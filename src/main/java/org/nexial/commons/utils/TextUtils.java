@@ -22,6 +22,7 @@ import org.apache.commons.collections4.IterableUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.RegExUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
@@ -32,6 +33,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Array;
+import java.math.BigDecimal;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
@@ -1337,12 +1339,79 @@ public final class TextUtils {
             return StringUtils.endsWithIgnoreCase(actual, StringUtils.substringAfter(expected, END_ANY_CASE));
         }
 
+        if (StringUtils.startsWith(expected, EMPTY)) {
+            if (BooleanUtils.toBoolean(StringUtils.substringAfter(expected, EMPTY))) {
+                return StringUtils.isEmpty(actual);
+            } else {
+                return StringUtils.isNotEmpty(actual);
+            }
+        }
+
+        if (StringUtils.startsWith(expected, BLANK)) {
+            if (BooleanUtils.toBoolean(StringUtils.substringAfter(expected, BLANK))) {
+                return StringUtils.isBlank(actual);
+            } else {
+                return StringUtils.isNotBlank(actual);
+            }
+        }
+
+        if (StringUtils.startsWith(expected, HAS_LENGTH)) {
+            String lengthCheck =
+                StringUtils.removeStart(StringUtils.trim(StringUtils.substringAfter(expected, HAS_LENGTH)), "+");
+            // if all we got is just the number, then assume equality comparison
+            List<String> groups = NumberUtils.isDigits(lengthCheck) ?
+                                  Arrays.asList("=", lengthCheck) :
+                                  RegexUtils.collectGroups(lengthCheck, REGEX_NUMERIC_COMPARE);
+            if (CollectionUtils.size(groups) != 2) {
+                throw new IllegalArgumentException("Invalid PolyMatcher syntax: " + expected);
+            }
+            return polyMatcherNumeric(groups.get(0),
+                                      StringUtils.length(actual),
+                                      NumberUtils.toInt(groups.get(1)),
+                                      expected);
+        }
+
+        if (StringUtils.startsWith(expected, NUMERIC)) {
+            String numberCheck =
+                StringUtils.removeStart(StringUtils.trim(StringUtils.substringAfter(expected, NUMERIC)), "+");
+            // if all we got is a just the number, then assume equality comparison
+            List<String> groups = NumberUtils.isParsable(numberCheck) ?
+                                  Arrays.asList("=", numberCheck) :
+                                  RegexUtils.collectGroups(numberCheck, REGEX_NUMERIC_COMPARE);
+            if (CollectionUtils.size(groups) != 2) {
+                throw new IllegalArgumentException("Invalid PolyMatcher syntax: " + expected);
+            }
+            return polyMatcherNumeric(groups.get(0),
+                                      new BigDecimal(StringUtils.trim(actual)).doubleValue(),
+                                      new BigDecimal(StringUtils.trim(groups.get(1))).doubleValue(),
+                                      expected);
+        }
+
         if (StringUtils.startsWith(expected, EXACT)) {
             return StringUtils.equals(actual, StringUtils.substringAfter(expected, EXACT));
         }
 
         // finally, exact match
         return StringUtils.equals(actual, expected);
+    }
+
+    private static boolean polyMatcherNumeric(String comparator, double actual, double expected, String polyMatcher) {
+        switch (comparator) {
+            case ">":
+                return actual > expected;
+            case ">=":
+                return actual >= expected;
+            case "<":
+                return actual < expected;
+            case "<=":
+                return actual <= expected;
+            case "=":
+                return actual == expected;
+            case "!=":
+                return actual != expected;
+            default:
+                throw new IllegalArgumentException("Unknown comparator in PolyMatcher: " + polyMatcher);
+        }
     }
 
     private static Map<String, String> initDefaultEscapeHtmlMapping() {

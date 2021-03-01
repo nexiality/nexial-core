@@ -259,6 +259,12 @@ public final class NexialConst {
         public static final String END_ANY_CASE = register("END_ANY_CASE:");
         public static final String REGEX = register("REGEX:");
         public static final String EXACT = register("EXACT:");
+        public static final String EMPTY = register("EMPTY:");
+        public static final String BLANK = register("BLANK:");
+        public static final String HAS_LENGTH = register("HAS_LENGTH:");
+        public static final String NUMERIC = register("NUMERIC:");
+        public static final String REGEX_NUMERIC_COMPARE = "^\\s*([><=!]+)\\s*([\\d\\-\\.]+)\\s*$";
+
         private PolyMatcher() {}
 
         private static String register(String keyword) {

@@ -17,21 +17,17 @@
 
 package org.nexial.commons.utils;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.SystemUtils;
 import org.apache.commons.lang3.math.NumberUtils;
-import org.junit.Assert;
 import org.junit.Test;
 
+import java.io.File;
+import java.util.*;
+
 import static java.io.File.separator;
+import static org.junit.Assert.*;
 import static org.nexial.commons.utils.TextUtils.CleanNumberStrategy.CSV;
 import static org.nexial.core.NexialConst.DEF_FILE_ENCODING;
 
@@ -39,26 +35,24 @@ public class TextUtilsTest {
 
     @Test
     public void testSubstringBetweenClosestPair() {
-        Assert.assertEquals("a", TextUtils.substringBetweenFirstPair("((a))", "(", ")"));
-        Assert.assertEquals("jolly good", TextUtils.substringBetweenFirstPair("((jolly good))", "(", ")"));
-
-        Assert.assertEquals("bracket", TextUtils.substringBetweenFirstPair("[bracket]", "[", "]"));
-        Assert.assertEquals("bracket", TextUtils.substringBetweenFirstPair("[bracket]]]", "[", "]"));
-        Assert.assertEquals("bracket", TextUtils.substringBetweenFirstPair("[[[[bracket]]", "[", "]"));
-        Assert.assertEquals("", TextUtils.substringBetweenFirstPair("[][[[bracket]]", "[", "]"));
-        Assert.assertNull(TextUtils.substringBetweenFirstPair("bracket]bracket[[[bracket]]", "[", "]"));
+        assertEquals("a", TextUtils.substringBetweenFirstPair("((a))", "(", ")"));
+        assertEquals("jolly good", TextUtils.substringBetweenFirstPair("((jolly good))", "(", ")"));
+        assertEquals("bracket", TextUtils.substringBetweenFirstPair("[bracket]", "[", "]"));
+        assertEquals("bracket", TextUtils.substringBetweenFirstPair("[bracket]]]", "[", "]"));
+        assertEquals("bracket", TextUtils.substringBetweenFirstPair("[[[[bracket]]", "[", "]"));
+        assertEquals("", TextUtils.substringBetweenFirstPair("[][[[bracket]]", "[", "]"));
+        assertNull(TextUtils.substringBetweenFirstPair("bracket]bracket[[[bracket]]", "[", "]"));
     }
 
     @Test
     public void testSubstringBetweenClosestPair_includeSep() {
-        Assert.assertEquals("(a)", TextUtils.substringBetweenFirstPair("((a))", "(", ")", true));
-        Assert.assertEquals("(jolly good)", TextUtils.substringBetweenFirstPair("((jolly good))", "(", ")", true));
-
-        Assert.assertEquals("[bracket]", TextUtils.substringBetweenFirstPair("[bracket]", "[", "]", true));
-        Assert.assertEquals("[bracket]", TextUtils.substringBetweenFirstPair("[bracket]]]", "[", "]", true));
-        Assert.assertEquals("[bracket]", TextUtils.substringBetweenFirstPair("[[[[bracket]]", "[", "]", true));
-        Assert.assertEquals("[]", TextUtils.substringBetweenFirstPair("[][[[bracket]]", "[", "]", true));
-        Assert.assertNull(TextUtils.substringBetweenFirstPair("bracket]bracket[[[bracket]]", "[", "]", true));
+        assertEquals("(a)", TextUtils.substringBetweenFirstPair("((a))", "(", ")", true));
+        assertEquals("(jolly good)", TextUtils.substringBetweenFirstPair("((jolly good))", "(", ")", true));
+        assertEquals("[bracket]", TextUtils.substringBetweenFirstPair("[bracket]", "[", "]", true));
+        assertEquals("[bracket]", TextUtils.substringBetweenFirstPair("[bracket]]]", "[", "]", true));
+        assertEquals("[bracket]", TextUtils.substringBetweenFirstPair("[[[[bracket]]", "[", "]", true));
+        assertEquals("[]", TextUtils.substringBetweenFirstPair("[][[[bracket]]", "[", "]", true));
+        assertNull(TextUtils.substringBetweenFirstPair("bracket]bracket[[[bracket]]", "[", "]", true));
     }
 
     @Test
@@ -67,29 +61,28 @@ public class TextUtilsTest {
         fixture.put("one", "yee");
         fixture.put("two", "er");
         fixture.put("three", "san");
-        Assert.assertEquals("one=yee|two=er|three=san", TextUtils.toString(fixture, "|", "="));
+        assertEquals("one=yee|two=er|three=san", TextUtils.toString(fixture, "|", "="));
 
         fixture = new HashMap<>();
         fixture.put("a", "");
         fixture.put("b", "");
         fixture.put("c", "=");
-        Assert.assertEquals("a=|b=|c==", TextUtils.toString(fixture, "|", "="));
-        Assert.assertEquals("a= b= c==", TextUtils.toString(fixture, " ", "="));
+        assertEquals("a=|b=|c==", TextUtils.toString(fixture, "|", "="));
+        assertEquals("a= b= c==", TextUtils.toString(fixture, " ", "="));
     }
 
     @Test
     public void testToOneLine() {
-        Assert.assertEquals("", TextUtils.toOneLine("", true));
-        Assert.assertEquals("", TextUtils.toOneLine(" ", true));
-        Assert.assertEquals("", TextUtils.toOneLine("\t", true));
-        Assert.assertEquals("\n", TextUtils.toOneLine("\n", false));
-        Assert.assertEquals("   ", TextUtils.toOneLine(" \n ", false));
-        Assert.assertEquals("That's enough already Jimmy",
-                            TextUtils.toOneLine("That's \nenough\r already\n\rJimmy", true));
-        Assert.assertEquals("Check out my really awesome hover text. I can include HTML tags and everything!!!",
-                            TextUtils.toOneLine("Check out my really awesome\n" +
-                                                " hover text. \n" +
-                                                " I can include HTML tags and everything!!!", true));
+        assertEquals("", TextUtils.toOneLine("", true));
+        assertEquals("", TextUtils.toOneLine(" ", true));
+        assertEquals("", TextUtils.toOneLine("\t", true));
+        assertEquals("\n", TextUtils.toOneLine("\n", false));
+        assertEquals("   ", TextUtils.toOneLine(" \n ", false));
+        assertEquals("That's enough already Jimmy", TextUtils.toOneLine("That's \nenough\r already\n\rJimmy", true));
+        assertEquals("Check out my really awesome hover text. I can include HTML tags and everything!!!",
+                     TextUtils.toOneLine("Check out my really awesome\n" +
+                                         " hover text. \n" +
+                                         " I can include HTML tags and everything!!!", true));
     }
 
     @Test
@@ -97,17 +90,17 @@ public class TextUtilsTest {
         String fixture = "a,,b,,c,d";
 
         List<String> actual = TextUtils.toList(fixture, ":", true);
-        Assert.assertEquals(1, actual.size());
-        Assert.assertEquals(fixture, actual.get(0));
+        assertEquals(1, actual.size());
+        assertEquals(fixture, actual.get(0));
 
         actual = TextUtils.toList(fixture, ",", true);
-        Assert.assertEquals(actual.size(), 6);
-        Assert.assertEquals(actual.get(0), "a");
-        Assert.assertEquals(actual.get(1), "");
-        Assert.assertEquals(actual.get(2), "b");
-        Assert.assertEquals(actual.get(3), "");
-        Assert.assertEquals(actual.get(4), "c");
-        Assert.assertEquals(actual.get(5), "d");
+        assertEquals(actual.size(), 6);
+        assertEquals(actual.get(0), "a");
+        assertEquals(actual.get(1), "");
+        assertEquals(actual.get(2), "b");
+        assertEquals(actual.get(3), "");
+        assertEquals(actual.get(4), "c");
+        assertEquals(actual.get(5), "d");
     }
 
     @Test
@@ -115,13 +108,13 @@ public class TextUtilsTest {
         String fixture = "a,,b,,c,d";
 
         List<String> actual = TextUtils.toListPreserveTokens(fixture, ",", false);
-        Assert.assertEquals(actual.size(), 6);
-        Assert.assertEquals(actual.get(0), "a");
-        Assert.assertEquals(actual.get(1), "");
-        Assert.assertEquals(actual.get(2), "b");
-        Assert.assertEquals(actual.get(3), "");
-        Assert.assertEquals(actual.get(4), "c");
-        Assert.assertEquals(actual.get(5), "d");
+        assertEquals(actual.size(), 6);
+        assertEquals(actual.get(0), "a");
+        assertEquals(actual.get(1), "");
+        assertEquals(actual.get(2), "b");
+        assertEquals(actual.get(3), "");
+        assertEquals(actual.get(4), "c");
+        assertEquals(actual.get(5), "d");
     }
 
     @Test
@@ -129,53 +122,53 @@ public class TextUtilsTest {
         String fixture = "Every~=~Time~=~You~=~Leave~=~Me";
 
         List<String> actual = TextUtils.toListPreserveTokens(fixture, "~=~", false);
-        Assert.assertEquals(5, actual.size());
-        Assert.assertEquals("Every", actual.get(0));
-        Assert.assertEquals("Time", actual.get(1));
-        Assert.assertEquals("You", actual.get(2));
-        Assert.assertEquals("Leave", actual.get(3));
-        Assert.assertEquals("Me", actual.get(4));
+        assertEquals(5, actual.size());
+        assertEquals("Every", actual.get(0));
+        assertEquals("Time", actual.get(1));
+        assertEquals("You", actual.get(2));
+        assertEquals("Leave", actual.get(3));
+        assertEquals("Me", actual.get(4));
     }
 
     @Test
     public void testToListWith2Spaces() {
         String fixture = "Active     SSN            Name             Client  Type    FSO ID          FSO Name";
         List<String> actual = TextUtils.toList(fixture, "  ", true);
-        Assert.assertEquals(actual.size(), 7);
-        Assert.assertEquals(actual.get(0), "Active");
-        Assert.assertEquals(actual.get(1), "SSN");
-        Assert.assertEquals(actual.get(2), "Name");
-        Assert.assertEquals(actual.get(3), "Client");
-        Assert.assertEquals(actual.get(4), "Type");
-        Assert.assertEquals(actual.get(5), "FSO ID");
-        Assert.assertEquals(actual.get(6), "FSO Name");
+        assertEquals(actual.size(), 7);
+        assertEquals(actual.get(0), "Active");
+        assertEquals(actual.get(1), "SSN");
+        assertEquals(actual.get(2), "Name");
+        assertEquals(actual.get(3), "Client");
+        assertEquals(actual.get(4), "Type");
+        assertEquals(actual.get(5), "FSO ID");
+        assertEquals(actual.get(6), "FSO Name");
     }
 
     @Test
     public void testToListWithMultipleTabs() {
         String fixture = "Active\tSSN\t\tName\t\t\tClient\tType\t\t\t\t\tFSO ID\t\tFSO Name";
         List<String> actual = TextUtils.toList(fixture, "\t", true);
-        Assert.assertEquals(actual.size(), 7);
-        Assert.assertEquals(actual.get(0), "Active");
-        Assert.assertEquals(actual.get(1), "SSN");
-        Assert.assertEquals(actual.get(2), "Name");
-        Assert.assertEquals(actual.get(3), "Client");
-        Assert.assertEquals(actual.get(4), "Type");
-        Assert.assertEquals(actual.get(5), "FSO ID");
-        Assert.assertEquals(actual.get(6), "FSO Name");
+        assertEquals(actual.size(), 7);
+        assertEquals(actual.get(0), "Active");
+        assertEquals(actual.get(1), "SSN");
+        assertEquals(actual.get(2), "Name");
+        assertEquals(actual.get(3), "Client");
+        assertEquals(actual.get(4), "Type");
+        assertEquals(actual.get(5), "FSO ID");
+        assertEquals(actual.get(6), "FSO Name");
     }
 
     @Test
     public void testToListPreserveTokens() {
-        Assert.assertEquals(null, TextUtils.toListPreserveTokens("", ",", true));
-        Assert.assertEquals("[a]", TextUtils.toListPreserveTokens("a", ",", true).toString());
-        Assert.assertEquals("[a, b, c, d, e]", TextUtils.toListPreserveTokens("a,b,c,d,e", ",", true).toString());
-        Assert.assertEquals("[a, b, , d, e]", TextUtils.toListPreserveTokens("a,b,,d,e", ",", true).toString());
-        Assert.assertEquals("[, b, , d, e]", TextUtils.toListPreserveTokens(",b,,d,e", ",", true).toString());
-        Assert.assertEquals("[, , , , e]", TextUtils.toListPreserveTokens(",,,,e", ",", true).toString());
-        Assert.assertEquals("[, , , , e]", TextUtils.toListPreserveTokens(",    ,,  ,e", ",", true).toString());
-        Assert.assertEquals("[, , , , e]", TextUtils.toListPreserveTokens("        ,   ,,  ,e", ",", true).toString());
-        Assert.assertEquals("[, b, , , e]", TextUtils.toListPreserveTokens("      , b  ,,  ,e", ",", true).toString());
+        assertNull(TextUtils.toListPreserveTokens("", ",", true));
+        assertEquals("[a]", TextUtils.toListPreserveTokens("a", ",", true).toString());
+        assertEquals("[a, b, c, d, e]", TextUtils.toListPreserveTokens("a,b,c,d,e", ",", true).toString());
+        assertEquals("[a, b, , d, e]", TextUtils.toListPreserveTokens("a,b,,d,e", ",", true).toString());
+        assertEquals("[, b, , d, e]", TextUtils.toListPreserveTokens(",b,,d,e", ",", true).toString());
+        assertEquals("[, , , , e]", TextUtils.toListPreserveTokens(",,,,e", ",", true).toString());
+        assertEquals("[, , , , e]", TextUtils.toListPreserveTokens(",    ,,  ,e", ",", true).toString());
+        assertEquals("[, , , , e]", TextUtils.toListPreserveTokens("        ,   ,,  ,e", ",", true).toString());
+        assertEquals("[, b, , , e]", TextUtils.toListPreserveTokens("      , b  ,,  ,e", ",", true).toString());
     }
 
     /**
@@ -185,220 +178,215 @@ public class TextUtilsTest {
     public void testStringUtilsSplit() {
         String fixture = "C:\\dir1\\dir2\\dir3\\dir4";
         String[] actual = StringUtils.split(fixture, "\\/");
-        Assert.assertNotNull(actual);
-        Assert.assertEquals(actual.length, 5);
-        Assert.assertEquals(actual[0], "C:");
-        Assert.assertEquals(actual[1], "dir1");
-        Assert.assertEquals(actual[2], "dir2");
-        Assert.assertEquals(actual[3], "dir3");
-        Assert.assertEquals(actual[4], "dir4");
+        assertNotNull(actual);
+        assertEquals(actual.length, 5);
+        assertEquals(actual[0], "C:");
+        assertEquals(actual[1], "dir1");
+        assertEquals(actual[2], "dir2");
+        assertEquals(actual[3], "dir3");
+        assertEquals(actual[4], "dir4");
 
         fixture = "/dir1/dir2/dir3/dir4";
         actual = StringUtils.split(fixture, "\\/");
-        Assert.assertNotNull(actual);
-        Assert.assertEquals(actual.length, 4);
-        Assert.assertEquals(actual[0], "dir1");
-        Assert.assertEquals(actual[1], "dir2");
-        Assert.assertEquals(actual[2], "dir3");
-        Assert.assertEquals(actual[3], "dir4");
+        assertNotNull(actual);
+        assertEquals(actual.length, 4);
+        assertEquals(actual[0], "dir1");
+        assertEquals(actual[1], "dir2");
+        assertEquals(actual[2], "dir3");
+        assertEquals(actual[3], "dir4");
 
         fixture = "/dir1\\dir2/dir3/dir4\\";
         actual = StringUtils.split(fixture, "/\\");
-        Assert.assertNotNull(actual);
-        Assert.assertEquals(actual.length, 4);
-        Assert.assertEquals(actual[0], "dir1");
-        Assert.assertEquals(actual[1], "dir2");
-        Assert.assertEquals(actual[2], "dir3");
-        Assert.assertEquals(actual[3], "dir4");
-
+        assertNotNull(actual);
+        assertEquals(actual.length, 4);
+        assertEquals(actual[0], "dir1");
+        assertEquals(actual[1], "dir2");
+        assertEquals(actual[2], "dir3");
+        assertEquals(actual[3], "dir4");
     }
 
     @Test
     public void testInsert() {
-        Assert.assertEquals("", TextUtils.insert("", 0, ""));
-        Assert.assertEquals("A", TextUtils.insert("A", 0, ""));
-        Assert.assertEquals("A", TextUtils.insert("A", 5, ""));
-        Assert.assertEquals("A", TextUtils.insert("A", -2, ""));
-        Assert.assertEquals("ABC", TextUtils.insert("ABC", -2, "D"));
-        Assert.assertEquals("ABC", TextUtils.insert("ABC", 9, "D"));
-        Assert.assertEquals("ABDC", TextUtils.insert("ABC", 2, "D"));
-        Assert.assertEquals("ABDDD", TextUtils.insert("ABDD", 2, "D"));
-        Assert.assertEquals("ABDDD", TextUtils.insert("ABDD", 4, "D"));
-        Assert.assertEquals("ABDD", TextUtils.insert("ABDD", 5, "D"));
+        assertEquals("", TextUtils.insert("", 0, ""));
+        assertEquals("A", TextUtils.insert("A", 0, ""));
+        assertEquals("A", TextUtils.insert("A", 5, ""));
+        assertEquals("A", TextUtils.insert("A", -2, ""));
+        assertEquals("ABC", TextUtils.insert("ABC", -2, "D"));
+        assertEquals("ABC", TextUtils.insert("ABC", 9, "D"));
+        assertEquals("ABDC", TextUtils.insert("ABC", 2, "D"));
+        assertEquals("ABDDD", TextUtils.insert("ABDD", 2, "D"));
+        assertEquals("ABDDD", TextUtils.insert("ABDD", 4, "D"));
+        assertEquals("ABDD", TextUtils.insert("ABDD", 5, "D"));
     }
 
     @Test
     public void isBetween() {
-        Assert.assertFalse(TextUtils.isBetween(null, null, null));
-        Assert.assertFalse(TextUtils.isBetween(null, "", null));
-        Assert.assertFalse(TextUtils.isBetween(null, "", ""));
-        Assert.assertFalse(TextUtils.isBetween("", "", ""));
-        Assert.assertFalse(TextUtils.isBetween("a", null, null));
-        Assert.assertFalse(TextUtils.isBetween("a", "", null));
-        Assert.assertFalse(TextUtils.isBetween("a", "", ""));
-        Assert.assertFalse(TextUtils.isBetween("a", "a", null));
-        Assert.assertFalse(TextUtils.isBetween("a", "a", "a"));
-        Assert.assertFalse(TextUtils.isBetween("ab", "a", "b"));
-        Assert.assertFalse(TextUtils.isBetween("ab", "a", "ab"));
-        Assert.assertFalse(TextUtils.isBetween("ab", "ab", "a"));
-        Assert.assertFalse(TextUtils.isBetween("aab", "a", "ab"));
-        Assert.assertFalse(TextUtils.isBetween("aab", "aa", "ab"));
+        assertFalse(TextUtils.isBetween(null, null, null));
+        assertFalse(TextUtils.isBetween(null, "", null));
+        assertFalse(TextUtils.isBetween(null, "", ""));
+        assertFalse(TextUtils.isBetween("", "", ""));
+        assertFalse(TextUtils.isBetween("a", null, null));
+        assertFalse(TextUtils.isBetween("a", "", null));
+        assertFalse(TextUtils.isBetween("a", "", ""));
+        assertFalse(TextUtils.isBetween("a", "a", null));
+        assertFalse(TextUtils.isBetween("a", "a", "a"));
+        assertFalse(TextUtils.isBetween("ab", "a", "b"));
+        assertFalse(TextUtils.isBetween("ab", "a", "ab"));
+        assertFalse(TextUtils.isBetween("ab", "ab", "a"));
+        assertFalse(TextUtils.isBetween("aab", "a", "ab"));
+        assertFalse(TextUtils.isBetween("aab", "aa", "ab"));
 
-        Assert.assertTrue(TextUtils.isBetween("aab", "a", "b"));
-        Assert.assertTrue(TextUtils.isBetween("aabb", "aa", "b"));
-        Assert.assertTrue(TextUtils.isBetween("aacbb", "aa", "bb"));
-        Assert.assertTrue(TextUtils.isBetween("${data1}", "${", "}"));
+        assertTrue(TextUtils.isBetween("aab", "a", "b"));
+        assertTrue(TextUtils.isBetween("aabb", "aa", "b"));
+        assertTrue(TextUtils.isBetween("aacbb", "aa", "bb"));
+        assertTrue(TextUtils.isBetween("${data1}", "${", "}"));
     }
 
     @Test
     public void toOneCharArray() {
-        Assert.assertNull(TextUtils.toOneCharArray(null));
-        Assert.assertNull(TextUtils.toOneCharArray(""));
-        Assert.assertArrayEquals(new String[]{"a"}, TextUtils.toOneCharArray("a"));
-        Assert.assertArrayEquals(new String[]{"a", "b", "c"}, TextUtils.toOneCharArray("abc"));
-        Assert.assertArrayEquals(new String[]{" ", " "}, TextUtils.toOneCharArray("  "));
+        assertNull(TextUtils.toOneCharArray(null));
+        assertNull(TextUtils.toOneCharArray(""));
+        assertArrayEquals(new String[]{"a"}, TextUtils.toOneCharArray("a"));
+        assertArrayEquals(new String[]{"a", "b", "c"}, TextUtils.toOneCharArray("abc"));
+        assertArrayEquals(new String[]{" ", " "}, TextUtils.toOneCharArray("  "));
     }
 
     @Test
     public void removeFirst() {
-        Assert.assertNull(TextUtils.removeFirst(null, null));
-        Assert.assertNull(TextUtils.removeFirst(null, ""));
-        Assert.assertNull(TextUtils.removeFirst(null, " "));
-        Assert.assertEquals("", TextUtils.removeFirst("", null));
-        Assert.assertEquals("", TextUtils.removeFirst("", ""));
-        Assert.assertEquals("", TextUtils.removeFirst("", " "));
-        Assert.assertEquals("", TextUtils.removeFirst(" ", " "));
-        Assert.assertEquals("", TextUtils.removeFirst("a", "a"));
-        Assert.assertEquals("a", TextUtils.removeFirst("a", "b"));
-        Assert.assertEquals("a", TextUtils.removeFirst("ab", "b"));
-        Assert.assertEquals("ab", TextUtils.removeFirst("abb", "b"));
-        Assert.assertEquals("ac", TextUtils.removeFirst("abc", "b"));
-        Assert.assertEquals("ac", TextUtils.removeFirst("acb", "b"));
-        Assert.assertEquals("ab", TextUtils.removeFirst("bab", "b"));
-        Assert.assertEquals("bab", TextUtils.removeFirst("babab", "ab"));
-        Assert.assertEquals("baab", TextUtils.removeFirst("baabab", "ab"));
-        Assert.assertEquals("This works", TextUtils.removeFirst("This{IS} works", "{IS}"));
+        assertNull(TextUtils.removeFirst(null, null));
+        assertNull(TextUtils.removeFirst(null, ""));
+        assertNull(TextUtils.removeFirst(null, " "));
+        assertEquals("", TextUtils.removeFirst("", null));
+        assertEquals("", TextUtils.removeFirst("", ""));
+        assertEquals("", TextUtils.removeFirst("", " "));
+        assertEquals("", TextUtils.removeFirst(" ", " "));
+        assertEquals("", TextUtils.removeFirst("a", "a"));
+        assertEquals("a", TextUtils.removeFirst("a", "b"));
+        assertEquals("a", TextUtils.removeFirst("ab", "b"));
+        assertEquals("ab", TextUtils.removeFirst("abb", "b"));
+        assertEquals("ac", TextUtils.removeFirst("abc", "b"));
+        assertEquals("ac", TextUtils.removeFirst("acb", "b"));
+        assertEquals("ab", TextUtils.removeFirst("bab", "b"));
+        assertEquals("bab", TextUtils.removeFirst("babab", "ab"));
+        assertEquals("baab", TextUtils.removeFirst("baabab", "ab"));
+        assertEquals("This works", TextUtils.removeFirst("This{IS} works", "{IS}"));
     }
 
     @Test
     public void xpathFriendlyQuotes() {
-        Assert.assertEquals("''", TextUtils.xpathFriendlyQuotes(null));
-        Assert.assertEquals("''", TextUtils.xpathFriendlyQuotes(""));
-        Assert.assertEquals("' '", TextUtils.xpathFriendlyQuotes(" "));
-        Assert.assertEquals("'\t'", TextUtils.xpathFriendlyQuotes("\t"));
-        Assert.assertEquals("'This is a test'", TextUtils.xpathFriendlyQuotes("This is a test"));
-        Assert.assertEquals("\"Mike's computer\"", TextUtils.xpathFriendlyQuotes("Mike's computer"));
-        Assert.assertEquals("'\"Over the hill\" cafe'", TextUtils.xpathFriendlyQuotes("\"Over the hill\" cafe"));
-        Assert.assertEquals("concat(\"Jane'\",'s \"','words\"')", TextUtils.xpathFriendlyQuotes("Jane's \"words\""));
+        assertEquals("''", TextUtils.xpathFriendlyQuotes(null));
+        assertEquals("''", TextUtils.xpathFriendlyQuotes(""));
+        assertEquals("' '", TextUtils.xpathFriendlyQuotes(" "));
+        assertEquals("'\t'", TextUtils.xpathFriendlyQuotes("\t"));
+        assertEquals("'This is a test'", TextUtils.xpathFriendlyQuotes("This is a test"));
+        assertEquals("\"Mike's computer\"", TextUtils.xpathFriendlyQuotes("Mike's computer"));
+        assertEquals("'\"Over the hill\" cafe'", TextUtils.xpathFriendlyQuotes("\"Over the hill\" cafe"));
+        assertEquals("concat(\"Jane'\",'s \"','words\"')", TextUtils.xpathFriendlyQuotes("Jane's \"words\""));
     }
 
     @Test
     public void countMatches() {
-        Assert.assertEquals(1, TextUtils.countMatches(null, null));
-        Assert.assertEquals(1, TextUtils.countMatches(null, ""));
-        Assert.assertEquals(1, TextUtils.countMatches(new ArrayList<>(), ""));
-        Assert.assertEquals(1, TextUtils.countMatches(Arrays.asList(""), ""));
-        Assert.assertEquals(3, TextUtils.countMatches(Arrays.asList("", "", ""), ""));
-        Assert.assertEquals(0, TextUtils.countMatches(Arrays.asList(" ", "", " "), "  "));
-        Assert.assertEquals(0, TextUtils.countMatches(Arrays.asList(" ", "", "a", " "), " a "));
-        Assert.assertEquals(0, TextUtils.countMatches(Arrays.asList(" ", "", "a", "b", "c", " "), " a "));
-        Assert.assertEquals(0, TextUtils.countMatches(Arrays.asList(" ", "", "a", "b", "c", " "), " ac "));
-        Assert.assertEquals(0, TextUtils.countMatches(Arrays.asList(" ", "", "a", "b", "c", " "), "as"));
-        Assert.assertEquals(1, TextUtils.countMatches(Arrays.asList(" ", "", "a", "b", "c", " "), "a"));
-        Assert.assertEquals(1, TextUtils.countMatches(Arrays.asList(" ", "", "a", "bc", " "), "bc"));
-        Assert.assertEquals(3,
-                            TextUtils
-                                .countMatches(Arrays.asList(" ", "", "bc", "\t", "a", "bc", "a", "bc", " "), "bc"));
+        assertEquals(1, TextUtils.countMatches(null, null));
+        assertEquals(1, TextUtils.countMatches(null, ""));
+        assertEquals(1, TextUtils.countMatches(new ArrayList<>(), ""));
+        assertEquals(1, TextUtils.countMatches(Arrays.asList(""), ""));
+        assertEquals(3, TextUtils.countMatches(Arrays.asList("", "", ""), ""));
+        assertEquals(0, TextUtils.countMatches(Arrays.asList(" ", "", " "), "  "));
+        assertEquals(0, TextUtils.countMatches(Arrays.asList(" ", "", "a", " "), " a "));
+        assertEquals(0, TextUtils.countMatches(Arrays.asList(" ", "", "a", "b", "c", " "), " a "));
+        assertEquals(0, TextUtils.countMatches(Arrays.asList(" ", "", "a", "b", "c", " "), " ac "));
+        assertEquals(0, TextUtils.countMatches(Arrays.asList(" ", "", "a", "b", "c", " "), "as"));
+        assertEquals(1, TextUtils.countMatches(Arrays.asList(" ", "", "a", "b", "c", " "), "a"));
+        assertEquals(1, TextUtils.countMatches(Arrays.asList(" ", "", "a", "bc", " "), "bc"));
+        assertEquals(3, TextUtils.countMatches(Arrays.asList(" ", "", "bc", "\t", "a", "bc", "a", "bc", " "), "bc"));
     }
 
     @Test
-    public void xpathNormlize() {
-        Assert.assertEquals("", TextUtils.xpathNormalize(null));
-        Assert.assertEquals("", TextUtils.xpathNormalize(""));
-        Assert.assertEquals("", TextUtils.xpathNormalize(" "));
-        Assert.assertEquals("Hello World", TextUtils.xpathNormalize("Hello World"));
-        Assert.assertEquals("Hello World", TextUtils.xpathNormalize("Hello   World"));
-        Assert.assertEquals("Hello World", TextUtils.xpathNormalize("  Hello   World"));
-        Assert.assertEquals("Hello World", TextUtils.xpathNormalize("  \t  Hello   World\t\t\t"));
-        Assert.assertEquals("Hello World", TextUtils.xpathNormalize("  \t  Hello   World\t\n\t \t \n"));
-        Assert.assertEquals("Hello World", TextUtils.xpathNormalize("  \t  Hello   World\t\n\t\t\n\r\n\t "));
-        Assert.assertEquals("Hello World", TextUtils.xpathNormalize("  \t  Hello \r  World\t\n\t\t\n\r\n\t "));
-        Assert.assertEquals("Hello World", TextUtils.xpathNormalize("  \t  Hello \r\n  World\t\n\t\t\n\r\n\t "));
-        Assert.assertEquals("Hello World", TextUtils.xpathNormalize("  \t  Hello \r\n\t \r  World\t\n\t\t\n\r\n\t "));
+    public void xpathNormalize() {
+        assertEquals("", TextUtils.xpathNormalize(null));
+        assertEquals("", TextUtils.xpathNormalize(""));
+        assertEquals("", TextUtils.xpathNormalize(" "));
+        assertEquals("Hello World", TextUtils.xpathNormalize("Hello World"));
+        assertEquals("Hello World", TextUtils.xpathNormalize("Hello   World"));
+        assertEquals("Hello World", TextUtils.xpathNormalize("  Hello   World"));
+        assertEquals("Hello World", TextUtils.xpathNormalize("  \t  Hello   World\t\t\t"));
+        assertEquals("Hello World", TextUtils.xpathNormalize("  \t  Hello   World\t\n\t \t \n"));
+        assertEquals("Hello World", TextUtils.xpathNormalize("  \t  Hello   World\t\n\t\t\n\r\n\t "));
+        assertEquals("Hello World", TextUtils.xpathNormalize("  \t  Hello \r  World\t\n\t\t\n\r\n\t "));
+        assertEquals("Hello World", TextUtils.xpathNormalize("  \t  Hello \r\n  World\t\n\t\t\n\r\n\t "));
+        assertEquals("Hello World", TextUtils.xpathNormalize("  \t  Hello \r\n\t \r  World\t\n\t\t\n\r\n\t "));
     }
 
     @Test
     public void to2dList() {
-        String fixture =
-            "taxID,weekBeginDate,name,gross\n" +
-            "623132658,20130318,ANDERSON/CARTER,5270.00\n" +
-            "623132658,20130325,ANDERSON/CARTER,5622.50\n" +
-            "623132658,20130401,ANDERSON/CARTER,3402.50\n" +
-            "623132658,20130408,ANDERSON/CARTER,3222.50\n" +
-            "623132658,20130415,ANDERSON/CARTER,3665.00\n" +
-            "623132658,20130422,ANDERSON/CARTER,5285.00\n" +
-            "623132658,20130429,ANDERSON/CARTER,4475.00\n" +
-            "623132658,20130506,ANDERSON/CARTER,4665.00\n" +
-            "623132658,20130513,ANDERSON/CARTER,4377.50\n" +
-            "623132658,20130520,ANDERSON/CARTER,4745.00\n" +
-            "623132658,20130527,ANDERSON/CARTER,3957.50\n" +
-            "623132658,20130603,ANDERSON/CARTER,5675.00\n";
+        String fixture = "taxID,weekBeginDate,name,gross\n" +
+                         "623132658,20130318,ANDERSON/CARTER,5270.00\n" +
+                         "623132658,20130325,ANDERSON/CARTER,5622.50\n" +
+                         "623132658,20130401,ANDERSON/CARTER,3402.50\n" +
+                         "623132658,20130408,ANDERSON/CARTER,3222.50\n" +
+                         "623132658,20130415,ANDERSON/CARTER,3665.00\n" +
+                         "623132658,20130422,ANDERSON/CARTER,5285.00\n" +
+                         "623132658,20130429,ANDERSON/CARTER,4475.00\n" +
+                         "623132658,20130506,ANDERSON/CARTER,4665.00\n" +
+                         "623132658,20130513,ANDERSON/CARTER,4377.50\n" +
+                         "623132658,20130520,ANDERSON/CARTER,4745.00\n" +
+                         "623132658,20130527,ANDERSON/CARTER,3957.50\n" +
+                         "623132658,20130603,ANDERSON/CARTER,5675.00\n";
         String rowSeparator = "\n";
         String delim = ",";
 
         List<List<String>> twoDlist = TextUtils.to2dList(fixture, rowSeparator, delim);
         System.out.println("twoDlist = " + twoDlist);
-        Assert.assertNotNull(twoDlist);
-        Assert.assertEquals("[taxID, weekBeginDate, name, gross]", twoDlist.get(0).toString());
-        Assert.assertEquals("[623132658, 20130318, ANDERSON/CARTER, 5270.00]", twoDlist.get(1).toString());
-        Assert.assertEquals("[623132658, 20130325, ANDERSON/CARTER, 5622.50]", twoDlist.get(2).toString());
-        Assert.assertEquals("[623132658, 20130401, ANDERSON/CARTER, 3402.50]", twoDlist.get(3).toString());
-        Assert.assertEquals("[623132658, 20130408, ANDERSON/CARTER, 3222.50]", twoDlist.get(4).toString());
-        Assert.assertEquals("[623132658, 20130415, ANDERSON/CARTER, 3665.00]", twoDlist.get(5).toString());
-        Assert.assertEquals("[623132658, 20130422, ANDERSON/CARTER, 5285.00]", twoDlist.get(6).toString());
-        Assert.assertEquals("[623132658, 20130429, ANDERSON/CARTER, 4475.00]", twoDlist.get(7).toString());
-        Assert.assertEquals("[623132658, 20130506, ANDERSON/CARTER, 4665.00]", twoDlist.get(8).toString());
-        Assert.assertEquals("[623132658, 20130513, ANDERSON/CARTER, 4377.50]", twoDlist.get(9).toString());
-        Assert.assertEquals("[623132658, 20130520, ANDERSON/CARTER, 4745.00]", twoDlist.get(10).toString());
-        Assert.assertEquals("[623132658, 20130527, ANDERSON/CARTER, 3957.50]", twoDlist.get(11).toString());
-        Assert.assertEquals("[623132658, 20130603, ANDERSON/CARTER, 5675.00]", twoDlist.get(12).toString());
+        assertNotNull(twoDlist);
+        assertEquals("[taxID, weekBeginDate, name, gross]", twoDlist.get(0).toString());
+        assertEquals("[623132658, 20130318, ANDERSON/CARTER, 5270.00]", twoDlist.get(1).toString());
+        assertEquals("[623132658, 20130325, ANDERSON/CARTER, 5622.50]", twoDlist.get(2).toString());
+        assertEquals("[623132658, 20130401, ANDERSON/CARTER, 3402.50]", twoDlist.get(3).toString());
+        assertEquals("[623132658, 20130408, ANDERSON/CARTER, 3222.50]", twoDlist.get(4).toString());
+        assertEquals("[623132658, 20130415, ANDERSON/CARTER, 3665.00]", twoDlist.get(5).toString());
+        assertEquals("[623132658, 20130422, ANDERSON/CARTER, 5285.00]", twoDlist.get(6).toString());
+        assertEquals("[623132658, 20130429, ANDERSON/CARTER, 4475.00]", twoDlist.get(7).toString());
+        assertEquals("[623132658, 20130506, ANDERSON/CARTER, 4665.00]", twoDlist.get(8).toString());
+        assertEquals("[623132658, 20130513, ANDERSON/CARTER, 4377.50]", twoDlist.get(9).toString());
+        assertEquals("[623132658, 20130520, ANDERSON/CARTER, 4745.00]", twoDlist.get(10).toString());
+        assertEquals("[623132658, 20130527, ANDERSON/CARTER, 3957.50]", twoDlist.get(11).toString());
+        assertEquals("[623132658, 20130603, ANDERSON/CARTER, 5675.00]", twoDlist.get(12).toString());
     }
 
     @Test
     public void to2dList_long_delim() {
-        String fixture =
-            "taxID<DELIM>weekBeginDate<DELIM>name<DELIM>gross<END_OF_RECORD>\n" +
-            "623132658<DELIM>20130318<DELIM>ANDERSON/CARTER<DELIM>5270.00<END_OF_RECORD>\n" +
-            "623132658<DELIM>20130325<DELIM>ANDERSON/CARTER<DELIM>5622.50<END_OF_RECORD>\n" +
-            "623132658<DELIM>20130401<DELIM>ANDERSON/CARTER<DELIM>3402.50<END_OF_RECORD>\n" +
-            "623132658<DELIM>20130408<DELIM>ANDERSON/CARTER<DELIM>3222.50<END_OF_RECORD>\n" +
-            "623132658<DELIM>20130415<DELIM>ANDERSON/CARTER<DELIM>3665.00<END_OF_RECORD>\n" +
-            "623132658<DELIM>20130422<DELIM>ANDERSON/CARTER<DELIM>5285.00<END_OF_RECORD>\n" +
-            "623132658<DELIM>20130429<DELIM>ANDERSON/CARTER<DELIM>4475.00<END_OF_RECORD>\n" +
-            "623132658<DELIM>20130506<DELIM>ANDERSON/CARTER<DELIM>4665.00<END_OF_RECORD>\n" +
-            "623132658<DELIM>20130513<DELIM>ANDERSON/CARTER<DELIM>4377.50<END_OF_RECORD>\n" +
-            "623132658<DELIM>20130520<DELIM>ANDERSON/CARTER<DELIM>4745.00<END_OF_RECORD>\n" +
-            "623132658<DELIM>20130527<DELIM>ANDERSON/CARTER<DELIM>3957.50<END_OF_RECORD>\n" +
-            "623132658<DELIM>20130603<DELIM>ANDERSON/CARTER<DELIM>5675.00<END_OF_RECORD>\n";
+        String fixture = "taxID<DELIM>weekBeginDate<DELIM>name<DELIM>gross<END_OF_RECORD>\n" +
+                         "623132658<DELIM>20130318<DELIM>ANDERSON/CARTER<DELIM>5270.00<END_OF_RECORD>\n" +
+                         "623132658<DELIM>20130325<DELIM>ANDERSON/CARTER<DELIM>5622.50<END_OF_RECORD>\n" +
+                         "623132658<DELIM>20130401<DELIM>ANDERSON/CARTER<DELIM>3402.50<END_OF_RECORD>\n" +
+                         "623132658<DELIM>20130408<DELIM>ANDERSON/CARTER<DELIM>3222.50<END_OF_RECORD>\n" +
+                         "623132658<DELIM>20130415<DELIM>ANDERSON/CARTER<DELIM>3665.00<END_OF_RECORD>\n" +
+                         "623132658<DELIM>20130422<DELIM>ANDERSON/CARTER<DELIM>5285.00<END_OF_RECORD>\n" +
+                         "623132658<DELIM>20130429<DELIM>ANDERSON/CARTER<DELIM>4475.00<END_OF_RECORD>\n" +
+                         "623132658<DELIM>20130506<DELIM>ANDERSON/CARTER<DELIM>4665.00<END_OF_RECORD>\n" +
+                         "623132658<DELIM>20130513<DELIM>ANDERSON/CARTER<DELIM>4377.50<END_OF_RECORD>\n" +
+                         "623132658<DELIM>20130520<DELIM>ANDERSON/CARTER<DELIM>4745.00<END_OF_RECORD>\n" +
+                         "623132658<DELIM>20130527<DELIM>ANDERSON/CARTER<DELIM>3957.50<END_OF_RECORD>\n" +
+                         "623132658<DELIM>20130603<DELIM>ANDERSON/CARTER<DELIM>5675.00<END_OF_RECORD>\n";
         String rowSeparator = "<END_OF_RECORD>\n";
         String delim = "<DELIM>";
 
         List<List<String>> twoDlist = TextUtils.to2dList(fixture, rowSeparator, delim);
         System.out.println("twoDlist = " + twoDlist);
-        Assert.assertNotNull(twoDlist);
-        Assert.assertEquals("[taxID, weekBeginDate, name, gross]", twoDlist.get(0).toString());
-        Assert.assertEquals("[623132658, 20130318, ANDERSON/CARTER, 5270.00]", twoDlist.get(1).toString());
-        Assert.assertEquals("[623132658, 20130325, ANDERSON/CARTER, 5622.50]", twoDlist.get(2).toString());
-        Assert.assertEquals("[623132658, 20130401, ANDERSON/CARTER, 3402.50]", twoDlist.get(3).toString());
-        Assert.assertEquals("[623132658, 20130408, ANDERSON/CARTER, 3222.50]", twoDlist.get(4).toString());
-        Assert.assertEquals("[623132658, 20130415, ANDERSON/CARTER, 3665.00]", twoDlist.get(5).toString());
-        Assert.assertEquals("[623132658, 20130422, ANDERSON/CARTER, 5285.00]", twoDlist.get(6).toString());
-        Assert.assertEquals("[623132658, 20130429, ANDERSON/CARTER, 4475.00]", twoDlist.get(7).toString());
-        Assert.assertEquals("[623132658, 20130506, ANDERSON/CARTER, 4665.00]", twoDlist.get(8).toString());
-        Assert.assertEquals("[623132658, 20130513, ANDERSON/CARTER, 4377.50]", twoDlist.get(9).toString());
-        Assert.assertEquals("[623132658, 20130520, ANDERSON/CARTER, 4745.00]", twoDlist.get(10).toString());
-        Assert.assertEquals("[623132658, 20130527, ANDERSON/CARTER, 3957.50]", twoDlist.get(11).toString());
-        Assert.assertEquals("[623132658, 20130603, ANDERSON/CARTER, 5675.00]", twoDlist.get(12).toString());
+        assertNotNull(twoDlist);
+        assertEquals("[taxID, weekBeginDate, name, gross]", twoDlist.get(0).toString());
+        assertEquals("[623132658, 20130318, ANDERSON/CARTER, 5270.00]", twoDlist.get(1).toString());
+        assertEquals("[623132658, 20130325, ANDERSON/CARTER, 5622.50]", twoDlist.get(2).toString());
+        assertEquals("[623132658, 20130401, ANDERSON/CARTER, 3402.50]", twoDlist.get(3).toString());
+        assertEquals("[623132658, 20130408, ANDERSON/CARTER, 3222.50]", twoDlist.get(4).toString());
+        assertEquals("[623132658, 20130415, ANDERSON/CARTER, 3665.00]", twoDlist.get(5).toString());
+        assertEquals("[623132658, 20130422, ANDERSON/CARTER, 5285.00]", twoDlist.get(6).toString());
+        assertEquals("[623132658, 20130429, ANDERSON/CARTER, 4475.00]", twoDlist.get(7).toString());
+        assertEquals("[623132658, 20130506, ANDERSON/CARTER, 4665.00]", twoDlist.get(8).toString());
+        assertEquals("[623132658, 20130513, ANDERSON/CARTER, 4377.50]", twoDlist.get(9).toString());
+        assertEquals("[623132658, 20130520, ANDERSON/CARTER, 4745.00]", twoDlist.get(10).toString());
+        assertEquals("[623132658, 20130527, ANDERSON/CARTER, 3957.50]", twoDlist.get(11).toString());
+        assertEquals("[623132658, 20130603, ANDERSON/CARTER, 5675.00]", twoDlist.get(12).toString());
     }
 
     @Test
@@ -415,42 +403,40 @@ public class TextUtilsTest {
 
         List<List<String>> twoDlist = TextUtils.to2dList(fixture, rowSeparator, delim);
         System.out.println("twoDlist = " + twoDlist);
-        Assert.assertNotNull(twoDlist);
-        Assert.assertEquals(
+        assertNotNull(twoDlist);
+        assertEquals(
             "[VendorId, VendorCategory, VendorTypeCode, VendorStatus, VendorCode, VendorCompositeName, VendorPayee, VendorCompanyOrLastName, VendorFirstName, VendorAddressLine1, VendorAddressLine2, VendorCity, VendorState, VendorCountry, VendorPostalCode, VendorPhone1, VendorPhone2, VendorCell, VendorEmail, VendorSSN, VendorFEIN, VendorAddressLines1and2, VendorCityStateCountryZip, TinCompositeName, TinLastName, TinFirstName, TinAddressLine1, TinAddressLine2, TinCity, TinState, TinCountry, TinPostalCode, TinAddressLines1and2, TinCityStateCountryZip, TaxYear, TransMasterId, TransTypeCode, ProjectCode, GlProductionCode, TaxLocationCode, DocumentNumber, TransDetailDescription, EpisodeCode, LocationCode, AccountNumber, CostAccount, SetCode, FreeCode1, FreeCode2, FreeCode3, FreeCode4, Code1099, Code1099Desc, ConvertedTransDetailAmount]",
             twoDlist.get(0).toString());
-        Assert.assertEquals(
+        assertEquals(
             "[303, TIN Entity, LLCP, Complete For 1099 Processing, 303, 330 N. WABASH AVENUE LLC, 330 N. WABASH AVENUE LLC, 330 N. WABASH AVENUE LLC, , 330 N. WABASH STE 2325, , CHICAGO, IL, , 60611, 312-621-8553, , , , , 36-4243298, 330 N. WABASH STE 2325\\,, CHICAGO\\, IL  60611, 330 N WABASH AVENUE LLC, 330 N WABASH AVENUE LLC, , , , , , , , , , 2016, 1476, AP, OCP, , IL, CKREQ032916, 4.4 LOCATION FEE-DRESS PLAZA:STATE ST BRIDGE, , 02, 3836, 3836, 001, IE, , , , 01, Rents, 3\\,000.00]",
             twoDlist.get(1).toString());
-        Assert.assertEquals(
+        assertEquals(
             "[552, TIN Entity, LLCP, Complete For 1099 Processing, 552, A&M COLD STORAGE LLC, A&M COLD STORAGE LLC, A&M COLD STORAGE LLC, , PO BOX 1176, , SUWANEE, GA, , 30024, 404-276-2884, , , , , 20-8626653, PO BOX 1176\\,, SUWANEE\\, GA  30024, A&M COLD STORAGE LLC, A&M COLD STORAGE LLC, , , , , , , , , , 2016, 3348, AP, OCP, , GA, 6408, 0502-0531 FREEZER TRUCK RNTL, , 01, 2335, 2335, 145, GE, 12, , , 01, Rents, 1\\,579.00]",
             twoDlist.get(2).toString());
-        Assert.assertEquals(
+        assertEquals(
             "[407, TIN Entity, LLCSC, Complete For 1099 Processing, 407, ALL ABOUT PROPS LLC, ALL ABOUT PROPS LLC, ALL ABOUT PROPS LLC, , 4820 HAMMERMILL RD, SUITE H, TUCKER, GA, , 30084, , , , , , 06-1743580, 4820 HAMMERMILL RD\\, SUITE H, TUCKER\\, GA  30084, MORROW\\, TED, MORROW, TED, , , , , , , , , 2016, 4926, AP, OCP, , GA, 25851, 0411-0530 MAIL CART RNTL x2, , 01, 2335, 2335, 145, GE, 12, , , 01, Rents, 288.90]",
             twoDlist.get(3).toString());
-        Assert.assertEquals(
+        assertEquals(
             "[708, Individual, IND, Complete For 1099 Processing, 708, AMBARUS-HINSHAW\\, INGRID-AIDA, INGRID AIDA AMBARUS-HINSHAW, AMBARUS-HINSHAW, INGRID-AIDA, 1028 SANDERS AVE SE, , ATLANTA, GA, USA, 30316, 404-309-2166, , , , xxx-xx-1496, , 1028 SANDERS AVE SE\\,, ATLANTA\\, GA  30316  USA, AMBARUS-HINSHAW\\, INGRID AIDA, AMBARUS-HINSHAW, INGRID AIDA, , , , , , , , , 2016, 7238, AP, OCP, , GA, 1003-2016, 10/02 CLEANING OF THEATRE FOR PHOTO SHOOT, , 01, 0529, 0529, 002, , , , , 07, Nonemployee Compensation, 450.00]",
             twoDlist.get(4).toString());
-        Assert.assertEquals(
+        assertEquals(
             "[598, Individual, IND, Complete For 1099 Processing, 598, AMBURGEY\\, JILLIAN, JILLIAN AMBURGEY, AMBURGEY, JILLIAN, 765 ST. CHARLES AVE.\\, APT. #4, , ATLANTA, GA, , 30306, 407.701.8658, , , , xxx-xx-4950, , 765 ST. CHARLES AVE.\\, APT. #4\\,, ATLANTA\\, GA  30306, AMBURGEY\\, JILLIAN, AMBURGEY, JILLIAN, , , , , , , , , 2016, 5184, AP, OCP, , GA, 051816, 0510 SCRIPT TIMING SERVICES:YELLOW REVISION, , 01, 2013, 2013, , GE, 13, , , 07, Nonemployee Compensation, 750.00]",
             twoDlist.get(5).toString());
     }
 
     @Test
     public void to2dList_row_separator_in_content() {
-        String fixture =
-            "This is another way to write my code\\, albeit it sucks," +
-            "Although for some folks\\, this ain't bad, or wrong";
+        String fixture = "This is another way to write my code\\, albeit it sucks," +
+                         "Although for some folks\\, this ain't bad, or wrong";
         String rowSeparator = ",";
         String delim = " ";
 
         List<List<String>> twoDlist = TextUtils.to2dList(fixture, rowSeparator, delim);
         System.out.println("twoDlist = " + twoDlist);
-        Assert.assertNotNull(twoDlist);
-        Assert.assertEquals("[This, is, another, way, to, write, my, code\\,, albeit, it, sucks]",
-                            twoDlist.get(0).toString());
-        Assert.assertEquals("[Although, for, some, folks\\,, this, ain't, bad]", twoDlist.get(1).toString());
-        Assert.assertEquals("[, or, wrong]", twoDlist.get(2).toString());
+        assertNotNull(twoDlist);
+        assertEquals("[This, is, another, way, to, write, my, code\\,, albeit, it, sucks]", twoDlist.get(0).toString());
+        assertEquals("[Although, for, some, folks\\,, this, ain't, bad]", twoDlist.get(1).toString());
+        assertEquals("[, or, wrong]", twoDlist.get(2).toString());
 
     }
 
@@ -486,166 +472,229 @@ public class TextUtilsTest {
         FileUtils.writeStringToFile(tmpProp, propContent, DEF_FILE_ENCODING);
 
         Map<String, String> propMap = TextUtils.loadProperties(tmpPropFile);
-        Assert.assertEquals("Humpty Dumpty together again", propMap.get("couldn't put"));
-        Assert.assertEquals("=[NULL]", propMap.get("mydata.treatNullAs"));
-        Assert.assertEquals("=", propMap.get("broken"));
-        Assert.assertEquals("", propMap.get("gotten"));
-        Assert.assertEquals("${nexial.web.alwaysWait}", propMap.get("nexial.lenientStringCompare"));
-        Assert.assertEquals("jdbc://myserver:1099/dbname;prop1=value1;prop2=#hash2;prop3=!what",
-                            propMap.get("my.datasource.url"));
+        assertEquals("Humpty Dumpty together again", propMap.get("couldn't put"));
+        assertEquals("=[NULL]", propMap.get("mydata.treatNullAs"));
+        assertEquals("=", propMap.get("broken"));
+        assertEquals("", propMap.get("gotten"));
+        assertEquals("${nexial.web.alwaysWait}", propMap.get("nexial.lenientStringCompare"));
+        assertEquals("jdbc://myserver:1099/dbname;prop1=value1;prop2=#hash2;prop3=!what",
+                     propMap.get("my.datasource.url"));
 
         FileUtils.deleteQuietly(tmpProp);
     }
 
     @Test
-    public void testLoadPropertiesFileWithSpacesInValues() throws Exception {
+    public void testLoadPropertiesFileWithSpacesInValues() {
         String testFixture = ResourceUtils.getResourceFilePath("/dummy-test.project.properties");
 
         Map<String, String> propMap = TextUtils.loadProperties(testFixture);
         assert propMap != null;
-        Assert.assertEquals(propMap.size(), 7);
-        Assert.assertEquals(propMap.get("environment"), "PROD");
-        Assert.assertEquals(propMap.get("mySite.url"), "https://abcdefg.qwertyu.com/user21/logon.aspx?key1=Integon&key2=63befb2pdosk8e358adf39f95e63700e&partnerId=qpwoslkgRater&redirectUrl=~/rating/Default.aspx ");
-        Assert.assertEquals(propMap.get("yoursite.url"), "http://1qazxswedfg.xvbghy.com/PolicyReview/ ");
-        Assert.assertEquals(propMap.get("theirSite.url"), "https://rfgthyuj.mvncbxvs.com/09sidu7/logon.aspx?key1=Integon&key2=63befb211f2cfe358w23er455e63700e&partnerId=asdfrtyu7890jhg&redirectUrl=~//rating/search/quotesearch.aspx \t\t\t\t\t");
-        Assert.assertEquals(propMap.get("username"), "tech21					");
-        Assert.assertEquals(propMap.get("passwordClue"), "agency19	");
-        Assert.assertEquals(propMap.get("mySuperDuperDB.url"), "jdbc:sqlserver://myserver09sdb04:1433;databaseName=dbase21;integratedSecurity=true;authenticationScheme=JavaKerberos");
+        assertEquals(propMap.size(), 7);
+        assertEquals(propMap.get("environment"), "PROD");
+        assertEquals(propMap.get("mySite.url"), "https://abcdefg.qwertyu.com/user21/logon.aspx?key1=Integon&key2=63befb2pdosk8e358adf39f95e63700e&partnerId=qpwoslkgRater&redirectUrl=~/rating/Default.aspx ");
+        assertEquals(propMap.get("yoursite.url"), "http://1qazxswedfg.xvbghy.com/PolicyReview/ ");
+        assertEquals(propMap.get("theirSite.url"), "https://rfgthyuj.mvncbxvs.com/09sidu7/logon.aspx?key1=Integon&key2=63befb211f2cfe358w23er455e63700e&partnerId=asdfrtyu7890jhg&redirectUrl=~//rating/search/quotesearch.aspx \t\t\t\t\t");
+        assertEquals(propMap.get("username"), "tech21					");
+        assertEquals(propMap.get("passwordClue"), "agency19	");
+        assertEquals(propMap.get("mySuperDuperDB.url"), "jdbc:sqlserver://myserver09sdb04:1433;databaseName=dbase21;integratedSecurity=true;authenticationScheme=JavaKerberos");
     }
 
     @Test
-    public void removeExcessWhitespaces() throws Exception {
-        Assert.assertEquals("", TextUtils.removeExcessWhitespaces(null));
-        Assert.assertEquals("", TextUtils.removeExcessWhitespaces(""));
-        Assert.assertEquals(" ", TextUtils.removeExcessWhitespaces(" "));
-        Assert.assertEquals(" ", TextUtils.removeExcessWhitespaces("  "));
-        Assert.assertEquals(" ", TextUtils.removeExcessWhitespaces(" \t "));
-        Assert.assertEquals(" ", TextUtils.removeExcessWhitespaces(" \n \t  "));
-        Assert.assertEquals(" ", TextUtils.removeExcessWhitespaces("    \n\n     \t      \r     \r \n \t\r\t  "));
-        Assert.assertEquals(" This is a test ",
-                            TextUtils.removeExcessWhitespaces(" This is  \n   \r \r    a \t\t\t test         "));
-        Assert.assertEquals("This is a test ",
-                            TextUtils.removeExcessWhitespaces("This\nis\ra\ttest\n\n\n"));
+    public void removeExcessWhitespaces() {
+        assertEquals("", TextUtils.removeExcessWhitespaces(null));
+        assertEquals("", TextUtils.removeExcessWhitespaces(""));
+        assertEquals(" ", TextUtils.removeExcessWhitespaces(" "));
+        assertEquals(" ", TextUtils.removeExcessWhitespaces("  "));
+        assertEquals(" ", TextUtils.removeExcessWhitespaces(" \t "));
+        assertEquals(" ", TextUtils.removeExcessWhitespaces(" \n \t  "));
+        assertEquals(" ", TextUtils.removeExcessWhitespaces("    \n\n     \t      \r     \r \n \t\r\t  "));
+        assertEquals(" This is a test ",
+                     TextUtils.removeExcessWhitespaces(" This is  \n   \r \r    a \t\t\t test         "));
+        assertEquals("This is a test ", TextUtils.removeExcessWhitespaces("This\nis\ra\ttest\n\n\n"));
     }
 
     @Test
-    public void removeEndRepeatedly() throws Exception {
-        Assert.assertEquals("", TextUtils.removeEndRepeatedly(null, null));
-        Assert.assertEquals("", TextUtils.removeEndRepeatedly(null, ""));
-        Assert.assertEquals("", TextUtils.removeEndRepeatedly("", null));
-        Assert.assertEquals("", TextUtils.removeEndRepeatedly("", " "));
-        Assert.assertEquals("", TextUtils.removeEndRepeatedly("", "\t"));
-        Assert.assertEquals("\t", TextUtils.removeEndRepeatedly("\t", " "));
-        Assert.assertEquals("", TextUtils.removeEndRepeatedly("     ", " "));
-        Assert.assertEquals("Username", TextUtils.removeEndRepeatedly("Username . . . . . .", " ."));
-        Assert.assertEquals("Username . . . . . .:", TextUtils.removeEndRepeatedly("Username . . . . . .:", " ."));
+    public void removeEndRepeatedly() {
+        assertEquals("", TextUtils.removeEndRepeatedly(null, null));
+        assertEquals("", TextUtils.removeEndRepeatedly(null, ""));
+        assertEquals("", TextUtils.removeEndRepeatedly("", null));
+        assertEquals("", TextUtils.removeEndRepeatedly("", " "));
+        assertEquals("", TextUtils.removeEndRepeatedly("", "\t"));
+        assertEquals("\t", TextUtils.removeEndRepeatedly("\t", " "));
+        assertEquals("", TextUtils.removeEndRepeatedly("     ", " "));
+        assertEquals("Username", TextUtils.removeEndRepeatedly("Username . . . . . .", " ."));
+        assertEquals("Username . . . . . .:", TextUtils.removeEndRepeatedly("Username . . . . . .:", " ."));
     }
 
     @Test
-    public void sanitizePhoneNumber() throws Exception {
+    public void sanitizePhoneNumber() {
         try {
             TextUtils.sanitizePhoneNumber(null);
-            Assert.fail("expects IllegalArgumentException");
+            fail("expects IllegalArgumentException");
         } catch (IllegalArgumentException e) {
             // expected
         }
 
         try {
             TextUtils.sanitizePhoneNumber("");
-            Assert.fail("expects IllegalArgumentException");
+            fail("expects IllegalArgumentException");
         } catch (IllegalArgumentException e) {
             // expected
         }
 
         try {
             TextUtils.sanitizePhoneNumber("           ");
-            Assert.fail("expects IllegalArgumentException");
+            fail("expects IllegalArgumentException");
         } catch (IllegalArgumentException e) {
             // expected
         }
 
-        Assert.assertEquals("+18189091234", TextUtils.sanitizePhoneNumber("(818)909-1234"));
-        Assert.assertEquals("+18189091234", TextUtils.sanitizePhoneNumber("(818)909-1234"));
-        Assert.assertEquals("+18463865323", TextUtils.sanitizePhoneNumber("TIME-TO-Lead"));
+        assertEquals("+18189091234", TextUtils.sanitizePhoneNumber("(818)909-1234"));
+        assertEquals("+18189091234", TextUtils.sanitizePhoneNumber("(818)909-1234"));
+        assertEquals("+18463865323", TextUtils.sanitizePhoneNumber("TIME-TO-Lead"));
     }
 
     @Test
     public void keepOnly() {
-        Assert.assertEquals("", TextUtils.keepOnly("", "abcde"));
-        Assert.assertEquals("This is a test. Do not be alarmed.",
-                            TextUtils.keepOnly("This is a test. Do not be alarmed.", ""));
-        Assert.assertEquals("09392394", TextUtils.keepOnly("sd0g9w3ihps9g23unap9w4", "0123456789"));
-        Assert.assertEquals("0123abbey", TextUtils.keepOnly("0123abbey", "0123abbey"));
-        Assert.assertEquals("0123abbey", TextUtils.keepOnly("0@1#2%3^^&*aKLRURTYbZXCBZDFGbWEWRey", "0123abbey"));
-        Assert.assertEquals("4567321.004", TextUtils.keepOnly("-$4,567,321.004", "0123456789."));
+        assertEquals("", TextUtils.keepOnly("", "abcde"));
+        assertEquals("This is a test. Do not be alarmed.",
+                     TextUtils.keepOnly("This is a test. Do not be alarmed.", ""));
+        assertEquals("09392394", TextUtils.keepOnly("sd0g9w3ihps9g23unap9w4", "0123456789"));
+        assertEquals("0123abbey", TextUtils.keepOnly("0123abbey", "0123abbey"));
+        assertEquals("0123abbey", TextUtils.keepOnly("0@1#2%3^^&*aKLRURTYbZXCBZDFGbWEWRey", "0123abbey"));
+        assertEquals("4567321.004", TextUtils.keepOnly("-$4,567,321.004", "0123456789."));
     }
 
     @Test
     public void removeOnly() {
-        Assert.assertEquals("", TextUtils.removeOnly("", ""));
-        Assert.assertEquals("", TextUtils.removeOnly("", "12345"));
-        Assert.assertEquals("12345", TextUtils.removeOnly("12345", ""));
-        Assert.assertEquals("12345", TextUtils.removeOnly("12345", " "));
-        Assert.assertEquals("12345", TextUtils.removeOnly("12345", "abcdef"));
-        Assert.assertEquals("Thatet", TextUtils.removeOnly("This is a test", " is"));
+        assertEquals("", TextUtils.removeOnly("", ""));
+        assertEquals("", TextUtils.removeOnly("", "12345"));
+        assertEquals("12345", TextUtils.removeOnly("12345", ""));
+        assertEquals("12345", TextUtils.removeOnly("12345", " "));
+        assertEquals("12345", TextUtils.removeOnly("12345", "abcdef"));
+        assertEquals("Thatet", TextUtils.removeOnly("This is a test", " is"));
     }
 
     @Test
     public void base64() {
-        Assert.assertEquals("WVBxVFd6ejlWbkZidGNsNE1hYmpOaDZRRW5nak5OQUg6UlNkRnRSYWdBZmtIZnNPbw==",
-                            TextUtils.base64encode("YPqTWzz9VnFbtcl4MabjNh6QEngjNNAH:RSdFtRagAfkHfsOo"));
-        Assert.assertEquals("UVJHZ2tCRDNZSHp2SGdBMGVhSWgyWEd4R2VBM0FHb1k6VVV1QUhOY0xlb00yZTBWZg==",
-                            TextUtils.base64encode("QRGgkBD3YHzvHgA0eaIh2XGxGeA3AGoY:UUuAHNcLeoM2e0Vf"));
-
-        Assert.assertEquals("YPqTWzz9VnFbtcl4MabjNh6QEngjNNAH:RSdFtRagAfkHfsOo",
-                            TextUtils
-                                .base64decode("WVBxVFd6ejlWbkZidGNsNE1hYmpOaDZRRW5nak5OQUg6UlNkRnRSYWdBZmtIZnNPbw=="));
-        Assert.assertEquals("QRGgkBD3YHzvHgA0eaIh2XGxGeA3AGoY:UUuAHNcLeoM2e0Vf",
-                            TextUtils
-                                .base64decode("UVJHZ2tCRDNZSHp2SGdBMGVhSWgyWEd4R2VBM0FHb1k6VVV1QUhOY0xlb00yZTBWZg=="));
+        assertEquals("WVBxVFd6ejlWbkZidGNsNE1hYmpOaDZRRW5nak5OQUg6UlNkRnRSYWdBZmtIZnNPbw==",
+                     TextUtils.base64encode("YPqTWzz9VnFbtcl4MabjNh6QEngjNNAH:RSdFtRagAfkHfsOo"));
+        assertEquals("UVJHZ2tCRDNZSHp2SGdBMGVhSWgyWEd4R2VBM0FHb1k6VVV1QUhOY0xlb00yZTBWZg==",
+                     TextUtils.base64encode("QRGgkBD3YHzvHgA0eaIh2XGxGeA3AGoY:UUuAHNcLeoM2e0Vf"));
+        assertEquals("YPqTWzz9VnFbtcl4MabjNh6QEngjNNAH:RSdFtRagAfkHfsOo",
+                     TextUtils.base64decode("WVBxVFd6ejlWbkZidGNsNE1hYmpOaDZRRW5nak5OQUg6UlNkRnRSYWdBZmtIZnNPbw=="));
+        assertEquals("QRGgkBD3YHzvHgA0eaIh2XGxGeA3AGoY:UUuAHNcLeoM2e0Vf",
+                     TextUtils.base64decode("UVJHZ2tCRDNZSHp2SGdBMGVhSWgyWEd4R2VBM0FHb1k6VVV1QUhOY0xlb00yZTBWZg=="));
     }
 
     @Test
     public void breakLines() {
         // sanity checks
-        Assert.assertEquals("This is a test. Do not be alarmed.",
-                            TextUtils.demarcate("This is a test. Do not be alarmed.", 5, ""));
-        Assert.assertEquals("This is a test. Do not be alarmed.",
-                            TextUtils.demarcate("This is a test. Do not be alarmed.", 0, ","));
-        Assert.assertEquals("This is a test. Do not be alarmed.",
-                            TextUtils.demarcate("This is a test. Do not be alarmed.", 35, ","));
+        assertEquals("This is a test. Do not be alarmed.",
+                     TextUtils.demarcate("This is a test. Do not be alarmed.", 5, ""));
+        assertEquals("This is a test. Do not be alarmed.",
+                     TextUtils.demarcate("This is a test. Do not be alarmed.", 0, ","));
+        assertEquals("This is a test. Do not be alarmed.",
+                     TextUtils.demarcate("This is a test. Do not be alarmed.", 35, ","));
 
-        Assert.assertEquals("This |is a |test.| Do n|ot be| alar|med.",
-                            TextUtils.demarcate("This is a test. Do not be alarmed.", 5, "|"));
-        Assert.assertEquals("This > <is a > <test.> < Do n> <ot be> < alar> <med.",
-                            TextUtils.demarcate("This is a test. Do not be alarmed.", 5, "> <"));
-        Assert.assertEquals("This <**>is a <**>test.<**> Do n<**>ot be<**> alar<**>med!!",
-                            TextUtils.demarcate("This is a test. Do not be alarmed!!", 5, "<**>"));
-        Assert.assertEquals("This is a test.... Do not be alar...med!!",
-                            TextUtils.demarcate("This is a test. Do not be alarmed!!", 15, "..."));
+        assertEquals("This |is a |test.| Do n|ot be| alar|med.",
+                     TextUtils.demarcate("This is a test. Do not be alarmed.", 5, "|"));
+        assertEquals("This > <is a > <test.> < Do n> <ot be> < alar> <med.",
+                     TextUtils.demarcate("This is a test. Do not be alarmed.", 5, "> <"));
+        assertEquals("This <**>is a <**>test.<**> Do n<**>ot be<**> alar<**>med!!",
+                     TextUtils.demarcate("This is a test. Do not be alarmed!!", 5, "<**>"));
+        assertEquals("This is a test.... Do not be alar...med!!",
+                     TextUtils.demarcate("This is a test. Do not be alarmed!!", 15, "..."));
     }
 
     @Test
     public void cleanNumber_simple() {
-        Assert.assertEquals(7.7, NumberUtils.createDouble(TextUtils.cleanNumber("7.7", CSV)), 0);
-        Assert.assertEquals(7.7, NumberUtils.createDouble(TextUtils.cleanNumber("7.70", CSV)), 0);
-        Assert.assertEquals(7.7, NumberUtils.createDouble(TextUtils.cleanNumber("7.70000000", CSV)), 0);
-        Assert.assertEquals(-7.7, NumberUtils.createDouble(TextUtils.cleanNumber("-07.7000", CSV)), 0);
-        Assert.assertEquals(-7.700123, NumberUtils.createDouble(TextUtils.cleanNumber("-07.700123", CSV)), 0);
-        Assert.assertEquals(0, NumberUtils.createDouble(TextUtils.cleanNumber("0.00", CSV)), 0);
-        Assert.assertEquals(0, NumberUtils.createDouble(TextUtils.cleanNumber("000.0", CSV)), 0);
-        Assert.assertEquals(0, NumberUtils.createDouble(TextUtils.cleanNumber("-0.00", CSV)), 0);
+        assertEquals(7.7, NumberUtils.createDouble(TextUtils.cleanNumber("7.7", CSV)), 0);
+        assertEquals(7.7, NumberUtils.createDouble(TextUtils.cleanNumber("7.70", CSV)), 0);
+        assertEquals(7.7, NumberUtils.createDouble(TextUtils.cleanNumber("7.70000000", CSV)), 0);
+        assertEquals(-7.7, NumberUtils.createDouble(TextUtils.cleanNumber("-07.7000", CSV)), 0);
+        assertEquals(-7.700123, NumberUtils.createDouble(TextUtils.cleanNumber("-07.700123", CSV)), 0);
+        assertEquals(0, NumberUtils.createDouble(TextUtils.cleanNumber("0.00", CSV)), 0);
+        assertEquals(0, NumberUtils.createDouble(TextUtils.cleanNumber("000.0", CSV)), 0);
+        assertEquals(0, NumberUtils.createDouble(TextUtils.cleanNumber("-0.00", CSV)), 0);
     }
 
     @Test
     public void insertAfter() {
-        Assert.assertNull(TextUtils.insertAfter(null, "a", "b"));
-        Assert.assertEquals("", TextUtils.insertAfter("", "a", "b"));
-        Assert.assertEquals("abc", TextUtils.insertAfter("abc", "", "b"));
-        Assert.assertEquals("abc", TextUtils.insertAfter("abc", "a", ""));
-        Assert.assertEquals("abbc", TextUtils.insertAfter("abc", "a", "b"));
-        Assert.assertEquals("abbc", TextUtils.insertAfter("abc", "ab", "b"));
-        Assert.assertEquals("nexial.browser.MY_PROFILE.command",
-                            TextUtils.insertAfter("nexial.browser.command", "nexial.browser", ".MY_PROFILE"));
+        assertNull(TextUtils.insertAfter(null, "a", "b"));
+        assertEquals("", TextUtils.insertAfter("", "a", "b"));
+        assertEquals("abc", TextUtils.insertAfter("abc", "", "b"));
+        assertEquals("abc", TextUtils.insertAfter("abc", "a", ""));
+        assertEquals("abbc", TextUtils.insertAfter("abc", "a", "b"));
+        assertEquals("abbc", TextUtils.insertAfter("abc", "ab", "b"));
+        assertEquals("nexial.browser.MY_PROFILE.command",
+                     TextUtils.insertAfter("nexial.browser.command", "nexial.browser", ".MY_PROFILE"));
+    }
+
+    @Test
+    public void polyMatcher_has_length() {
+        assertTrue(TextUtils.polyMatch("12345", "HAS_LENGTH:5"));
+        assertTrue(TextUtils.polyMatch("12345", "HAS_LENGTH:>=5"));
+        assertTrue(TextUtils.polyMatch("12345", "HAS_LENGTH:<=5"));
+        assertTrue(TextUtils.polyMatch("12345", "HAS_LENGTH:<=6"));
+        assertTrue(TextUtils.polyMatch("12345", "HAS_LENGTH: >= 4"));
+        assertTrue(TextUtils.polyMatch("12345", "HAS_LENGTH: != 17"));
+        assertTrue(TextUtils.polyMatch("12345", "HAS_LENGTH:   =   5   "));
+        assertTrue(TextUtils.polyMatch("", "HAS_LENGTH:0"));
+        assertTrue(TextUtils.polyMatch("", "HAS_LENGTH: 0 "));
+        assertTrue(TextUtils.polyMatch("", "HAS_LENGTH: 0 "));
+        assertTrue(TextUtils.polyMatch(" ", "HAS_LENGTH: <2 "));
+        assertTrue(TextUtils.polyMatch("\t", "HAS_LENGTH: <2 "));
+        assertTrue(TextUtils.polyMatch("\r\n", "HAS_LENGTH: 2 "));
+    }
+
+    @Test
+    public void polyMatcher_blank_empty() {
+        assertTrue(TextUtils.polyMatch("", "EMPTY:yes"));
+        assertTrue(TextUtils.polyMatch("", "EMPTY:y"));
+        assertTrue(TextUtils.polyMatch("", "EMPTY:true"));
+        assertTrue(TextUtils.polyMatch("", "EMPTY:TRUE"));
+        assertTrue(TextUtils.polyMatch(" ", "EMPTY:no"));
+        assertTrue(TextUtils.polyMatch(" ", "EMPTY:false"));
+
+        assertTrue(TextUtils.polyMatch(" ", "BLANK:true"));
+        assertTrue(TextUtils.polyMatch(" ", "BLANK:YES"));
+        assertTrue(TextUtils.polyMatch("", "BLANK:Y"));
+    }
+
+    @Test
+    public void polyMatcher_numeric_compare() {
+        assertTrue(TextUtils.polyMatch("100", "NUMERIC:100"));
+        assertTrue(TextUtils.polyMatch("100", "NUMERIC:100.0"));
+        assertTrue(TextUtils.polyMatch("100", "NUMERIC:100.0000000"));
+        assertTrue(TextUtils.polyMatch("100", "NUMERIC:+100.0000000"));
+        assertTrue(TextUtils.polyMatch("100.0000", "NUMERIC:+100"));
+        assertTrue(TextUtils.polyMatch("  -100.0001    ", "NUMERIC:  -100.000100000 "));
+
+        assertTrue(TextUtils.polyMatch("  -131", "NUMERIC: < 130"));
+        assertTrue(TextUtils.polyMatch("  -131", "NUMERIC: <= 130"));
+        assertTrue(TextUtils.polyMatch("  -131.0000001", "NUMERIC: < 131"));
+
+        try {
+            assertTrue(TextUtils.polyMatch("15.0d", "NUMERIC:\t15 "));
+            fail("Expected NumberFormatException not thrown");
+        } catch (Exception e) {
+            // expected
+        }
+
+        try {
+            assertTrue(TextUtils.polyMatch("", "NUMERIC:\t15 "));
+            fail("Expected NumberFormatException not thrown");
+        } catch (Exception e) {
+            // expected
+        }
+
+        try {
+            assertTrue(TextUtils.polyMatch("15 .01", "NUMERIC:\t15 "));
+            fail("Expected NumberFormatException not thrown");
+        } catch (Exception e) {
+            // expected
+        }
+
     }
 }
