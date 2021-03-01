@@ -40,7 +40,6 @@ import org.nexial.core.plugins.base.ScreenshotUtils;
 import org.nexial.core.plugins.desktop.DesktopTable.TableMetaData;
 import org.nexial.core.plugins.desktop.ig.IgExplorerBar;
 import org.nexial.core.plugins.desktop.ig.IgRibbon;
-import org.nexial.core.plugins.web.WebDriverExceptionHelper;
 import org.nexial.core.utils.CheckUtils;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.NativeInputHelper;
@@ -79,8 +78,10 @@ import static org.nexial.core.SystemVariables.getDefaultBool;
 import static org.nexial.core.SystemVariables.getDefaultInt;
 import static org.nexial.core.plugins.desktop.DesktopConst.*;
 import static org.nexial.core.plugins.desktop.DesktopNotification.NotificationLevel.info;
-import static org.nexial.core.plugins.desktop.DesktopUtils.*;
+import static org.nexial.core.plugins.desktop.DesktopUtils.toShortcuts;
+import static org.nexial.core.plugins.desktop.DesktopUtils.treatQuoteString;
 import static org.nexial.core.plugins.desktop.ElementType.*;
+import static org.nexial.core.plugins.web.WebDriverExceptionHelper.resolveErrorMessage;
 import static org.nexial.core.utils.CheckUtils.*;
 
 public class DesktopCommand extends BaseCommand implements ForcefulTerminate, CanTakeScreenshot, CanLogExternally {
@@ -355,13 +356,12 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
         // move into position
         new Actions(winiumDriver).moveToElement(menuParent, 10, 10).perform();
 
-        boolean useIndex = StringUtils.startsWith(menu, CONTEXT_MENU_VIA_INDEX);
-        if (useIndex) { menu = StringUtils.trim(StringUtils.substringAfter(menu, CONTEXT_MENU_VIA_INDEX)); }
-
         // split menu into its individual levels
         String[] menuItems = StringUtils.splitByWholeSeparator(menu, context.getTextDelim());
         for (int i = 0; i < menuItems.length; i++) {
             String item = menuItems[i];
+            boolean useIndex = StringUtils.startsWith(item, CONTEXT_MENU_VIA_INDEX);
+            if (useIndex) { item = StringUtils.trim(StringUtils.substringAfter(item, CONTEXT_MENU_VIA_INDEX)); }
 
             String xpath = i == 0 ? "" : "*[@ControlType='ControlType.Menu']/";
             if (useIndex) {
@@ -896,8 +896,7 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
                 return StepResult.success("No text found for element " + locator + "; '" + var + "' removed");
             }
         } catch (WebDriverException e) {
-            String msg = "Cannot resolve content for '" + locator + "': " +
-                         WebDriverExceptionHelper.resolveErrorMessage(e);
+            String msg = "Cannot resolve content for '" + locator + "': " + resolveErrorMessage(e);
             ConsoleUtils.error(context.getRunId(), msg);
             return StepResult.fail(msg);
         }
@@ -2234,25 +2233,30 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
         return StepResult.success("Clicked offset (" + x + "," + y + ") from element " + elem);
     }
 
-    protected StepResult type(String name, ElementType expectedType, boolean forceShortcut, String... text) {
+    // todo: not used?
+    protected StepResult type(String name, ElementType expectedType, String... text) {
         requires(ArrayUtils.isNotEmpty(text), "at least one text parameter is required");
 
         DesktopElement component = getRequiredElement(name, expectedType);
+        // combine shortcut sequences into 1 string for performance.
+        String shortcut = TextUtils.toString(
+            DesktopElement.parseTextInputWithShortcuts(TextUtils.toString(text, "", "", ""), true), "");
 
-        String shortcut = "";
-        for (String thisText : text) {
-            if (StringUtils.isNotEmpty(thisText)) {
-                shortcut = StringUtils.isEmpty(shortcut) ?
-                           forceShortcutSyntax(thisText) : addShortcut(shortcut, thisText);
-                // if (component.getElementType() == FormattedTextbox) {
-                // 	component.type(forceShortcutSyntax(thisText));
-                // } else {
-                // 	component.type(forceShortcut ? forceShortcutSyntax(thisText) : treatShortcutSyntax(thisText));
-                // }
-            }
+        //        String shortcut = "";
+        //        for (String thisText : text) {
+        //            if (StringUtils.isNotEmpty(thisText)) {
+        //                shortcut = StringUtils.isEmpty(shortcut) ?
+        //                           forceShortcutSyntax(thisText) : addShortcut(shortcut, thisText);
+        //            }
+        //        }
+
+        try {
+            component.getElement().click();
+        } catch (WebDriverException e) {
+            ConsoleUtils.error("Unable to click on component %s; might be ok...: %s", name, resolveErrorMessage(e));
         }
 
-        if (StringUtils.isNotEmpty(shortcut)) { component.type(shortcut); }
+        if (StringUtils.isNotEmpty(shortcut)) { component.type(shortcut, false); }
         autoClearModalDialog(component.getXpath());
         return StepResult.success("text entered to element '" + name + "'");
     }

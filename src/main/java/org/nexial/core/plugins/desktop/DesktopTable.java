@@ -254,7 +254,7 @@ public class DesktopTable extends DesktopElement {
         Instant startTime = Instant.now();
         if (isTreeView) {
             String xpath = StringUtils.appendIfMissing(getXpath(), "/") +
-                           "/*[@ControlType='ControlType.DataItem' and " +
+                           "*[@ControlType='ControlType.DataItem' and " +
                            "(position() >= " + (begin + 2) + " and position() <= " + (end + 2) + ")]/*";
             List<WebElement> rowData = driver.findElements(By.xpath(xpath));
             return TableData.fromTreeViewRows(headers, rowData, Duration.between(startTime, Instant.now()));
@@ -595,9 +595,9 @@ public class DesktopTable extends DesktopElement {
                             .append("'] and ");
         }
 
-        String xpath = getXpath() + "/*[" + StringUtils.removeEnd(xpathMatchColumn.toString(), " and ") + "]";
+        String xpath = "*[" + StringUtils.removeEnd(xpathMatchColumn.toString(), " and ") + "]";
         ConsoleUtils.log("finding/clicking on first matched row via " + xpath);
-        List<WebElement> elements = driver.findElements(By.xpath(xpath));
+        List<WebElement> elements = element.findElements(By.xpath(xpath));
         if (CollectionUtils.isEmpty(elements)) { return; }
 
         WebElement row = elements.get(0);

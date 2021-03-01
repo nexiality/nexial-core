@@ -47,12 +47,8 @@ public class FormLayout {
     public boolean isTwoLines() { return layoutType == LAYOUT_TWO_LINES; }
 
     public static FormLayout toLayout(String hint) {
-        if (StringUtils.equals(hint, DesktopConst.LAYOUT_LEFT_2_RIGHT)) {
-            return newLeftToRightLayout(BOUND_GROUP_TOLERANCE);
-        }
-        if (StringUtils.equals(hint, LAYOUT_2LINES)) {
-            return newTwoLineLayout(BOUND_GROUP_TOLERANCE);
-        }
+        if (StringUtils.equals(hint, LAYOUT_LEFT_2_RIGHT)) { return newLeftToRightLayout(BOUND_GROUP_TOLERANCE); }
+        if (StringUtils.equals(hint, LAYOUT_2LINES)) { return newTwoLineLayout(BOUND_GROUP_TOLERANCE); }
         throw new IllegalArgumentException("Unknown layout hint: " + hint);
     }
 

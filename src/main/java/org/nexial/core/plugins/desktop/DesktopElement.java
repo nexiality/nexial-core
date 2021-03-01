@@ -57,6 +57,7 @@ import static org.nexial.core.SystemVariables.getDefaultBool;
 import static org.nexial.core.plugins.desktop.DesktopConst.*;
 import static org.nexial.core.plugins.desktop.DesktopUtils.*;
 import static org.nexial.core.plugins.desktop.ElementType.*;
+import static org.nexial.core.plugins.web.WebDriverExceptionHelper.resolveErrorMessage;
 import static org.nexial.core.utils.AssertUtils.requires;
 
 /**
@@ -472,12 +473,13 @@ public class DesktopElement {
         // if combo box is disabled
         if (!element.isEnabled()) {return StepResult.fail("Text cannot be selected since '" + label + "' is disabled");}
 
-        List<String> list = parseTextInputWithShortcuts(text);
+        List<String> list = parseTextInputWithShortcuts(text, false);
 
         StepResult result = null;
 
         for (String item : list) {
-            text = treatShortcutSyntax(item);
+            // text = treatShortcutSyntax(item);
+            text = item;
 
             if (TextUtils.isBetween(text, SHORTCUT_PREFIX, SHORTCUT_POSTFIX)) {
                 driver.executeScript(SCRIPT_PREFIX_SHORTCUT + text, element);
@@ -1302,7 +1304,7 @@ public class DesktopElement {
             return true;
         }
 
-//        return false;
+        //        return false;
         List<WebElement> children = element.findElements(By.xpath("*"));
         if (CollectionUtils.isEmpty(children)) { return false; }
 
@@ -1549,15 +1551,15 @@ public class DesktopElement {
 
             Integer thisGroup = groups.get(i);
             Integer nextGroup = groups.get(i + 1);
-//            DesktopConst.debug("comparing " + thisGroup + "," + nextGroup + " ...");
+            //            DesktopConst.debug("comparing " + thisGroup + "," + nextGroup + " ...");
             if (Math.abs(thisGroup - nextGroup) <= BOUND_GROUP_TOLERANCE) {
                 // put these 2 groups as 1
-//                DesktopConst.debug("combining");
+                //                DesktopConst.debug("combining");
                 boundGroups.get(thisGroup).addAll(boundGroups.remove(nextGroup));
                 groups.remove(nextGroup);
                 i--;
-//            } else {
-//                DesktopConst.debug("kept separate");
+                //            } else {
+                //                DesktopConst.debug("kept separate");
             }
         }
 
@@ -1604,8 +1606,8 @@ public class DesktopElement {
             if (layout.isTwoLines()) { bounds.sort(Comparator.comparingInt(BoundingRectangle::getY)); }
         });
 
-//        groups.forEach(group -> DesktopConst.debug(NL + "Group [" + group + "] Bounds:" + NL + "\t" +
-//                                                   TextUtils.toString(boundGroups.get(group), NL + "\t")));
+        //        groups.forEach(group -> DesktopConst.debug(NL + "Group [" + group + "] Bounds:" + NL + "\t" +
+        //                                                   TextUtils.toString(boundGroups.get(group), NL + "\t")));
 
         return boundGroups;
     }
@@ -1778,14 +1780,15 @@ public class DesktopElement {
                     try {
                         driver.executeScript(SCRIPT_PREFIX_SHORTCUT + shortcuts, element);
                     } catch (WebDriverException e) {
-                        ConsoleUtils.error("Error when typing'" + ArrayUtils.toString(text) + "' on '" + label + "': " +
-                                           e.getMessage());
+                        ConsoleUtils.error("Error when typing '%s' on '%s': %s",
+                                           ArrayUtils.toString(text), label, resolveErrorMessage(e));
                     }
                 }
             } else {
                 // join text into 1 string, parse the entire combined string and loop through each token to type
-                parseTextInputWithShortcuts(TextUtils.toString(text, "", "", ""))
-                    .forEach(txt -> type(txt, useSendKeys));
+                // parseTextInputWithShortcuts(TextUtils.toString(text, "", "", ""), true).forEach(txt -> type(txt, useSendKeys));
+                type(TextUtils.toString(parseTextInputWithShortcuts(TextUtils.toString(text, "", "", ""), true), ""),
+                     useSendKeys);
             }
         }
 
@@ -1794,44 +1797,56 @@ public class DesktopElement {
         return StepResult.success("text entered to element '" + label + "'");
     }
 
-    protected List<String> parseTextInputWithShortcuts(String text) {
+    protected static List<String> parseTextInputWithShortcuts(String text, boolean forceShortcuts) {
         List<String> list = new ArrayList<>();
 
         if (StringUtils.isEmpty(text)) { return list; }
 
         if (StringUtils.isBlank(text)) {
+            if (forceShortcuts) { text = TextUtils.wrapIfMissing(text, TEXT_INPUT_PREFIX, TEXT_INPUT_POSTFIX); }
             list.add(text);
             return list;
         }
 
+        text = StringUtils.remove(text, "\r");
+        text = StringUtils.replace(text, "\n", "[ENTER]");
+
         String regex = "^.*?\\[.+].*?$";
 
-        while (text.matches(regex)) {
+        while (RegexUtils.match(text, regex, true)) {
             String beforeShortcut = StringUtils.substringBefore(text, "[");
             if (StringUtils.isNotEmpty(beforeShortcut)) {
+                if (forceShortcuts) {
+                    beforeShortcut = TextUtils.wrapIfMissing(beforeShortcut, TEXT_INPUT_PREFIX, TEXT_INPUT_POSTFIX);
+                }
                 list.add(beforeShortcut);
+
                 text = "[" + StringUtils.substringAfter(text, "[");
             }
+
             if (StringUtils.contains(text, "]")) {
-                list.add("[" + StringUtils.substringBetween(text, "[", "]") + "]");
+                list.add(SHORTCUT_PREFIX + StringUtils.substringBetween(text, "[", "]") + SHORTCUT_POSTFIX);
                 text = StringUtils.substringAfter(text, "]");
             }
         }
 
-        if (StringUtils.isNotEmpty(text)) { list.add(text); }
+        if (StringUtils.isNotEmpty(text)) {
+            if (forceShortcuts) { text = TextUtils.wrapIfMissing(text, TEXT_INPUT_PREFIX, TEXT_INPUT_POSTFIX); }
+            list.add(text);
+        }
+
         return list;
     }
 
-    protected void type(String text) {
-        type(text, false);
-    }
+    //    protected void type(String text) { type(text, false); }
 
     protected void type(String text, boolean useSendKeys) {
         if (StringUtils.isEmpty(text)) { return; }
 
         if (!element.isEnabled()) { CheckUtils.fail("Text cannot be entered as it is disabled for input"); }
 
-        text = StringUtils.trim(treatShortcutSyntax(text));
+        // assuming that `text` has already been treated with the appropriate shortcut markings
+        //        text = StringUtils.trim(treatShortcutSyntax(text));
 
         if (getElementType() == FormattedTextbox) {
 
@@ -1849,15 +1864,19 @@ public class DesktopElement {
         }
 
         // click required to make sure that the focus is set
-        element.click();
+        // element.click();
+        // (ABOVE): NO LONGER FORCEFULLY CLICK ON ELEMENT PRIOR TO TYPING, AS THIS BREAKS THE FLOW OF KEYSTROKE
+        // SEQUENCES EXPRESSED VIA MULTIPLE PARAMETERS. CALLING METHOD SHOULD CONSIDER DOING SO IF NEEDED.
+
         if (StringUtils.contains(text, SHORTCUT_PREFIX) && StringUtils.contains(text, SHORTCUT_POSTFIX)) {
-            String keystrokes = toKeystrokes(text);
+            // String keystrokes = toKeystrokes(text);
+            String keystrokes = text;
 
             try {
                 driver.executeScript(SCRIPT_PREFIX_SHORTCUT + keystrokes, element);
             } catch (WebDriverException e) {
-                ConsoleUtils.error("Error when executing shortcut '" + keystrokes + "' on '" + label + "': " +
-                                   e.getMessage());
+                ConsoleUtils.error("Error when executing shortcut '%s' on '%s': %s",
+                                   keystrokes, label, resolveErrorMessage(e));
             }
 
             return;
@@ -1928,7 +1947,7 @@ public class DesktopElement {
             boolean matched = isActualAndTextMatched(element, actual, text);
 
             if (!matched) {
-                //todo: apply some strategy set the value when it is not matched
+                //todo: apply some strategy to set the value when it is not matched
                 ConsoleUtils.log(errPrefix +
                                  "actual is '" + actual + "' but expected is '" + text + "'; Trying other approach...");
             }
@@ -2332,7 +2351,7 @@ public class DesktopElement {
     }
 
     private String normalizeUiText(String uiText) {
-//        if (StringUtils.isBlank(uiText)) { return StringUtils.trim(uiText); }
+        //        if (StringUtils.isBlank(uiText)) { return StringUtils.trim(uiText); }
 
         // & is treated within windows desktop as a shortcut indicator - &F means Alt-F
         // return StringUtils.remove(StringUtils.trim(uiText), "&");

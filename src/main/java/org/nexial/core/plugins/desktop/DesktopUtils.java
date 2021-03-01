@@ -80,13 +80,13 @@ final class DesktopUtils {
         return script.toString();
     }
 
-    protected static String appendShortcuts(String shortcut, String... shortcuts) {
-        if (ArrayUtils.isEmpty(shortcuts)) { return shortcut; }
-
-        StringBuilder script = new StringBuilder(StringUtils.defaultIfEmpty(shortcut, SCRIPT_PREFIX_SHORTCUT));
-        Arrays.stream(shortcuts).forEach(s -> script.append(SHORTCUT_PREFIX).append(s).append(SHORTCUT_POSTFIX));
-        return script.toString();
-    }
+//    protected static String appendShortcuts(String shortcut, String... shortcuts) {
+//        if (ArrayUtils.isEmpty(shortcuts)) { return shortcut; }
+//
+//        StringBuilder script = new StringBuilder(StringUtils.defaultIfEmpty(shortcut, SCRIPT_PREFIX_SHORTCUT));
+//        Arrays.stream(shortcuts).forEach(s -> script.append(SHORTCUT_PREFIX).append(s).append(SHORTCUT_POSTFIX));
+//        return script.toString();
+//    }
 
     /**
      * {@code shortcuts} could be a mix of function keys and 'normal' keys
@@ -102,10 +102,10 @@ final class DesktopUtils {
         return shortcut;
     }
 
-    protected static String treatShortcutSyntax(String text) {
-        if (!TextUtils.isBetween(text, "[", "]")) { return text; }
-        return StringUtils.replace(StringUtils.replace(text, "[", SHORTCUT_PREFIX), "]", SHORTCUT_POSTFIX);
-    }
+//    protected static String treatShortcutSyntax(String text) {
+//        if (!TextUtils.isBetween(text, "[", "]")) { return text; }
+//        return StringUtils.replace(StringUtils.replace(text, "[", SHORTCUT_PREFIX), "]", SHORTCUT_POSTFIX);
+//    }
 
     protected static String forceShortcutSyntax(String text) {
         if (StringUtils.isEmpty(text)) { return text; }
@@ -143,8 +143,6 @@ final class DesktopUtils {
         }
     }
 
-    protected static boolean hasText(WebElement element) { return isValuePatternAvailable(element); }
-
     protected static String toKeystrokes(String text) {
         // clean up input
         StringBuilder keystrokes = new StringBuilder();
@@ -168,6 +166,8 @@ final class DesktopUtils {
 
         return keystrokes.toString();
     }
+
+    protected static boolean hasText(WebElement element) { return isValuePatternAvailable(element); }
 
     protected static boolean isValuePatternAvailable(WebElement element) {
         return element != null && BooleanUtils.toBoolean(element.getAttribute(ATTR_IS_VALUE_PATTERN_AVAILABLE));

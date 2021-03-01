@@ -17,18 +17,17 @@
 
 package org.nexial.core.plugins.desktop;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.Assert;
 import org.junit.Test;
-
 import org.nexial.commons.utils.CollectionUtil;
 import org.nexial.commons.utils.TextUtils;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 import static org.nexial.core.plugins.desktop.ElementType.*;
 
@@ -98,138 +97,184 @@ public class DesktopElementTest {
     @Test
     public void testParseTextInputWithShortcuts() {
         List<String> expected = new ArrayList<>();
-        DesktopElement desktopElement = new DesktopElement();
 
         expected.add("Hello");
-        expected.add("[CTRL-ALT-S]");
+        expected.add("<[CTRL-ALT-S]>");
         expected.add("Good[Bye");
-        Assert.assertEquals(expected, desktopElement.parseTextInputWithShortcuts("Hello[CTRL-ALT-S]Good[Bye"));
+        Assert.assertEquals(expected, DesktopElement.parseTextInputWithShortcuts("Hello[CTRL-ALT-S]Good[Bye", false));
 
         expected.clear();
-        expected.add("[CTRL-A]");
+        expected.add("<[CTRL-A]>");
         expected.add("Hello");
-        expected.add("[CTRL-C]");
-        Assert.assertEquals(expected, desktopElement.parseTextInputWithShortcuts("[CTRL-A]Hello[CTRL-C]"));
-
-        expected.clear();
-        expected.add("Hello");
-        expected.add("[CTRL-K]");
-        Assert.assertEquals(expected, desktopElement.parseTextInputWithShortcuts("Hello[CTRL-K]"));
+        expected.add("<[CTRL-C]>");
+        Assert.assertEquals(expected, DesktopElement.parseTextInputWithShortcuts("[CTRL-A]Hello[CTRL-C]", false));
 
         expected.clear();
         expected.add("Hello");
-        expected.add("[CTRL-ALT-S]");
+        expected.add("<[CTRL-K]>");
+        Assert.assertEquals(expected, DesktopElement.parseTextInputWithShortcuts("Hello[CTRL-K]", false));
+
+        expected.clear();
+        expected.add("Hello");
+        expected.add("<[CTRL-ALT-S]>");
         expected.add("Bye]");
-        Assert.assertEquals(expected, desktopElement.parseTextInputWithShortcuts("Hello[CTRL-ALT-S]Bye]"));
+        Assert.assertEquals(expected, DesktopElement.parseTextInputWithShortcuts("Hello[CTRL-ALT-S]Bye]", false));
 
         expected.clear();
         expected.add("Hello");
-        expected.add("[CTRL-ALT-S]");
+        expected.add("<[CTRL-ALT-S]>");
         expected.add("Good[]Bye[");
-        Assert.assertEquals(expected, desktopElement.parseTextInputWithShortcuts("Hello[CTRL-ALT-S]Good[]Bye["));
+        Assert.assertEquals(expected, DesktopElement.parseTextInputWithShortcuts("Hello[CTRL-ALT-S]Good[]Bye[", false));
 
         expected.clear();
         expected.add("Hello");
-        Assert.assertEquals(expected, desktopElement.parseTextInputWithShortcuts("Hello"));
+        Assert.assertEquals(expected, DesktopElement.parseTextInputWithShortcuts("Hello", false));
 
         expected.clear();
-        expected.add("[ALT-TAB]");
-        Assert.assertEquals(expected, desktopElement.parseTextInputWithShortcuts("[ALT-TAB]"));
+        expected.add("<[ALT-TAB]>");
+        Assert.assertEquals(expected, DesktopElement.parseTextInputWithShortcuts("[ALT-TAB]", false));
     }
 
     @Test
     public void testParseTextInputWithShortcuts_repeated_shortcuts() {
         List<String> expected = new ArrayList<>();
-        DesktopElement desktopElement = new DesktopElement();
 
         expected.add("Hello");
-        expected.add("[tab]");
-        expected.add("[tab]");
-        Assert.assertEquals(expected, desktopElement.parseTextInputWithShortcuts("Hello[tab][tab]"));
+        expected.add("<[tab]>");
+        expected.add("<[tab]>");
+        Assert.assertEquals(expected, DesktopElement.parseTextInputWithShortcuts("Hello[tab][tab]", false));
 
         expected.clear();
-        expected.add("[TAB]");
-        expected.add("[tab]");
-        expected.add("[tab]");
-        Assert.assertEquals(expected, desktopElement.parseTextInputWithShortcuts("[TAB][tab][tab]"));
+        expected.add("<[TAB]>");
+        expected.add("<[tab]>");
+        expected.add("<[tab]>");
+        Assert.assertEquals(expected, DesktopElement.parseTextInputWithShortcuts("[TAB][tab][tab]", false));
 
         expected.clear();
-        expected.add("[tab]");
+        expected.add("<[tab]>");
         expected.add(".");
-        expected.add("[tab]");
+        expected.add("<[tab]>");
         expected.add("tab");
-        expected.add("[ ]");
-        Assert.assertEquals(expected, desktopElement.parseTextInputWithShortcuts("[tab].[tab]tab[ ]"));
+        expected.add("<[ ]>");
+        Assert.assertEquals(expected, DesktopElement.parseTextInputWithShortcuts("[tab].[tab]tab[ ]", false));
 
         expected.clear();
-        expected.add("[tab]");
+        expected.add("<[tab]>");
         expected.add("]");
-        expected.add("[tab]");
+        expected.add("<[tab]>");
         expected.add("tab");
-        expected.add("[ ]");
-        Assert.assertEquals(expected, desktopElement.parseTextInputWithShortcuts("[tab]][tab]tab[ ]"));
+        expected.add("<[ ]>");
+        Assert.assertEquals(expected, DesktopElement.parseTextInputWithShortcuts("[tab]][tab]tab[ ]", false));
 
         expected.clear();
-        expected.add("[tab]");
-        expected.add("[[tab]");
+        expected.add("<[tab]>");
+        expected.add("<[[tab]>");
         expected.add("tab");
-        expected.add("[ ]");
-        Assert.assertEquals(expected, desktopElement.parseTextInputWithShortcuts("[tab][[tab]tab[ ]"));
+        expected.add("<[ ]>");
+        Assert.assertEquals(expected, DesktopElement.parseTextInputWithShortcuts("[tab][[tab]tab[ ]", false));
 
         expected.clear();
-        expected.add("[tab]");
+        expected.add("<[tab]>");
         expected.add(" ");
-        expected.add("[tab]");
+        expected.add("<[tab]>");
         expected.add("tab");
-        expected.add("[ ]");
-        Assert.assertEquals(expected, desktopElement.parseTextInputWithShortcuts("[tab] [tab]tab[ ]"));
+        expected.add("<[ ]>");
+        Assert.assertEquals(expected, DesktopElement.parseTextInputWithShortcuts("[tab] [tab]tab[ ]", false));
 
         expected.clear();
         expected.add(" ");
-        expected.add("[tab]");
+        expected.add("<[tab]>");
         expected.add(" ");
-        expected.add("[tab]");
+        expected.add("<[tab]>");
         expected.add(" tab ");
-        expected.add("[ ]");
-        Assert.assertEquals(expected, desktopElement.parseTextInputWithShortcuts(" [tab] [tab] tab [ ]"));
+        expected.add("<[ ]>");
+        Assert.assertEquals(expected, DesktopElement.parseTextInputWithShortcuts(" [tab] [tab] tab [ ]", false));
 
         expected.clear();
         expected.add("\t");
-        expected.add("[tab]");
+        expected.add("<[tab]>");
         expected.add(" ");
-        expected.add("[enter]");
+        expected.add("<[enter]>");
         expected.add(" ");
-        Assert.assertEquals(expected, desktopElement.parseTextInputWithShortcuts("\t[tab] [enter] "));
+        Assert.assertEquals(expected, DesktopElement.parseTextInputWithShortcuts("\t[tab] [enter] ", false));
 
     }
 
     @Test
     public void testParseTextInputWithShortcuts_combine_strings() {
         List<String> expected = new ArrayList<>();
-        DesktopElement desktopElement = new DesktopElement();
-
-        Assert.assertEquals(expected, desktopElement.parseTextInputWithShortcuts(
-            TextUtils.toString(new String[]{"", "", ""}, "", "", "")));
+        Assert.assertEquals(expected,
+                            DesktopElement.parseTextInputWithShortcuts(
+                                TextUtils.toString(new String[]{"", "", ""}, "", "", ""), false));
 
         expected.clear();
         expected.add(" ");
-        Assert.assertEquals(expected, desktopElement.parseTextInputWithShortcuts(
-            TextUtils.toString(new String[]{"", " ", ""}, "", "", "")));
+        Assert.assertEquals(expected,
+                            DesktopElement.parseTextInputWithShortcuts(
+                                TextUtils.toString(new String[]{"", " ", ""}, "", "", ""), false));
 
         expected.clear();
         expected.add("Hello");
-        expected.add("[tab]");
-        expected.add("[tab]");
-        Assert.assertEquals(expected, desktopElement.parseTextInputWithShortcuts(
-            TextUtils.toString(new String[]{"Hello", "[tab]", "[tab]"}, "", "", "")));
+        expected.add("<[tab]>");
+        expected.add("<[tab]>");
+        Assert.assertEquals(expected,
+                            DesktopElement.parseTextInputWithShortcuts(
+                                TextUtils.toString(new String[]{"Hello", "[tab]", "[tab]"}, "", "", ""), false));
 
         expected.clear();
         expected.add("Hello ");
-        expected.add("[tab]");
-        expected.add("[ctrl-shift-F7]");
+        expected.add("<[tab]>");
+        expected.add("<[ctrl-shift-F7]>");
         expected.add(" ");
-        Assert.assertEquals(expected, desktopElement.parseTextInputWithShortcuts(
-            TextUtils.toString(new String[]{"Hello", " ", "[tab]", "[ctrl-shift-F7]", " "}, "", "", "")));
+        Assert.assertEquals(expected,
+                            DesktopElement.parseTextInputWithShortcuts(
+                                TextUtils.toString(new String[]{"Hello", " ", "[tab]", "[ctrl-shift-F7]", " "},
+                                                   "", "", ""),
+                                false));
+    }
+
+    @Test
+    public void testForceParseTextInputWithShortcuts_combine_strings() {
+        List<String> expected = new ArrayList<>();
+        Assert.assertEquals(expected,
+                            DesktopElement.parseTextInputWithShortcuts(
+                                TextUtils.toString(new String[]{"", "", ""}, "", "", ""), true));
+
+        expected.clear();
+        expected.add("<[{ }]>");
+        Assert.assertEquals(expected,
+                            DesktopElement.parseTextInputWithShortcuts(
+                                TextUtils.toString(new String[]{"", " ", ""}, "", "", ""), true));
+
+        expected.clear();
+        expected.add("<[{Hello}]>");
+        expected.add("<[tab]>");
+        expected.add("<[tab]>");
+        Assert.assertEquals(expected,
+                            DesktopElement.parseTextInputWithShortcuts(
+                                TextUtils.toString(new String[]{"Hello", "[tab]", "[tab]"}, "", "", ""), true));
+
+        expected.clear();
+        expected.add("<[{Hello }]>");
+        expected.add("<[tab]>");
+        expected.add("<[ctrl-shift-F7]>");
+        expected.add("<[{ }]>");
+        Assert.assertEquals(expected,
+                            DesktopElement.parseTextInputWithShortcuts(
+                                TextUtils.toString(new String[]{"Hello", " ", "[tab]", "[ctrl-shift-F7]", " "},
+                                                   "", "", ""),
+                                true));
+
+        expected.clear();
+        expected.add("<[ctrl-end]>");
+        expected.add("<[{\r\nThis is a test\r\nDo not be alarmed}]>");
+        Assert.assertEquals(expected,
+                            DesktopElement.parseTextInputWithShortcuts(
+                                TextUtils.toString(new String[]{"[ctrl-end]", "\r\nThis is a test",
+                                                                "\r\nDo not be alarmed"},
+                                                   "", "", ""),
+                                true));
+
     }
 
     protected DesktopElement newTextbox(String c, String id) {
