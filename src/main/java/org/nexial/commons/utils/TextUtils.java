@@ -1355,9 +1355,9 @@ public final class TextUtils {
             }
         }
 
-        if (StringUtils.startsWith(expected, HAS_LENGTH)) {
+        if (StringUtils.startsWith(expected, LENGTH)) {
             String lengthCheck =
-                StringUtils.removeStart(StringUtils.trim(StringUtils.substringAfter(expected, HAS_LENGTH)), "+");
+                StringUtils.removeStart(StringUtils.trim(StringUtils.substringAfter(expected, LENGTH)), "+");
             // if all we got is just the number, then assume equality comparison
             List<String> groups = NumberUtils.isDigits(lengthCheck) ?
                                   Arrays.asList("=", lengthCheck) :

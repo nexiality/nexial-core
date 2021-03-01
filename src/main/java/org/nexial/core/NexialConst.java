@@ -261,7 +261,7 @@ public final class NexialConst {
         public static final String EXACT = register("EXACT:");
         public static final String EMPTY = register("EMPTY:");
         public static final String BLANK = register("BLANK:");
-        public static final String HAS_LENGTH = register("HAS_LENGTH:");
+        public static final String LENGTH = register("LENGTH:");
         public static final String NUMERIC = register("NUMERIC:");
         public static final String REGEX_NUMERIC_COMPARE = "^\\s*([><=!]+)\\s*([\\d\\-\\.]+)\\s*$";
 

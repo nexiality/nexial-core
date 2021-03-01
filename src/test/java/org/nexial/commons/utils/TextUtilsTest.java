@@ -633,19 +633,19 @@ public class TextUtilsTest {
 
     @Test
     public void polyMatcher_has_length() {
-        assertTrue(TextUtils.polyMatch("12345", "HAS_LENGTH:5"));
-        assertTrue(TextUtils.polyMatch("12345", "HAS_LENGTH:>=5"));
-        assertTrue(TextUtils.polyMatch("12345", "HAS_LENGTH:<=5"));
-        assertTrue(TextUtils.polyMatch("12345", "HAS_LENGTH:<=6"));
-        assertTrue(TextUtils.polyMatch("12345", "HAS_LENGTH: >= 4"));
-        assertTrue(TextUtils.polyMatch("12345", "HAS_LENGTH: != 17"));
-        assertTrue(TextUtils.polyMatch("12345", "HAS_LENGTH:   =   5   "));
-        assertTrue(TextUtils.polyMatch("", "HAS_LENGTH:0"));
-        assertTrue(TextUtils.polyMatch("", "HAS_LENGTH: 0 "));
-        assertTrue(TextUtils.polyMatch("", "HAS_LENGTH: 0 "));
-        assertTrue(TextUtils.polyMatch(" ", "HAS_LENGTH: <2 "));
-        assertTrue(TextUtils.polyMatch("\t", "HAS_LENGTH: <2 "));
-        assertTrue(TextUtils.polyMatch("\r\n", "HAS_LENGTH: 2 "));
+        assertTrue(TextUtils.polyMatch("12345", "LENGTH:5"));
+        assertTrue(TextUtils.polyMatch("12345", "LENGTH:>=5"));
+        assertTrue(TextUtils.polyMatch("12345", "LENGTH:<=5"));
+        assertTrue(TextUtils.polyMatch("12345", "LENGTH:<=6"));
+        assertTrue(TextUtils.polyMatch("12345", "LENGTH: >= 4"));
+        assertTrue(TextUtils.polyMatch("12345", "LENGTH: != 17"));
+        assertTrue(TextUtils.polyMatch("12345", "LENGTH:   =   5   "));
+        assertTrue(TextUtils.polyMatch("", "LENGTH:0"));
+        assertTrue(TextUtils.polyMatch("", "LENGTH: 0 "));
+        assertTrue(TextUtils.polyMatch("", "LENGTH: 0 "));
+        assertTrue(TextUtils.polyMatch(" ", "LENGTH: <2 "));
+        assertTrue(TextUtils.polyMatch("\t", "LENGTH: <2 "));
+        assertTrue(TextUtils.polyMatch("\r\n", "LENGTH: 2 "));
     }
 
     @Test
