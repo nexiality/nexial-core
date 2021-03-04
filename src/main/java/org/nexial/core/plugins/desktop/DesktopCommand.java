@@ -644,25 +644,25 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
     public StepResult typeTextBox(String name, String text1, String text2, String text3, String text4) {
         DesktopElement component = getRequiredElement(name, Textbox);
         if (component == null) { return StepResult.fail("Unable to derive component via '" + name + "'"); }
-        return component.typeTextComponent(false, text1, text2, text3, text4);
+        return component.typeTextComponent(false, false, text1, text2, text3, text4);
     }
 
     public StepResult typeTextArea(String name, String text1, String text2, String text3, String text4) {
         DesktopElement component = getRequiredElement(name, TextArea);
         if (component == null) { return StepResult.fail("Unable to derive component via '" + name + "'"); }
-        return component.typeTextComponent(false, text1, text2, text3, text4);
+        return component.typeTextComponent(false, false, text1, text2, text3, text4);
     }
 
     public StepResult typeAppendTextBox(String name, String text1, String text2, String text3, String text4) {
         DesktopElement component = getRequiredElement(name, Textbox);
         if (component == null) { return StepResult.fail("Unable to derive component via '" + name + "'"); }
-        return component.typeTextComponent(true, text1, text2, text3, text4);
+        return component.typeTextComponent(false, true, text1, text2, text3, text4);
     }
 
     public StepResult typeAppendTextArea(String name, String text1, String text2, String text3, String text4) {
         DesktopElement component = getRequiredElement(name, TextArea);
         if (component == null) { return StepResult.fail("Unable to derive component via '" + name + "'"); }
-        return component.typeTextComponent(true, text1, text2, text3, text4);
+        return component.typeTextComponent(false, true, text1, text2, text3, text4);
     }
 
     public StepResult typeByLocator(String locator, String text) {
@@ -797,13 +797,25 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
     }
 
     public StepResult screenshot(String name, String file) {
+        requiresNotBlank(name, "Invalid component name", name);
+
         requiresNotNull(file, "Invalid screenshot file", file);
         if (FileUtil.isDirectoryReadable(file)) {
             return StepResult.fail("Invalid file specified: " + file + " points to a directory");
         }
 
-        DesktopElement component = getRequiredElement(name, Any);
-        WebElement elem = component.getElement();
+        DesktopElement container = getCurrentContainer();
+        WebElement elem;
+        if (StringUtils.equals(container.getLabel(), name)) {
+            elem = container.getElement();
+            if (elem == null) {
+                container.refreshElement();
+                elem = container.getElement();
+            }
+        } else {
+            elem = getRequiredElement(name, Any).getElement();
+        }
+
         if (elem == null) { return StepResult.fail("No component can be resolved via its name " + name); }
 
         List<String> dimension = TextUtils.toList(elem.getAttribute("BoundingRectangle"), ",", true);
@@ -2327,7 +2339,6 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
 
     /** As of v3.7, we will support HierTable (aka ControlType.Tree) as well */
     protected DesktopTable resolveTableElement(String name) {
-        // DesktopElement tableObject = getRequiredElement(name, Table);
         DesktopElement tableObject = getRequiredElement(name, Any);
         DesktopTable table = null;
         if (tableObject.getElementType() == Table) { table = (DesktopTable) tableObject; }

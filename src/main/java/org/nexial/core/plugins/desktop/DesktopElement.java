@@ -18,7 +18,6 @@
 package org.nexial.core.plugins.desktop;
 
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.collections4.IterableUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.ArrayUtils;
@@ -45,6 +44,7 @@ import org.openqa.selenium.remote.RemoteWebElement;
 import org.openqa.selenium.winium.WiniumDriver;
 import winium.elements.desktop.ComboBox;
 
+import javax.annotation.Nonnull;
 import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -59,6 +59,7 @@ import static org.nexial.core.plugins.desktop.DesktopUtils.*;
 import static org.nexial.core.plugins.desktop.ElementType.*;
 import static org.nexial.core.plugins.web.WebDriverExceptionHelper.resolveErrorMessage;
 import static org.nexial.core.utils.AssertUtils.requires;
+import static org.openqa.selenium.Keys.ESCAPE;
 
 /**
  * Object representataion of a UI element in a desktop (native) application (Windows only).
@@ -475,30 +476,30 @@ public class DesktopElement {
 
         List<String> list = parseTextInputWithShortcuts(text, false);
 
-        StepResult result = null;
+        StringBuilder messages = new StringBuilder();
+        boolean success = true;
 
         for (String item : list) {
-            // text = treatShortcutSyntax(item);
-            text = item;
-
-            if (TextUtils.isBetween(text, SHORTCUT_PREFIX, SHORTCUT_POSTFIX)) {
-                driver.executeScript(SCRIPT_PREFIX_SHORTCUT + text, element);
-                result = StepResult.success("Shortcut key '" + text + "' pressed");
-                continue;
-            }
-
-            result = typeSpecificSelect(text);
-            if (result == null) {
-                // unknown combo??
-                DesktopConst.debug("Unknown element type '" + elementType + "' for Combo '" + getLabel() +
-                                   "', might fail...");
-                element.clear();
-                element.sendKeys(text);
+            if (TextUtils.isBetween(item, SHORTCUT_PREFIX, SHORTCUT_POSTFIX)) {
+                driver.executeScript(SCRIPT_PREFIX_SHORTCUT + item, element);
+                messages.append("Shortcut key '").append(item).append("' pressed. ");
+            } else {
+                StepResult result = typeSpecificSelect(item);
+                if (result == null) {
+                    // unknown combo??
+                    DesktopConst.debug("Unknown element type '" + elementType + "' for Combo '" + getLabel() +
+                                       "', this might fail...");
+                    element.clear();
+                    element.sendKeys(item);
+                } else {
+                    if (result.failed()) { success = false; }
+                    messages.append(result.getMessage()).append(" ");
+                }
             }
         }
 
         autoClearModalDialog();
-        return result;
+        return new StepResult(success, messages.toString().trim(), null);
     }
 
     public boolean isSelected() { return element != null && element.isSelected(); }
@@ -658,7 +659,7 @@ public class DesktopElement {
         layout = StringUtils.isBlank(layoutHint) ? FORM_LAYOUT_DEFAULT : FormLayout.toLayout(layoutHint);
     }
 
-    protected void inheritParentCompoents(Map<String, DesktopElement> parentComponents) {
+    protected void inheritParentComponents(Map<String, DesktopElement> parentComponents) {
         if (StringUtils.isBlank(xpath)) { return; }
         if (MapUtils.isEmpty(parentComponents)) { return; }
 
@@ -887,7 +888,7 @@ public class DesktopElement {
     }
 
     protected boolean resolvedAsRadio() {
-        if (!StringUtils.equals(controlType, RADIO)) {return false;}
+        if (!StringUtils.equals(controlType, RADIO)) { return false; }
 
         elementType = Radio;
         String elemLabel = formatLabel(name);
@@ -925,18 +926,14 @@ public class DesktopElement {
     }
 
     protected boolean resolvedAsTextbox() {
-        // - if 'ControlType.Edit'     -> this is a text box
-        if (!StringUtils.equals(controlType, EDIT)) {
-            // not so far.. we might have one of those IG anamalies, where
-            //  ControlType='ControlType.Pane'
-            //  IsValuePatternAvailable='True'
-            //  has child of
-            //      ControlType='ControlType.Custom' or 'ControlType.Edit'
-            //      IsValuePatternAvailable='True'
-            if (!StringUtils.equals(controlType, PANE)) { return false; }
 
-            // so at this point, the control type is PANE
-
+        // we might have one of those IG anomalies, where
+        //  ControlType='ControlType.Pane'
+        //  IsValuePatternAvailable='True'
+        //  has child of
+        //      ControlType='ControlType.Custom' or 'ControlType.Edit'
+        //      IsValuePatternAvailable='True'
+        if (StringUtils.equals(controlType, PANE)) {
             // click element
             if (isEnabled(element)) { element.click(); }
 
@@ -949,14 +946,16 @@ public class DesktopElement {
 
             // else, we found textbox under PANE, good to go
             this.elementType = Textbox;
-        } else {
+        } else if (StringUtils.equals(controlType, EDIT)) {
             this.elementType = Textbox;
             if (isEnabled(element)) { element.click(); }
 
-            String xpathFormattedEdits = "*[@ControlType='" + EDIT + "']/*[@ControlType='" + EDIT + "']";
-            List<WebElement> formattedEdits = element.findElements(By.xpath(xpathFormattedEdits));
+            List<WebElement> formattedEdits = element.findElements(By.xpath(LOCATOR_TEXTBOX));
             // this looks like a masked/formatted text box since it contains multiple levels of edits
-            if (CollectionUtils.isNotEmpty(formattedEdits)) { this.elementType = FormattedTextbox;}
+            if (CollectionUtils.isNotEmpty(formattedEdits)) { this.elementType = FormattedTextbox; }
+        } else {
+            // not EDIT or PANE control type
+            return false;
         }
 
         this.editable = isKeyboardFocusable(element);
@@ -1254,7 +1253,7 @@ public class DesktopElement {
                 return true;
             }
 
-            // child could be a ControlType.Custom (IG).  We need to khow editable and native control type
+            // child could be a ControlType.Custom (IG).  We need to know editable and native control type
             if (StringUtils.equals(controlType1, CUSTOM) || StringUtils.equals(controlType2, CUSTOM)) {
                 if (StringUtils.contains(automationId, "TextBox_")) {
                     this.elementType = Textbox;
@@ -1402,10 +1401,11 @@ public class DesktopElement {
             // ignore these..
             if (shouldSkipScanning(child)) { continue; }
 
-            String childControlType = child.getAttribute("ControlType");
             String childName = child.getAttribute("Name");
-            DesktopConst.debug(format("[%s]: scanning nested element [%s] of type '%s'...",
-                                      label, childName, childControlType));
+            String childAutomationId = child.getAttribute("AutomationId");
+            String childControlType = child.getAttribute("ControlType");
+            DesktopConst.debug(format("[%s]: scanning nested element [Name=%s, AutomationId=%s, ControlType=%s]...",
+                                      label, childName, childAutomationId, childControlType));
 
             if (StringUtils.equals(childControlType, SCROLLBAR)) {
                 handleScrollbar(child);
@@ -1454,8 +1454,8 @@ public class DesktopElement {
             if (StringUtils.isBlank(desktopElement.getLabel())) {
                 DesktopConst.debug("NAMELESS CONTAINER: INSPECT DEEPER:" + NL + desktopElement.getXpath() + NL);
                 // let this nameless container temporarily inherit the components of its parent so that we can
-                // match up all the defined elements against disovered elements.
-                desktopElement.inheritParentCompoents(getComponents());
+                // match up all the defined elements against discovered elements.
+                desktopElement.inheritParentComponents(getComponents());
                 List<DesktopElement> elements = findElementsFromNamelessContainer(desktopElement);
                 if (CollectionUtils.isNotEmpty(elements)) { desktopElements.addAll(elements); }
                 return;
@@ -1477,7 +1477,8 @@ public class DesktopElement {
         }
 
         WebElement containerElement = namelessContainer.getElement();
-        DesktopConst.debug("collecting child elements for " + ((RemoteWebElement) containerElement).getId());
+        DesktopConst.debug(format("collecting nested elements in container (AutomationId=%s,ClassName=%s)",
+                                                                                                             containerElement.getAttribute("AutomationId"), containerElement.getAttribute("ClassName")));
 
         // 1. check for child elements
         List<WebElement> children = containerElement.findElements(By.xpath("*"));
@@ -1517,10 +1518,10 @@ public class DesktopElement {
 
         desktopElements.forEach(desktopElement -> {
             if (desktopElement == null) {
-                ConsoleUtils.error("NULL DESKTOPELEMENT FOUND!");
+                ConsoleUtils.error("NULL DESKTOP ELEMENT FOUND!");
             } else {
                 if (desktopElement.getElementType() == null) {
-                    ConsoleUtils.error("NULL ELEMENTTYPE FOUND: " + printDetails(desktopElement));
+                    ConsoleUtils.error("NULL ELEMENT TYPE FOUND: " + printDetails(desktopElement));
                 } else {
                     if (!desktopElement.getElementType().isSelfLabel()) {
                         BoundingRectangle bound = BoundingRectangle.newInstance(desktopElement);
@@ -1758,15 +1759,25 @@ public class DesktopElement {
         if (StringUtils.isNotBlank(xpath)) { setElement(driver.findElement(By.xpath(xpath)));}
     }
 
-    protected StepResult typeTextComponent(boolean append, String... text) {
-        return typeTextComponent(false, append, text);
-    }
-
-    /**
-     * meant for TextBox or TextArea
-     */
+    /** meant for TextBox or TextArea */
     protected StepResult typeTextComponent(boolean useSendKeys, boolean append, String... text) {
         requires(ArrayUtils.isNotEmpty(text), "at least one text parameter is required");
+
+        String currentText = getText();
+        String combinedText = TextUtils.toString(text, "", "", "");
+
+        // special case: if specified text and the current text is the same
+        // make sure we don't have control/shortcut key here
+        if (!append && !StringUtils.contains(combinedText, "[")) {
+            if (StringUtils.isEmpty(combinedText)) {
+                clearFormattedTextbox(driver, element);
+                return StepResult.success("text cleared from element '%s'", label);
+            }
+
+            if (StringUtils.equals(currentText, combinedText)) {
+                return StepResult.success("text already entered into element '%s'", label);
+            }
+        }
 
         ExecutionContext context = ExecutionThread.get();
         if (context != null && context.getBooleanData(DESKTOP_USE_TYPE_KEYS, DEF_DESKTOP_USE_TYPE_KEYS)) {
@@ -1775,26 +1786,26 @@ public class DesktopElement {
             NativeInputHelper.typeKeys(TextUtils.toList(StringUtils.remove(keystrokes, "\r"), "\n", false));
         } else {
             if (append) {
-                String shortcuts = forceShortcutSyntax("[CTRL-END]") + joinShortcuts(text);
-                if (StringUtils.isNotEmpty(shortcuts)) {
-                    try {
-                        driver.executeScript(SCRIPT_PREFIX_SHORTCUT + shortcuts, element);
-                    } catch (WebDriverException e) {
-                        ConsoleUtils.error("Error when typing '%s' on '%s': %s",
-                                           ArrayUtils.toString(text), label, resolveErrorMessage(e));
-                    }
+                try {
+                    driver.executeScript(SCRIPT_PREFIX_SHORTCUT +
+                                         forceShortcutSyntax("[CTRL-END]") + joinShortcuts(text),
+                                         element);
+                } catch (WebDriverException e) {
+                    ConsoleUtils.error("Error when typing '%s' on '%s': %s",
+                                       ArrayUtils.toString(text), label, resolveErrorMessage(e));
                 }
             } else {
                 // join text into 1 string, parse the entire combined string and loop through each token to type
                 // parseTextInputWithShortcuts(TextUtils.toString(text, "", "", ""), true).forEach(txt -> type(txt, useSendKeys));
-                type(TextUtils.toString(parseTextInputWithShortcuts(TextUtils.toString(text, "", "", ""), true), ""),
-                     useSendKeys);
+
+                // append=false means overwrite. Hence the HOME->SHIFT-END->DEL sequence
+                if (StringUtils.isNotEmpty(currentText)) { clearFormattedTextbox(driver, element); }
+                type(TextUtils.toString(parseTextInputWithShortcuts(combinedText, true), ""), useSendKeys);
             }
         }
 
         autoClearModalDialog();
-
-        return StepResult.success("text entered to element '" + label + "'");
+        return StepResult.success("text %s into element '%s'", (append ? "appended" : "entered"), label);
     }
 
     protected static List<String> parseTextInputWithShortcuts(String text, boolean forceShortcuts) {
@@ -1856,10 +1867,11 @@ public class DesktopElement {
             }
 
             // click to be avoided here in formatted textbox before calling clear, which gives undesired results
-            element.clear();
+            if (StringUtils.isNotEmpty(element.getText())) { element.clear(); }
             // setValue does not work for action driven components. sendKeys and shortcut script both works
             driver.executeScript(SCRIPT_PREFIX_SHORTCUT + TEXT_INPUT_PREFIX + text + TEXT_INPUT_POSTFIX, element);
-            verifyAndTry(text);
+            // only perform verification is current component is not a date/time editor (those things are unreliable)
+            if (!StringUtils.contains(automationId, "DateTimeEditor")) { verifyAndTry(text); }
             return;
         }
 
@@ -1888,29 +1900,59 @@ public class DesktopElement {
         element.sendKeys(text);
     }
 
-    protected void clearFormattedTextbox() { clearFormattedTextbox(driver, element); }
+    protected void clearFormattedTextbox(WiniumDriver driver, WebElement target) {
+        String targetAutomationId = target.getAttribute("AutomationId");
+        boolean isMaskedTextbox = StringUtils.containsIgnoreCase(targetAutomationId, "MaskedText");
 
-    protected static void clearFormattedTextbox(WiniumDriver driver, WebElement target) {
+        // short-circuit with shortcut first
+        // special case: masked editor should be cleared via ESCAPE
+        driver.executeScript(isMaskedTextbox ?
+                             DesktopUtils.toShortcuts("ESC") :
+                             DesktopUtils.toShortcuts("HOME", "SHIFT-END", "DEL"),
+                             target);
+
+        String afterShortcutDelete = postClearFormattedTextbox(target);
+        if (StringUtils.isEmpty(afterShortcutDelete)) { return; }
+
+        // special case: masked editor and remaining value all zero's
+        if (isMaskedTextbox && StringUtils.containsOnly(afterShortcutDelete, "0")) {
+            return;
+        }
+
+        target.clear();
+        afterShortcutDelete = postClearFormattedTextbox(target);
+        if (StringUtils.isEmpty(afterShortcutDelete)) { return; }
+
         int previousValueCount = 0;
 
-        List<WebElement> editables = target.findElements(By.xpath(LOCATOR_TEXTBOX + "/" + LOCATOR_TEXTBOX));
+        //        List<WebElement> editables = target.findElements(By.xpath(LOCATOR_TEXTBOX + "/" + LOCATOR_TEXTBOX));
+        List<WebElement> editables = target.findElements(By.xpath(LOCATOR_TEXTBOX));
         if (CollectionUtils.isNotEmpty(editables)) {
             WebElement editable = editables.get(0);
-            String currentValue = StringUtils.trim(editable.getText());
-            // todo currency sign should be externalized for extensibility
-            if (StringUtils.startsWithAny(currentValue, "$", "€")) {
-                currentValue = StringUtils.substring(currentValue, 1);
-            }
-            currentValue = StringUtils.trim(StringUtils.replaceChars(currentValue, " _", ""));
-            previousValueCount = StringUtils.length(currentValue);
+            afterShortcutDelete = postClearFormattedTextbox(target);
+            previousValueCount = StringUtils.length(afterShortcutDelete);
+        } else {
+            // find existing values found in textbox for delete
+            previousValueCount = StringUtils.length(target.getText());
         }
 
         // attempt to clear off character in this field
         if (previousValueCount > 0) {
             driver.executeScript(DesktopUtils.toShortcuts("CTRL-HOME") +
-                                 StringUtils.repeat("<[DEL]>", previousValueCount),
+                                 StringUtils.repeat("<[DEL]>", previousValueCount + 1),
                                  target);
         }
+    }
+
+    protected String postClearFormattedTextbox(WebElement element) {
+        String text = getValue(element);
+        if (StringUtils.isEmpty(text)) { return text; }
+
+        if (elementType == DateTimeCombo) { return StringUtils.trim(StringUtils.replaceChars(text, " _/:", "")); }
+
+        // todo currency sign should be externalized for extensibility
+        if (StringUtils.startsWithAny(text, "$", "€")) { text = StringUtils.substring(text, 1); }
+        return StringUtils.trim(StringUtils.replaceChars(text, " _.", ""));
     }
 
     /** This is to check the set value is equal with entered text **/
@@ -2062,40 +2104,30 @@ public class DesktopElement {
     }
 
     protected StepResult selectTypeAheadCombo(String text) {
-        element.click();
-
-        // get first element and handle exception in case element is not present
-        WebElement editField;
-        try {
-            // using .findElement for better performance
-            editField = element.findElement(By.xpath(LOCATOR_EDITOR));
-        } catch (org.openqa.selenium.NoSuchElementException e) {
-            List<WebElement> editFields = element.findElements(By.xpath(LOCATOR_EDITOR));
-            if (CollectionUtils.isEmpty(editFields)) {
-                return StepResult.fail("EXPECTED element '" + EDIT + "' NOT found for Combo '" + label + "'");
-            }
-
-            editField = editFields.get(0);
+        String currentSelection = getText();
+        if (StringUtils.equals(currentSelection, text)) {
+            return StepResult.success("Text '" + text + "' already entered into '" + label + "'");
         }
-        if (editField != null && setComboValue(editField, text)) {
-            autoClearModalDialog();
-            return StepResult.success("Text '" + text + "' entered into '" + label + "'");
-        } else {
-            return StepResult.fail("Error setting value to '" + label + "' via ValuePattern.SetValue");
-        }
+
+        driver.executeScript(SCRIPT_PREFIX_SHORTCUT +
+                             (StringUtils.isNotEmpty(currentSelection) ? "<[HOME]><[SHIFT-END]><[DEL]>" : "") +
+                             forceShortcutSyntax(text),
+                             element);
+        autoClearModalDialog();
+        return StepResult.success("Text '" + text + "' entered into '" + label + "'");
     }
 
     protected StepResult clear() {
         ElementType elementType = getElementType();
         if (elementType.isCombo()) { return clearCombo(); }
 
-        WebElement elem = getElement();
         if (elementType == TextArea) {
-            driver.executeScript(toShortcuts("CTRL-HOME", "CTRL-SHIFT-END", "DEL"), elem);
+            driver.executeScript(toShortcuts("CTRL-HOME", "CTRL-SHIFT-END", "DEL"), getElement());
         } else if (elementType == FormattedTextbox) {
-            clearFormattedTextbox();
+            clearFormattedTextbox(driver, element);
         } else {
-            element.clear();
+            // turns out that `clearFormattedTextbox` works better for both normal edit and formatted textbox
+            clearFormattedTextbox(driver, element);
         }
 
         autoClearModalDialog();
@@ -2142,26 +2174,99 @@ public class DesktopElement {
     }
 
     protected StepResult selectSingleSelectList(String text) {
-        String msgPostfix = " for List '" + label + "'.";
+        String msgPostfix = " for '" + label + "'.";
 
         // we want blank?
         if (StringUtils.isBlank(text)) {
             element.clear();
+            element.sendKeys(ESCAPE);
             return StepResult.success("Text cleared" + msgPostfix);
-        }
-
-        if (isExpandCollapsePatternAvailable(element)) {
-            String xpathListItem = StringUtils.replace(LOCATOR_LIST_ITEM, "{value}", text);
-            WebElement matched = IterableUtils.get(element.findElements(By.xpath(xpathListItem)), 0);
-            if (isInvokePatternAvailable(matched)) {
-                element.click();
-                matched.click();
-                return StepResult.success("Text '" + text + "' selected" + msgPostfix);
-            }
         }
 
         if (!isSelectionPatternAvailable(element)) {
             return StepResult.fail("Unable select since selection-pattern is not available" + msgPostfix);
+        }
+
+        String currentSelectedText = element.getText();
+        if (StringUtils.isNotEmpty(currentSelectedText)) {
+            // combo's text won't always be the same as the specified text because combo might display one text while
+            // storing another.
+            if (StringUtils.equals(currentSelectedText, text)) {
+                return StepResult.success("Text '" + text + "' already selected" + msgPostfix);
+            }
+
+            // however we can still check to see if any selection has been made at this time, and if so, check that the
+            // selected list item is the same as the specified text.
+            WebElement targetItem = findFirstElement(LOCATOR_SELECTED_LIST_ITEM);
+            // targetItem = findFirstElement(StringUtils.replace(LOCATOR_LIST_ITEM_ONLY, "{value}", text));
+            // targetItem = findFirstElement(StringUtils.replace(LOCATOR_LIST_ITEM, "{value}", text));
+            if (targetItem != null && StringUtils.equals(targetItem.getAttribute("Name"), text)) {
+                return StepResult.success("Text '" + text + "' already selected" + msgPostfix);
+            }
+        }
+
+        if (isExpandCollapsePatternAvailable(element)) {
+            element.click();
+
+            // nested EmbeddableTextBox?
+            List<WebElement> nestedEditors = element.findElements(By.xpath(LOCATOR_EDITOR));
+            // if size == 1 then unlikely to contain EmbeddableTextBox
+            WebElement embeddableTextBox = CollectionUtils.size(nestedEditors) > 1 ?
+                                           findFirstElement(LOCATOR_EDITOR + LOCATOR_EMBEDDABLE_TEXTBOX) :
+                                           null;
+            if (embeddableTextBox != null) {
+                // need to clear existing data first... unless it already contains the specified text
+                String existingText = embeddableTextBox.getText();
+                if (!StringUtils.equals(existingText, text)) {
+                    driver.executeScript(SCRIPT_PREFIX_SHORTCUT +
+                                         (StringUtils.isNotEmpty(existingText) ? "<[ESC]><[HOME]><[SHIFT-END]><[DEL]>" : "") +
+                                         forceShortcutSyntax(text),
+                                         embeddableTextBox);
+                }
+                return StepResult.success("Text '" + text + "' selected" + msgPostfix);
+            } else {
+                WebElement targetItem = findFirstElement(StringUtils.replace(LOCATOR_LIST_ITEM_ONLY, "{value}", text));
+                if (targetItem != null) {
+                    if (!targetItem.isSelected()) {
+                        if (isInvokePatternAvailable(targetItem)) {
+                            element.sendKeys(ESCAPE);
+                            element.click();
+                            targetItem.click();
+                        } else {
+                            // clear off any existing selection
+                            if (StringUtils.isNotEmpty(currentSelectedText)) {
+                                driver.executeScript(SCRIPT_PREFIX_SHORTCUT + "<[ESC]>", element);
+                            }
+                            StepResult result = singleSelectViaFirstChar(text);
+                            element.click();
+                            return result;
+                        }
+                    } else {
+                        // collapse dropdown
+                        element.click();
+                    }
+
+                    return StepResult.success("Text '" + text + "' selected" + msgPostfix);
+                }
+                // driver.executeScript(SCRIPT_PREFIX_SHORTCUT + forceShortcutSyntax(text), element);
+                // return StepResult.success("Text '" + text + "' selected" + msgPostfix);
+
+                /*
+                WebElement matched = findFirstElement(StringUtils.replace(LOCATOR_LIST_ITEM, "{value}", text));
+                if (matched != null) {
+                    if (!matched.isSelected()) {
+                        if (isInvokePatternAvailable(matched)) {
+                            element.sendKeys(ESCAPE);
+                            matched.click();
+                        } else {
+                            // driver.executeScript(SCRIPT_PREFIX_SHORTCUT + forceShortcutSyntax(text) + "<[TAB]>", element);
+                            driver.executeScript(SCRIPT_PREFIX_SHORTCUT + forceShortcutSyntax(text), element);
+                        }
+                    } // else no need... it's already selected
+                    return StepResult.success("Text '" + text + "' selected" + msgPostfix);
+                }
+                */
+            }
         }
 
         // type by first char of text until the selected value matches text
@@ -2198,6 +2303,39 @@ public class DesktopElement {
     }
 
     protected StepResult selectSingleSelectCombo(String text) {
+        String value = getValue(element);
+        if (StringUtils.equals(text, value)) {
+            return StepResult.success("Text '" + text + "' already selected for '" + label + "'");
+        }
+
+        boolean comboOpened = false;
+        if (StringUtils.isNotEmpty(value)) {
+            driver.executeScript(SCRIPT_PREFIX_SHORTCUT + "<[ESC]>", element);
+        } else {
+            comboOpened = true;
+            element.click();
+        }
+
+        try {
+            List<WebElement> nestedElements = element.findElements(By.xpath("*"));
+            if (CollectionUtils.isEmpty(nestedElements)) {
+                return StepResult.fail("Unable to select %s in %s; no selection available", text, getLabel());
+            }
+
+            // does this combo contains a edit?
+            boolean hasEdit = nestedElements.stream()
+                                            .anyMatch(elem -> StringUtils.equals(elem.getAttribute("ControlType"), EDIT));
+            if (hasEdit) {
+                driver.executeScript(toShortcutText(text), element);
+                return StepResult.success("Text '%s' entered into '%s'", text, label);
+            }
+
+            return singleSelectViaFirstChar(text);
+        } finally {
+            if (comboOpened) { element.click(); }
+        }
+
+        /*
         element.click();
 
         text = normalizeUiText(text);
@@ -2206,7 +2344,7 @@ public class DesktopElement {
         String value = normalizeUiText(element.getAttribute("Name"));
         // todo: double check - does not get the value with @Name, when actually exists
         if (StringUtils.equals(text, value)) {
-            return StepResult.success("Text '" + text + "' selected for '" + label + "'");
+            return StepResult.success("Text '" + text + "' already selected for '" + label + "'");
         }
 
         driver.executeScript(appendShortcutText(toShortcuts("HOME"), firstChar), element);
@@ -2231,6 +2369,37 @@ public class DesktopElement {
         }
 
         return StepResult.success("Text '" + text + "' entered into '" + label + "'");
+        */
+    }
+
+    @Nonnull
+    private StepResult singleSelectViaFirstChar(String text) {
+        String selectionScript = toShortcutText("" + text.charAt(0));
+        String isSelectedXpath = "*[@Name and @IsSelected='True']";
+
+        String firstSelection = null;
+        // fictitious upper limit based on specified text
+        for (int i = 0; i < text.length(); i++) {
+            driver.executeScript(selectionScript, element);
+
+            WebElement selected = findFirstElement(isSelectedXpath);
+            if (selected == null) { continue; }
+
+            String selectedValue = selected.getAttribute("Name");
+            if (StringUtils.equals(selectedValue, text)) { break; }
+
+            if (firstSelection == null && StringUtils.isNotEmpty(selectedValue)) {
+                firstSelection = selectedValue;
+                continue;
+            }
+
+            // looped around already, we are done!
+            if (StringUtils.equals(firstSelection, selectedValue)) {
+                return StepResult.fail("Unable to select text '%s' from '%s'", text, getLabel());
+            }
+        }
+
+        return StepResult.success("Text '%s' entered into '%s'", text, label);
     }
 
     protected void clearModalDialog() {
@@ -2278,16 +2447,21 @@ public class DesktopElement {
         // all else
     }
 
+    protected WebElement findFirstElement(String xpath) {
+        if (StringUtils.isBlank(xpath)) { return null; }
+        return CollectionUtil.getOrDefault(element.findElements(By.xpath(xpath)), 0, null);
+    }
+
     private void verifyAndTry(String text) {
         if (verifyText(text, element.getText())) { return; }
 
-        clearFormattedTextbox();
+        clearFormattedTextbox(driver, element);
         driver.executeScript(SCRIPT_PREFIX_SHORTCUT + TEXT_INPUT_PREFIX + text + TEXT_INPUT_POSTFIX, element);
         // trust text entered correctly after second try!!
     }
 
     private boolean verifyText(String text, String currentValue) {
-        if (!NumberUtils.isCreatable(text)) { return isActualAndTextMatched(element, currentValue.trim(), text); }
+        if (!NumberUtils.isCreatable(text)) { return isActualAndTextMatched(element, currentValue, text); }
 
         // todo currency sign should be externalized for extensibility
         // todo create utility method around formatted text handling to improve usability
@@ -2314,14 +2488,16 @@ public class DesktopElement {
             return false;
         }
 
-        return isActualAndTextMatched(element, currentValue.trim(), text);
+        return isActualAndTextMatched(element, currentValue, text);
     }
 
-    private String getValue(WebElement element) {
+    protected String getValue(WebElement element) { return getValue(element, getLabel()); }
+
+    protected static String getValue(WebElement element, String label) {
         try {
             return StringUtils.defaultIfEmpty(element.getText(), element.getAttribute("Name"));
         } catch (WebDriverException e) {
-            ConsoleUtils.log("Cannot resolve text content for '" + getLabel() + "', retrying via @Name attribute...");
+            ConsoleUtils.log("Unable to resolve text content for '" + label + "', retrying via @Name attribute...");
             return element.getAttribute("Name");
         }
     }

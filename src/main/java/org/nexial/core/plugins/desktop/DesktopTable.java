@@ -40,6 +40,8 @@ import org.openqa.selenium.WebDriverException;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.interactions.Actions;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
@@ -175,13 +177,32 @@ public class DesktopTable extends DesktopElement {
         // short-circuit: if header information is provided via extra, then we don't need to do the scanning again
         if (CollectionUtils.isEmpty(headers) || CollectionUtils.size(headers) != columnCount) {
             // collect headers
-            String xpath = StringUtils.appendIfMissing(getXpath(), "/") +
-                           (isTreeView ? LOCATOR_HIER_HEADER_COLUMNS : LOCATOR_HEADER_COLUMNS);
-            ConsoleUtils.log("scanning for table structure via " + xpath);
+            String xpath = null;
+            if (isTreeView) {
+                // first try with a data row since we'd get more accurate headers (correct order)
+                xpath = "*[@ControlType='ControlType.DataItem'][1]/*";
+                ConsoleUtils.log("scanning for table structure via " + xpath);
+                List<WebElement> columns = element.findElements(By.xpath(xpath));
+                if (CollectionUtils.isEmpty(columns)) {
+                    ConsoleUtils.log("No data found; re-scanning for table structure via " + xpath);
+                    xpath = LOCATOR_HIER_HEADER_COLUMNS;
+                    columns = element.findElements(By.xpath(xpath));
+                }
 
-            headers = new ArrayList<>();
-            driver.findElements(By.xpath(xpath)).forEach(elem -> headers.add(elem.getAttribute(ATTR_NAME)));
-            columnCount = headers.size();
+                headers = columns.stream().map(elem -> elem.getAttribute(ATTR_NAME)).collect(Collectors.toList());
+                columnCount = headers.size();
+
+            } else {
+                String row = getFirstAvailableRowName();
+                if (StringUtils.isNotEmpty(row)) {
+                    xpath = "*[@Name='" + row + "']/*[@Name!='Column Headers']";
+                    ConsoleUtils.log("scanning for table structure via " + xpath);
+                    headers = element.findElements(By.xpath(xpath)).stream()
+                                     .map(elem -> elem.getAttribute(ATTR_NAME))
+                                     .collect(Collectors.toList());
+                    columnCount = headers.size();
+                }
+            }
         }
 
         TableMetaData metaData = new TableMetaData();
@@ -191,6 +212,30 @@ public class DesktopTable extends DesktopElement {
         metaData.setNormalizeSpace(normalizeSpace);
         metaData.setColumnCount(columnCount);
         return metaData;
+    }
+
+    @Nonnull
+    private String getFirstAvailableRowName() {
+        return element.findElements(By.xpath("*")).stream()
+                      .filter(elem -> StringUtils.containsIgnoreCase(elem.getAttribute("Name"), "row"))
+                      .findFirst()
+                      .map(elem -> elem.getAttribute("Name")).orElse("");
+    }
+
+    @Nonnull
+    private String getLastDataRowName() {
+        return element.findElements(By.xpath("*")).stream()
+                      .filter(elem -> StringUtils.contains(elem.getAttribute("Name"), "row "))
+                      .map(elem -> elem.getAttribute("Name"))
+                      .max(Comparator.naturalOrder()).orElse("");
+    }
+
+    @Nonnull
+    private String getMatchingRowName(String endWith) {
+        return element.findElements(By.xpath("*")).stream()
+                      .filter(elem -> StringUtils.endsWith(elem.getAttribute("Name"), endWith))
+                      .findFirst()
+                      .map(elem -> elem.getAttribute("Name")).orElse("");
     }
 
     public List<List<String>> scanAllRows() {
@@ -253,10 +298,11 @@ public class DesktopTable extends DesktopElement {
         sanityCheck();
         Instant startTime = Instant.now();
         if (isTreeView) {
-            String xpath = StringUtils.appendIfMissing(getXpath(), "/") +
-                           "*[@ControlType='ControlType.DataItem' and " +
-                           "(position() >= " + (begin + 2) + " and position() <= " + (end + 2) + ")]/*";
-            List<WebElement> rowData = driver.findElements(By.xpath(xpath));
+            String index = begin == end ?
+                           "position()=" + (begin + 1) :
+                           "position()>=" + (begin + 1) + " and position()<=" + (end + 1);
+            String xpath = "*[@ControlType='ControlType.DataItem'][" + index + "]/*";
+            List<WebElement> rowData = element.findElements(By.xpath(xpath));
             return TableData.fromTreeViewRows(headers, rowData, Duration.between(startTime, Instant.now()));
         } else {
             String object = (String) driver.executeScript(SCRIPT_DATAGRID_FETCH, element, begin, end);
@@ -289,7 +335,7 @@ public class DesktopTable extends DesktopElement {
 
         JSONObject jsonObject = JsonUtils.toJSONObject(object.toString());
         try {
-            if (jsonObject != null && jsonObject.has("error")) {
+            if (jsonObject == null || jsonObject.has("error")) {
                 ConsoleUtils.log("error fetching row count by driver. Try to get row count by xpath");
                 // get the rowCount using xpath
                 return collectRowCountByXpath();
@@ -315,7 +361,7 @@ public class DesktopTable extends DesktopElement {
             // test for initial empty row
             String rowIndex = dataElements.get(0).getAttribute("AutomationId");
             if (StringUtils.contains(rowIndex, "-1")) {
-                // only 1 row and its id is -1 -- this is the intial empty row; meaning no rows yet created for this table
+                // only 1 row and its id is -1 -- this is the initial empty row; meaning no rows yet created for this table
                 dataElements.clear();
             }
         }
@@ -343,15 +389,36 @@ public class DesktopTable extends DesktopElement {
                 if (row == 0) {
                     if (clickBeforeEdit()) {
                         clickOffset(element, clickOffsetX, (headerHeight + (TABLE_ROW_HEIGHT / 2)));
+                        try { Thread.sleep(2000);} catch (InterruptedException e) {}
                     }
                     matches = element.findElements(By.xpath(LOCATOR_NEW_ROW));
                     if (CollectionUtils.isEmpty(matches)) {
-                        throw new IllegalArgumentException(msgPrefix + "Unable to retrieve columns - no 'Add Row'");
+                        // try clicking on first row
+                        WebElement firstRow =
+                            element.findElements(By.xpath("*")).stream()
+                                   .filter(elem -> StringUtils.containsIgnoreCase(elem.getAttribute("Name"), "row"))
+                                   .findFirst().orElse(null);
+                        if (firstRow != null) {
+                            firstRow.click();
+                            matches = element.findElements(By.xpath(LOCATOR_NEW_ROW));
+                        }
+                        if (CollectionUtils.isEmpty(matches)) {
+                            throw new IllegalArgumentException(
+                                msgPrefix + "Unable to retrieve any row; no 'Add Row' found");
+                        }
                     }
                 } else {
-                    // get the 'Template Add Row' element for new row and then get all the child elements with '*[@Name!='Column Headers']'
+                    // old table/datagrid acts weird some times... we need to click on it, it seems
+                    // element.click();
+
+                    // get the 'Add Row' element for new row and then get all the child elements with '*[@Name!='Column Headers']'
                     matches = element.findElements(By.xpath(LOCATOR_NEW_ROW));
-                    // in case the 'Template Add Row' not available, fetch the elements with previous row (row - 1)
+                    if (CollectionUtils.isEmpty(matches)) {
+                        try { Thread.sleep(5000);} catch (InterruptedException e) {}
+                        matches = element.findElements(By.xpath(LOCATOR_NEW_ROW));
+                    }
+
+                    // in case the 'Add Row' not available, fetch the elements with previous row (row - 1)
                     if (CollectionUtils.isEmpty(matches)) {
                         String cellsXpath = StringUtils.replace(LOCATOR_CELLS, "{row}", (row - 1) + "");
                         ConsoleUtils.log("fetching columns for previous row" + msgPrefix + "via " + cellsXpath);
@@ -367,9 +434,12 @@ public class DesktopTable extends DesktopElement {
                     }
                 }
 
+                WebElement addRow = matches.get(0);
+                // addRow.click();
+
                 String cellsXpath = "*[@Name!='Column Headers']";
                 ConsoleUtils.log("fetching columns for " + msgPrefix + "via " + cellsXpath);
-                columns = matches.get(0).findElements(By.xpath(cellsXpath));
+                columns = addRow.findElements(By.xpath(cellsXpath));
             } else {
 
                 String xpathRow = StringUtils.replace(LOCATOR_HIER_FIRST_CELL, "{row}", (row + 1) + "");
@@ -388,8 +458,14 @@ public class DesktopTable extends DesktopElement {
                 columns = element.findElements(By.xpath(cellsXpath));
             }
         } else {
-            String cellsXpath = StringUtils.replace(isTreeView ? LOCATOR_HIER_CELLS : LOCATOR_CELLS,
-                                                    "{row}", (row + 1) + "");
+            String cellsXpath;
+            if (isTreeView) {
+                cellsXpath = StringUtils.replace(LOCATOR_HIER_CELLS, "{row}", (row + 1) + "");
+            } else {
+                String rowName = getMatchingRowName("row " + (row + 1));
+                cellsXpath = "*[@Name='" + rowName + "']/*[@Name!='Column Headers']";
+            }
+
             ConsoleUtils.log("fetching columns for " + msgPrefix + "via " + cellsXpath);
             columns = element.findElements(By.xpath(cellsXpath));
         }
@@ -486,7 +562,7 @@ public class DesktopTable extends DesktopElement {
             }
 
             ConsoleUtils.log("editing " + msgPrefix2);
-            cellElement.click();
+            if (isInvokePatternAvailable(cellElement)) { cellElement.click(); }
             ConsoleUtils.log("clicked at (0,0) on " + msgPrefix2);
 
             if (StringUtils.equals(value, TABLE_CELL_CHECK) || StringUtils.equals(value, TABLE_CELL_UNCHECK)) {
@@ -839,6 +915,7 @@ public class DesktopTable extends DesktopElement {
         }
     }
 
+    // todo: not used?
     private List<WebElement> getRowElements() {
         List<WebElement> rows = new ArrayList<>();
         List<WebElement> dataElements = element.findElements(By.xpath(LOCATOR_TABLE_DATA));
@@ -862,6 +939,7 @@ public class DesktopTable extends DesktopElement {
         }
     }
 
+    // not used?
     private List<WebElement> rescanNullColumns(List<WebElement> columns, String cellsXpath) {
         List<WebElement> cols = new ArrayList<>();
         columns.forEach(column -> {
@@ -905,7 +983,7 @@ public class DesktopTable extends DesktopElement {
             try {
                 ElementType elementTypeHint = ElementType.valueOf(cellType);
                 if (elementTypeHint == FormattedTextbox) {
-                    return typeValueWithFunctionKey(tableRow, cellElement, value, true);
+                    return typeValueWithFunctionKey(tableRow, cellElement, value);
                 }
             } catch (IllegalArgumentException e) {
                 // never mind...
@@ -920,7 +998,13 @@ public class DesktopTable extends DesktopElement {
             // dramatically increase execution time esp. when the combo in question contains many selection items.
             // therefore for combo, we would directly enter text (and trust that) and then evaluate the combo's value
             // afterwards
-            return typeValueWithFunctionKey(tableRow, cellElement, value, false);
+            return typeValueWithFunctionKey(tableRow, cellElement, value);
+        }
+
+        String currentValue = getCellValue(cellElement);
+        if (StringUtils.equals(currentValue, value)) {
+            ConsoleUtils.log("Text '" + value + "' already entered into cell '" + column + "'");
+            return true;
         }
 
         if (isValuePatternAvailable(cellElement)) {
@@ -929,31 +1013,32 @@ public class DesktopTable extends DesktopElement {
             // driver.executeScript("automation: ValuePattern.SetValue", cellElement, value);
 
             // do I have Edit component under Table?
+            /*
             List<WebElement> matches = cellElement.findElements(By.xpath("*[@ControlType='" + EDIT + "']"));
             if (CollectionUtils.isEmpty(matches) && isInvokePatternAvailable(cellElement)) {
                 // the code below is alternative for combo which do not have 'Edit' component under Table even if it is editable.
                 // This is the case when sometime we can't type text in combo box of table row, need to select from dropdowns
                 ConsoleUtils.log("using shortcut on '" + column + "'");
-                driver.executeScript(SCRIPT_PREFIX_SHORTCUT + forceShortcutSyntax(value), cellElement);
+                driver.executeScript(SCRIPT_PREFIX_SHORTCUT +
+                                     (StringUtils.isNotEmpty(currentValue) ? "<[HOME]><[SHIFT-END]><[DEL]>" : "") +
+                                     forceShortcutSyntax(value), cellElement);
                 return true;
             }
+            */
 
             ConsoleUtils.log("type '" + value + "' on '" + column + "'");
-            return typeValueWithFunctionKey(tableRow, cellElement, value, false);
+            return typeValueWithFunctionKey(tableRow, cellElement, value);
         } else if (isTextPatternAvailable(cellElement)) {
             ConsoleUtils.log("using shortcut on '" + column + "'");
             driver.executeScript(SCRIPT_PREFIX_SHORTCUT + forceShortcutSyntax(value), cellElement);
             return true;
         } else {
             ConsoleUtils.log("using sendKeys on '" + column + "'");
-            return typeValueWithFunctionKey(tableRow, cellElement, value, false);
+            return typeValueWithFunctionKey(tableRow, cellElement, value);
         }
     }
 
-    private boolean typeValueWithFunctionKey(DesktopTableRow tableRow,
-                                             WebElement cellElement,
-                                             String value,
-                                             boolean isFormattedText) {
+    private boolean typeValueWithFunctionKey(DesktopTableRow tableRow, WebElement cellElement, String value) {
         ExecutionContext context = ExecutionThread.get();
         if (TextUtils.isBetween(value, "[", "]")) {
             ConsoleUtils.log("enter shortcut keys " + value + " on '" + label + "'");
@@ -961,6 +1046,10 @@ public class DesktopTable extends DesktopElement {
             driver.executeScript(toShortcuts(StringUtils.substringBetween(value, "[", "]")), cellElement);
             return false;
         }
+
+        String currentValue = getCellValue(cellElement);
+        String shortcutPrefix = SCRIPT_PREFIX_SHORTCUT +
+                                (StringUtils.isNotEmpty(currentValue) ? "<[HOME]><[SHIFT-END]><[DEL]>" : "");
 
         Pattern p = Pattern.compile("^(.+)\\[(.+)]$");
         Matcher m = p.matcher(value);
@@ -971,14 +1060,22 @@ public class DesktopTable extends DesktopElement {
             String postShortcut = m.group(2);
 
             if (context != null) { context.setData(CURRENT_DESKTOP_TABLE_ROW, tableRow); }
-            typeValue(cellElement, value, isFormattedText);
-            if (StringUtils.isNotBlank(postShortcut)) { driver.executeScript(toShortcuts(postShortcut), element); }
+
+            driver.executeScript(shortcutPrefix + forceShortcutSyntax(value) +
+                                 (StringUtils.isNotBlank(postShortcut) ? toShortcuts(postShortcut) : ""),
+                                 cellElement);
             return false;
         } else {
-            typeValue(cellElement, value, isFormattedText);
+            driver.executeScript(shortcutPrefix + forceShortcutSyntax(value), cellElement);
             return true;
         }
 
+    }
+
+    @Nullable
+    private String getCellValue(WebElement cellElement) {
+        try { return cellElement.getText(); } catch (WebDriverException e) { /* ignore... */ }
+        return null;
     }
 }
 

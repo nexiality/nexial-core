@@ -17,25 +17,25 @@
 
 package org.nexial.core.plugins.base;
 
-import java.awt.image.*;
-import java.io.File;
-import javax.imageio.ImageIO;
-import javax.validation.constraints.NotNull;
-
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.nexial.core.ExecutionThread;
+import org.nexial.core.logs.ExecutionLogger;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.model.TestStep;
 import org.nexial.core.plugins.web.WebDriverExceptionHelper;
 import org.nexial.core.utils.ConsoleUtils;
-import org.nexial.core.logs.ExecutionLogger;
 import org.openqa.selenium.Rectangle;
 import org.openqa.selenium.TakesScreenshot;
 import org.openqa.selenium.UnhandledAlertException;
 import org.openqa.selenium.WebDriverException;
+
+import javax.imageio.ImageIO;
+import javax.validation.constraints.NotNull;
+import java.awt.image.BufferedImage;
+import java.io.File;
 
 import static org.nexial.core.NexialConst.Data.QUIET;
 import static org.openqa.selenium.OutputType.BASE64;
@@ -53,10 +53,15 @@ public class ScreenshotUtils {
 
         try {
             BufferedImage image = ImageIO.read(imageFile);
-            BufferedImage cropped = image.getSubimage(Math.max(rect.getX(), 0),
-                                                      Math.max(rect.getY(), 0),
-                                                      Math.min(rect.getWidth(), image.getWidth()),
-                                                      Math.min(rect.getHeight(), image.getHeight()));
+            int imageWidth = image.getWidth();
+            int imageHeight = image.getHeight();
+            int cropX = Math.max(rect.getX(), 0);
+            int cropY = Math.max(rect.getY(), 0);
+            BufferedImage cropped =
+                image.getSubimage(cropX,
+                                  cropY,
+                                  Math.min((imageWidth - cropX), Math.min(rect.getWidth(), imageWidth)),
+                                  Math.min((imageHeight - cropY), Math.min(rect.getHeight(), imageHeight)));
             if (ImageIO.write(cropped, ext, output)) { return output; }
 
             error("Unable to save cropped screen capture successfully");
@@ -66,24 +71,6 @@ public class ScreenshotUtils {
             return imageFile;
         }
     }
-
-    // public static File saveDesktopScreenshot(String filename) {
-    //     if (filename == null) { throw new IllegalArgumentException("filename is null"); }
-    //
-    //     File output = prepScreenshotFile(filename);
-    //
-    //     try {
-    //         BufferedImage image =
-    //             new Robot().createScreenCapture(new java.awt.Rectangle(Toolkit.getDefaultToolkit().getScreenSize()));
-    //         ImageIO.write(image, StringUtils.removeStart(SCREENSHOT_EXT, "."), output);
-    //         ExecutionContext context = ExecutionThread.get();
-    //         if (context != null) { context.setData(OPT_LAST_SCREENSHOT_NAME, output.getName()); }
-    //         return output;
-    //     } catch (HeadlessException | AWTException | IOException e) {
-    //         error("failed to save screen capture to '" + filename + "': " + e.getMessage());
-    //         return null;
-    //     }
-    // }
 
     public static File saveScreenshot(TakesScreenshot screenshot, String filename) {
         if (screenshot == null) { throw new IllegalArgumentException("screenshot object is null"); }
