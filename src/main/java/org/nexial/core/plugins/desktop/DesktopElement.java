@@ -2123,8 +2123,8 @@ public class DesktopElement {
 
         if (elementType == TextArea) {
             driver.executeScript(toShortcuts("CTRL-HOME", "CTRL-SHIFT-END", "DEL"), getElement());
-        } else if (elementType == FormattedTextbox) {
-            clearFormattedTextbox(driver, element);
+        // } else if (elementType == FormattedTextbox) {
+        //     clearFormattedTextbox(driver, element);
         } else {
             // turns out that `clearFormattedTextbox` works better for both normal edit and formatted textbox
             clearFormattedTextbox(driver, element);
