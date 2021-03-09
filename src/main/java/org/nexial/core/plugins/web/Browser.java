@@ -20,6 +20,7 @@ package org.nexial.core.plugins.web;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.IterableUtils;
 import org.apache.commons.collections4.MapUtils;
+import org.apache.commons.collections4.map.UnmodifiableMap;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -28,6 +29,7 @@ import org.apache.commons.lang3.math.NumberUtils;
 import org.nexial.commons.proc.RuntimeUtils;
 import org.nexial.commons.utils.EnvUtils;
 import org.nexial.commons.utils.FileUtil;
+import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.NexialConst.*;
 import org.nexial.core.ShutdownAdvisor;
 import org.nexial.core.model.ExecutionContext;
@@ -58,6 +60,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.validation.constraints.NotNull;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -79,6 +82,8 @@ import static org.openqa.selenium.UnexpectedAlertBehaviour.ACCEPT;
 import static org.openqa.selenium.UnexpectedAlertBehaviour.IGNORE;
 import static org.openqa.selenium.chrome.ChromeDriverService.CHROME_DRIVER_LOG_PROPERTY;
 import static org.openqa.selenium.chrome.ChromeDriverService.CHROME_DRIVER_VERBOSE_LOG_PROPERTY;
+import static org.openqa.selenium.edge.EdgeDriverService.EDGE_DRIVER_EXE_PROPERTY;
+import static org.openqa.selenium.edge.EdgeDriverService.EDGE_DRIVER_VERBOSE_LOG_PROPERTY;
 import static org.openqa.selenium.firefox.FirefoxDriver.MARIONETTE;
 import static org.openqa.selenium.firefox.FirefoxDriverLogLevel.ERROR;
 import static org.openqa.selenium.ie.InternetExplorerDriver.*;
@@ -920,20 +925,28 @@ public class Browser implements ForcefulTerminate {
     }
 
     protected WebDriver initEdge(boolean chrome) throws IOException {
+        System.setProperty(EDGE_DRIVER_VERBOSE_LOG_PROPERTY, context.getStringConfig("web", profile, EDGE_LOG_ENABLED));
+
         WebDriverHelper helper = WebDriverHelper.newInstance(chrome ? edgechrome : edge, context);
-        return initEdgeDriver(helper);
-    }
-
-    private EdgeDriver initEdgeDriver(WebDriverHelper helper) throws IOException {
         helper.setBrowserBinLocation(resolveBinLocation());
-
         File driver = helper.resolveDriver();
-
         String driverPath = driver.getAbsolutePath();
-        context.setData(SELENIUM_EDGE_DRIVER, driverPath);
-        System.setProperty(SELENIUM_EDGE_DRIVER, driverPath);
+        context.setData(EDGE_DRIVER_EXE_PROPERTY, driverPath);
+        System.setProperty(EDGE_DRIVER_EXE_PROPERTY, driverPath);
 
         EdgeOptions options = new EdgeOptions();
+
+        String customBinary = context.getStringConfig("web", profile, CEF_CLIENT_LOCATION);
+        if (StringUtils.isNotEmpty(customBinary)) {
+            if (!FileUtil.isFileExecutable(customBinary)) {
+                throw new FileNotFoundException("Specified file is not an executable binary: " + customBinary);
+            }
+
+            options.setCapability(BROWSER_NAME, "webview2");
+            Map<String, Object> edgeOptions = new HashMap<>();
+            edgeOptions.put("binary", new File(customBinary).getAbsolutePath());
+            options.setCapability("ms:edgeOptions", UnmodifiableMap.unmodifiableMap(edgeOptions));
+        }
 
         if (context.getBooleanConfig("web", profile, BROWSER_INCOGNITO)) { options.setCapability("InPrivate", true); }
 
@@ -1351,6 +1364,7 @@ public class Browser implements ForcefulTerminate {
         return helper;
     }
 
+    @NotNull
     private String resolveBinLocation() {
         String configuredPath;
         Map<String, List<String>> binaryLocations;
@@ -1383,18 +1397,18 @@ public class Browser implements ForcefulTerminate {
 
         List<String> possibleLocations = IS_OS_WINDOWS ? binaryLocations.get("windows") :
                                          IS_OS_MAC ? binaryLocations.get("mac") :
-                                         IS_OS_LINUX ? binaryLocations.get("linux") : null;
+                                         IS_OS_LINUX ? binaryLocations.get("linux") :
+                                         null;
         if (CollectionUtils.isEmpty(possibleLocations)) {
-            ConsoleUtils.error("Unable to derive alternative " + browserType + " binary... ");
-            return null;
+            throw new IllegalArgumentException("Unable to derive alternative " + browserType + " binary... ");
         }
 
         for (String location : possibleLocations) {
             if (FileUtil.isFileExecutable(location)) { return new File(location).getAbsolutePath(); }
         }
 
-        ConsoleUtils.error("Unable to derive alternative " + browserType + " binary... ");
-        return null;
+        throw new IllegalArgumentException("Unable to derive alternative " + browserType + " binary via " +
+                                           TextUtils.toString(possibleLocations, ", ", null, null));
     }
 
     private void resolveIEDriverLocation() throws IOException {

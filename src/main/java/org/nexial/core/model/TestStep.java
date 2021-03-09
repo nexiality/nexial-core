@@ -386,15 +386,25 @@ public class TestStep extends TestStepManifest {
             if (plugin == null) { return StepResult.fail("Unknown/unsupported command target " + target); }
 
             if (plugin instanceof CanTakeScreenshot) { context.registerScreenshotAgent((CanTakeScreenshot) plugin); }
-            result = plugin.execute(command, args);
+            try {
+                result = plugin.execute(command, args);
+            } finally {
+                // web client perf. metrics collection
+                // only if the command is not "assert...", "wait...", "save...", etc.
+                if (context.getBooleanData(WEB_PERF_METRICS_ENABLED, getDefaultBool(WEB_PERF_METRICS_ENABLED)) &&
+                    !context.isInteractiveMode() &&
+                    StringUtils.equals("web", plugin.getTarget()) &&
+                    !StringUtils.startsWithAny(command, "assert", "wait", "save", "verify")) {
+                    ((WebCommand) plugin).collectClientPerfMetrics();
+                }
 
-            // web client perf. metrics collection
-            // only if the command is not "assert...", "wait...", "save...", etc.
-            if (context.getBooleanData(WEB_PERF_METRICS_ENABLED, getDefaultBool(WEB_PERF_METRICS_ENABLED)) &&
-                !context.isInteractiveMode() &&
-                StringUtils.equals("web", plugin.getTarget()) &&
-                !StringUtils.startsWithAny(command, "assert", "wait", "save", "verify")) {
-                ((WebCommand) plugin).collectClientPerfMetrics();
+                // support post-execution flow control
+                if (result != null) {
+                    context.setData(OPT_LAST_OUTCOME, result.isSuccess());
+                    result.update(FlowControlUtils.checkEndAfterIf(context, this));
+                    result.update(FlowControlUtils.checkEndLoopAfterIf(context, this));
+                    result.update(FlowControlUtils.checkFailAfterIf(context, this));
+                }
             }
         }
 

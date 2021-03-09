@@ -17,8 +17,6 @@
 
 package org.nexial.core.utils;
 
-import java.util.Map;
-
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -29,6 +27,8 @@ import org.nexial.core.model.FlowControl.Directive;
 import org.nexial.core.model.StepResult;
 import org.nexial.core.model.TestStep;
 import org.nexial.core.plugins.desktop.DesktopNotification;
+
+import java.util.Map;
 
 import static org.apache.commons.lang3.SystemUtils.IS_OS_WINDOWS;
 import static org.nexial.core.NexialConst.Data.REPEAT_UNTIL_LOOP_IN;
@@ -98,12 +98,24 @@ public final class FlowControlUtils {
         return checkFlowControl(context, testStep, FailIf);
     }
 
+    public static StepResult checkFailAfterIf(ExecutionContext context, TestStep testStep) {
+        return checkFlowControl(context, testStep, FailAfterIf);
+    }
+
     public static StepResult checkEndIf(ExecutionContext context, TestStep testStep) {
         return checkFlowControl(context, testStep, EndIf);
     }
 
+    public static StepResult checkEndAfterIf(ExecutionContext context, TestStep testStep) {
+        return checkFlowControl(context, testStep, EndAfterIf);
+    }
+
     public static StepResult checkEndLoopIf(ExecutionContext context, TestStep testStep) {
         return checkFlowControl(context, testStep, EndLoopIf);
+    }
+
+    public static StepResult checkEndLoopAfterIf(ExecutionContext context, TestStep testStep) {
+        return checkFlowControl(context, testStep, EndLoopAfterIf);
     }
 
     protected static StepResult checkFlowControl(ExecutionContext context, TestStep testStep, Directive directive) {
@@ -127,11 +139,13 @@ public final class FlowControlUtils {
 
         switch (directive) {
             case FailIf:
+            case FailAfterIf:
                 logger.log(testStep, MSG_ABORT + "due to flow control " + flowControlText);
                 context.setFailImmediate(true);
                 return StepResult.fail("current step failed: " + flowControlText);
 
             case EndIf:
+            case EndAfterIf:
                 logger.log(testStep, MSG_ABORT + "due to flow control " + flowControlText);
                 context.setEndImmediate(true);
 
@@ -147,6 +161,7 @@ public final class FlowControlUtils {
                 return StepResult.skipped("current step skipped: " + flowControlText);
 
             case EndLoopIf:
+            case EndLoopAfterIf:
                 logger.log(testStep, MSG_ABORT + "loop ends due to flow control " + flowControlText);
                 context.setBreakCurrentIteration(true);
                 return StepResult.skipped("current iteration ends here: " + flowControlText);

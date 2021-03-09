@@ -1816,13 +1816,16 @@ public final class NexialConst {
         public static final String CHROME_REMOTE_PORT = registerSysVar(NS_BROWSER + ".chrome.remote.port");
         public static final String CHROME_LOG_ENABLED = registerSysVar(NS_BROWSER + ".logChrome", false);
 
+        // edge
+        public static final String EDGE_LOG_ENABLED = registerSysVar(NS_BROWSER + ".logEdge", false);
+
         // electron
         public static final String ELECTRON_FORCE_TERMINATE = registerSysVar(NS_ELECTRON + "forceTerminate", false);
         public static final String ELECTRON_CLIENT_LOCATION = registerSysVar(NS_ELECTRON + "appLocation");
         public static final String ELECTRON_LOG_VERBOSE = registerSysVar(NS_BROWSER + ".logElectronVerbose", false);
         public static final String ELECTRON_LOG_ENABLED = registerSysVar(NS_BROWSER + ".logElectron", false);
 
-        // chrome embedded
+        // chrome or edgechrome embedded
         public static final String CEF_CLIENT_LOCATION = registerSysVar(NS_BROWSER + ".embedded.appLocation");
 
         // safari

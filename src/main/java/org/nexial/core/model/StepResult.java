@@ -128,4 +128,16 @@ public class StepResult {
                    .append("paramValues", ArrayUtils.toString(paramValues))
                    .toString();
     }
+
+    /** allow existing result to be updated/influenced by new result that is derived from the current step */
+    public void update(StepResult newResult) {
+        if (newResult == null) { return; }
+
+        String newMessage = newResult.getMessage();
+        if (StringUtils.isNotBlank(newMessage)) {
+            this.message = StringUtils.appendIfMissing(this.message, " ") + newMessage;
+        }
+
+        if (newResult.failed()) { success = false; }
+    }
 }

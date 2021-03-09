@@ -17,17 +17,13 @@
 
 package org.nexial.core.model;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import javax.validation.constraints.NotNull;
-
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.nexial.commons.utils.RegexUtils;
 import org.nexial.core.utils.ConsoleUtils;
+
+import javax.validation.constraints.NotNull;
+import java.util.*;
 
 import static org.nexial.core.NexialConst.FlowControls.ARG_PREFIX;
 import static org.nexial.core.NexialConst.FlowControls.REGEX_ARGS;
@@ -75,7 +71,10 @@ public class FlowControl {
         EndLoopIf(true),
         ProceedIf(true),
         TimeTrackStart(true),
-        TimeTrackEnd(false);
+        TimeTrackEnd(false),
+        EndAfterIf(true),
+        FailAfterIf(true),
+        EndLoopAfterIf(true);
 
         private boolean conditionRequired;
 
