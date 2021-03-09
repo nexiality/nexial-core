@@ -2223,14 +2223,11 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
 
     protected StepResult clickOffset(WebElement elem, String xOffset, String yOffset) {
         requiresNotNull(elem, "Unable to reference target element", elem);
-        requiresPositiveNumber(xOffset, "Invalid xOffset", xOffset);
-        requiresPositiveNumber(yOffset, "Invalid yOffset", yOffset);
+        requiresInteger(xOffset, "Invalid xOffset", xOffset);
+        requiresInteger(yOffset, "Invalid yOffset", yOffset);
 
         int x = NumberUtils.toInt(xOffset);
-        requires(x > 0, "Invalid xOffset", xOffset);
-
         int y = NumberUtils.toInt(yOffset);
-        requires(y > 0, "Invalid yOffset", yOffset);
 
         Actions actions = new Actions(getDriver()).moveToElement(elem, x, y).click();
         actions.perform();
