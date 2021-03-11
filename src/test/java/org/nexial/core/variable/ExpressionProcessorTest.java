@@ -789,6 +789,15 @@ public class ExpressionProcessorTest {
         assertEquals("96", subject.process("[NUMBER(96.49341) => floor]"));
         assertEquals("96.49", subject.process("[NUMBER(96.49341) => roundTo(0.00)]"));
         assertEquals("100", subject.process("[NUMBER(96.49341) => roundTo(000.00)]"));
+
+        assertEquals("100.0", subject.process("[NUMBER(96.49341) => max(100.00)]"));
+        assertEquals("1.41", subject.process("[NUMBER(1.41) => max(1.41000)]"));
+        assertEquals("0", subject.process("[NUMBER(0) => max(-0.002)]"));
+        assertEquals("17.91", subject.process("[NUMBER(15.02) => max(17.91)]"));
+        assertEquals("18.0", subject.process("[NUMBER(15.02) => max(15.05,17.91,-29.12,18.0)]"));
+
+        assertEquals("-0.002", subject.process("[NUMBER(0) => min(-0.00200)]"));
+        assertEquals("0.412", subject.process("[NUMBER(0.412) => min(0.602,14.02,4.412,0.415)]"));
     }
 
     @Test

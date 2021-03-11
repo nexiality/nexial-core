@@ -17,13 +17,6 @@
 
 package org.nexial.core.variable;
 
-import java.lang.reflect.Method;
-import java.math.BigDecimal;
-import java.math.RoundingMode;
-import java.util.Arrays;
-import java.util.Map;
-import javax.validation.constraints.NotNull;
-
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
@@ -33,6 +26,14 @@ import org.nexial.core.ExecutionThread;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.plugins.base.NumberCommand;
 import org.nexial.core.utils.ConsoleUtils;
+
+import javax.annotation.Nullable;
+import javax.validation.constraints.NotNull;
+import java.lang.reflect.Method;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.util.Arrays;
+import java.util.Map;
 
 import static java.math.RoundingMode.UP;
 import static org.nexial.commons.utils.TextUtils.CleanNumberStrategy.REAL;
@@ -266,6 +267,50 @@ public class NumberTransformer<T extends NumberDataType> extends Transformer {
 
     public T store(T data, String var) {
         snapshot(var, data);
+        return data;
+    }
+
+    /**
+     * replace current value with the maximum numeric value amongst current value and the {@literal numbers} specified.
+     */
+    public T max(T data, String... numbers) throws TypeConversionException { return findTopValue(data, numbers, true); }
+
+    /**
+     * replace current value with the min numeric value amongst current value and the {@literal numbers} specified.
+     */
+    public T min(T data, String... numbers) throws TypeConversionException { return findTopValue(data, numbers, false);}
+
+    @Nullable
+    private T findTopValue(T data, String[] numbers, boolean compareGreater) throws TypeConversionException {
+        if (data == null || data.getTextValue() == null) { return data; }
+
+        String currentText = data.textValue;
+        Number current = data.value;
+
+        if (ArrayUtils.isNotEmpty(numbers)) {
+            for (String number : numbers) {
+                if (StringUtils.isBlank(number)) { continue; }
+                try {
+                    number = TextUtils.cleanNumber(number, REAL);
+                    Number num = isDecimal(number) ?
+                                 BigDecimal.valueOf(NumberUtils.toDouble(number)).doubleValue() :
+                                 NumberUtils.toLong(number);
+                    boolean replace = compareGreater ?
+                                      num.doubleValue() > current.doubleValue() :
+                                      num.doubleValue() < current.doubleValue();
+                    if (replace) {
+                        current = num;
+                        currentText = number;
+                    }
+                } catch (IllegalArgumentException e) {
+                    ConsoleUtils.log("[" + number + "] is not a number; ignored...");
+                }
+            }
+
+            data.setTextValue(currentText);
+            data.init();
+        }
+
         return data;
     }
 
