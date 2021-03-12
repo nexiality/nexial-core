@@ -447,7 +447,7 @@ public class Browser implements ForcefulTerminate {
         }
 
         try {
-            ConsoleUtils.log("Quits this driver, closing every associated window.");
+            ConsoleUtils.log("Quit this driver, closing every associated window.");
             driver.quit();
             Thread.sleep(2000);
         } catch (Throwable e) {

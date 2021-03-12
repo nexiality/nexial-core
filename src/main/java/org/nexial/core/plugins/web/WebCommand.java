@@ -132,6 +132,11 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
         if (!context.isDelayBrowser()) { initWebDriver(); }
 
+        // after the first initialization of the webdriver, we don't need to proactively (re)init it again...
+        // setting this avoid the too-eager re-init of browser already closed.
+        // webdriver readiness is already set in place to many of the web commands.
+        context.setData(OPT_DELAY_BROWSER, false);
+
         ws = (WsCommand) context.findPlugin("ws");
         ws.init(context);
 
