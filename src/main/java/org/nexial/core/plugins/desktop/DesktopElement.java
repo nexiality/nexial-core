@@ -509,11 +509,11 @@ public class DesktopElement {
         if (!element.isEnabled() && elementType.isTextPatternAvailable()) { return getValue(element); }
 
         if (elementType == SingleSelectList) {
-            ComboBox winiumComboBox = new ComboBox(element);
-            RemoteWebElement selected = winiumComboBox.findSelected();
-            if (selected == null) { return null; }
-            return StringUtils.equals(selected.getAttribute("ControlType"), LIST_ITEM) ?
-                   selected.getAttribute("Name") : selected.getText();
+            String name = element.getAttribute("Name");
+            String text = element.getText();
+            return controlType.equals(LIST_ITEM) ?
+                   StringUtils.defaultIfEmpty(name, text) :
+                   StringUtils.defaultIfEmpty(text, name);
         }
 
         WebElement targetElement;
@@ -521,7 +521,7 @@ public class DesktopElement {
             targetElement = resolveComboContentElement(element);
         } else if (elementType == TextArea) {
             String controlType = element.getAttribute("ControlType");
-            if (StringUtils.endsWith(controlType, "ControlType.Document")) {
+            if (StringUtils.endsWith(controlType, DOCUMENT)) {
                 targetElement = element;
             } else {
                 element.click();
@@ -2145,25 +2145,20 @@ public class DesktopElement {
         String msgSuccess = "Combo '" + label + "' cleared";
 
         if (elementType == DateTimeCombo || elementType == TypeAheadCombo || elementType == SingleSelectCombo) {
-            String script = toShortcuts("HOME", "SHIFT-END", "DEL");
-            if (elementType == SingleSelectCombo) { script = toShortcuts("ESC"); }
-            driver.executeScript(script, element);
+            driver.executeScript(elementType == SingleSelectCombo ?
+                                 toShortcuts("ESC") : toShortcuts("HOME", "SHIFT-END", "DEL"),
+                                 element);
             autoClearModalDialog();
             return StepResult.success(msgSuccess);
         }
 
         if (elementType == SingleSelectList) {
-            driver.executeScript(toShortcuts("HOME", "TAB"), element);
+            String selectedText = getText();
+            if (StringUtils.isEmpty(selectedText)) { return StepResult.success("Combo '%s' is already cleared", label);}
+
+            driver.executeScript(toShortcuts("ESC", "TAB"), element);
             autoClearModalDialog();
-
-            ComboBox winiumComboBox = new ComboBox(element);
-            RemoteWebElement selected = winiumComboBox.findSelected();
-            if (selected == null) {
-                return StepResult.fail("Unable to validate currently selected value for Combo '" + label + "'");
-            }
-
-            String selectedText = StringUtils.equals(selected.getAttribute("ControlType"), LIST_ITEM) ?
-                                  selected.getAttribute("Name") : selected.getText();
+            selectedText = getText();
             if (StringUtils.isBlank(selectedText)) { return StepResult.success(msgSuccess); }
 
             return StepResult.success("After attempting to clear Combo '" + label + "', " +
