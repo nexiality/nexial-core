@@ -19,8 +19,9 @@ package org.nexial.core.interactive
 import com.diogonunes.jcdp.bw.Printer.Builder
 import com.diogonunes.jcdp.bw.Printer.Types
 import com.diogonunes.jcdp.color.ColoredPrinter
-import com.diogonunes.jcdp.color.api.Ansi.*
 import com.diogonunes.jcdp.color.api.Ansi.Attribute.*
+import com.diogonunes.jcdp.color.api.Ansi.BColor
+import com.diogonunes.jcdp.color.api.Ansi.FColor
 import org.apache.commons.collections4.CollectionUtils
 import org.apache.commons.collections4.MapUtils
 import org.apache.commons.lang3.ArrayUtils
@@ -99,16 +100,17 @@ open class InteractiveConsole {
         private const val HDR_SUMMARY = "${META_START}Summary $META_END"
         private const val HDR_EXCEPTION = "${META_START}ERROR   $META_END"
 
-        private val SUB1_START = StringUtils.repeat(" ", HDR_ACTIVITY.length)
+        // private val SUB1_START = StringUtils.repeat(" ", HDR_ACTIVITY.length)
+        private val SUB1_START = "  "
         private const val SUB2_END = ": "
         private const val CMD_START = "  "
         private const val CMD_END = " "
         private const val FILLER = '~'
 
-        private val HDR_TIMESPAN = "${SUB1_START}timespan       $SUB2_END"
-        private val HDR_DURATION = "${SUB1_START}duration       $SUB2_END"
+        private val HDR_TIMESPAN  = "${SUB1_START}timespan       $SUB2_END"
+        private val HDR_DURATION  = "${SUB1_START}duration       $SUB2_END"
         private val HDR_ITERATION = "${SUB1_START}iteration      $SUB2_END"
-        private val HDR_STATS = "${SUB1_START}total/pass/fail$SUB2_END"
+        private val HDR_STATS     = "${SUB1_START}total/pass/fail$SUB2_END"
 
         private const val MAX_LENGTH_BASE = PROMPT_LINE_WIDTH - MARGIN_LEFT.length - MARGIN_RIGHT.length
         private const val MAX_LENGTH_SCRIPT = MAX_LENGTH_BASE - HDR_SCRIPT.length
@@ -171,16 +173,16 @@ open class InteractiveConsole {
             val context = session.context
             val testScenarios = context.testScenarios
             if (CollectionUtils.isEmpty(testScenarios)) {
-                System.err.println("ERROR: Test steps executed")
+                System.err.println("ERROR: execution but no test scenario data found")
                 return
             }
 
             testScenarios.forEach { scenario -> showRun(scenario.executionSummary, session) }
-            println()
-            println()
         }
 
         fun showRun(scenarioSummary: ExecutionSummary, session: InteractiveSession) {
+            if (scenarioSummary.endTime < 1) scenarioSummary.endTime = System.currentTimeMillis()
+
             printConsoleHeaderTop(out, "NEXIAL INTERACTIVE", ConsoleUtils.FILLER)
             printHeaderLine(out, HDR_EXECUTED, formatExecutionMeta(scenarioSummary.startTime))
             printHeaderLine(out, HDR_SCRIPT, formatTestScript(session.script))
@@ -195,28 +197,24 @@ open class InteractiveConsole {
             activitySummaries.forEach { activity ->
                 val endTime = activity.endTime
                 val startTime = activity.startTime
-                val timeSpan = formatLongDate(startTime) + " - " + formatLongDate(endTime)
                 val duration = DateUtility.formatStopWatchTime(endTime - startTime)
 
-                val header = if (activity.executionLevel == STEP) HDR_STEPS else HDR_ACTIVITY
-                printHeaderLine(out, header, activity.name)
-                printHeaderLine(out, HDR_TIMESPAN, timeSpan)
-                printHeaderLine(out, HDR_DURATION, duration)
-                printStats(activity)
+                printHeaderLine(out, if (activity.executionLevel == STEP) HDR_STEPS else HDR_ACTIVITY, activity.name)
+                printHeaderLine(out, HDR_TIMESPAN, "${formatLongDate(startTime)} - ${formatLongDate(endTime)} ($duration)")
+                // printHeaderLine(out, HDR_DURATION, duration)
+                printStats(activity, null)
             }
 
             printConsoleSectionSeparator(out, FILLER)
 
-            scenarioSummary.endTime = System.currentTimeMillis()
             val endTime = scenarioSummary.endTime
             val startTime = scenarioSummary.startTime
-            val timeSpan = formatLongDate(startTime) + " - " + formatLongDate(endTime)
             val duration = DateUtility.formatStopWatchTime(endTime - startTime)
             printHeaderLine(out, HDR_SUMMARY, scenarioSummary.name)
-            printHeaderLine(out, HDR_TIMESPAN, timeSpan)
-            printHeaderLine(out, HDR_DURATION, duration)
-            printHeaderLine(out, HDR_ITERATION, session.iteration.toString())
-            printStats(scenarioSummary)
+            printHeaderLine(out, HDR_TIMESPAN, "${formatLongDate(startTime)} - ${formatLongDate(endTime)} ($duration)")
+            // printHeaderLine(out, HDR_DURATION, duration)
+            // printHeaderLine(out, HDR_ITERATION, session.iteration.toString())
+            printStats(scenarioSummary, session.iteration.toString())
 
             val context = session.context
             printReferenceData("script reference data", context.gatherScriptReferenceData())
@@ -326,21 +324,20 @@ open class InteractiveConsole {
             val header1 = "[$header]"
 
             CONSOLE.print(MARGIN_LEFT)
-            CONSOLE.print(SUB1_START)
+            // CONSOLE.print(SUB1_START)
             CPRINTER.print(header1, UNDERLINE, FColor.CYAN, BColor.NONE)
             CPRINTER.clear()
 
-            val fillerLength = LEFT_MARGIN_L3_HEADER - header1.length
+            val fillerLength = LEFT_MARGIN_L3_HEADER - header1.length + SUB1_START.length
             CONSOLE.print(StringUtils.repeat(" ", fillerLength))
             CONSOLE.println(MARGIN_RIGHT)
 
-            refs.forEach { key, value ->
-                val refKey = SUB1_START + StringUtils.rightPad("($key)", MAX_LENGTH_REF, " ") + SUB2_END
-                printHeaderLine(out, refKey, value)
+            refs.forEach { (key, value) ->
+                printHeaderLine(out, SUB1_START + StringUtils.rightPad("($key)", MAX_LENGTH_REF, " ") + SUB2_END, value)
             }
         }
 
-        private fun printStats(executionSummary: ExecutionSummary) {
+        private fun printStats(executionSummary: ExecutionSummary, iteration: String?) {
             val totalCount = executionSummary.totalSteps
             val failCount = executionSummary.failCount
             val skipCount = totalCount - executionSummary.executed
@@ -350,17 +347,18 @@ open class InteractiveConsole {
             val fail = StringUtils.leftPad(failCount.toString(), 3)
             val skipped = StringUtils.leftPad(skipCount.toString(), 3)
 
-            val headerLine = MARGIN_LEFT + HDR_STATS
             val skippedStat = if (skipCount > 0) "  (SKIPPED:$skipped)" else ""
-            val statDetails = total + MULTI_SEP + pass + MULTI_SEP + fail + skippedStat
+            val iterationStat = if (iteration == null) "" else "  (ITERATION:$iteration)"
+            val statDetails = total + MULTI_SEP + pass + MULTI_SEP + fail + skippedStat + iterationStat
 
-            CONSOLE.print(headerLine)
+            CONSOLE.print(MARGIN_LEFT + HDR_STATS)
             CPRINTER.print(total, BOLD, FColor.WHITE, BColor.NONE)
-            CPRINTER.print(MULTI_SEP, Attribute.NONE, FColor.WHITE, BColor.NONE)
+            CPRINTER.print(MULTI_SEP, NONE, FColor.WHITE, BColor.NONE)
             CPRINTER.print(pass, BOLD, FColor.GREEN, BColor.NONE)
-            CPRINTER.print(MULTI_SEP, Attribute.NONE, FColor.WHITE, BColor.NONE)
+            CPRINTER.print(MULTI_SEP, NONE, FColor.WHITE, BColor.NONE)
             CPRINTER.print(fail, BOLD, if (failCount < 1) FColor.WHITE else FColor.RED, BColor.NONE)
             if (skipCount > 0) CPRINTER.print(skippedStat, CLEAR, FColor.YELLOW, BColor.NONE)
+            if (iteration != null) CPRINTER.print(iterationStat, CLEAR, FColor.WHITE, BColor.NONE)
             CPRINTER.clear()
 
             val fillerLength = LEFT_MARGIN_L2_VAL - statDetails.length
@@ -386,7 +384,7 @@ open class InteractiveConsole {
         }
 
         private fun formatExecutionMeta(startTime: Long) =
-                "$USER_NAME$MULTI_SEP${getHostName()} ($OS_NAME $OS_VERSION)$MULTI_SEP${formatLongDate(startTime)}"
+                "$USER_NAME on ${getHostName()} ($OS_NAME $OS_VERSION); ${formatLongDate(startTime)}"
 
         init {
             try {

@@ -55,13 +55,9 @@ import org.nexial.core.interactive.InteractiveConsole.Commands.SET_SCENARIO
 import org.nexial.core.interactive.InteractiveConsole.Commands.SET_SCRIPT
 import org.nexial.core.interactive.InteractiveConsole.Commands.SET_STEPS
 import org.nexial.core.interactive.InteractiveConsole.Commands.TOGGLE_RECORDING
-import org.nexial.core.model.ExecutionContext
-import org.nexial.core.model.ExecutionDefinition
-import org.nexial.core.model.ExecutionSummary
+import org.nexial.core.model.*
 import org.nexial.core.model.ExecutionSummary.ExecutionLevel
 import org.nexial.core.model.ExecutionSummary.ExecutionLevel.*
-import org.nexial.core.model.TestCase
-import org.nexial.core.model.TestScenario
 import org.nexial.core.utils.ConsoleUtils
 import org.nexial.core.utils.ExecUtils
 import java.io.File
@@ -307,9 +303,9 @@ class NexialInteractive {
             }
 
             // find target scenario object
+            val availableScenarios = context.testScenarios
             targetScenario = session.inflightScenario
             if (targetScenario == null) {
-                val availableScenarios = context.testScenarios
                 for (testScenario in availableScenarios) {
                     if (StringUtils.equals(testScenario.name, session.scenario)) {
                         targetScenario = testScenario
@@ -323,8 +319,6 @@ class NexialInteractive {
                 }
 
                 session.inflightScenario = targetScenario
-                availableScenarios.clear()
-                availableScenarios.add(targetScenario)
             }
 
             // gather pre-execution reference data here, so that after the execution we can reset the reference data
@@ -336,6 +330,8 @@ class NexialInteractive {
             ref.forEach { (name, value) -> context.setData(SCENARIO_REF_PREFIX + name, context.replaceTokens(value)) }
 
             // reset for this run
+            availableScenarios.clear()
+            availableScenarios.add(targetScenario)
             scenarioSummary = resetScenarioExecutionSummary(session, targetScenario)
 
             if (session.activities.isNotEmpty())
@@ -503,6 +499,7 @@ class NexialInteractive {
                                       level: ExecutionLevel) {
         es.scriptFile = session.script
         es.startTime = System.currentTimeMillis()
+        es.endTime = 0
         es.executionLevel = level
         es.name = name
         es.nestedExecutions.clear()
