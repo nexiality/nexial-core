@@ -319,6 +319,8 @@ class NexialInteractive {
                 }
 
                 session.inflightScenario = targetScenario
+                availableScenarios.clear()
+                availableScenarios.add(targetScenario)
             }
 
             // gather pre-execution reference data here, so that after the execution we can reset the reference data
@@ -330,8 +332,7 @@ class NexialInteractive {
             ref.forEach { (name, value) -> context.setData(SCENARIO_REF_PREFIX + name, context.replaceTokens(value)) }
 
             // reset for this run
-            availableScenarios.clear()
-            availableScenarios.add(targetScenario)
+            availableScenarios.forEach { scenario -> resetScenarioExecutionSummary(session, scenario) }
             scenarioSummary = resetScenarioExecutionSummary(session, targetScenario)
 
             if (session.activities.isNotEmpty())

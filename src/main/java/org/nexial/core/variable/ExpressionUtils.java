@@ -17,18 +17,19 @@
 
 package org.nexial.core.variable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.ExecutionThread;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.utils.CheckUtils;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.OutputResolver;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 import static org.nexial.core.NexialConst.Data.RESOLVE_TEXT_AS_IS;
 import static org.nexial.core.SystemVariables.getDefaultBool;
@@ -110,11 +111,6 @@ public class ExpressionUtils {
         }
     }
 
-    protected static String fixControlChars(String text) {
-        text = StringUtils.replace(text, "\\n", "\n");
-        text = StringUtils.replace(text, "\\r", "\r");
-        text = StringUtils.replace(text, "\\t", "\t");
-        return text;
-    }
+    protected static String fixControlChars(String text) { return TextUtils.escapeLiterals(text); }
 
 }

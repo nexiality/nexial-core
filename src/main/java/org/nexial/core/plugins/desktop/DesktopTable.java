@@ -526,6 +526,7 @@ public class DesktopTable extends DesktopElement {
         StringBuilder messageBuffer = new StringBuilder();
 
         ExecutionContext context = ExecutionThread.get();
+        boolean tabAfterEdit = context.getBooleanData(CURRENT_DESKTOP_TABLE_TAB_AFTER_EDIT, DEF_DESKTOP_TABLE_TAB_AFTER_EDIT);
 
         // loop through each nameValues pairs
         WebElement cellElement;
@@ -605,6 +606,8 @@ public class DesktopTable extends DesktopElement {
                         }
 
                         messageBuffer.append(msgPrefix2).append("unchecked").append(NL);
+                    } else {
+                        if (tabAfterEdit) { driver.executeScript(toShortcuts("TAB"), checkboxElement); }
                     }
                 } else {
                     if (StringUtils.equals(value, TABLE_CELL_CHECK)) {
@@ -618,15 +621,19 @@ public class DesktopTable extends DesktopElement {
                         }
 
                         messageBuffer.append(msgPrefix2).append("checked").append(NL);
+                    } else {
+                        if (tabAfterEdit) { driver.executeScript(toShortcuts("TAB"), checkboxElement); }
                     }
                 }
             } else if (StringUtils.isEmpty(value) || StringUtils.equals(value, TABLE_CELL_CLEAR)) {
                 clearCellContent(cellElement);
                 messageBuffer.append(msgPrefix2).append("content cleared").append(NL);
+                if (tabAfterEdit) { driver.executeScript(toShortcuts("TAB"), cellElement); }
             } else {
                 // focused would be false if shortcut key is used
                 focused = typeCellContent(tableRow, cellElement, column, value);
                 messageBuffer.append(msgPrefix2).append("entered text '").append(value).append("'").append(NL);
+                if (tabAfterEdit) { driver.executeScript(toShortcuts("TAB"), cellElement); }
             }
         }
 

@@ -58,12 +58,12 @@ public class DesktopConst {
     public static final String CURRENT_DESKTOP_TABLE_NAME = NS_DESKTOP + "table.name";
     public static final String CURRENT_DESKTOP_TABLE_ROW = NS_DESKTOP + "table.row";
     public static final String CURRENT_DESKTOP_TABLE_ROW_NAME = NS_DESKTOP + "table.row.name";
-    public static final String CURRENT_DESKTOP_TABLE_EDITABLE_COLUMN_NAME =
-        CURRENT_DESKTOP_TABLE + "editable.column.name";
-    public static final String CURRENT_DESKTOP_TABLE_EDITABLE_COLUMN_FOUND =
-        CURRENT_DESKTOP_TABLE + "editable.column.found";
+    public static final String CURRENT_DESKTOP_TABLE_EDITABLE_COLUMN_NAME = CURRENT_DESKTOP_TABLE + "editable.column.name";
+    public static final String CURRENT_DESKTOP_TABLE_EDITABLE_COLUMN_FOUND = CURRENT_DESKTOP_TABLE + "editable.column.found";
     public static final String CURRENT_DESKTOP_TABLE_CLICK_BEFORE_EDIT = CURRENT_DESKTOP_TABLE + ".clickBeforeEdit";
     public static final boolean DEF_DESKTOP_TABLE_CLICK_BEFORE_EDIT = true;
+    public static final String CURRENT_DESKTOP_TABLE_TAB_AFTER_EDIT = CURRENT_DESKTOP_TABLE + ".tabAfterEdit";
+    public static final boolean DEF_DESKTOP_TABLE_TAB_AFTER_EDIT = false;
     public static final String CURRENT_DESKTOP_HIER_TABLE = NS_DESKTOP + "hiertable";
     public static final String CURRENT_DESKTOP_HIER_TABLE_NAME = NS_DESKTOP + "hiertable.name";
     public static final String DESKTOP_SCREENSHOT_FULLSCREEN = NS_DESKTOP + "fullScreenCapture";

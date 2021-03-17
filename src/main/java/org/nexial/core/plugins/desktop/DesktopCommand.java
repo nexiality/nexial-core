@@ -1878,7 +1878,7 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
             nameValues = StringUtils.replace(nameValues, "\r", pairDelim);
         }
 
-        Map<String, String> nameValuePairs = TextUtils.toMap(nameValues, pairDelim, "=");
+        Map<String, String> nameValuePairs = TextUtils.toMap(nameValues, pairDelim, "=", true);
         requires(MapUtils.isNotEmpty(nameValuePairs), "Invalid name-values", nameValues);
         return nameValuePairs;
     }

@@ -28,6 +28,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.nexial.core.utils.ConsoleUtils;
 
+import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
 import java.io.File;
 import java.io.IOException;
@@ -219,6 +220,11 @@ public final class TextUtils {
 
     @NotNull
     public static Map<String, String> toMap(String text, String pairDelim, String nameValueDelim) {
+        return toMap(text, pairDelim, nameValueDelim, false);
+    }
+
+    @NotNull
+    public static Map<String, String> toMap(String text, String pairDelim, String nameValueDelim, boolean unescape) {
         Map<String, String> map = new LinkedHashMap<>();
 
         if (StringUtils.isEmpty(text)) { return map; }
@@ -228,7 +234,11 @@ public final class TextUtils {
         String[] pairs = StringUtils.splitByWholeSeparatorPreserveAllTokens(text, pairDelim);
         for (String pair : pairs) {
             String key = StringUtils.substringBefore(pair, nameValueDelim);
+            if (unescape) { key = escapeLiterals(key); }
+
             String value = StringUtils.substringAfter(pair, nameValueDelim);
+            if (unescape) { value = escapeLiterals(value); }
+
             map.put(key, value);
         }
 
@@ -1293,6 +1303,20 @@ public final class TextUtils {
                    return StringUtils.isBlank(key) ?
                           "" : StringUtils.rightPad(key, TO_STRING_KEY_LENGTH) + "=" + value + delimiter;
                }).collect(Collectors.joining(""));
+    }
+
+    @Nullable
+    public static String escapeLiterals(String text) {
+        if (StringUtils.isBlank(text)) { return text; }
+        text = StringUtils.replace(text, "\\t", "\t");
+        text = StringUtils.replace(text, "\\b", "\b");
+        text = StringUtils.replace(text, "\\n", "\n");
+        text = StringUtils.replace(text, "\\r", "\r");
+        text = StringUtils.replace(text, "\\f", "\f");
+        text = StringUtils.replace(text, "\\'", "'");
+        text = StringUtils.replace(text, "\\\"", "\"");
+        text = StringUtils.replace(text, "\\\\", "\\");
+        return text;
     }
 
     /** check if one of the items of {@code actual} would poly-match against the specified {@code expected}. */
