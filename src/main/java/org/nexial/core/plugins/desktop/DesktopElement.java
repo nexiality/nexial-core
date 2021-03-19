@@ -42,7 +42,6 @@ import org.openqa.selenium.WebElement;
 import org.openqa.selenium.interactions.Actions;
 import org.openqa.selenium.remote.RemoteWebElement;
 import org.openqa.selenium.winium.WiniumDriver;
-import winium.elements.desktop.ComboBox;
 
 import javax.annotation.Nonnull;
 import java.io.File;
@@ -509,6 +508,12 @@ public class DesktopElement {
         if (!element.isEnabled() && elementType.isTextPatternAvailable()) { return getValue(element); }
 
         if (elementType == SingleSelectList) {
+            if (!controlType.equals(LIST_ITEM)) {
+                // take the long way... find selected element (if any)
+                WebElement selected = findFirstElement("*[@ControlType='" + LIST_ITEM + "' and @IsSelected='True']");
+                if (selected != null) { return selected.getAttribute("Name"); }
+            }
+
             String name = element.getAttribute("Name");
             String text = element.getText();
             return controlType.equals(LIST_ITEM) ?
@@ -684,7 +689,7 @@ public class DesktopElement {
 
             // could be single select combo or date/time combo
             WebElement element = targetElement.findElement(By.xpath(LOCATOR_COMBOBOX));
-            if (elementType == DateTimeCombo) {
+            if (elementType == DateTimeCombo && element != null) {
                 return element.findElement(By.xpath(LOCATOR_EDITOR));
             }
 
@@ -1478,7 +1483,7 @@ public class DesktopElement {
 
         WebElement containerElement = namelessContainer.getElement();
         DesktopConst.debug(format("collecting nested elements in container (AutomationId=%s,ClassName=%s)",
-                                                                                                             containerElement.getAttribute("AutomationId"), containerElement.getAttribute("ClassName")));
+                                  containerElement.getAttribute("AutomationId"), containerElement.getAttribute("ClassName")));
 
         // 1. check for child elements
         List<WebElement> children = containerElement.findElements(By.xpath("*"));
@@ -2123,8 +2128,8 @@ public class DesktopElement {
 
         if (elementType == TextArea) {
             driver.executeScript(toShortcuts("CTRL-HOME", "CTRL-SHIFT-END", "DEL"), getElement());
-        // } else if (elementType == FormattedTextbox) {
-        //     clearFormattedTextbox(driver, element);
+            // } else if (elementType == FormattedTextbox) {
+            //     clearFormattedTextbox(driver, element);
         } else {
             // turns out that `clearFormattedTextbox` works better for both normal edit and formatted textbox
             clearFormattedTextbox(driver, element);
@@ -2214,7 +2219,8 @@ public class DesktopElement {
                 String existingText = embeddableTextBox.getText();
                 if (!StringUtils.equals(existingText, text)) {
                     driver.executeScript(SCRIPT_PREFIX_SHORTCUT +
-                                         (StringUtils.isNotEmpty(existingText) ? "<[ESC]><[HOME]><[SHIFT-END]><[DEL]>" : "") +
+                                         (StringUtils.isNotEmpty(existingText) ? "<[ESC]><[HOME]><[SHIFT-END]><[DEL]>" :
+                                          "") +
                                          forceShortcutSyntax(text),
                                          embeddableTextBox);
                 }
