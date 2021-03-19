@@ -20,7 +20,6 @@ package org.nexial.core.variable;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.ExecutionThread;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.utils.CheckUtils;
@@ -111,6 +110,11 @@ public class ExpressionUtils {
         }
     }
 
-    protected static String fixControlChars(String text) { return TextUtils.escapeLiterals(text); }
+    protected static String fixControlChars(String text) {
+        text = StringUtils.replace(text, "\\n", "\n");
+        text = StringUtils.replace(text, "\\r", "\r");
+        text = StringUtils.replace(text, "\\t", "\t");
+        return text;
+    }
 
 }

@@ -41,7 +41,7 @@ class ExecutionInspector(private val baseCommand: BaseCommand) {
         // just in case
         if (ExecutionThread.get() == null) ExecutionThread.set(context)
 
-        print(quickHelp)
+        print(inspectPrompt)
         print(prompt)
 
         val stdin = Scanner(System.`in`)
@@ -50,6 +50,11 @@ class ExecutionInspector(private val baseCommand: BaseCommand) {
         while (StringUtils.isNotBlank(input)) {
             try {
                 when {
+                    // show help
+                    input == help -> {
+                        print(quickHelp)
+                    }
+
                     // save var
                     RegexUtils.isExact(input, regexSaveVar)    -> {
                         val groups = RegexUtils.collectGroups(input, regexSaveVar)
@@ -87,6 +92,7 @@ class ExecutionInspector(private val baseCommand: BaseCommand) {
             }
 
             println()
+            print(inspectPrompt)
             print(prompt)
             input = stdin.nextLine()
         }
@@ -120,6 +126,10 @@ class ExecutionInspector(private val baseCommand: BaseCommand) {
     private fun showVar(input: String) = println(baseCommand.context.replaceTokens(input, true))
 
     companion object {
+        private const val help = ":HELP"
+        private const val inspectPrompt =
+            "\nType $help for usage description\n"
+
         private const val quickHelp =
             "\nUse:\n" +
             "> SAVE(variable-name)=... - (re)create a data variable. Example: SAVE(a)=Hello\n" +
@@ -146,8 +156,7 @@ class ExecutionInspector(private val baseCommand: BaseCommand) {
             "\n" +
             "> Press [Enter]           - quit Inspect and return back to Nexial Interactive\n" +
             "\n" +
-            "Data variable, built-in function and Nexial Expression can be used in combination.\n" +
-            "\n"
+            "Data variable, built-in function and Nexial Expression can be used in combination.\n"
 
         private const val prompt = "> inspect: "
 
