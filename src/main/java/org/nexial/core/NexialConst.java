@@ -1819,6 +1819,9 @@ public final class NexialConst {
         // edge
         public static final String EDGE_LOG_ENABLED = registerSysVar(NS_BROWSER + ".logEdge", false);
 
+        // advanced/selenium logging
+        public static final String CAPTURE_BROWSER_LOGS = registerSysVar(NS_WEB + "log.includeBrowser", false);
+
         // electron
         public static final String ELECTRON_FORCE_TERMINATE = registerSysVar(NS_ELECTRON + "forceTerminate", false);
         public static final String ELECTRON_CLIENT_LOCATION = registerSysVar(NS_ELECTRON + "appLocation");

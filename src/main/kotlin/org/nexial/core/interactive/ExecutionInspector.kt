@@ -128,7 +128,7 @@ class ExecutionInspector(private val baseCommand: BaseCommand) {
     companion object {
         private const val help = ":HELP"
         private const val inspectPrompt =
-            "\nType $help for usage description\n"
+            "\nType $help for usage description. Press ENTER to return to Interactive menu\n"
 
         private const val quickHelp =
             "\nUse:\n" +

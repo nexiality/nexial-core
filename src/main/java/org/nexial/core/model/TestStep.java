@@ -401,8 +401,11 @@ public class TestStep extends TestStepManifest {
                 // support post-execution flow control
                 if (result != null) {
                     context.setData(OPT_LAST_OUTCOME, result.isSuccess());
-                    result.update(FlowControlUtils.checkEndAfterIf(context, this));
-                    result.update(FlowControlUtils.checkEndLoopAfterIf(context, this));
+                    // for End... flow control, don't update result since it should not alter the execution result.
+                    // result.update(FlowControlUtils.checkEndAfterIf(context, this));
+                    // result.update(FlowControlUtils.checkEndLoopAfterIf(context, this));
+                    FlowControlUtils.checkEndAfterIf(context, this);
+                    FlowControlUtils.checkEndLoopAfterIf(context, this);
                     result.update(FlowControlUtils.checkFailAfterIf(context, this));
                 }
             }

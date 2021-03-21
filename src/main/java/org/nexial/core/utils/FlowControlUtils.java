@@ -151,7 +151,7 @@ public final class FlowControlUtils {
 
                 String stepDetails =
                     context.hasData(REPEAT_UNTIL_LOOP_IN) ? " at row " + (testStep.getRowIndex() + 1) : "";
-                if (context.isInMacro()) {
+                if (context.isInMacro() && testStep.getMacro() != null) {
                     stepDetails = " at macro (" + testStep.getMacro().getSheet() + ") " + stepDetails;
                 }
                 return StepResult.ended("Execution ends" + stepDetails + ": " + flowControlText);
