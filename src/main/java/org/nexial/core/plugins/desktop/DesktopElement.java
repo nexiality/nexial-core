@@ -2187,7 +2187,7 @@ public class DesktopElement {
             return StepResult.fail("Unable select since selection-pattern is not available" + msgPostfix);
         }
 
-        String currentSelectedText = element.getText();
+        String currentSelectedText = getText();
         if (StringUtils.isNotEmpty(currentSelectedText)) {
             // combo's text won't always be the same as the specified text because combo might display one text while
             // storing another.
@@ -2198,8 +2198,6 @@ public class DesktopElement {
             // however we can still check to see if any selection has been made at this time, and if so, check that the
             // selected list item is the same as the specified text.
             WebElement targetItem = findFirstElement(LOCATOR_SELECTED_LIST_ITEM);
-            // targetItem = findFirstElement(StringUtils.replace(LOCATOR_LIST_ITEM_ONLY, "{value}", text));
-            // targetItem = findFirstElement(StringUtils.replace(LOCATOR_LIST_ITEM, "{value}", text));
             if (targetItem != null && StringUtils.equals(targetItem.getAttribute("Name"), text)) {
                 return StepResult.success("Text '" + text + "' already selected" + msgPostfix);
             }
@@ -2249,24 +2247,6 @@ public class DesktopElement {
 
                     return StepResult.success("Text '" + text + "' selected" + msgPostfix);
                 }
-                // driver.executeScript(SCRIPT_PREFIX_SHORTCUT + forceShortcutSyntax(text), element);
-                // return StepResult.success("Text '" + text + "' selected" + msgPostfix);
-
-                /*
-                WebElement matched = findFirstElement(StringUtils.replace(LOCATOR_LIST_ITEM, "{value}", text));
-                if (matched != null) {
-                    if (!matched.isSelected()) {
-                        if (isInvokePatternAvailable(matched)) {
-                            element.sendKeys(ESCAPE);
-                            matched.click();
-                        } else {
-                            // driver.executeScript(SCRIPT_PREFIX_SHORTCUT + forceShortcutSyntax(text) + "<[TAB]>", element);
-                            driver.executeScript(SCRIPT_PREFIX_SHORTCUT + forceShortcutSyntax(text), element);
-                        }
-                    } // else no need... it's already selected
-                    return StepResult.success("Text '" + text + "' selected" + msgPostfix);
-                }
-                */
             }
         }
 
@@ -2335,52 +2315,23 @@ public class DesktopElement {
         } finally {
             if (comboOpened) { element.click(); }
         }
-
-        /*
-        element.click();
-
-        text = normalizeUiText(text);
-        String firstChar = text.charAt(0) + "";
-
-        String value = normalizeUiText(element.getAttribute("Name"));
-        // todo: double check - does not get the value with @Name, when actually exists
-        if (StringUtils.equals(text, value)) {
-            return StepResult.success("Text '" + text + "' already selected for '" + label + "'");
-        }
-
-        driver.executeScript(appendShortcutText(toShortcuts("HOME"), firstChar), element);
-        value = normalizeUiText(element.getAttribute("Name"));
-        String initialValue = value;
-
-        String script = toShortcutText(firstChar);
-
-        // keep typing the first character until the selected text matches "text"
-        while (!StringUtils.equals(value, text)) {
-            driver.executeScript(script, element);
-            autoClearModalDialog();
-
-            value = normalizeUiText(element.getAttribute("Name"));
-
-            // probably means we've looped around.. so we are done
-            if (StringUtils.equals(value, initialValue)) { break; }
-        }
-
-        if (!StringUtils.equals(value, text)) {
-            return StepResult.fail("Unable to select in '" + label + "' the text '" + text + "': " + value);
-        }
-
-        return StepResult.success("Text '" + text + "' entered into '" + label + "'");
-        */
     }
 
     @Nonnull
     private StepResult singleSelectViaFirstChar(String text) {
-        String selectionScript = toShortcutText("" + text.charAt(0));
+        String firstChar = "" + text.charAt(0);
+        List<WebElement> selectionCandidates = element.findElements(By.xpath("*[contains(@Name,'" + firstChar + "')]"));
+        if (CollectionUtils.isEmpty(selectionCandidates)) {
+            return StepResult.fail("Text '%s' cannot be selected since '%s' does not seem to contain such value",
+                                   text, label);
+        }
+
+        String selectionScript = toShortcutText(firstChar);
         String isSelectedXpath = "*[@Name and @IsSelected='True']";
 
         String firstSelection = null;
         // fictitious upper limit based on specified text
-        for (int i = 0; i < text.length(); i++) {
+        for (int i = 0; i < selectionCandidates.size(); i++) {
             driver.executeScript(selectionScript, element);
 
             WebElement selected = findFirstElement(isSelectedXpath);
