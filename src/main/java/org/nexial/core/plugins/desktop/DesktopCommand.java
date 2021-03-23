@@ -56,6 +56,7 @@ import org.openqa.selenium.interactions.Actions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import org.openqa.selenium.winium.WiniumDriver;
 
+import javax.annotation.Nonnull;
 import java.awt.Point;
 import java.io.File;
 import java.io.IOException;
@@ -1591,7 +1592,7 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
         requiresValidAndNotReadOnlyVariableName(var);
         Map<String, String> rowData = getHierRow(matchBy);
         context.setData(var, rowData);
-        return StepResult.success("Hierarchical table row saved to '" + var + "'");
+        return StepResult.success("Hierarchical Table row saved to '" + var + "'");
     }
 
     public StepResult saveHierCells(String var, String matchBy, String column, String nestedOnly) {
@@ -1616,32 +1617,42 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
         requiresNotBlank(matchBy, "Invalid 'matchBy' specified", matchBy);
         Map<String, String> rowData = getHierRow(matchBy);
         if (StringUtils.isBlank(expected)) {
-            if (!rowData.isEmpty()) {
-                return StepResult.fail("EXPECTS empty but row data found via " + matchBy);
-            }
-
+            if (!rowData.isEmpty()) { return StepResult.fail("EXPECTS empty but row data found via " + matchBy); }
             return StepResult.success("EXPECTS empty and either empty row or no match was found");
         }
+
         if (rowData.isEmpty()) {
             return StepResult.fail("EXPECTS '" + expected + "' but empty row or no match was found");
         }
+
+        String[] criterion = formatExpectedHierData(expected);
+        String[] actualValues = formatActualHierData(rowData);
+        return assertArrayEqual(Arrays.toString(criterion), Arrays.toString(actualValues), "true");
+    }
+
+    private String[] formatActualHierData(Map<String, String> rowData) { return formatActualHierData(rowData.values());}
+
+    private String[] formatActualHierData(Collection<String> data) {
+        return data.stream().map(StringUtils::trim).toArray(String[]::new);
+    }
+
+    @Nonnull
+    private String[] formatExpectedHierData(String expected) {
+        final String TMP = "!@#-#@!";
         String delim = context.getTextDelim();
+        expected = StringUtils.replace(StringUtils.trim(expected), "\\" + delim, TMP);
         String[] criterion = StringUtils.contains(expected, delim) ?
                              StringUtils.splitByWholeSeparator(expected, delim) :
                              new String[]{expected};
-
-        String[] actualValues = rowData.values().toArray(new String[0]);
-
-        return assertArrayEqual(Arrays.toString(criterion), Arrays.toString(actualValues), "true");
-
+        return Arrays.stream(criterion).map(s -> StringUtils.trim(StringUtils.replace(s, TMP, ",")))
+                     .toArray(String[]::new);
     }
 
     public StepResult assertHierCells(String matchBy, String column, String expected, String nestedOnly) {
         requiresNotBlank(matchBy, "Invalid 'matchBy' specified", matchBy);
         requiresNotBlank(column, "Invalid 'column' specified", column);
-        if (CheckUtils.toBoolean(nestedOnly)) {
-            return assertHierCellChildData(matchBy, column, expected);
-        }
+        if (CheckUtils.toBoolean(nestedOnly)) { return assertHierCellChildData(matchBy, column, expected); }
+
         String cellData = getHierCell(matchBy, column);
         if (cellData == null) {
             if (StringUtils.isEmpty(expected)) { return StepResult.success("EXPECTED empty cell found"); }
@@ -1666,8 +1677,13 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
         String delim = context.getTextDelim();
         List<String> matchData = TextUtils.toList(matchBy, delim, true);
         Map<String, String> result = hiertable.editHierCell(matchData, nameValuesToMap(nameValues));
-        context.setData(var, result);
-        return StepResult.success("Edited " + nameValues + " on the row where matchBy  =" + matchBy);
+        if (MapUtils.isEmpty(result)) {
+            context.removeData(var);
+            return StepResult.fail("Unable to edit Hierarchical Table; unmatched specified hierarchy:" + matchBy);
+        } else {
+            context.setData(var, result);
+            return StepResult.success("Edited " + nameValues + " on the row matched by " + matchBy);
+        }
     }
 
     public StepResult clickTab(String group, String name) {
@@ -1820,13 +1836,8 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
             return StepResult.fail("EXPECTS '" + expected + "' but empty row or no match was found");
         }
 
-        String delim = context.getTextDelim();
-        String[] criterion = StringUtils.contains(expected, delim) ?
-                             StringUtils.splitByWholeSeparator(expected, delim) :
-                             new String[]{expected};
-
-        String[] actualValues = cellData.toArray(new String[0]);
-
+        String[] criterion = formatExpectedHierData(expected);
+        String[] actualValues = formatActualHierData(cellData);
         return assertArrayEqual(Arrays.toString(criterion), Arrays.toString(actualValues), "true");
 
     }
@@ -1846,24 +1857,22 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
         requiresNotNull(hiertable, "No Hierarchical Table element referenced or scanned");
 
         if (!hiertable.getHeaders().contains(column)) {CheckUtils.fail("Specified column '" + column + "' not found.");}
-        String delim = context.getTextDelim();
-        List<String> matchData = TextUtils.toList(matchBy, delim, true);
 
-        Map<String, String> row = hiertable.getHierRow(matchData);
-        if (row == null) { CheckUtils.fail("Unable to fetch data from hiertable"); }
+        Map<String, String> row = hiertable.getHierRow(TextUtils.toList(matchBy, context.getTextDelim(), true));
+        if (row == null) { CheckUtils.fail("Unable to fetch data from Hierarchical Table"); }
 
-        return String.valueOf(row.get(column));
+        return row.get(column);
     }
 
     protected List<String> getHierCellChildData(String matchBy, String fetchColumn) {
         DesktopHierTable hiertable = getCurrentHierTable();
         requiresNotNull(hiertable, "No Hierarchical Table element referenced or scanned");
-        requires(hiertable.containsHeader(fetchColumn), "Unmatched column specified", fetchColumn);
-        String delim = context.getTextDelim();
-        List<String> matchData = TextUtils.toList(matchBy, delim, true);
 
+        requires(hiertable.containsHeader(fetchColumn), "Unmatched column specified", fetchColumn);
+
+        List<String> matchData = TextUtils.toList(matchBy, context.getTextDelim(), true);
         List<String> cellData = hiertable.getHierCellChildData(matchData, fetchColumn);
-        if (cellData == null) { CheckUtils.fail("Unable to fetch data from hiertable"); }
+        if (cellData == null) { CheckUtils.fail("Unable to fetch data from Hierarchical Table"); }
 
         return cellData;
     }
@@ -2428,14 +2437,14 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
             if (CollectionUtils.isEmpty(table.headers) && table.columnCount == UNDEFINED) { table.scanStructure(); }
             return table;
         } else {
-            fail("requested element '" + name + "' is not a " + HierTable + " but a " + object.getElementType() + ".");
+            fail("requested element '" + name + "' is not a Hierarchical Table but a " + object.getElementType() + ".");
             return null;
         }
     }
 
     protected void syncHierTableDataToContext(DesktopElement table, String label) {
-        if (table == null) { fail("desktop hierarchical table object is null!"); }
-        if (StringUtils.isBlank(label)) { fail("desktop hierarchical table name is missing!"); }
+        if (table == null) { fail("Hierarchical Table object is null!"); }
+        if (StringUtils.isBlank(label)) { fail("Hierarchical Table name is missing!"); }
 
         context.setData(CURRENT_DESKTOP_HIER_TABLE, table);
         context.setData(CURRENT_DESKTOP_HIER_TABLE_NAME, label);
@@ -2455,15 +2464,13 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
         requiresValidAndNotReadOnlyVariableName(var);
 
         DesktopHierTable table = resolveHierTableElement(name);
-        if (table == null) {
-            return StepResult.fail("Unable to reference '" + name + "' as a hierarchical table element.");
-        }
+        if (table == null) { return StepResult.fail("Element '" + name + "' as a Hierarchical Table"); }
 
         syncHierTableDataToContext(table, name);
         context.setData(var, table.toMetaData());
         table.collapseAll();
 
-        return StepResult.success("hierarchical table metadata stored to '" + var + "'");
+        return StepResult.success("Hierarchical Table metadata stored to '" + var + "'");
     }
 
     protected void autoClearModalDialog(DesktopSession session) {

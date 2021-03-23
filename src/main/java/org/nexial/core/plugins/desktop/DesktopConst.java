@@ -115,10 +115,21 @@ public class DesktopConst {
         "*[substring(@Name,string-length(@Name)-4)='row 1']/*[@Name!='Column Headers']";
     public final static String LOCATOR_HIER_HEADER_COLUMNS =
         "*[@ControlType='ControlType.Header']/*[@ControlType='ControlType.HeaderItem']";
-    public static final String LOCATOR_HIER_TABLE_ROWS = "*[@ControlType='ControlType.DataItem']";
+    public static final String LOCATOR_HIER_TABLE_ROWS = "*[@ControlType='" + TREE_VIEW_ROW + "']";
     public static final String LOCATOR_HIER_CELLS = LOCATOR_HIER_TABLE_ROWS + "[{row}]/*";
     public static final String LOCATOR_HIER_CELL = LOCATOR_HIER_CELLS + "[@Name='{column}']";
     public static final String LOCATOR_HIER_FIRST_CELL = LOCATOR_HIER_CELLS + "[1]";
+    public static final String XPATH_FIRST_HIER_ROW = "*[@ControlType='" + TREE_ITEM + "'][1]";
+    public static final String XPATH_MATCHING_HIER_CELL = "*[@ControlType='" + TREE_ITEM + "' and " +
+                                                          "./*[normalize-space(@Name)='${column}' and @Value='${value}']]";
+
+    // support Infragistics4 components
+    public static final String XPATH_HIER_HEADER_ROW_INFRAG4 = "*[@ControlType='" + TREE_VIEW_HEADER + "'][1]";
+    public static final String XPATH_FIRST_HIER_ROW_INFRAG4 = "*[@ControlType='" + TREE_VIEW_ROW + "'][1]";
+    public static final String XPATH_CELL_ATTR = "@ControlType='" + EDIT + "' and @Name='{name}'";
+    public static final String XPATH_ROW_BY_CATEGORY_INFRAG4 = "*[@ControlType='" + TREE_VIEW_ROW + "' and " +
+                                                               "./*[" + XPATH_CELL_ATTR + " and @Value='{value}']]";
+    public static final String XPATH_CELL_INFRAG4 = "*[" + XPATH_CELL_ATTR + "]";
 
     public final static String LOCATOR_TABLE_DATA = "*[contains(@Name, 'row ')]";
     public final static String LOCATOR_ROW = "*[contains(@Name, 'row {row}')][1]";
@@ -132,10 +143,7 @@ public class DesktopConst {
     public static final String LOCATOR_TEXTBOX = "*[@ControlType='" + EDIT + "']";
     public static final String LOCATOR_TAB_ITEMS = "*[@ControlType='" + TAB_ITEM + "']";
     public static final String LOCATOR_TAB_ITEM = "*[@ControlType='" + TAB_ITEM + "' and @Name='${tabName}']";
-    public static final String XPATH_FIRST_HIER_ROW = "*[@ControlType='" + TREE_ITEM + "'][1]";
     public static final String XPATH_NORMALIZE_CELL = "*[normalize-space(@Name)='${column}']";
-    public static final String XPATH_MATCHING_HIER_CELL = "*[@ControlType='" + TREE_ITEM + "' and " +
-                                                          "./*[normalize-space(@Name)='${column}' and @Value='${value}']]";
     // either list of list-items or just list-items
     public static final String LOCATOR_SELECTED_LIST_ITEM = "*[@ControlType='" + LIST_ITEM + "' and @IsSelected='True']";
     public static final String LOCATOR_LIST_ITEM_ONLY = "*[@ControlType='" + LIST_ITEM + "' and contains(@Name,'{value}')]";
@@ -267,13 +275,20 @@ public class DesktopConst {
 
     public static final String SCRIPT_SET_VALUE = "automation: ValuePattern.SetValue";
     public static final String SCRIPT_CLICK = "input: brc_click";
+
     public static final String SCRIPT_DATAGRID_ROW_COUNT = "datagrid: row-count";
-    public static final String SCRIPT_TREE_EDIT_CELLS = "tree: editCells";
-    public static final String SCRIPT_TREE_COLLAPSE_ALL = "tree: collapseAll";
     public static final String SCRIPT_DATAGRID_FETCH = "datagrid: fetch";
     public static final String SCRIPT_DATAGRID_FETCH_ALL = "datagrid: fetch-all";
-    public static final String SRIPT_TREE_GETROW = "tree: getRowData";
+
+    public static final String SCRIPT_TREE_COLLAPSE_ALL = "tree: collapseAll";
+    public static final String SCRIPT_TREE_GETROW = "tree: getRowData";
     public static final String SCRIPT_TREE_GET_CHILD = "tree: getChildData";
+    public static final String SCRIPT_TREE_EDIT_CELLS = "tree: editCells";
+
+    // public static final String SCRIPT_INFRAG4_TREE_COLLAPSE_ALL = "tree4: collapseAll";
+    // public static final String SCRIPT_INFRAG4_TREE_GETROW = "tree4: getRowData";
+    // public static final String SCRIPT_INFRAG4_TREE_GET_CHILD = "tree4: getChildData";
+    // public static final String SCRIPT_INFRAG4_TREE_EDIT_CELLS = "tree4: editCells";
 
     protected DesktopConst() { }
 
@@ -293,5 +308,13 @@ public class DesktopConst {
 
     public static void debug(String msg, WebElement element) {
         if (AUTOSCAN_DEBUG) { ConsoleUtils.log(msg + NL + printDetails(element)); }
+    }
+
+    public static String resolveHierHeaderRowXpath(boolean infragistic4) {
+        return (infragistic4 ? XPATH_HIER_HEADER_ROW_INFRAG4 : XPATH_FIRST_HIER_ROW)+"/*";
+    }
+
+    public static String resolveFirstHierRowXpath(boolean infragistic4) {
+        return (infragistic4 ? XPATH_FIRST_HIER_ROW_INFRAG4 : XPATH_FIRST_HIER_ROW)+"/*";
     }
 }

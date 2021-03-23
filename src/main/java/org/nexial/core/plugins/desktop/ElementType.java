@@ -88,6 +88,8 @@ public enum ElementType {
     public static final String TREE = "ControlType.Tree";
     // tree item with IsInvokePatternAvailable as false means it's a leaf item.  otherwise, expand/collapse is possible
     public static final String TREE_ITEM = "ControlType.TreeItem";
+    public static final String TREE_VIEW_HEADER = "ControlType.Header";
+    public static final String TREE_VIEW_ROW = "ControlType.DataItem";
     public static final String GROUP = "ControlType.Group";
     public static final String PANE = "ControlType.Pane";
     public static final String CUSTOM = "ControlType.Custom";

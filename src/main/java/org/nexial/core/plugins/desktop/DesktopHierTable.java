@@ -28,20 +28,27 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.nexial.commons.utils.TextUtils;
+import org.nexial.core.ExecutionThread;
+import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.model.StepResult;
 import org.nexial.core.utils.CheckUtils;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.JsonUtils;
 import org.openqa.selenium.By;
 import org.openqa.selenium.NoSuchElementException;
+import org.openqa.selenium.WebDriverException;
 import org.openqa.selenium.WebElement;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static org.apache.commons.lang3.builder.ToStringStyle.NO_CLASS_NAME_STYLE;
+import static org.nexial.core.NexialConst.Desktop.AUTOSCAN_INFRAGISTICS4_AWARE;
+import static org.nexial.core.SystemVariables.getDefaultBool;
 import static org.nexial.core.plugins.desktop.DesktopConst.*;
+import static org.nexial.core.plugins.web.WebDriverExceptionHelper.resolveErrorMessage;
 
 public class DesktopHierTable extends DesktopElement {
 
@@ -127,9 +134,11 @@ public class DesktopHierTable extends DesktopElement {
 
     public void scanStructure() {
 
+        boolean infragistics4 = supportInfragistics4();
+
         // if header not defined or not yet scanned... scan for existing headers
         if (CollectionUtils.isEmpty(headers)) {
-            String headersXpath = XPATH_FIRST_HIER_ROW + "/*";
+            String headersXpath = resolveHierHeaderRowXpath(infragistics4);
             ConsoleUtils.log("scanning for hierarchical table structure via " + headersXpath);
             List<WebElement> elements = element.findElements(By.xpath(headersXpath));
             if (CollectionUtils.isEmpty(elements)) {
@@ -146,7 +155,7 @@ public class DesktopHierTable extends DesktopElement {
         // find first row to make sure we have something in this hier table
         WebElement firstRow = getFirstHierRow();
         if (firstRow == null) {
-            throw new NoSuchElementException("Unable to retrieve first row of HierTable '" + getLabel() + "'");
+            throw new NoSuchElementException("Unable to retrieve first row of Hierarchical Table '" + getLabel() + "'");
         }
     }
 
@@ -155,177 +164,251 @@ public class DesktopHierTable extends DesktopElement {
         return headers != null && headers.contains(header);
     }
 
-    public Map<String, String> editHierCell(List<String> matchBy, Map<String, String> nameValues) {
-        if (MapUtils.isEmpty(nameValues)) { CheckUtils.fail("No name-value pairs found"); }
-        if (CollectionUtils.isEmpty(headers)) { scanStructure(); }
-        for (String name : nameValues.keySet()) {
-            if (!containsHeader(name)) { CheckUtils.fail("Invalid column name:" + name);}
-        }
-
-        JsonObject jsonInput = new JsonObject();
-        if (hierarchyColumn != null && StringUtils.isNotBlank(hierarchyColumn)) {
-            jsonInput.addProperty(ROW_TYPE_COLUMN, hierarchyColumn);
-        }
-        if (hierarchyList != null && StringUtils.isNotBlank(hierarchyList)) {
-            hierarchyList = formatHierarchy(TextUtils.toList(hierarchyList, ",", true));
-            jsonInput.addProperty(ROW_TYPE_HIERARCHY, hierarchyList);
-        }
-        if (categoryColumn == null || StringUtils.isBlank(categoryColumn)) {
-            CheckUtils.fail(" No categoryColumn found");
-        }
-
-        jsonInput.addProperty(MATCH_COLUMN, categoryColumn);
-        jsonInput.addProperty(MATCH_HIERARCHY, formatHierarchy(matchBy));
-        jsonInput.addProperty(ALREADY_COLLAPSED, alreadyCollapsed);
-
-        JsonArray edits = new JsonArray();
-
-        nameValues.forEach((key, value) -> {
-            JsonObject edit = new JsonObject();
-            edit.addProperty("column", key);
-            edit.addProperty("value", value);
-            edits.add(edit);
-        });
-        jsonInput.add("edits", edits);
-        Object result = driver.executeScript(SCRIPT_TREE_EDIT_CELLS, element, jsonInput.toString());
-        alreadyCollapsed = false;
-        return getResultData(result);
-    }
-
     public StepResult collapseAll() {
-        driver.executeScript(SCRIPT_TREE_COLLAPSE_ALL, element);
+        boolean infragistics4 = supportInfragistics4();
+        if (!infragistics4) {
+            driver.executeScript(SCRIPT_TREE_COLLAPSE_ALL, element);
+        } else {
+            // do it by hand!
+            String shortcuts = DesktopUtils.toShortcuts("CTRL-SPACE", "LEFT");
+            element.findElements(By.xpath(LOCATOR_HIER_TABLE_ROWS))
+                   .forEach(row -> driver.executeScript(shortcuts, row));
+        }
+
         // alreadyCollapsed has no effect if hierarchyColumn and hierarchyList values are provided
         alreadyCollapsed = true;
-        return StepResult.success("collapsed all hierTable rows");
-
+        return StepResult.success("collapsed all rows in Hierarchical Table");
     }
 
     protected Map<String, String> getHierRow(List<String> matchBy) {
-        if (categoryColumn == null || StringUtils.isBlank(categoryColumn)) {
-            CheckUtils.fail(" No categoryColumn found");
-        }
+        if (StringUtils.isBlank(categoryColumn)) { CheckUtils.fail("No categoryColumn found"); }
+
         if (CollectionUtils.isEmpty(matchBy)) { return null; }
         if (CollectionUtils.isEmpty(headers)) { scanStructure(); }
         if (!containsHeader(categoryColumn)) { return null; }
 
-        JsonObject jsonInput = new JsonObject();
+        boolean infragistics4 = supportInfragistics4();
 
-        if (hierarchyColumn != null && StringUtils.isNotBlank(hierarchyColumn)) {
-            jsonInput.addProperty(ROW_TYPE_COLUMN, hierarchyColumn);
+        if (!infragistics4) {
+            JsonObject jsonInput = new JsonObject();
+            if (StringUtils.isNotBlank(hierarchyColumn)) { jsonInput.addProperty(ROW_TYPE_COLUMN, hierarchyColumn); }
+            if (StringUtils.isNotBlank(hierarchyList)) {
+                hierarchyList = formatHierarchy(TextUtils.toList(hierarchyList, ",", true));
+                jsonInput.addProperty(ROW_TYPE_HIERARCHY, hierarchyList);
+            }
+
+            jsonInput.addProperty(MATCH_COLUMN, categoryColumn);
+            jsonInput.addProperty(MATCH_HIERARCHY, formatHierarchy(matchBy));
+            jsonInput.addProperty(ALREADY_COLLAPSED, alreadyCollapsed);
+
+            Object result = driver.executeScript(SCRIPT_TREE_GETROW, element, jsonInput.toString());
+            alreadyCollapsed = false;
+            return getResultData(result);
+        } else {
+            WebElement parentRow = expandToMatchedHierarchy(matchBy);
+            if (parentRow == null) { return null; }
+
+            // if last match is found, use `nameValues` to construct a series of setValue()'s.
+            Map<String, String> outcome = new ListOrderedMap<>();
+            parentRow.findElements(By.xpath(LOCATOR_EDITOR))
+                     .forEach(cell -> outcome.put(cell.getAttribute("Name"), cell.getText()));
+            return outcome;
         }
-        if (hierarchyList != null && StringUtils.isNotBlank(hierarchyList)) {
-            hierarchyList = formatHierarchy(TextUtils.toList(hierarchyList, ",", true));
-            jsonInput.addProperty(ROW_TYPE_HIERARCHY, hierarchyList);
+    }
+
+    protected Map<String, String> editHierCell(List<String> matchBy, Map<String, String> nameValues) {
+        if (MapUtils.isEmpty(nameValues)) { CheckUtils.fail("No name-value pairs found"); }
+        if (StringUtils.isBlank(categoryColumn)) { CheckUtils.fail("No categoryColumn found"); }
+
+        if (CollectionUtils.isEmpty(headers)) { scanStructure(); }
+
+        String invalidColumns = nameValues.keySet().stream()
+                                          .filter(name -> !containsHeader(name))
+                                          .collect(Collectors.joining(", "));
+        if (StringUtils.isNotBlank(invalidColumns)) { CheckUtils.fail("Invalid columns: " + invalidColumns); }
+
+        boolean infragistics4 = supportInfragistics4();
+        if (!infragistics4) {
+            JsonObject jsonInput = new JsonObject();
+            if (StringUtils.isNotBlank(hierarchyColumn)) { jsonInput.addProperty(ROW_TYPE_COLUMN, hierarchyColumn); }
+            if (StringUtils.isNotBlank(hierarchyList)) {
+                hierarchyList = formatHierarchy(TextUtils.toList(hierarchyList, ",", true));
+                jsonInput.addProperty(ROW_TYPE_HIERARCHY, hierarchyList);
+            }
+
+            jsonInput.addProperty(MATCH_COLUMN, categoryColumn);
+            jsonInput.addProperty(MATCH_HIERARCHY, formatHierarchy(matchBy));
+            jsonInput.addProperty(ALREADY_COLLAPSED, alreadyCollapsed);
+
+            JsonArray edits = new JsonArray();
+            nameValues.forEach((key, value) -> {
+                JsonObject edit = new JsonObject();
+                edit.addProperty("column", key);
+                edit.addProperty("value", value);
+                edits.add(edit);
+            });
+            jsonInput.add("edits", edits);
+
+            Object result = driver.executeScript(SCRIPT_TREE_EDIT_CELLS, element, jsonInput.toString());
+            alreadyCollapsed = false;
+            return getResultData(result);
+        } else {
+            WebElement parentRow = expandToMatchedHierarchy(matchBy);
+            if (parentRow == null) { return null; }
+
+            // if last match is found, use `nameValues` to construct a series of setValue()'s.
+            Map<String, String> outcome = new ListOrderedMap<>();
+            nameValues.forEach((name, value) -> {
+                WebElement cell = findFirstElement(parentRow, StringUtils.replace(XPATH_CELL_INFRAG4, "{name}", name));
+                if (cell != null) {
+                    try {
+                        cell.clear();
+                        driver.executeScript(DesktopUtils.toShortcutText(value), cell);
+                        outcome.put(name, cell.getText());
+                    } catch (WebDriverException e) {
+                        String message = resolveErrorMessage(e);
+                        ConsoleUtils.error("Error when executing shortcut '%s' on '%s': %s", value, name, message);
+                        outcome.put(name, "ERROR: " + message);
+                    }
+                } else {
+                    outcome.put(name, null);
+                }
+            });
+
+            return outcome;
+        }
+    }
+
+    protected WebElement expandToMatchedHierarchy(List<String> matchBy) {
+        if (CollectionUtils.isEmpty(matchBy)) { return null; }
+
+        String shortcutExpand = DesktopUtils.toShortcuts("CTRL-SPACE", "RIGHT");
+        String xpathMatching = StringUtils.replace(XPATH_ROW_BY_CATEGORY_INFRAG4, "{name}", categoryColumn);
+        WebElement parentRow = element;
+
+        for (String matchValue : matchBy) {
+            // 1. use `categoryColumn` and `matchBy` to construct XPATH for each level. assume we start from Level 1
+            WebElement matched = findFirstElement(parentRow, StringUtils.replace(xpathMatching, "{value}", matchValue));
+            if (matched == null) {
+                // if no element matched to xpath, then we have not reached the target level/row
+                parentRow = null;
+                break;
+            }
+
+            // 2. if level is found, expand it (unless it's the last one to match)
+            driver.executeScript(shortcutExpand, matched);
+
+            // 3. use the matched row to find the next level.
+            parentRow = matched;
         }
 
-        jsonInput.addProperty(MATCH_COLUMN, categoryColumn);
-        jsonInput.addProperty(MATCH_HIERARCHY, formatHierarchy(matchBy));
-        jsonInput.addProperty(ALREADY_COLLAPSED, alreadyCollapsed);
-        Object result = driver.executeScript(SRIPT_TREE_GETROW, element, jsonInput.toString());
         alreadyCollapsed = false;
-        return getResultData(result);
+
+        // 4. if we did not reach the last matching level, then return with nothing
+        return parentRow;
     }
 
     protected List<String> getHierCellChildData(List<String> matchBy, String fetchColumn) {
-        if (categoryColumn == null || StringUtils.isBlank(categoryColumn)) {
-            CheckUtils.fail(" No categoryColumn found");
-        }
+        if (StringUtils.isBlank(categoryColumn)) { CheckUtils.fail(" No categoryColumn found"); }
+
         if (CollectionUtils.isEmpty(headers)) { scanStructure(); }
         if (!containsHeader(categoryColumn)) { return null; }
 
-        JsonObject jsonInput = new JsonObject();
-        if (hierarchyColumn != null && StringUtils.isNotBlank(hierarchyColumn)) {
-            jsonInput.addProperty(ROW_TYPE_COLUMN, hierarchyColumn);
-        }
-        if (hierarchyList != null && StringUtils.isNotBlank(hierarchyList)) {
-            hierarchyList = formatHierarchy(TextUtils.toList(hierarchyList, ",", true));
-            jsonInput.addProperty(ROW_TYPE_HIERARCHY, hierarchyList);
-        }
+        boolean infragistics4 = supportInfragistics4();
 
-        jsonInput.addProperty(MATCH_COLUMN, categoryColumn);
-        jsonInput.addProperty(MATCH_HIERARCHY, formatHierarchy(matchBy));
-        jsonInput.addProperty(FETCH_COLUMN, fetchColumn);
-        jsonInput.addProperty(ALREADY_COLLAPSED, alreadyCollapsed);
-        Object result = driver.executeScript(SCRIPT_TREE_GET_CHILD, element, jsonInput.toString());
-        if (result == null) { CheckUtils.fail("Unable to fetch data with matchBy " + matchBy); }
-        JSONArray jsonArray = JsonUtils.toJSONArray(result.toString());
-        List<String> data = new ArrayList<>();
-
-        for (int i = 0; i < jsonArray.length(); i++) {
-
-            try {
-                if (jsonArray.get(i) instanceof JSONObject) {
-                    JSONObject jsonObject = (JSONObject) jsonArray.get(i);
-                    if (jsonObject.length() == 0) {
-                        CheckUtils.fail("Unable to fetch data with specified matchBy criterion..");
-                    }
-                    if (jsonObject.has("name") && jsonObject.getString("name").equals(fetchColumn)) {
-                        data.add(String.valueOf(jsonObject.get("value")).trim());
-                    }
-                }
-            } catch (JSONException e) {
+        if (!infragistics4) {
+            JsonObject jsonInput = new JsonObject();
+            if (StringUtils.isNotBlank(hierarchyColumn)) { jsonInput.addProperty(ROW_TYPE_COLUMN, hierarchyColumn); }
+            if (StringUtils.isNotBlank(hierarchyList)) {
+                hierarchyList = formatHierarchy(TextUtils.toList(hierarchyList, ",", true));
+                jsonInput.addProperty(ROW_TYPE_HIERARCHY, hierarchyList);
             }
+
+            jsonInput.addProperty(MATCH_COLUMN, categoryColumn);
+            jsonInput.addProperty(MATCH_HIERARCHY, formatHierarchy(matchBy));
+            jsonInput.addProperty(FETCH_COLUMN, fetchColumn);
+            jsonInput.addProperty(ALREADY_COLLAPSED, alreadyCollapsed);
+            Object result = driver.executeScript(SCRIPT_TREE_GET_CHILD, element, jsonInput.toString());
+            if (result == null) { CheckUtils.fail("Unable to fetch data with matchBy " + matchBy); }
+            JSONArray jsonArray = JsonUtils.toJSONArray(result.toString());
+            List<String> data = new ArrayList<>();
+
+            for (int i = 0; i < jsonArray.length(); i++) {
+                try {
+                    if (jsonArray.get(i) instanceof JSONObject) {
+                        JSONObject jsonObject = (JSONObject) jsonArray.get(i);
+                        if (jsonObject.length() == 0) {
+                            CheckUtils.fail("Unable to fetch data with specified matchBy criterion..");
+                        }
+                        if (jsonObject.has("name") && jsonObject.getString("name").equals(fetchColumn)) {
+                            data.add(String.valueOf(jsonObject.get("value")).trim());
+                        }
+                    }
+                } catch (JSONException e) {
+                }
+            }
+
+            alreadyCollapsed = false;
+            return data;
+        } else {
+            WebElement parentRow = expandToMatchedHierarchy(matchBy);
+            if (parentRow == null) { return null; }
+
+            // if last match is found, use `nameValues` to construct a series of setValue()'s.
+            return parentRow.findElements(By.xpath(LOCATOR_HIER_TABLE_ROWS + "/*[@Name='" + fetchColumn + "']"))
+                            .stream().map(WebElement::getText).collect(Collectors.toList());
         }
-        alreadyCollapsed = false;
-        return data;
     }
 
     protected List<String> collectData(WebElement row) {
-        List<String> data = new ArrayList<>();
-        if (row == null) { return data; }
-
-        row.click();
-        List<WebElement> cells = row.findElements(By.xpath("*"));
-        if (CollectionUtils.isEmpty(cells)) { return data; }
-
-        cells.forEach(cell -> data.add(StringUtils.trim(cell.getText())));
-        return data;
+        List<String> empty = new ArrayList<>();
+        if (row == null) {
+            return empty;
+        } else {
+            row.click();
+            List<WebElement> cells = row.findElements(By.xpath("*"));
+            return CollectionUtils.isEmpty(cells) ?
+                   empty :
+                   cells.stream().map(cell -> StringUtils.trim(cell.getText())).collect(Collectors.toList());
+        }
     }
 
     protected WebElement getFirstHierRow() {
-        List<WebElement> matches = element.findElements(By.xpath(XPATH_FIRST_HIER_ROW));
-        if (CollectionUtils.isNotEmpty(matches)) { return matches.get(0);}
-        return null;
+        boolean infragistics4 = supportInfragistics4();
+        List<WebElement> matches = element.findElements(By.xpath(resolveFirstHierRowXpath(infragistics4)));
+        return CollectionUtils.isNotEmpty(matches) ? matches.get(0) : null;
     }
 
     private Map<String, String> getResultData(Object result) {
-
-        if (result == null) {
-            CheckUtils.fail("Unable to fetch data from hiertable");
-        }
+        if (result == null) { CheckUtils.fail("Unable to fetch data from Hierarchical Table"); }
 
         JSONArray jsonArray = JsonUtils.toJSONArray(result.toString());
         Map<String, String> data = new ListOrderedMap<>();
-
-        for (int i = 0; i < jsonArray.length(); i++) {
-
-            try {
-                if (jsonArray.get(i) instanceof JSONObject) {
-                    JSONObject jsonObject = (JSONObject) jsonArray.get(i);
-                    if (jsonObject.length() == 0) {
-                        CheckUtils.fail("Unable to fetch data with specified matchBy criterion..");
+        if (jsonArray != null && jsonArray.length() > 0) {
+            for (int i = 0; i < jsonArray.length(); i++) {
+                try {
+                    if (jsonArray.get(i) instanceof JSONObject) {
+                        JSONObject json = (JSONObject) jsonArray.get(i);
+                        if (json.length() == 0) {
+                            CheckUtils.fail("Unable to fetch data with specified matchBy criterion..");
+                        }
+                        if (json.has("name") && json.has("value")) {
+                            data.put((String) json.get("name"), String.valueOf(json.get("value")).trim());
+                        }
                     }
-                    if (jsonObject.has("name") && jsonObject.has("value")) {
-                        data.put((String) jsonObject.get("name"), String.valueOf(jsonObject.get("value")).trim());
-                    }
+                } catch (JSONException e) {
+                    CheckUtils.fail("Unable to read data from Hierarchical Table");
                 }
-            } catch (JSONException e) {
-                CheckUtils.fail("Unable to read data from hiertable");
             }
         }
         return data;
     }
 
-    private String formatHierarchy(List<String> matchBy) {
+    private String formatHierarchy(List<String> matchBy) { return String.join("/", matchBy); }
 
-        StringBuilder builder = new StringBuilder();
-
-        for (int i = 0; i < matchBy.size(); i++) {
-            builder.append(matchBy.get(i) + "/");
-        }
-        return StringUtils.removeEnd(builder.toString(), "/");
-
+    private boolean supportInfragistics4() {
+        ExecutionContext context = ExecutionThread.get();
+        return context != null &&
+               context.getBooleanData(AUTOSCAN_INFRAGISTICS4_AWARE, getDefaultBool(AUTOSCAN_INFRAGISTICS4_AWARE));
     }
-
-
 }

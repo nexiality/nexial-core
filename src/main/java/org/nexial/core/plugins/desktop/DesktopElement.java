@@ -2399,8 +2399,10 @@ public class DesktopElement {
         // all else
     }
 
-    protected WebElement findFirstElement(String xpath) {
-        if (StringUtils.isBlank(xpath)) { return null; }
+    protected WebElement findFirstElement(String xpath) { return findFirstElement(element, xpath); }
+
+    protected WebElement findFirstElement(WebElement element, String xpath) {
+        if (element == null || StringUtils.isBlank(xpath)) { return null; }
         return CollectionUtil.getOrDefault(element.findElements(By.xpath(xpath)), 0, null);
     }
 
