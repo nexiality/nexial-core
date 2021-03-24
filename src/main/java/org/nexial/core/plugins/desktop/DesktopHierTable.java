@@ -24,9 +24,11 @@ import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.collections4.map.ListOrderedMap;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.nexial.commons.utils.RegexUtils;
 import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.ExecutionThread;
 import org.nexial.core.model.ExecutionContext;
@@ -39,12 +41,15 @@ import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.WebDriverException;
 import org.openqa.selenium.WebElement;
 
+import javax.annotation.Nonnull;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 import static org.apache.commons.lang3.builder.ToStringStyle.NO_CLASS_NAME_STYLE;
+import static org.nexial.commons.utils.TextUtils.CleanNumberStrategy.REAL;
 import static org.nexial.core.NexialConst.Desktop.AUTOSCAN_INFRAGISTICS4_AWARE;
 import static org.nexial.core.SystemVariables.getDefaultBool;
 import static org.nexial.core.plugins.desktop.DesktopConst.*;
@@ -58,6 +63,7 @@ public class DesktopHierTable extends DesktopElement {
     private static final String FETCH_COLUMN = "fetchColumn";
     private static final String MATCH_HIERARCHY = "matchHierarchy";
     private static final String ALREADY_COLLAPSED = "alreadyCollapsed";
+    private static final DecimalFormat CELL_NUMBER_FORMAT = new DecimalFormat("###,##0.00");
 
     protected List<String> headers;
     protected int columnCount = UNDEFINED;
@@ -190,15 +196,7 @@ public class DesktopHierTable extends DesktopElement {
         boolean infragistics4 = supportInfragistics4();
 
         if (!infragistics4) {
-            JsonObject jsonInput = new JsonObject();
-            if (StringUtils.isNotBlank(hierarchyColumn)) { jsonInput.addProperty(ROW_TYPE_COLUMN, hierarchyColumn); }
-            if (StringUtils.isNotBlank(hierarchyList)) {
-                hierarchyList = formatHierarchy(TextUtils.toList(hierarchyList, ",", true));
-                jsonInput.addProperty(ROW_TYPE_HIERARCHY, hierarchyList);
-            }
-
-            jsonInput.addProperty(MATCH_COLUMN, categoryColumn);
-            jsonInput.addProperty(MATCH_HIERARCHY, formatHierarchy(matchBy));
+            JsonObject jsonInput = newJsonInput(matchBy);
             jsonInput.addProperty(ALREADY_COLLAPSED, alreadyCollapsed);
 
             Object result = driver.executeScript(SCRIPT_TREE_GETROW, element, jsonInput.toString());
@@ -211,9 +209,23 @@ public class DesktopHierTable extends DesktopElement {
             // if last match is found, use `nameValues` to construct a series of setValue()'s.
             Map<String, String> outcome = new ListOrderedMap<>();
             parentRow.findElements(By.xpath(LOCATOR_EDITOR))
-                     .forEach(cell -> outcome.put(cell.getAttribute("Name"), cell.getText()));
+                     .forEach(cell -> outcome.put(cell.getAttribute("Name"), formatHierCellData(cell)));
             return outcome;
         }
+    }
+
+    @Nonnull
+    private JsonObject newJsonInput(List<String> matchBy) {
+        JsonObject jsonInput = new JsonObject();
+        if (StringUtils.isNotBlank(hierarchyColumn)) { jsonInput.addProperty(ROW_TYPE_COLUMN, hierarchyColumn); }
+        if (StringUtils.isNotBlank(hierarchyList)) {
+            hierarchyList = formatHierarchy(TextUtils.toList(hierarchyList, ",", true));
+            jsonInput.addProperty(ROW_TYPE_HIERARCHY, hierarchyList);
+        }
+
+        jsonInput.addProperty(MATCH_COLUMN, categoryColumn);
+        jsonInput.addProperty(MATCH_HIERARCHY, formatHierarchy(matchBy));
+        return jsonInput;
     }
 
     protected Map<String, String> editHierCell(List<String> matchBy, Map<String, String> nameValues) {
@@ -229,17 +241,8 @@ public class DesktopHierTable extends DesktopElement {
 
         boolean infragistics4 = supportInfragistics4();
         if (!infragistics4) {
-            JsonObject jsonInput = new JsonObject();
-            if (StringUtils.isNotBlank(hierarchyColumn)) { jsonInput.addProperty(ROW_TYPE_COLUMN, hierarchyColumn); }
-            if (StringUtils.isNotBlank(hierarchyList)) {
-                hierarchyList = formatHierarchy(TextUtils.toList(hierarchyList, ",", true));
-                jsonInput.addProperty(ROW_TYPE_HIERARCHY, hierarchyList);
-            }
-
-            jsonInput.addProperty(MATCH_COLUMN, categoryColumn);
-            jsonInput.addProperty(MATCH_HIERARCHY, formatHierarchy(matchBy));
+            JsonObject jsonInput = newJsonInput(matchBy);
             jsonInput.addProperty(ALREADY_COLLAPSED, alreadyCollapsed);
-
             JsonArray edits = new JsonArray();
             nameValues.forEach((key, value) -> {
                 JsonObject edit = new JsonObject();
@@ -264,7 +267,7 @@ public class DesktopHierTable extends DesktopElement {
                     try {
                         cell.clear();
                         driver.executeScript(DesktopUtils.toShortcutText(value), cell);
-                        outcome.put(name, cell.getText());
+                        outcome.put(name, formatHierCellData(cell));
                     } catch (WebDriverException e) {
                         String message = resolveErrorMessage(e);
                         ConsoleUtils.error("Error when executing shortcut '%s' on '%s': %s", value, name, message);
@@ -277,6 +280,27 @@ public class DesktopHierTable extends DesktopElement {
 
             return outcome;
         }
+    }
+
+    protected String formatHierCellData(WebElement cell) {
+        if (cell == null) { return null; }
+        String data = null;
+        try {
+            data = cell.getText();
+        } catch (WebDriverException e) {
+            // try @Name instead
+        }
+
+        if (data == null) { data = cell.getAttribute("Name"); }
+
+        data = StringUtils.trim(data);
+
+        boolean infragistics4 = supportInfragistics4();
+
+        // number treatment
+        return infragistics4 && RegexUtils.match(data, "^\\-?[\\d\\,]+\\.[\\d]{1,}$") ?
+               CELL_NUMBER_FORMAT.format(NumberUtils.createDouble(TextUtils.cleanNumber(data, REAL))) :
+               data;
     }
 
     protected WebElement expandToMatchedHierarchy(List<String> matchBy) {
@@ -317,34 +341,31 @@ public class DesktopHierTable extends DesktopElement {
         boolean infragistics4 = supportInfragistics4();
 
         if (!infragistics4) {
-            JsonObject jsonInput = new JsonObject();
-            if (StringUtils.isNotBlank(hierarchyColumn)) { jsonInput.addProperty(ROW_TYPE_COLUMN, hierarchyColumn); }
-            if (StringUtils.isNotBlank(hierarchyList)) {
-                hierarchyList = formatHierarchy(TextUtils.toList(hierarchyList, ",", true));
-                jsonInput.addProperty(ROW_TYPE_HIERARCHY, hierarchyList);
-            }
-
-            jsonInput.addProperty(MATCH_COLUMN, categoryColumn);
-            jsonInput.addProperty(MATCH_HIERARCHY, formatHierarchy(matchBy));
+            JsonObject jsonInput = newJsonInput(matchBy);
             jsonInput.addProperty(FETCH_COLUMN, fetchColumn);
             jsonInput.addProperty(ALREADY_COLLAPSED, alreadyCollapsed);
+
             Object result = driver.executeScript(SCRIPT_TREE_GET_CHILD, element, jsonInput.toString());
             if (result == null) { CheckUtils.fail("Unable to fetch data with matchBy " + matchBy); }
+
             JSONArray jsonArray = JsonUtils.toJSONArray(result.toString());
             List<String> data = new ArrayList<>();
 
-            for (int i = 0; i < jsonArray.length(); i++) {
-                try {
-                    if (jsonArray.get(i) instanceof JSONObject) {
-                        JSONObject jsonObject = (JSONObject) jsonArray.get(i);
-                        if (jsonObject.length() == 0) {
-                            CheckUtils.fail("Unable to fetch data with specified matchBy criterion..");
+            if (jsonArray != null  && jsonArray.length() > 0) {
+                for (int i = 0; i < jsonArray.length(); i++) {
+                    try {
+                        if (jsonArray.get(i) instanceof JSONObject) {
+                            JSONObject jsonObject = (JSONObject) jsonArray.get(i);
+                            if (jsonObject.length() == 0) {
+                                CheckUtils.fail("Unable to fetch data with specified matchBy criterion..");
+                            }
+                            if (jsonObject.has("name") && jsonObject.getString("name").equals(fetchColumn)) {
+                                data.add(String.valueOf(jsonObject.get("value")).trim());
+                            }
                         }
-                        if (jsonObject.has("name") && jsonObject.getString("name").equals(fetchColumn)) {
-                            data.add(String.valueOf(jsonObject.get("value")).trim());
-                        }
+                    } catch (JSONException e) {
+                        // ignored...
                     }
-                } catch (JSONException e) {
                 }
             }
 
@@ -356,22 +377,22 @@ public class DesktopHierTable extends DesktopElement {
 
             // if last match is found, use `nameValues` to construct a series of setValue()'s.
             return parentRow.findElements(By.xpath(LOCATOR_HIER_TABLE_ROWS + "/*[@Name='" + fetchColumn + "']"))
-                            .stream().map(WebElement::getText).collect(Collectors.toList());
+                            .stream().map(this::formatHierCellData).collect(Collectors.toList());
         }
     }
 
-    protected List<String> collectData(WebElement row) {
-        List<String> empty = new ArrayList<>();
-        if (row == null) {
-            return empty;
-        } else {
-            row.click();
-            List<WebElement> cells = row.findElements(By.xpath("*"));
-            return CollectionUtils.isEmpty(cells) ?
-                   empty :
-                   cells.stream().map(cell -> StringUtils.trim(cell.getText())).collect(Collectors.toList());
-        }
-    }
+    // protected List<String> collectData(WebElement row) {
+    //     List<String> empty = new ArrayList<>();
+    //     if (row == null) {
+    //         return empty;
+    //     } else {
+    //         row.click();
+    //         List<WebElement> cells = row.findElements(By.xpath("*"));
+    //         return CollectionUtils.isEmpty(cells) ?
+    //                empty :
+    //                cells.stream().map(cell -> StringUtils.trim(cell.getText())).collect(Collectors.toList());
+    //     }
+    // }
 
     protected WebElement getFirstHierRow() {
         boolean infragistics4 = supportInfragistics4();
