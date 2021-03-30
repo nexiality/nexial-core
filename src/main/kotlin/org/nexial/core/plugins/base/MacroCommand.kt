@@ -33,7 +33,7 @@ class MacroCommand : BaseCommand() {
             assertVarPresent(`var`)
         else {
             if (context.hasData(`var`))
-                StepResult.success()
+                StepResult.success("")
             else {
                 updateDataVariable(`var`, default)
                 StepResult.success("Data variable '$`var`' set to default value '$default'")

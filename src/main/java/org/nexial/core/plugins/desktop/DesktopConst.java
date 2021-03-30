@@ -290,6 +290,33 @@ public class DesktopConst {
     // public static final String SCRIPT_INFRAG4_TREE_GET_CHILD = "tree4: getChildData";
     // public static final String SCRIPT_INFRAG4_TREE_EDIT_CELLS = "tree4: editCells";
 
+    /*
+    ("input: ctrl_click", null, element)
+    ("input: brc_click", null, element)
+        - include setFocus
+
+    ("automation: ValuePattern.SetValue", "value", element)
+    ("automation: resize", null, element)
+    ("automation: maximize", null, element)
+    ("automation: minimize", "800X600", element)
+
+    ("shortcut: <[FUNCTION_KEY]>", "", element)
+    ("shortcut: <[{TEXT}]>", "", element)
+
+    ("clickExploreBar: [Level 1][Level 2]", "", element)
+
+    ("tree: getRowData", 	{json}, element)
+    ("tree: getChildData", 	{json}, element)
+    ("tree: editCells", 	{json}, element)
+    ("tree: collapseAll", 	null, element)
+
+    ("datagrid: metadata", 	null, element)
+    ("datagrid: fetch", 	row-start, row-end, element)
+    ("datagrid: fetch-all",	null, element)
+    ("datagrid: row-count",	null, element)
+    ("datagrid: edit", 		{json}, element)
+    */
+
     protected DesktopConst() { }
 
     public static void postMenuClickWait() {
