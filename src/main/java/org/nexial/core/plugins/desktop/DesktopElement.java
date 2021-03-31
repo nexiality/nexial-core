@@ -2320,34 +2320,56 @@ public class DesktopElement {
     @Nonnull
     private StepResult singleSelectViaFirstChar(String text) {
         String firstChar = "" + text.charAt(0);
+        String selectionScript = toShortcutText(firstChar);
+
         List<WebElement> selectionCandidates = element.findElements(By.xpath("*[contains(@Name,'" + firstChar + "')]"));
-        if (CollectionUtils.isEmpty(selectionCandidates)) {
-            return StepResult.fail("Text '%s' cannot be selected since '%s' does not seem to contain such value",
-                                   text, label);
+        boolean useFirstChar = CollectionUtils.isEmpty(selectionCandidates);
+        if (useFirstChar) {
+            ConsoleUtils.log("No selections found under Combo '" +label + "'; " +
+                             "elect 'useFirstChar' strategy to select '" + text + "'");
         }
 
-        String selectionScript = toShortcutText(firstChar);
-        String isSelectedXpath = "*[@Name and @IsSelected='True']";
+        if (useFirstChar) {
+            String value = normalizeUiText(element.getAttribute("Name"));
+            String initialValue = value;
 
-        String firstSelection = null;
-        // fictitious upper limit based on specified text
-        for (int i = 0; i < selectionCandidates.size(); i++) {
-            driver.executeScript(selectionScript, element);
+            // keep typing the first character until the selected text matches "text"
+            while (!StringUtils.equals(value, text)) {
+                driver.executeScript(selectionScript, element);
+                // autoClearModalDialog();
 
-            WebElement selected = findFirstElement(isSelectedXpath);
-            if (selected == null) { continue; }
+                value = normalizeUiText(element.getAttribute("Name"));
 
-            String selectedValue = selected.getAttribute("Name");
-            if (StringUtils.equals(selectedValue, text)) { break; }
-
-            if (firstSelection == null && StringUtils.isNotEmpty(selectedValue)) {
-                firstSelection = selectedValue;
-                continue;
+                // probably means we've looped around.. so we are done
+                if (StringUtils.equals(value, initialValue)) { break; }
             }
 
-            // looped around already, we are done!
-            if (StringUtils.equals(firstSelection, selectedValue)) {
-                return StepResult.fail("Unable to select text '%s' from '%s'", text, getLabel());
+            if (!StringUtils.equals(value, text)) {
+                return StepResult.fail("Unable to select in '" + label + "' the text '" + text + "': " + value);
+            }
+        } else {
+            String isSelectedXpath = "*[@Name and @IsSelected='True']";
+            String firstSelection = null;
+
+            // fictitious upper limit based on specified text
+            for (int i = 0; i < selectionCandidates.size(); i++) {
+                driver.executeScript(selectionScript, element);
+
+                WebElement selected = findFirstElement(isSelectedXpath);
+                if (selected == null) { continue; }
+
+                String selectedValue = selected.getAttribute("Name");
+                if (StringUtils.equals(selectedValue, text)) { break; }
+
+                if (firstSelection == null && StringUtils.isNotEmpty(selectedValue)) {
+                    firstSelection = selectedValue;
+                    continue;
+                }
+
+                // looped around already, we are done!
+                if (StringUtils.equals(firstSelection, selectedValue)) {
+                    return StepResult.fail("Unable to select text '%s' from '%s'", text, getLabel());
+                }
             }
         }
 
