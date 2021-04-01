@@ -122,6 +122,56 @@ class BaseCommandTest {
 
     @Test
     @Throws(Exception::class)
+    fun assertArrayEqual_test_output() {
+        val subject = BaseCommand()
+        subject.init(context)
+
+        try {
+            subject.assertArrayEqual("This, is, a , test  ,Do,not,be , alarm .",
+                                     "This,is,a ,test,Do,not, be,alarmed.",
+                                     "true")
+            fail("expect failure")
+        } catch (e: Exception) {
+            fail(e.message)
+        } catch (e: AssertionError) {
+            println(e.message)
+            assertEquals("expected=This,[ is],[ a ],[ test  ],Do,not,[be ],[ alarm .]\n" +
+                         "actual  =This,[is] ,[a ] ,[test]   ,Do,not,[ be],[alarmed.]",
+                         e.message?.trim()
+            )
+        }
+
+        try {
+            subject.assertArrayEqual("",
+                                     "This,is,a ,test,Do,not, be,alarmed.",
+                                     "true")
+            fail("expect failure")
+        } catch (e: Exception) {
+            fail(e.message)
+        } catch (e: AssertionError) {
+            println(e.message)
+            assertEquals("EXPECTED array is empty: {}", e.message?.trim()
+            )
+        }
+
+        try {
+            subject.assertArrayEqual("This",
+                                     "This,is,a ,test,Do,not, be,alarmed.",
+                                     "true")
+            fail("expect failure")
+        } catch (e: Exception) {
+            fail(e.message)
+        } catch (e: AssertionError) {
+            println(e.message)
+            assertEquals("expected=This,<missing>,<missing>,<missing>,<missing>,<missing>,<missing>,<missing> \n" +
+                         "actual  =This,[is]     ,[a ]     ,[test]   ,[Do]     ,[not]    ,[ be]    ,[alarmed.]",
+                         e.message?.trim()
+            )
+        }
+    }
+
+    @Test
+    @Throws(Exception::class)
     fun assertEquals_null() {
         val subject = BaseCommand()
         subject.init(context)

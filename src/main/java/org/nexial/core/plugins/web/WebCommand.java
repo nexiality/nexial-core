@@ -90,6 +90,7 @@ import static org.nexial.core.NexialConst.PolyMatcher.REGEX;
 import static org.nexial.core.NexialConst.Project.BROWSER_META_CACHE_PATH;
 import static org.nexial.core.NexialConst.Web.*;
 import static org.nexial.core.SystemVariables.*;
+import static org.nexial.core.plugins.base.ComparisonFormatter.displayForCompare;
 import static org.nexial.core.plugins.ws.WebServiceClient.hideAuthDetails;
 import static org.nexial.core.utils.CheckUtils.*;
 import static org.openqa.selenium.Keys.BACK_SPACE;

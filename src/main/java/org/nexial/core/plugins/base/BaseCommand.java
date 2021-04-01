@@ -22,8 +22,6 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
-import org.apache.commons.lang3.tuple.ImmutablePair;
-import org.apache.commons.lang3.tuple.Pair;
 import org.jetbrains.annotations.Nullable;
 import org.nexial.commons.utils.*;
 import org.nexial.core.ExecutionThread;
@@ -61,11 +59,14 @@ import static java.lang.Boolean.TRUE;
 import static java.lang.System.lineSeparator;
 import static java.util.regex.Pattern.CASE_INSENSITIVE;
 import static org.apache.commons.lang3.SystemUtils.JAVA_IO_TMPDIR;
+import static org.nexial.commons.utils.TextUtils.*;
 import static org.nexial.core.CommandConst.*;
 import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.NexialConst.Data.*;
 import static org.nexial.core.NexialConst.ImageCaption.*;
 import static org.nexial.core.excel.ExcelConfig.MSG_PASS;
+import static org.nexial.core.plugins.base.ComparisonFormatter.displayAssertionResult;
+import static org.nexial.core.plugins.base.ComparisonFormatter.displayForCompare;
 import static org.nexial.core.plugins.base.IncrementStrategy.ALPHANUM;
 import static org.nexial.core.utils.CheckUtils.*;
 import static org.nexial.core.utils.OutputFileUtils.CASE_INSENSIVE_SORT;
@@ -271,7 +272,7 @@ public class BaseCommand implements NexialCommand {
     /** clear data variables by name */
     public StepResult clear(String vars) {
         requiresNotBlank(vars, "invalid variable(s)", vars);
-        return StepResult.success(clearVariables(TextUtils.toList(vars, context.getTextDelim(), true)));
+        return StepResult.success(clearVariables(toList(vars, context.getTextDelim(), true)));
     }
 
     @NotNull
@@ -411,7 +412,7 @@ public class BaseCommand implements NexialCommand {
         List<String> expected = new ArrayList<>();
         if (obj instanceof List || obj instanceof String) {
             List list = obj instanceof String ?
-                        TextUtils.toList((String) obj, context.getTextDelim(), false) : (List) obj;
+                        toList((String) obj, context.getTextDelim(), false) : (List) obj;
             list.stream().filter(o -> o != null).forEach(o -> {
                 String string = o.toString();
                 actual.add(string);
@@ -458,21 +459,13 @@ public class BaseCommand implements NexialCommand {
     }
 
     protected StepResult polyAssertEqual(String expected, String actual) {
-        assertTrue(NL + displayForCompare("expected", expected, "actual", actual),
-                   TextUtils.polyMatch(actual, expected));
-        String nullValue = context.getNullValueToken();
-        String expectedForDisplay = context.truncateForDisplay(StringUtils.defaultString(expected, nullValue));
-        String actualForDisplay = context.truncateForDisplay(StringUtils.defaultString(actual, nullValue));
-        return StepResult.success("validated EXPECTED = ACTUAL; '%s' = '%s'", expectedForDisplay, actualForDisplay);
+        assertTrue(NL + displayForCompare("expected", expected, "actual", actual), polyMatch(actual, expected));
+        return StepResult.success(displayAssertionResult(context, true, expected, actual));
     }
 
     public StepResult assertEqual(String expected, String actual) {
         assertEquals(handleSpecialMarkers(expected), handleSpecialMarkers(actual));
-
-        String nullValue = context.getNullValueToken();
-        String expectedForDisplay = context.truncateForDisplay(StringUtils.defaultString(expected, nullValue));
-        String actualForDisplay = context.truncateForDisplay(StringUtils.defaultString(actual, nullValue));
-        return StepResult.success("validated EXPECTED = ACTUAL; '%s' = '%s'", expectedForDisplay, actualForDisplay);
+        return StepResult.success(displayAssertionResult(context, true, expected, actual));
     }
 
     /**
@@ -487,7 +480,7 @@ public class BaseCommand implements NexialCommand {
     public StepResult assertMatch(String text, String regex) {
         requiresNotBlank(regex, "invalid regex", regex);
         boolean matched = PolyMatcher.isPolyMatcher(regex) ?
-                          TextUtils.polyMatch(text, regex) :
+                          polyMatch(text, regex) :
                           RegexUtils.isExact(text, regex, true);
         return new StepResult(matched,
                               String.format("'%s' " + (matched ? "matches" : "does not match") + " '%s'", text, regex),
@@ -503,13 +496,7 @@ public class BaseCommand implements NexialCommand {
 
     public StepResult assertNotEqual(String expected, String actual) {
         assertNotEquals(handleSpecialMarkers(expected), handleSpecialMarkers(actual));
-
-        String nullValue = context.getNullValueToken();
-        String expectedForDisplay = context.truncateForDisplay(StringUtils.defaultString(expected, nullValue));
-        String actualForDisplay = context.truncateForDisplay(StringUtils.defaultString(actual, nullValue));
-        return StepResult.success("validated EXPECTED not equal to ACTUAL; '%s' not equal to '%s'",
-                                  expectedForDisplay,
-                                  actualForDisplay);
+        return StepResult.success(displayAssertionResult(context, false, expected, actual));
     }
 
     public StepResult assertContains(String text, String substring) {
@@ -578,10 +565,10 @@ public class BaseCommand implements NexialCommand {
         }
 
         String delim = context.getTextDelim();
-        List<String> expectedList = TextUtils.toList(array1, delim, false);
+        List<String> expectedList = toList(array1, delim, false);
         requiresNotEmpty(expectedList, "EXPECTED array is empty", array1);
 
-        List<String> actualList = TextUtils.toList(array2, delim, false);
+        List<String> actualList = toList(array2, delim, false);
         requiresNotEmpty(actualList, "ACTUAL array is empty", array2);
 
         if (!CheckUtils.toBoolean(exactOrder)) {
@@ -607,13 +594,13 @@ public class BaseCommand implements NexialCommand {
 
         String delim = context.getTextDelim();
 
-        List<String> list = TextUtils.toList(array, delim, false);
+        List<String> list = toList(array, delim, false);
         if (CollectionUtils.isEmpty(list)) { CheckUtils.fail("'array' cannot be parsed: " + array); }
 
-        List<String> expectedList = TextUtils.toList(expected, delim, false)
-                                             .stream()
-                                             .distinct()
-                                             .collect(Collectors.toList());
+        List<String> expectedList = toList(expected, delim, false)
+                                        .stream()
+                                        .distinct()
+                                        .collect(Collectors.toList());
 
         if (CollectionUtils.isEmpty(expectedList)) { CheckUtils.fail("'expected' cannot be parsed: " + expected); }
 
@@ -627,11 +614,9 @@ public class BaseCommand implements NexialCommand {
             ConsoleUtils.log("All expected items matched: " + containsAll + ", remaining unmatched: " + expectedList);
         }
 
-        if (containsAll && expectedList.isEmpty()) {
-            return StepResult.success("All items in 'expected' are found in 'array'");
-        }
-
-        return StepResult.fail("Not all items in 'expected' are found in 'array': " + expected);
+        return containsAll && expectedList.isEmpty() ?
+               StepResult.success("All items in 'expected' are found in 'array'") :
+               StepResult.fail("Not all items in 'expected' are found in 'array': " + expected);
     }
 
     /** assert that {@code array} DOES NOT contains any items in {@code expected}. */
@@ -641,21 +626,19 @@ public class BaseCommand implements NexialCommand {
 
         String delim = context.getTextDelim();
 
-        List<String> list = TextUtils.toList(array, delim, false);
+        List<String> list = toList(array, delim, false);
         if (CollectionUtils.isEmpty(list)) { return StepResult.success("empty array found"); }
 
-        List<String> unexpectedList = TextUtils.toList(unexpected, delim, false)
-                                               .stream()
-                                               .distinct()
-                                               .collect(Collectors.toList());
+        List<String> unexpectedList = toList(unexpected, delim, false)
+                                          .stream()
+                                          .distinct()
+                                          .collect(Collectors.toList());
         if (CollectionUtils.isEmpty(unexpectedList)) { CheckUtils.fail("'unexpected' cannot be parsed: " + unexpected);}
 
         // all all items in `expectedList` is removed due to match against `list`, then all items in `expected` matched
-        if (unexpectedList.removeIf(item -> !list.contains(item)) && unexpectedList.isEmpty()) {
-            return StepResult.success("All items in 'unexpected' are NOT found in 'array'");
-        }
-
-        return StepResult.fail("One or more items in 'unexpected' are found in 'array': " + unexpectedList);
+        return unexpectedList.removeIf(item -> !list.contains(item)) && unexpectedList.isEmpty() ?
+               StepResult.success("All items in 'unexpected' are NOT found in 'array'") :
+               StepResult.fail("One or more items in 'unexpected' are found in 'array': " + unexpectedList);
     }
 
     public StepResult assertVarPresent(String var) {
@@ -715,9 +698,8 @@ public class BaseCommand implements NexialCommand {
 
         long mustEndBy = System.currentTimeMillis() + NumberUtils.toLong(maxWaitMs);
         NexialFilterList filterList = new NexialFilterList(conditions);
-        if (filterList.size() == 0) {
-            return StepResult.fail("Invalid filter condition " + filterList.getFilterText());
-        }
+        if (filterList.size() == 0) { return StepResult.fail("Invalid filter condition " + filterList.getFilterText());}
+
         boolean isMatch = false;
         while (System.currentTimeMillis() < mustEndBy) {
             if (filterList.isMatched(context, null)) {
@@ -771,7 +753,7 @@ public class BaseCommand implements NexialCommand {
      * @param file the full path of the macro library.
      * @param name the name of the macro to invoke
      * @return pass/fail based on the validity of the referenced macro/file.  If macro {@code name} or library
-     * ({@code file}) is not found, a failure is returned with fail-immediate in effect.
+     *     ({@code file}) is not found, a failure is returned with fail-immediate in effect.
      */
     public StepResult macro(String file, String sheet, String name) {
         Macro macro = new Macro(file, sheet, name);
@@ -783,12 +765,12 @@ public class BaseCommand implements NexialCommand {
      * fully qualified, whilst Nexial function may be used (e.g. {@code $(syspath)}).
      *
      * @return pass/fail based on the validity of the referenced macro/file.  If macro {@code name} or library
-     * ({@code file}) is not found, a failure is returned with fail-immediate in effect.
+     *     ({@code file}) is not found, a failure is returned with fail-immediate in effect.
      */
     public StepResult macroFlex(String macro, String input, String output) {
         requiresNotBlank(macro, "macro parameter is empty", "");
 
-        List<String> macroList = TextUtils.toList(macro, "::", false);
+        List<String> macroList = toList(macro, "::", false);
         if (macroList.size() != 3) { return StepResult.fail("Invalid macro parameter: " + macro); }
 
         context.setInMacroFlex(true);
@@ -836,90 +818,6 @@ public class BaseCommand implements NexialCommand {
     public void assertEquals(String expected, String actual) {
         assertTrue(NL + displayForCompare("expected", expected, "actual", actual),
                    assertEqualsInternal(expected, actual));
-    }
-
-    public static String displayForCompare(String label1, Object data1, String label2, Object data2) {
-        // 1. label treatment
-        if (StringUtils.isBlank(label1)) { label1 = "expected"; }
-        if (StringUtils.isBlank(label2)) { label2 = "actual"; }
-        int labelLength = Math.max(label1.length(), label2.length());
-        label1 = StringUtils.rightPad(label1, labelLength, " ");
-        label2 = StringUtils.rightPad(label2, labelLength, " ");
-
-        // 2. check for special types
-        List<String> data1List = null;
-        List<String> data2List = null;
-        Map<String, String> data1Map = null;
-        Map<String, String> data2Map = null;
-
-        // 3. form display for data1 :: first pass
-        String data1Display = label1;
-        if (data1 == null) {
-            data1Display += "=<null/undefined>";
-        } else if (data1.getClass().isArray()) {
-            data1List = Arrays.asList(TextUtils.toStringArray(data1));
-        } else if (data1 instanceof Collection) {
-            data1List = TextUtils.toStringList(data1);
-        } else if (data1 instanceof Map) {
-            data1Map = TextUtils.toStringMap(data1);
-        } else if (data1 instanceof String) {
-            String data1String = (String) data1;
-            if (StringUtils.isEmpty(data1String)) {
-                data1Display += "=<empty>";
-            } else if (StringUtils.isBlank(data1String)) {
-                data1Display += "=<blank>[" + data1 + "]";
-            } else {
-                data1Display += "=" + data1String;
-            }
-        } else {
-            data1Display += "=" + data1;
-        }
-
-        // 3. form display for data2 :: first pass
-        String data2Display = label2;
-        if (data2 == null) {
-            data2Display += "=<null/undefined>";
-        } else if (data2.getClass().isArray()) {
-            data2List = Arrays.asList(TextUtils.toStringArray(data2));
-        } else if (data2 instanceof Collection) {
-            data2List = TextUtils.toStringList(data2);
-        } else if (data2 instanceof Map) {
-            data2Map = TextUtils.toStringMap(data2);
-        } else if (data2 instanceof String) {
-            String data2String = (String) data2;
-            if (StringUtils.isEmpty(data2String)) {
-                data2Display += "=<empty>";
-            } else if (StringUtils.isBlank(data2String)) {
-                data2Display += "=<blank>[" + data2 + "]";
-            } else {
-                data2Display += "=" + data2String;
-            }
-        } else {
-            data2Display += "=" + data2;
-        }
-
-        if (data1List != null) {
-            if (data2List != null) {
-                Pair<String, String> lines = displayAligned(data1List, data2List);
-                data1Display += "=" + lines.getKey();
-                data2Display += "=" + lines.getValue();
-            } else {
-                data1Display += "=" + TextUtils.toString(data1List, ",");
-            }
-        } else {
-            if (data1Map != null) {
-                if (data2Map != null) {
-                    return displayAsMapDiff(label1, data1Map, label2, data2Map);
-                } else {
-                    data1Display += "=" + data1Map;
-                }
-            } else {
-                if (data2Map != null) { data2Display += "=" + data2Map; }
-                if (data2List != null) { data2Display += "=" + TextUtils.toString(data2List, ","); }
-            }
-        }
-
-        return data1Display + NL + data2Display;
     }
 
     public void waitFor(int waitMs) {
@@ -1035,7 +933,7 @@ public class BaseCommand implements NexialCommand {
         String caption = context.getStringData(SCREENSHOT_CAPTION);
         if (StringUtils.isNotBlank(caption)) {
             CaptionModel model = new CaptionModel();
-            model.addCaptions(TextUtils.toList(caption, "\n", true));
+            model.addCaptions(toList(caption, "\n", true));
 
             String color = context.getStringData(SCREENSHOT_CAPTION_COLOR);
             if (StringUtils.isNotBlank(color)) { model.setCaptionColor(color); }
@@ -1081,8 +979,8 @@ public class BaseCommand implements NexialCommand {
 
     private StepResult executeMacro(Macro macro, String input, String output) {
         TestStep currentTestStep = context.getCurrentTestStep();
-        Map<String, String> inputMap = TextUtils.toMap(input, "\n", "=");
-        Map<String, String> outputMap = TextUtils.toMap(output, "\n", "=");
+        Map<String, String> inputMap = toMap(input, "\n", "=");
+        Map<String, String> outputMap = toMap(output, "\n", "=");
 
         MacroExecutor macroExecutor = new MacroExecutor(currentTestStep, macro, inputMap, outputMap);
         currentTestStep.setMacroExecutor(macroExecutor);
@@ -1508,8 +1406,8 @@ public class BaseCommand implements NexialCommand {
         boolean equals = seleniumEquals(expected, actual);
         if (!equals && context.isTextMatchLeniently()) {
             // not so fast.. could be one of those quirky IE issues..
-            String lenientExpected = TextUtils.toOneLine(expected, true);
-            String lenientActual = TextUtils.toOneLine(actual, true);
+            String lenientExpected = toOneLine(expected, true);
+            String lenientActual = toOneLine(actual, true);
             equals = StringUtils.equals(lenientExpected, lenientActual);
         }
 
@@ -1526,9 +1424,7 @@ public class BaseCommand implements NexialCommand {
             }
         }
 
-        if (misMatch) { return displayForCompare("expected", expected, "actual", actual); }
-
-        return null;
+        return misMatch ? displayForCompare("expected", expected, "actual", actual) : null;
     }
 
     protected static String throwableToString(Throwable t) {
@@ -1603,12 +1499,8 @@ public class BaseCommand implements NexialCommand {
             if (i >= numOfParamSpecified) {
                 args[i] = "";
             } else {
-                String param = params[i];
-                if (cryptRestricted && context.containsCrypt(param)) {
-                    args[i] = param;
-                } else {
-                    args[i] = context.replaceTokens(param);
-                }
+                args[i] = cryptRestricted && context.containsCrypt(params[i]) ?
+                          params[i] : context.replaceTokens(params[i]);
             }
         }
 
@@ -1646,88 +1538,10 @@ public class BaseCommand implements NexialCommand {
         array = StringUtils.remove(array, "\r");
         array = StringUtils.replace(array, "\\" + delim, TMP_DELIM);
         if (!StringUtils.equals(delim, "\n")) { array = StringUtils.replace(array, delim, "\n"); }
-        List<String> values = TextUtils.toList(array, "\n", false);
+        List<String> values = toList(array, "\n", false);
         values.forEach(v -> list.add(StringUtils.replace(v, TMP_DELIM, delim)));
 
         return list;
     }
 
-    private static Pair<String, String> displayAligned(List<String> list1, List<String> list2) {
-        if (CollectionUtils.isEmpty(list1)) { return new ImmutablePair<>("", TextUtils.toString(list2, ",")); }
-        if (CollectionUtils.isEmpty(list2)) { return new ImmutablePair<>(TextUtils.toString(list1, ","), ""); }
-
-        StringBuilder buffer1 = new StringBuilder();
-        StringBuilder buffer2 = new StringBuilder();
-
-        int list1Size = list1.size();
-        int list2Size = list2.size();
-        int commonSize = Math.min(list1Size, list2Size);
-
-        for (int i = 0; i < commonSize; i++) {
-            String item1 = list1.get(i);
-            String item2 = list2.get(i);
-            int maxWidth = Math.max(StringUtils.length(item1), StringUtils.length(item2));
-            buffer1.append(StringUtils.rightPad(item1, maxWidth, " ")).append(",");
-            buffer2.append(StringUtils.rightPad(item2, maxWidth, " ")).append(",");
-        }
-
-        if (list1Size > commonSize) {
-            for (int i = commonSize; i < list1Size; i++) {
-                String item1 = list1.get(i);
-                String item2 = "<missing>";
-                int maxWidth = Math.max(StringUtils.length(item1), StringUtils.length(item2));
-                buffer1.append(StringUtils.rightPad(item1, maxWidth, " ")).append(",");
-                buffer2.append(StringUtils.rightPad(item2, maxWidth, " ")).append(",");
-            }
-        }
-
-        if (list2Size > commonSize) {
-            for (int i = commonSize; i < list2Size; i++) {
-                String item1 = "<missing>";
-                String item2 = list2.get(i);
-                int maxWidth = Math.max(StringUtils.length(item1), StringUtils.length(item2));
-                buffer1.append(StringUtils.rightPad(item1, maxWidth, " ")).append(",");
-                buffer2.append(StringUtils.rightPad(item2, maxWidth, " ")).append(",");
-            }
-        }
-
-        return new ImmutablePair<>(StringUtils.removeEnd(buffer1.toString(), ","),
-                                   StringUtils.removeEnd(buffer2.toString(), ","));
-    }
-
-    private static String displayAsMapDiff(String label1,
-                                           Map<String, String> map1,
-                                           String label2,
-                                           Map<String, String> map2) {
-        List<String> headers = Arrays.asList("key",
-                                             StringUtils.trim(label1) + " value",
-                                             StringUtils.trim(label2) + " value",
-                                             "matched");
-        List<List<String>> records = new ArrayList<>();
-
-        List<String> map1Keys = new ArrayList<>(map1.keySet());
-        List<String> map2Keys = new ArrayList<>(map2.keySet());
-
-        map1Keys.forEach(map1Key -> {
-            List<String> record = new ArrayList<>();
-            record.add(map1Key);
-            record.add(map1.get(map1Key));
-            record.add(StringUtils.defaultString(map2.get(map1Key), "<missing>"));
-            record.add(StringUtils.equals(record.get(1), record.get(2)) ? "yes" : "NO");
-            records.add(record);
-
-            map2Keys.remove(map1Key);
-        });
-
-        map2Keys.forEach(map2Key -> {
-            List<String> record = new ArrayList<>();
-            record.add(map2Key);
-            record.add("<missing>");
-            record.add(map2.get(map2Key));
-            record.add("NO");
-            records.add(record);
-        });
-
-        return TextUtils.createAsciiTable(headers, records, List::get);
-    }
 }
