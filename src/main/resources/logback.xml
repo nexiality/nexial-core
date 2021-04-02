@@ -250,6 +250,7 @@
         <appender-ref ref="console-catchall"/>
         <appender-ref ref="file-3rdparty"/>
     </logger>
+    <logger name="org.apache.pdfbox.pdmodel.font.PDFont" level="OFF"/>
 
     <logger name="org.apache.http" level="WARN">
         <appender-ref ref="console-catchall"/>

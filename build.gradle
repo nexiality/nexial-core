@@ -180,10 +180,10 @@ dependencies {
 	compile("com.itextpdf:itextpdf:${itextVersion}")
 	compile("com.itextpdf.tool:xmlworker:${itextVersion}")
 
-	compile("org.apache.pdfbox:pdfbox:+")
-	compile("org.apache.pdfbox:pdfbox-tools:+")
-	compile("org.apache.pdfbox:fontbox:+")
-	compile("org.apache.pdfbox:xmpbox:+")
+	compile("org.apache.pdfbox:pdfbox:${pdfboxVersion}")
+	compile("org.apache.pdfbox:pdfbox-tools:${pdfboxVersion}")
+	compile("org.apache.pdfbox:fontbox:${pdfboxVersion}")
+	compile("org.apache.pdfbox:xmpbox:${pdfboxVersion}")
 
 	// support: poi/msoffice
 	compile("org.apache.poi:poi:${poiVersion}")
