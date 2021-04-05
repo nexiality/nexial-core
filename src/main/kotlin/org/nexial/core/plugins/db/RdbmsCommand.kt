@@ -316,7 +316,7 @@ class RdbmsCommand : BaseCommand() {
 
         for (row in result.getData()) sb.append(rowToString(row, result.columns, delim)).append(CSV_ROW_SEP)
 
-        return sb.toString()
+        return StringUtils.removeEnd(sb.toString(), CSV_ROW_SEP)
     }
 
     private fun parseSQLs(db: String, sqls: String): List<SqlComponent> {

@@ -16,11 +16,6 @@
 
 package org.nexial.core.plugins.ws;
 
-import java.io.File;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
-
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.http.HttpEntity;
@@ -33,6 +28,11 @@ import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.utils.ConsoleUtils;
 
+import java.io.File;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+
 import static org.apache.http.entity.ContentType.DEFAULT_BINARY;
 import static org.apache.http.entity.mime.HttpMultipartMode.BROWSER_COMPATIBLE;
 import static org.nexial.core.NexialConst.Ws.WS_CONTENT_TYPE;
@@ -44,9 +44,13 @@ public class PostMultipartRequest extends PostRequest {
 
     PostMultipartRequest(ExecutionContext context) { super(context); }
 
+    /**
+     * payload is a "stringify" map of request (i.e. key1=value1\nkey2=value2\n...). {@literal fileParams} is a list
+     * of request parameter keys that should be considered as files to be specified as multipart.
+     */
     public void setPayload(String payload, String... fileParams) {
-        System.out.println("payload = " + payload);
-        System.out.println("fileParams = " + ArrayUtils.toString(fileParams));
+        // ConsoleUtils.log("payload = " + payload);
+        // ConsoleUtils.log("fileParams = " + ArrayUtils.toString(fileParams));
 
         MultipartEntityBuilder multipartEntityBuilder = MultipartEntityBuilder.create().setMode(BROWSER_COMPATIBLE);
 

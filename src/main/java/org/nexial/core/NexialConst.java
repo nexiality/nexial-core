@@ -602,6 +602,10 @@ public final class NexialConst {
                                                                           "cfe984f88088957",
                                                                           "cedc8a5d2d88957",
                                                                           "e5f2913cc388957");
+        public static final List<String> APIKEYS_ZZ = Arrays.asList("e565eaec441c9ddbfae4134c73aa45ecf3802df1",
+                                                                    "234e2cbc99948665f561e1f7b4ee6f4b47da709e",
+                                                                    "a64410bb3e41caa19d2460936487382b77893818");
+        public static final List<String> HOSTS_ZZ = Arrays.asList("sandbox.zamzar.com", "api.zamzar.com");
 
         // overrun text
         public static final String MAX_CONSOLE_DISPLAY = registerSysVar(NAMESPACE + "maxConsoleDisplay", 500);

@@ -38,6 +38,7 @@ import org.nexial.core.excel.ExcelAddress;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.model.StepResult;
 import org.nexial.core.plugins.base.BaseCommand;
+import org.nexial.core.services.FileConversionAPI;
 import org.nexial.core.utils.CheckUtils;
 
 import java.io.File;
@@ -373,6 +374,7 @@ public class ExcelCommand extends BaseCommand {
 
     /**
      * rename a worksheet to a new name
+     *
      * @param file
      * @param worksheet
      * @param newName
@@ -393,6 +395,19 @@ public class ExcelCommand extends BaseCommand {
         excel.save();
         excel.close();
         return StepResult.success("Excel '" + file + "': Worksheet '" + worksheet + "' renamed to '" + newName + "'");
+    }
+
+    public StepResult xls2xlsx(String xlsFile, String xlsxFile) {
+        requiresReadableFile(xlsFile);
+        requiresNotBlank(xlsxFile, "Invalid xlsxFile", xlsxFile);
+
+        File xls = new File(xlsFile);
+        File xlsx = new FileConversionAPI().xls2xlsx(xls, xlsxFile);
+        if (xlsx == null || !xlsx.exists()) {
+            return StepResult.fail("Unable to convert " + xlsFile + " to " + xlsxFile);
+        } else {
+            return StepResult.success(xlsFile + " converted to " + xlsx.getAbsolutePath());
+        }
     }
 
     protected List<List<XSSFCell>> fetchRows(String file, String worksheet, String range) throws IOException {

@@ -19,16 +19,11 @@ package org.nexial.core.plugins.io;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.poi.hssf.usermodel.HSSFCell;
-import org.apache.poi.hssf.usermodel.HSSFRow;
-import org.apache.poi.hssf.usermodel.HSSFSheet;
-import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import org.apache.poi.hssf.usermodel.*;
+import org.apache.poi.hssf.util.HSSFColor;
 import org.apache.poi.poifs.filesystem.POIFSFileSystem;
-import org.apache.poi.ss.usermodel.Cell;
-import org.apache.poi.xssf.usermodel.XSSFCell;
-import org.apache.poi.xssf.usermodel.XSSFRow;
-import org.apache.poi.xssf.usermodel.XSSFSheet;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.usermodel.*;
 import org.nexial.commons.utils.FileUtil;
 import org.nexial.core.excel.Excel;
 import org.nexial.core.excel.Excel.Worksheet;
@@ -38,13 +33,15 @@ import org.nexial.core.model.StepResult;
 import org.nexial.core.plugins.db.DaoUtils;
 import org.nexial.core.utils.ConsoleUtils;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
+import javax.annotation.Nonnull;
+import java.awt.Color;
+import java.io.*;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import static java.lang.System.lineSeparator;
 import static org.nexial.core.NexialConst.DEF_CHARSET;
@@ -77,6 +74,153 @@ public class ExcelHelper {
         Excel excel = FileUtil.isFileReadable(file, MIN_EXCEL_FILE_SIZE) ? new Excel(f) : Excel.newExcel(f);
         Worksheet worksheet = excel.worksheet(sheet, true);
         worksheet.writeAcross(new ExcelAddress(startCell), rowsAndColumns);
+    }
+
+    // currently not used; we might remove it after some time...
+    // excel conversion is currently performed via external API (Easier and more reliable)
+    public static void xlx2xlsx(File xls, File xlsx) throws IOException {
+        if (xls == null || xlsx == null) { return; }
+
+        Map<Short, XSSFCellStyle> cellStyleMap = new HashMap<>();
+        Workbook fromWorkbook = null;
+        Workbook toWorkbook = new XSSFWorkbook();
+        OutputStream out = null;
+
+        InputStream in = null;
+        try {
+            in = new FileInputStream(xls);
+            fromWorkbook = new HSSFWorkbook(in);
+            int sheetCnt = fromWorkbook.getNumberOfSheets();
+
+            for (int i = 0; i < sheetCnt; i++) {
+                Sheet fromSheet = fromWorkbook.getSheetAt(i);
+                Sheet toSheet = toWorkbook.createSheet(fromSheet.getSheetName());
+                Iterator<Row> iter = fromSheet.rowIterator();
+                while (iter.hasNext()) {
+                    Row fromRow = iter.next();
+                    Row toRow = toSheet.createRow(fromRow.getRowNum());
+                    copyRowProperties(fromRow, toRow, cellStyleMap);
+                }
+            }
+
+            out = new BufferedOutputStream(new FileOutputStream(xlsx));
+            toWorkbook.write(out);
+        } finally {
+            if (in != null) { in.close(); }
+            toWorkbook.close();
+            if (fromWorkbook != null) { fromWorkbook.close(); }
+            if (out != null) { out.close(); }
+        }
+    }
+
+    private static void copyRowProperties(Row from, Row to, Map<Short, XSSFCellStyle> styles) {
+        to.setRowNum(from.getRowNum());
+        to.setHeight(from.getHeight());
+        to.setHeightInPoints(from.getHeightInPoints());
+        to.setZeroHeight(from.getZeroHeight());
+
+        Sheet fromSheet = from.getSheet();
+        Sheet toSheet = to.getSheet();
+        Iterator<Cell> iter = from.cellIterator();
+        while (iter.hasNext()) {
+            Cell fromCell = iter.next();
+            int fromCellIndex = fromCell.getColumnIndex();
+
+            Cell toCell = to.createCell(fromCellIndex, fromCell.getCellTypeEnum());
+            int toCellIndex = toCell.getColumnIndex();
+
+            toSheet.setColumnWidth(toCellIndex, fromSheet.getColumnWidth(fromCellIndex));
+            copyCellProperties(fromCell, toCell, styles);
+        }
+    }
+
+    private static void copyCellProperties(Cell from, Cell to, Map<Short, XSSFCellStyle> styles) {
+        copyCellValue(from, to);
+
+        HSSFCellStyle fromStyle = (HSSFCellStyle) from.getCellStyle();
+        XSSFCellStyle styleOut;
+        if (styles.get(fromStyle.getIndex()) != null) {
+            styleOut = styles.get(fromStyle.getIndex());
+        } else {
+            Workbook wbOut = to.getSheet().getWorkbook();
+            styleOut = createStyle(from, wbOut);
+            styles.put(fromStyle.getIndex(), styleOut);
+        }
+        to.setCellStyle(styleOut);
+        to.setCellComment(from.getCellComment());
+    }
+
+    @Nonnull
+    private static XSSFCellStyle createStyle(Cell from, Workbook targetWorkbook) {
+        HSSFCellStyle fromStyle = (HSSFCellStyle) from.getCellStyle();
+
+        XSSFCellStyle toStyle = (XSSFCellStyle) targetWorkbook.createCellStyle();
+        toStyle.setAlignment(fromStyle.getAlignmentEnum());
+        toStyle.setDataFormat(targetWorkbook.createDataFormat().getFormat(fromStyle.getDataFormatString()));
+
+        HSSFColor foregroundColor = fromStyle.getFillForegroundColorColor();
+        if (foregroundColor != null) {
+            toStyle.setFillForegroundColor(toXSSFColor(foregroundColor));
+            toStyle.setFillPattern(fromStyle.getFillPatternEnum());
+        }
+
+        toStyle.setFillPattern(fromStyle.getFillPatternEnum());
+        toStyle.setBorderBottom(fromStyle.getBorderBottomEnum());
+        toStyle.setBorderLeft(fromStyle.getBorderLeftEnum());
+        toStyle.setBorderRight(fromStyle.getBorderRightEnum());
+        toStyle.setBorderTop(fromStyle.getBorderTopEnum());
+
+        HSSFPalette palette = ((HSSFWorkbook) from.getSheet().getWorkbook()).getCustomPalette();
+        HSSFColor bottom = palette.getColor(fromStyle.getBottomBorderColor());
+        if (bottom != null) { toStyle.setBottomBorderColor(toXSSFColor(bottom)); }
+
+        HSSFColor top = palette.getColor(fromStyle.getTopBorderColor());
+        if (top != null) { toStyle.setTopBorderColor(toXSSFColor(top)); }
+
+        HSSFColor left = palette.getColor(fromStyle.getLeftBorderColor());
+        if (left != null) { toStyle.setLeftBorderColor(toXSSFColor(left)); }
+
+        HSSFColor right = palette.getColor(fromStyle.getRightBorderColor());
+        if (right != null) { toStyle.setRightBorderColor(toXSSFColor(right)); }
+
+        toStyle.setVerticalAlignment(fromStyle.getVerticalAlignmentEnum());
+        toStyle.setHidden(fromStyle.getHidden());
+        toStyle.setIndention(fromStyle.getIndention());
+        toStyle.setLocked(fromStyle.getLocked());
+        toStyle.setRotation(fromStyle.getRotation());
+        toStyle.setShrinkToFit(fromStyle.getShrinkToFit());
+        toStyle.setVerticalAlignment(fromStyle.getVerticalAlignmentEnum());
+        toStyle.setWrapText(fromStyle.getWrapText());
+        return toStyle;
+    }
+
+    @Nonnull
+    private static XSSFColor toXSSFColor(HSSFColor color) {
+        short[] values = color.getTriplet();
+        return new XSSFColor(new Color(values[0], values[1], values[2]));
+    }
+
+    private static void copyCellValue(Cell from, Cell to) {
+        CellType cellTypeEnum = from.getCellTypeEnum();
+        switch (cellTypeEnum) {
+            case BLANK:
+                break;
+            case BOOLEAN:
+                to.setCellValue(from.getBooleanCellValue());
+                break;
+            case ERROR:
+                to.setCellValue(from.getErrorCellValue());
+                break;
+            case FORMULA:
+                to.setCellFormula(from.getCellFormula());
+                break;
+            case NUMERIC:
+                to.setCellValue(from.getNumericCellValue());
+                break;
+            case STRING:
+                to.setCellValue(from.getStringCellValue());
+                break;
+        }
     }
 
     protected StringBuilder xlsx2csv(File excelFile, String worksheet) throws IOException {
