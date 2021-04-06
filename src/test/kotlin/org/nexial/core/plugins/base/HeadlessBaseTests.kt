@@ -71,6 +71,9 @@ class HeadlessBaseTests : ExcelBasedTests() {
         val executionSummary = testViaExcel("unitTest_base_macro3.xlsx")
         assertPassFail(executionSummary, "start", TestOutcomeStats.allPassed())
         assertPassFail(executionSummary, "macro-test", TestOutcomeStats.allPassed())
+        assertPassFail(executionSummary, "macro-section-test", TestOutcomeStats.allPassed())
+        // to check total steps inside macro-section-test is not reduced
+        assertEquals(38, executionSummary.totalSteps)
     }
 
     @Test
