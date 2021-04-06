@@ -61,7 +61,7 @@ import static org.nexial.core.utils.AssertUtils.requires;
 import static org.openqa.selenium.Keys.ESCAPE;
 
 /**
- * Object representataion of a UI element in a desktop (native) application (Windows only).
+ * Object representation of a UI element in a desktop (native) application (Windows only).
  * <p>
  * A {@code DesktopElement} can be a textbox, checkbox, combo box, table, a container (see below) that can more
  * {@code DesktopElement}, etc.
@@ -84,7 +84,8 @@ public class DesktopElement {
     protected transient WebElement verticalScrollBar;
 
     /**
-     * determine the appropriate way to generate XPATH during autoscan.  Copied from {@link DesktopConfig#xpathGenerationStrategy}.
+     * determine the appropriate way to generate XPATH during autoscanning.  Copied from
+     * {@link DesktopConfig#xpathGenerationStrategy}.
      */
     protected String xpathGenerationStrategy;
 
@@ -381,7 +382,7 @@ public class DesktopElement {
      * (ControlType.Text) associated to it</li>
      * <li>group :: label - this refers to an element that is placed inside of a "group", which is placed within a
      * form object.</li>
-     * <li>label(index) - this refers to an indexed assocation of a series of form elements that are associated to 1
+     * <li>label(index) - this refers to an indexed association of a series of form elements that are associated to 1
      * label.</li>
      * <li>group :: label(index) - complete long form; the combination of the above examples.</li>
      * </ol>
@@ -503,6 +504,15 @@ public class DesktopElement {
 
     public boolean isSelected() { return element != null && element.isSelected(); }
 
+    protected static String getElementText(WebElement element) {
+        if (!isTextPatternAvailable(element)) { return null; }
+        try {
+            return element.getText();
+        } catch (WebDriverException e) {
+            return null;
+        }
+    }
+
     public String getText() {
         if (elementType == null || elementType == Any) { return getValue(element); }
         if (!element.isEnabled() && elementType.isTextPatternAvailable()) { return getValue(element); }
@@ -515,7 +525,7 @@ public class DesktopElement {
             }
 
             String name = element.getAttribute("Name");
-            String text = element.getText();
+            String text = getElementText(element);
             return controlType.equals(LIST_ITEM) ?
                    StringUtils.defaultIfEmpty(name, text) :
                    StringUtils.defaultIfEmpty(text, name);
@@ -976,7 +986,7 @@ public class DesktopElement {
     }
 
     protected boolean resolvedAsTable() {
-        // - if 'ControlType.Table'    -> this is a table / datagrid
+        // - if 'ControlType.Table'    -> this is a table / data grid
         if (!StringUtils.equals(controlType, TABLE)) { return false; }
 
         this.elementType = Table;
@@ -1872,7 +1882,7 @@ public class DesktopElement {
             }
 
             // click to be avoided here in formatted textbox before calling clear, which gives undesired results
-            if (StringUtils.isNotEmpty(element.getText())) { element.clear(); }
+            if (StringUtils.isNotEmpty(getElementText(element))) { element.clear(); }
             // setValue does not work for action driven components. sendKeys and shortcut script both works
             driver.executeScript(SCRIPT_PREFIX_SHORTCUT + TEXT_INPUT_PREFIX + text + TEXT_INPUT_POSTFIX, element);
             // only perform verification is current component is not a date/time editor (those things are unreliable)
@@ -1886,14 +1896,11 @@ public class DesktopElement {
         // SEQUENCES EXPRESSED VIA MULTIPLE PARAMETERS. CALLING METHOD SHOULD CONSIDER DOING SO IF NEEDED.
 
         if (StringUtils.contains(text, SHORTCUT_PREFIX) && StringUtils.contains(text, SHORTCUT_POSTFIX)) {
-            // String keystrokes = toKeystrokes(text);
-            String keystrokes = text;
-
             try {
-                driver.executeScript(SCRIPT_PREFIX_SHORTCUT + keystrokes, element);
+                driver.executeScript(SCRIPT_PREFIX_SHORTCUT + text, element);
             } catch (WebDriverException e) {
                 ConsoleUtils.error("Error when executing shortcut '%s' on '%s': %s",
-                                   keystrokes, label, resolveErrorMessage(e));
+                                   text, label, resolveErrorMessage(e));
             }
 
             return;
@@ -1928,17 +1935,13 @@ public class DesktopElement {
         afterShortcutDelete = postClearFormattedTextbox(target);
         if (StringUtils.isEmpty(afterShortcutDelete)) { return; }
 
-        int previousValueCount = 0;
-
-        //        List<WebElement> editables = target.findElements(By.xpath(LOCATOR_TEXTBOX + "/" + LOCATOR_TEXTBOX));
+        int previousValueCount;
         List<WebElement> editables = target.findElements(By.xpath(LOCATOR_TEXTBOX));
         if (CollectionUtils.isNotEmpty(editables)) {
-            WebElement editable = editables.get(0);
-            afterShortcutDelete = postClearFormattedTextbox(target);
-            previousValueCount = StringUtils.length(afterShortcutDelete);
+            previousValueCount = StringUtils.length(postClearFormattedTextbox(target));
         } else {
             // find existing values found in textbox for delete
-            previousValueCount = StringUtils.length(target.getText());
+            previousValueCount = StringUtils.length(getElementText(target));
         }
 
         // attempt to clear off character in this field
@@ -1990,7 +1993,7 @@ public class DesktopElement {
             } else {
                 driver.executeScript(SCRIPT_SET_VALUE, element, text);
             }
-            String actual = element.getText();
+            String actual = getElementText(element);
             boolean matched = isActualAndTextMatched(element, actual, text);
 
             if (!matched) {
@@ -2018,13 +2021,13 @@ public class DesktopElement {
             // click needs for combo that has child element as edit type
             element.click();
             driver.executeScript(SCRIPT_SET_VALUE, element, text);
-            String actual = element.getText();
+            String actual = getElementText(element);
             boolean matched = isActualAndTextMatched(element, actual, text);
             if (!matched) {
                 // try again... this time with extra space in the front to avoid autofill
                 driver.executeScript(SCRIPT_SET_VALUE, element, " " + text);
                 driver.executeScript(toShortcuts("CTRL-HOME", "DEL"), element);
-                actual = element.getText();
+                actual = getElementText(element);
                 matched = isActualAndTextMatched(element, actual, text);
                 if (!matched) {
                     ConsoleUtils.log(errPrefix + "actual is '" + actual + "' but expected is '" + text + "'; " +
@@ -2068,7 +2071,7 @@ public class DesktopElement {
         element.click();
 
         // check for Edit
-        // todo: need to implement for multiselectcombo
+        // todo: need to implement for multi select combo
         List<WebElement> children = this.element.findElements(By.xpath(LOCATOR_EDITOR));
         if (CollectionUtils.isEmpty(children)) {
             elementType = SingleSelectCombo;
@@ -2214,7 +2217,7 @@ public class DesktopElement {
                                            null;
             if (embeddableTextBox != null) {
                 // need to clear existing data first... unless it already contains the specified text
-                String existingText = embeddableTextBox.getText();
+                String existingText = getElementText(embeddableTextBox);
                 if (!StringUtils.equals(existingText, text)) {
                     driver.executeScript(SCRIPT_PREFIX_SHORTCUT +
                                          (StringUtils.isNotEmpty(existingText) ? "<[ESC]><[HOME]><[SHIFT-END]><[DEL]>" :
@@ -2233,9 +2236,7 @@ public class DesktopElement {
                             targetItem.click();
                         } else {
                             // clear off any existing selection
-                            if (StringUtils.isNotEmpty(currentSelectedText)) {
-                                driver.executeScript(SCRIPT_PREFIX_SHORTCUT + "<[ESC]>", element);
-                            }
+                            if (StringUtils.isNotEmpty(currentSelectedText)) { execEscape(this.element); }
                             StepResult result = singleSelectViaFirstChar(text);
                             element.click();
                             return result;
@@ -2283,6 +2284,8 @@ public class DesktopElement {
         return StepResult.fail("FAIL to enter/find text '" + text + "'" + msgPostfix);
     }
 
+    protected void execEscape(WebElement elem) { driver.executeScript(SCRIPT_PREFIX_SHORTCUT + "<[ESC]>", elem); }
+
     protected StepResult selectSingleSelectCombo(String text) {
         String value = getValue(element);
         if (StringUtils.equals(text, value)) {
@@ -2291,7 +2294,7 @@ public class DesktopElement {
 
         boolean comboOpened = false;
         if (StringUtils.isNotEmpty(value)) {
-            driver.executeScript(SCRIPT_PREFIX_SHORTCUT + "<[ESC]>", element);
+            execEscape(element);
         } else {
             comboOpened = true;
             element.click();
@@ -2429,7 +2432,7 @@ public class DesktopElement {
     }
 
     private void verifyAndTry(String text) {
-        if (verifyText(text, element.getText())) { return; }
+        if (verifyText(text, getElementText(element))) { return; }
 
         clearFormattedTextbox(driver, element);
         driver.executeScript(SCRIPT_PREFIX_SHORTCUT + TEXT_INPUT_PREFIX + text + TEXT_INPUT_POSTFIX, element);
@@ -2471,7 +2474,7 @@ public class DesktopElement {
 
     protected static String getValue(WebElement element, String label) {
         try {
-            return StringUtils.defaultIfEmpty(element.getText(), element.getAttribute("Name"));
+            return StringUtils.defaultIfEmpty(getElementText(element), element.getAttribute("Name"));
         } catch (WebDriverException e) {
             ConsoleUtils.log("Unable to resolve text content for '" + label + "', retrying via @Name attribute...");
             return element.getAttribute("Name");
