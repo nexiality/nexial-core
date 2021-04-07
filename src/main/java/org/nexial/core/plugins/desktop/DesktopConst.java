@@ -149,6 +149,8 @@ public class DesktopConst {
     public static final String LOCATOR_LIST_ITEM_ONLY = "*[@ControlType='" + LIST_ITEM + "' and contains(@Name,'{value}')]";
     public static final String LOCATOR_LIST_TO_ITEM = LOCATOR_LIST + "/" + LOCATOR_LIST_ITEM_ONLY;
     public static final String LOCATOR_LIST_ITEM = LOCATOR_LIST_ITEM_ONLY + "|" + LOCATOR_LIST_TO_ITEM;
+    public static final String LOCATOR_LIST_ITEMS = "*[@ControlType='" + LIST_ITEM + "']|" +
+                                                    "*[@ControlType='" + LIST + "']/*[@ControlType='" + LIST_ITEM + "']";
     public static final String XPATH_SCROLLBARS = "*[@ControlType='" + SCROLLBAR + "']";
 
     // public static final int SCROLL_TOLERANCE = 25;

@@ -48,6 +48,8 @@ import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 
 import static java.lang.String.format;
 import static org.nexial.core.NexialConst.Desktop.AUTOSCAN_INFRAGISTICS4_AWARE;
@@ -2190,6 +2192,21 @@ public class DesktopElement {
             return StepResult.fail("Unable select since selection-pattern is not available" + msgPostfix);
         }
 
+        List<WebElement> nestedElements = element.findElements(By.xpath("*"));
+        if (CollectionUtils.isEmpty(nestedElements)) {
+            return StepResult.fail("Unable to select %s in %s; no selection available", text, getLabel());
+        }
+
+        AtomicBoolean hasListItem = new AtomicBoolean(false);
+        AtomicBoolean hasEditor = new AtomicBoolean(false);
+        AtomicBoolean hasList = new AtomicBoolean(false);
+        nestedElements.forEach(elem -> {
+            String controlType = elem.getAttribute("ControlType");
+            if (StringUtils.equals(controlType, EDIT)) { hasEditor.set(true); }
+            if (StringUtils.equals(controlType, LIST)) { hasList.set(true); }
+            if (StringUtils.equals(controlType, LIST_ITEM)) { hasListItem.set(true); }
+        });
+
         String currentSelectedText = getText();
         if (StringUtils.isNotEmpty(currentSelectedText)) {
             // combo's text won't always be the same as the specified text because combo might display one text while
@@ -2200,9 +2217,11 @@ public class DesktopElement {
 
             // however we can still check to see if any selection has been made at this time, and if so, check that the
             // selected list item is the same as the specified text.
-            WebElement targetItem = findFirstElement(LOCATOR_SELECTED_LIST_ITEM);
-            if (targetItem != null && StringUtils.equals(targetItem.getAttribute("Name"), text)) {
-                return StepResult.success("Text '" + text + "' already selected" + msgPostfix);
+            if (hasListItem.get()) {
+                WebElement targetItem = findFirstElement(LOCATOR_SELECTED_LIST_ITEM);
+                if (targetItem != null && StringUtils.equals(targetItem.getAttribute("Name"), text)) {
+                    return StepResult.success("Text '" + text + "' already selected" + msgPostfix);
+                }
             }
         }
 
@@ -2210,11 +2229,14 @@ public class DesktopElement {
             element.click();
 
             // nested EmbeddableTextBox?
-            List<WebElement> nestedEditors = element.findElements(By.xpath(LOCATOR_EDITOR));
-            // if size == 1 then unlikely to contain EmbeddableTextBox
-            WebElement embeddableTextBox = CollectionUtils.size(nestedEditors) > 1 ?
-                                           findFirstElement(LOCATOR_EDITOR + LOCATOR_EMBEDDABLE_TEXTBOX) :
-                                           null;
+            WebElement embeddableTextBox = null;
+            if (hasEditor.get()) {
+                List<WebElement> nestedEditors = element.findElements(By.xpath(LOCATOR_EDITOR));
+                // if size == 1 then unlikely to contain EmbeddableTextBox
+                embeddableTextBox = CollectionUtils.size(nestedEditors) > 1 ?
+                                    findFirstElement(LOCATOR_EDITOR + LOCATOR_EMBEDDABLE_TEXTBOX) : null;
+            }
+
             if (embeddableTextBox != null) {
                 // need to clear existing data first... unless it already contains the specified text
                 String existingText = getElementText(embeddableTextBox);
@@ -2227,7 +2249,13 @@ public class DesktopElement {
                 }
                 return StepResult.success("Text '" + text + "' selected" + msgPostfix);
             } else {
-                WebElement targetItem = findFirstElement(StringUtils.replace(LOCATOR_LIST_ITEM_ONLY, "{value}", text));
+                WebElement targetItem = null;
+                if (hasList.get()) {
+                    targetItem = findFirstElement(StringUtils.replace(LOCATOR_LIST_TO_ITEM, "{value}", text));
+                }
+                if (hasListItem.get()) {
+                    targetItem = findFirstElement(StringUtils.replace(LOCATOR_LIST_ITEM_ONLY, "{value}", text));
+                }
                 if (targetItem != null) {
                     if (!targetItem.isSelected()) {
                         if (isInvokePatternAvailable(targetItem)) {
@@ -2235,11 +2263,17 @@ public class DesktopElement {
                             element.click();
                             targetItem.click();
                         } else {
-                            // clear off any existing selection
-                            if (StringUtils.isNotEmpty(currentSelectedText)) { execEscape(this.element); }
-                            StepResult result = singleSelectViaFirstChar(text);
-                            element.click();
-                            return result;
+                            try {
+                                // try click anyways... if it works it's faster
+                                targetItem.click();
+                            } catch (WebDriverException e) {
+                                // nope... no good, try the old fashion select via first char
+                                // clear off any existing selection
+                                if (StringUtils.isNotEmpty(currentSelectedText)) { execEscape(this.element); }
+                                StepResult result = singleSelectViaFirstChar(text);
+                                element.click();
+                                return result;
+                            }
                         }
                     } else {
                         // collapse dropdown
@@ -2284,8 +2318,6 @@ public class DesktopElement {
         return StepResult.fail("FAIL to enter/find text '" + text + "'" + msgPostfix);
     }
 
-    protected void execEscape(WebElement elem) { driver.executeScript(SCRIPT_PREFIX_SHORTCUT + "<[ESC]>", elem); }
-
     protected StepResult selectSingleSelectCombo(String text) {
         String value = getValue(element);
         if (StringUtils.equals(text, value)) {
@@ -2320,6 +2352,16 @@ public class DesktopElement {
         }
     }
 
+    protected void execEscape(WebElement elem) { driver.executeScript(SCRIPT_PREFIX_SHORTCUT + "<[ESC]>", elem); }
+
+    @Nonnull
+    protected List<String> listOptions() {
+        List<WebElement> options = element.findElements(By.xpath(LOCATOR_LIST_ITEMS));
+        return CollectionUtils.isEmpty(options) ?
+               new ArrayList<>() :
+               options.stream().map(option -> getValue(option, getLabel() + " option")).collect(Collectors.toList());
+    }
+
     @Nonnull
     private StepResult singleSelectViaFirstChar(String text) {
         String firstChar = "" + text.charAt(0);
@@ -2328,7 +2370,7 @@ public class DesktopElement {
         List<WebElement> selectionCandidates = element.findElements(By.xpath("*[contains(@Name,'" + firstChar + "')]"));
         boolean useFirstChar = CollectionUtils.isEmpty(selectionCandidates);
         if (useFirstChar) {
-            ConsoleUtils.log("No selections found under Combo '" +label + "'; " +
+            ConsoleUtils.log("No selections found under Combo '" + label + "'; " +
                              "elect 'useFirstChar' strategy to select '" + text + "'");
         }
 

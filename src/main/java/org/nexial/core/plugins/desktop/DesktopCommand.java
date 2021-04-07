@@ -950,6 +950,30 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
                                   " or it does not contain attribute " + attribute + ". No data saved to " + var);
     }
 
+    public StepResult saveComboOptions(String var, String name) {
+        requiresValidVariableName(var);
+
+        DesktopElement component = getRequiredElement(name, Any);
+        if (component == null) { return StepResult.fail("Unable to find any component via '" + name + "'"); }
+
+        ElementType elementType = component.getElementType();
+        if (!elementType.isCombo()) {
+            return StepResult.fail("Unable to resolve a combo component via '" + name + "'");
+        }
+        if (elementType != SingleSelectCombo && elementType != SingleSelectList) {
+            return StepResult.fail("This command is only applicable for SingleSelectCombo or SingleSelectList");
+        }
+
+        List<String> options = component.listOptions();
+        if (options == null) {
+            context.removeData(var);
+            return StepResult.fail("No options found for Combo '" + name + "'");
+        } else {
+            context.setData(var, options);
+            return StepResult.success("Options for Combo '" + name + "' saved to data variable '" + var + "'");
+        }
+    }
+
     public StepResult waitFor(String name, String maxWaitMs) {
         DesktopElement component = getRequiredElement(name, Any);
         return waitForLocator(component.getXpath(), maxWaitMs);
