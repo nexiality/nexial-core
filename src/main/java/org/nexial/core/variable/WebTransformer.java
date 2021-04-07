@@ -18,14 +18,15 @@
 package org.nexial.core.variable;
 
 import java.lang.reflect.Method;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.nexial.commons.utils.CollectionUtil;
+import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.ExecutionThread;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.model.StepResult;
@@ -158,7 +159,7 @@ public class WebTransformer<T extends WebDataType> extends Transformer<T> {
         return csv;
     }
 
-    public WebDataType select(T data, String... array) {
+    public WebDataType select(T data, String locator, String... options) {
         if (data == null || data.getValue() == null) { return null; }
 
         WebCommand webCommand = resolveWebCommand();
@@ -167,22 +168,20 @@ public class WebTransformer<T extends WebDataType> extends Transformer<T> {
         String delim = context.getTextDelim();
 
         StepResult stepResult;
-        List<String> list = new ArrayList<>(Arrays.asList(array));
-        String operation = "select(" + CollectionUtil.toString(list, delim) + ")";
+        String opts = TextUtils.toString(options, delim, "", "");
+        String operation = "select(" + opts + ")";
 
-        if (list.size() < 2) {
+        int length = ArrayUtils.getLength(options);
+        if (StringUtils.isBlank(locator) || length < 1) {
             stepResult = new StepResult(false, "locator/options missing", null);
             return saveResult(data, operation, stepResult);
         }
 
-        String locator = list.remove(0);
-        String options = CollectionUtil.toString(list, delim);
-
         try {
-            if (list.size() == 1) {
-                stepResult = webCommand.select(locator, options);
+            if (length == 1) {
+                stepResult = webCommand.select(locator, opts);
             } else {
-                stepResult = webCommand.selectMulti(locator, options);
+                stepResult = webCommand.selectMulti(locator, opts);
             }
         } catch (Exception e) {
             stepResult = new StepResult(false, resolveErrorMessage(e), null);
@@ -191,7 +190,7 @@ public class WebTransformer<T extends WebDataType> extends Transformer<T> {
         return saveResult(data, operation, stepResult);
     }
 
-    public WebDataType deselect(T data, String... array) {
+    public WebDataType deselect(T data, String locator, String... options) {
         if (data == null || data.getValue() == null) { return null; }
 
         WebCommand webCommand = resolveWebCommand();
@@ -200,21 +199,20 @@ public class WebTransformer<T extends WebDataType> extends Transformer<T> {
         String delim = context.getTextDelim();
 
         StepResult stepResult;
-        List<String> list = new ArrayList<>(Arrays.asList(array));
-        String operation = "deselect(" + CollectionUtil.toString(list, delim) + ")";
+        String opts = TextUtils.toString(options, delim, "", "");
+        String operation = "deselect(" + opts + ")";
 
-        if (list.size() < 2) {
+        int length = ArrayUtils.getLength(options);
+        if (StringUtils.isBlank(locator) || length < 1) {
             stepResult = new StepResult(false, "locator/options missing", null);
             return saveResult(data, operation, stepResult);
         }
 
-        String locator = list.remove(0);
-        String options = CollectionUtil.toString(list, delim);
         try {
-            if (list.size() == 1) {
-                stepResult = webCommand.deselect(locator, options);
+            if (length == 1) {
+                stepResult = webCommand.deselect(locator, opts);
             } else {
-                stepResult = webCommand.deselectMulti(locator, options);
+                stepResult = webCommand.deselectMulti(locator, opts);
             }
         } catch (Exception e) {
             stepResult = new StepResult(false, resolveErrorMessage(e), null);

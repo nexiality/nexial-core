@@ -17,6 +17,16 @@
 
 package org.nexial.core.variable;
 
+import java.io.File;
+import java.io.IOException;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+import javax.validation.constraints.NotNull;
+
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.ArrayUtils;
@@ -33,16 +43,6 @@ import org.nexial.core.excel.Excel.Worksheet;
 import org.nexial.core.excel.ExcelAddress;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.utils.ConsoleUtils;
-
-import javax.validation.constraints.NotNull;
-import java.io.File;
-import java.io.IOException;
-import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 public class ExcelTransformer<T extends ExcelDataType> extends Transformer {
     private static final Map<String, Integer> FUNCTION_TO_PARAM = discoverFunctions(ExcelTransformer.class);
@@ -216,17 +216,15 @@ public class ExcelTransformer<T extends ExcelDataType> extends Transformer {
         return data;
     }
 
-    public T writeAcross(T data, String... startAndContent) throws TypeConversionException {
+    public T writeAcross(T data, String start, String... values) throws TypeConversionException {
         requireAfterRead(data, "writeAcross()");
 
-        if (ArrayUtils.getLength(startAndContent) < 2) {
+        if (StringUtils.isBlank(start) || ArrayUtils.getLength(values) < 1) {
             throw new IllegalArgumentException("No starting address or content specified");
         }
 
-        String start = startAndContent[0];
-
         List<List<String>> rows = new ArrayList<>();
-        rows.add(Arrays.asList(ArrayUtils.remove(startAndContent, 0)));
+        rows.add(Arrays.asList(values));
 
         try {
             data.getCurrentSheet().writeAcross(toExcelAddress(start), rows);
@@ -238,18 +236,15 @@ public class ExcelTransformer<T extends ExcelDataType> extends Transformer {
         }
     }
 
-    public T writeDown(T data, String... startAndContent) throws TypeConversionException {
+    public T writeDown(T data, String start, String... values) throws TypeConversionException {
         requireAfterRead(data, "writeAcross()");
 
-        if (ArrayUtils.getLength(startAndContent) < 2) {
+        if (StringUtils.isBlank(start) || ArrayUtils.getLength(values) < 1) {
             throw new IllegalArgumentException("No starting address or content specified");
         }
 
-        String start = startAndContent[0];
-        String[] content = ArrayUtils.remove(startAndContent, 0);
-
         List<List<String>> columns = new ArrayList<>();
-        columns.add(Arrays.asList(content));
+        columns.add(Arrays.asList(values));
 
         try {
             data.getCurrentSheet().writeDown(toExcelAddress(start), columns);

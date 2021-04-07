@@ -17,10 +17,17 @@
 
 package org.nexial.core.variable;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
-import com.univocity.parsers.common.record.Record;
-import com.univocity.parsers.common.record.RecordMetaData;
+import java.io.File;
+import java.io.IOException;
+import java.lang.reflect.Method;
+import java.math.BigDecimal;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import javax.validation.constraints.NotNull;
+
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.IterableUtils;
 import org.apache.commons.collections4.MapUtils;
@@ -40,16 +47,10 @@ import org.nexial.core.model.NexialFilter.ListItemConverterImpl;
 import org.nexial.core.plugins.io.ExcelHelper;
 import org.nexial.core.utils.ConsoleUtils;
 
-import javax.validation.constraints.NotNull;
-import java.io.File;
-import java.io.IOException;
-import java.lang.reflect.Method;
-import java.math.BigDecimal;
-import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
+import com.univocity.parsers.common.record.Record;
+import com.univocity.parsers.common.record.RecordMetaData;
 
 import static java.lang.System.lineSeparator;
 import static org.nexial.core.NexialConst.*;
@@ -85,27 +86,30 @@ public class CsvTransformer<T extends CsvDataType> extends Transformer<CsvDataTy
         return recordToList(IterableUtils.get(data.getValue(), NumberUtils.toInt(index)));
     }
 
-    public ListDataType column(T data, String column) {
-        if (data == null || CollectionUtils.isEmpty(data.getValue()) || StringUtils.isBlank(column)) { return null; }
+    public ListDataType column(T data, String columnNameOrIndex) {
+        if (data == null || CollectionUtils.isEmpty(data.getValue()) || StringUtils.isBlank(columnNameOrIndex)) {
+            return null;
+        }
 
         int index;
 
         // if no header specified, then we can only use index (not column name)
         if (!data.isHeader()) {
-            if (!NumberUtils.isDigits(column)) {
+            if (!NumberUtils.isDigits(columnNameOrIndex)) {
                 ConsoleUtils.log(ERROR, null,
                                  "Invalid column '%s'. Columns of a CSV without header can be referenced via its index",
-                                 column);
+                                 columnNameOrIndex);
                 return null;
             }
 
-            index = NumberUtils.toInt(column);
+            index = NumberUtils.toInt(columnNameOrIndex);
         } else {
-            index = NumberUtils.isDigits(column) ? NumberUtils.toInt(column) : data.getHeaderPosition(column);
+            index = NumberUtils.isDigits(columnNameOrIndex) ?
+                    NumberUtils.toInt(columnNameOrIndex) : data.getHeaderPosition(columnNameOrIndex);
         }
 
         if (index < 0 || index >= data.getColumnCount()) {
-            ConsoleUtils.log(ERROR, null, "Invalid column '%s'", column);
+            ConsoleUtils.log(ERROR, null, "Invalid column '%s'", columnNameOrIndex);
             return null;
         }
 
@@ -124,18 +128,18 @@ public class CsvTransformer<T extends CsvDataType> extends Transformer<CsvDataTy
         return toListDataType(data.getHeaders(), data.getDelim());
     }
 
-    public T filter(T data, String filter) throws TypeConversionException {
-        if (data == null || data.getValue() == null || StringUtils.isBlank(filter)) { return data; }
+    public T filter(T data, String conditions) throws TypeConversionException {
+        if (data == null || data.getValue() == null || StringUtils.isBlank(conditions)) { return data; }
 
         if (!data.isHeader()) {
             throw new TypeConversionException(data.getName(),
-                                              filter,
+                                              conditions,
                                               "Unable to filter() on CSV data that does not have header");
         }
 
-        filter = getFormattedFilter(filter);
+        conditions = getFormattedFilter(conditions);
         ListItemConverter<NexialFilter> converter = new ListItemConverterImpl();
-        List<NexialFilter> filters = TextUtils.toList(filter, PAIR_DELIM, converter);
+        List<NexialFilter> filters = TextUtils.toList(conditions, PAIR_DELIM, converter);
         if (CollectionUtils.isEmpty(filters)) { return data; }
 
         List<Record> filtered = new ArrayList<>();
@@ -157,12 +161,12 @@ public class CsvTransformer<T extends CsvDataType> extends Transformer<CsvDataTy
         return data;
     }
 
-    public ListDataType fetch(T data, String filter) {
-        if (data == null || data.getValue() == null || StringUtils.isBlank(filter)) { return null; }
+    public ListDataType fetch(T data, String conditions) {
+        if (data == null || data.getValue() == null || StringUtils.isBlank(conditions)) { return null; }
 
-        filter = getFormattedFilter(filter);
+        conditions = getFormattedFilter(conditions);
         ListItemConverter<NexialFilter> converter = new ListItemConverterImpl();
-        List<NexialFilter> filters = TextUtils.toList(filter, PAIR_DELIM, converter);
+        List<NexialFilter> filters = TextUtils.toList(conditions, PAIR_DELIM, converter);
         if (CollectionUtils.isEmpty(filters)) { return null; }
 
         // short-circuit via flyweight pattern: only if there's only 1 equal-filter
@@ -211,21 +215,21 @@ public class CsvTransformer<T extends CsvDataType> extends Transformer<CsvDataTy
         return data;
     }
 
-    public T removeRows(T data, String... matches) {
-        if (data == null || data.getValue() == null || ArrayUtils.isEmpty(matches)) { return data; }
+    public T removeRows(T data, String... conditions) {
+        if (data == null || data.getValue() == null || ArrayUtils.isEmpty(conditions)) { return data; }
 
         // todo: support filter by column index (e.g. #2 != 02)
 
         // could be a list of row indices?
-        if (Arrays.stream(matches).allMatch(NumberUtils::isDigits)) {
+        if (Arrays.stream(conditions).allMatch(NumberUtils::isDigits)) {
             // all args are integers, so this is a request to remove row by index
-            int[] targetRows = Arrays.stream(matches).mapToInt(NumberUtils::toInt).toArray();
+            int[] targetRows = Arrays.stream(conditions).mapToInt(NumberUtils::toInt).toArray();
             data.removeRows(targetRows);
             return data;
         }
 
         // if not row indices, then they must be filters (no varargs here; only first value considered)
-        String filter = getFormattedFilter(matches[0]);
+        String filter = getFormattedFilter(conditions[0]);
         ListItemConverter<NexialFilter> converter = new ListItemConverterImpl();
         List<NexialFilter> filters = TextUtils.toList(filter, PAIR_DELIM, converter);
         if (CollectionUtils.isEmpty(filters)) { return data; }

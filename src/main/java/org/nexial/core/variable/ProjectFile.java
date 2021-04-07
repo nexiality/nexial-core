@@ -54,9 +54,9 @@ public class ProjectFile {
     }
 
     // ${projectfile|macro|file|sheet|name)
-    public Macro macro(String file, String sheet, String name) {
+    public String macro(String file, String sheet, String name) {
         // File macroFile = resolveMacroFile(StringUtils.appendIfMissing(file, SCRIPT_FILE_EXT));
-        return new Macro(file, sheet, name);
+        return new Macro(file, sheet, name).toString();
     }
 
     public String executionErrorsAsHtml(String tableOnly) {

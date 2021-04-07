@@ -17,6 +17,15 @@
 
 package org.nexial.core.variable;
 
+import java.lang.reflect.Method;
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
+
 import org.apache.commons.collections4.ListUtils;
 import org.apache.commons.collections4.SetUtils;
 import org.apache.commons.collections4.SetUtils.SetView;
@@ -30,15 +39,6 @@ import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.ExecutionThread;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.utils.ConsoleUtils;
-
-import java.lang.reflect.Method;
-import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.IntStream;
-import java.util.stream.Stream;
 
 import static org.nexial.core.NexialConst.Data.TEXT_DELIM;
 import static org.nexial.core.NexialConst.treatCommonValueShorthand;
@@ -337,21 +337,21 @@ public class ListTransformer<T extends ListDataType> extends Transformer {
         return updateValue(data, Array.replicaUntil(data.getValue(), size));
     }
 
-    public T join(T data, String... array) {
-        if (data == null || data.getValue() == null || ArrayUtils.isEmpty(array)) { return data; }
-        return updateValue(data, ArrayUtils.addAll(data.getValue(), array));
+    public T join(T data, String... list) {
+        if (data == null || data.getValue() == null || ArrayUtils.isEmpty(list)) { return data; }
+        return updateValue(data, ArrayUtils.addAll(data.getValue(), list));
     }
 
-    public T union(T data, String... array) {
-        if (data == null || data.getValue() == null || ArrayUtils.isEmpty(array)) { return data; }
+    public T union(T data, String... list) {
+        if (data == null || data.getValue() == null || ArrayUtils.isEmpty(list)) { return data; }
         SetView<String> union = SetUtils.union(ListOrderedSet.listOrderedSet(Arrays.asList(data.getValue())),
-                                               ListOrderedSet.listOrderedSet(Arrays.asList(array)));
+                                               ListOrderedSet.listOrderedSet(Arrays.asList(list)));
         return updateValue(data, union.toArray(new String[union.size()]));
     }
 
-    public T intersect(T data, String... array) {
-        if (data == null || data.getValue() == null || ArrayUtils.isEmpty(array)) { return data; }
-        List<String> intersect = ListUtils.intersection(Arrays.asList(data.getValue()), Arrays.asList(array));
+    public T intersect(T data, String... list) {
+        if (data == null || data.getValue() == null || ArrayUtils.isEmpty(list)) { return data; }
+        List<String> intersect = ListUtils.intersection(Arrays.asList(data.getValue()), Arrays.asList(list));
         return updateValue(data, intersect.toArray(new String[intersect.size()]));
     }
 

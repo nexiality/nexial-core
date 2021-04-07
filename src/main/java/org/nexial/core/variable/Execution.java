@@ -17,6 +17,10 @@
 package org.nexial.core.variable;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.validation.constraints.NotNull;
 
 import org.apache.commons.lang3.StringUtils;
@@ -29,8 +33,8 @@ import org.nexial.core.utils.ConsoleUtils;
 
 import static org.apache.commons.lang3.SystemUtils.JAVA_VERSION;
 import static org.apache.commons.lang3.SystemUtils.USER_NAME;
-import static org.nexial.core.NexialConst.Iteration.CURR_ITERATION;
 import static org.nexial.core.NexialConst.Data.ITERATION_ENDED;
+import static org.nexial.core.NexialConst.Iteration.CURR_ITERATION;
 import static org.nexial.core.NexialConst.OPT_INPUT_EXCEL_FILE;
 import static org.nexial.core.NexialConst.OPT_INPUT_PLAN_FILE;
 import static org.nexial.core.NexialConst.Project.SCRIPT_FILE_EXT;
@@ -52,6 +56,7 @@ import static org.nexial.core.utils.ExecUtils.NEXIAL_MANIFEST;
  * </ol>
  */
 public class Execution {
+    // if any extra Metadata added please add it too getMetaForScope
     enum Metadata {
         name, fullpath, index, script, iteration, scenario, activity, description, command,
         // on-the-fly calculation of elapsed time, pass count, fail count, skip count and success rate at every scope
@@ -289,4 +294,48 @@ public class Execution {
     }
 
     private TestCase resolveEnclosedActivity(TestStep step) { return step == null ? null : step.getTestCase(); }
+
+    // used to retrieve all execution methods currently hard coded
+    public static List<String> getExecutionMeta(String scope) {
+        Stream<String> scopeMeta;
+        switch (scope) {
+            case "step": {
+                scopeMeta = Stream.of("name", "index", "script", "iteration", "scenario",
+                                      "activity", "description", "command");
+                break;
+            }
+
+            case "activity": {
+                scopeMeta = Stream.of("name", "script", "iteration", "scenario");
+                break;
+            }
+
+            case "scenario": {
+                scopeMeta = Stream.of("name", "script", "iteration");
+                break;
+            }
+
+            case "iteration": {
+                scopeMeta = Stream.of("index", "script");
+                break;
+            }
+
+            case "script": {
+                scopeMeta = Stream.of("name", "fullpath");
+                break;
+            }
+
+            case "plan": {
+                scopeMeta = Stream.of("name", "fullpath", "index");
+                break;
+            }
+            case "meta": {
+                scopeMeta = Stream.of("java", "nexial", "user");
+                break;
+            }
+            default:
+                return new ArrayList<>();
+        }
+        return scopeMeta.collect(Collectors.toList());
+    }
 }

@@ -118,7 +118,7 @@ public class JsonTransformer<T extends JsonDataType> extends Transformer {
         }
     }
 
-    public ExpressionDataType replace(T data, String jsonpath, String replace) throws ExpressionException {
+    public ExpressionDataType replace(T data, String jsonpath, String replaceWith) throws ExpressionException {
         if (data == null || data.getValue() == null || StringUtils.isBlank(jsonpath)) { return null; }
 
         JsonElement value = data.getValue();
@@ -126,16 +126,17 @@ public class JsonTransformer<T extends JsonDataType> extends Transformer {
         if (value instanceof JsonNull) { return data; }
 
         if (value instanceof JsonPrimitive) {
-            return new TextDataType(StringUtils.replace(value.getAsString(), jsonpath, replace));
+            return new TextDataType(StringUtils.replace(value.getAsString(), jsonpath, replaceWith));
         }
 
         try {
             if (value instanceof JsonObject) {
-                return handleJsonPathResult(data, JSONPath.overwrite(data.toJSONObject(), jsonpath, replace, false));
+                return handleJsonPathResult(data,
+                                            JSONPath.overwrite(data.toJSONObject(), jsonpath, replaceWith, false));
             }
 
             if (value instanceof JsonArray) {
-                return handleJsonPathResult(data, JSONPath.overwrite(data.toJSONArray(), jsonpath, replace, false));
+                return handleJsonPathResult(data, JSONPath.overwrite(data.toJSONArray(), jsonpath, replaceWith, false));
             }
 
             throw new ExpressionException("Unable to transform " + value.getClass().getSimpleName() + " instance");
@@ -172,16 +173,16 @@ public class JsonTransformer<T extends JsonDataType> extends Transformer {
         }
     }
 
-    public NumberDataType count(T data, String jsonPath) throws ExpressionException {
+    public NumberDataType count(T data, String jsonpath) throws ExpressionException {
         NumberDataType count = new NumberDataType("0");
-        if (data == null || data.getValue() == null || StringUtils.isBlank(jsonPath)) { return count; }
+        if (data == null || data.getValue() == null || StringUtils.isBlank(jsonpath)) { return count; }
 
         JsonElement value = data.getValue();
 
         try {
             if (value instanceof JsonArray) {
                 JSONArray jsonArray = new JSONArray(value.toString());
-                JSONPath jp = new JSONPath(jsonArray, jsonPath);
+                JSONPath jp = new JSONPath(jsonArray, jsonpath);
                 count.setValue(jp.count());
                 count.setTextValue(count.getValue().toString());
                 return count;
@@ -189,7 +190,7 @@ public class JsonTransformer<T extends JsonDataType> extends Transformer {
 
             if (value instanceof JsonObject) {
                 JSONObject jsonObject = new JSONObject(value.toString());
-                JSONPath jp = new JSONPath(jsonObject, jsonPath);
+                JSONPath jp = new JSONPath(jsonObject, jsonpath);
                 count.setValue(jp.count());
                 count.setTextValue(count.getValue().toString());
                 return count;

@@ -17,8 +17,16 @@
 
 package org.nexial.core;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
+import java.awt.*;
+import java.io.File;
+import java.io.IOException;
+import java.math.RoundingMode;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.List;
+import java.util.*;
+import javax.validation.constraints.NotNull;
+
 import org.apache.commons.cli.Options;
 import org.apache.commons.collections4.ListUtils;
 import org.apache.commons.collections4.MapUtils;
@@ -41,19 +49,11 @@ import org.nexial.core.model.TestProject;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.ExecUtils;
 
-import javax.validation.constraints.NotNull;
-import java.awt.*;
-import java.io.File;
-import java.io.IOException;
-import java.math.RoundingMode;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.List;
-import java.util.*;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
 import static java.awt.Color.*;
-import static java.awt.image.BufferedImage.TYPE_INT_ARGB;
-import static java.awt.image.BufferedImage.TYPE_INT_RGB;
+import static java.awt.image.BufferedImage.*;
 import static java.io.File.separator;
 import static java.math.RoundingMode.*;
 import static javax.naming.Context.*;
@@ -77,6 +77,7 @@ public final class NexialConst {
     // @formatter:off
 
     // default values
+    public static final String DOCUMENTATION_URL = "https://nexiality.github.io/documentation";
     public static final String DATE_FORMAT_NOW = "yyyy-MM-dd-HH-mm-ss.S";
     public static final String COOKIE_DATE_FORMAT = "EEE, dd MMM yyyy HH:mm:ss ZZZ";
     public static final String COOKIE_DATE_FORMAT2 = "EEE, dd-MMM-yyyy HH:mm:ss ZZZ";
@@ -248,6 +249,7 @@ public final class NexialConst {
     // public static final int MAX_VERBOSE_CHAR = 2000;
     public static final int MAX_VERBOSE_CHAR = 32760;
     public static final int MAX_FORMULA_CHAR = 8192;
+    public static final long MIN_JSON_FILE_SIZE = 1024L;
 
     public static class PolyMatcher {
         public static final List<String> MATCHES = new ArrayList<>();
@@ -1004,6 +1006,7 @@ public final class NexialConst {
         public static final String VAR_CMD_JSON = NAMESPACE + "var.command.json";
         public static final String JSON_FOLDER = TEMP + "nexial-json" + separator;
         public static final File COMMAND_JSON_FILE = new File(JSON_FOLDER + COMMAND_JSON_FILE_NAME);
+        public static final File COMMAND_VAR_JSON_FILE = new File(JSON_FOLDER + VAR_CMD_JSON);
         public static final File TEMP_JSON_JAR = new File(TEMP + "nexial-json-jar/nexial-json.jar");
 
         public static final String USER_NEXIAL_HOME =
@@ -1251,8 +1254,9 @@ public final class NexialConst {
                                                       SMTP_KEYS), JNDI_KEYS), SES_KEYS);
 
         public static final String NOT_READY_PREFIX = "nexial mailer not enabled: ";
-        public static final String DOC_REF_SUFFIX =
-            " Please check https://nexiality.github.io/documentation/tipsandtricks/IntegratingNexialWithEmail.html for more details";
+        public static final String DOC_REF_SUFFIX = " Please check " + DOCUMENTATION_URL +
+                                                    "/tipsandtricks/IntegratingNexialWithEmail.html for more details";
+
         public static final String JNDI_NOT_READY =
             NOT_READY_PREFIX + "missing required JNDI configurations." + DOC_REF_SUFFIX;
         public static final String SMTP_NOT_READY =
@@ -2028,7 +2032,7 @@ public final class NexialConst {
     public static String toCloudIntegrationNotReadyMessage(String data) {
         return "Unable to save " + (StringUtils.isBlank(data) ? "content" : data) + " to cloud storage since " +
                "Nexial Cloud Integration is not properly configured. See " +
-               "https://nexiality.github.io/documentation/systemvars/index.html#nexial.outputToCloud " +
+               DOCUMENTATION_URL + "/systemvars/index.html#nexial.outputToCloud " +
                "for more details.";
     }
 

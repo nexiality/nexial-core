@@ -36,7 +36,7 @@ public class DateTransformer<T extends DateDataType> extends Transformer {
 
     public TextDataType text(T data) { return super.text(data); }
 
-    public TextDataType format(T data, String format) {
+    public TextDataType format(T data, String pattern) {
         TextDataType returnType;
         try {
             returnType = new TextDataType("");
@@ -44,13 +44,13 @@ public class DateTransformer<T extends DateDataType> extends Transformer {
             throw new IllegalArgumentException("Unable to extract text: " + e.getMessage(), e);
         }
 
-        if (data == null || StringUtils.isBlank(data.getTextValue()) || StringUtils.isBlank(format)) {
+        if (data == null || StringUtils.isBlank(data.getTextValue()) || StringUtils.isBlank(pattern)) {
             return returnType;
         }
 
-        String formatted = StringUtils.equals(format, EPOCH) ?
+        String formatted = StringUtils.equals(pattern, EPOCH) ?
                            data.getValue().getTime() + "" :
-                           dateHelper.format(data.getTextValue(), data.getFormat(), format);
+                           dateHelper.format(data.getTextValue(), data.getFormat(), pattern);
         returnType.setValue(formatted);
         return returnType;
     }

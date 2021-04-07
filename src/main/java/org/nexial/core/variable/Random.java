@@ -66,9 +66,9 @@ public class Random {
         return RandomStringUtils.randomAscii(NumberUtils.toInt(length));
     }
 
-    public String characters(String characters, String length) {
+    public String characters(String input, String length) {
         if (isDigit("random.characters()", length)) { return ""; }
-        return RandomStringUtils.random(NumberUtils.toInt(length), characters.toCharArray());
+        return RandomStringUtils.random(NumberUtils.toInt(length), input.toCharArray());
     }
 
     public String numeric(String from, String to) {

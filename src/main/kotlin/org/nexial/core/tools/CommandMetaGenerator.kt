@@ -47,7 +47,6 @@ import java.util.jar.JarOutputStream
 import java.util.jar.Manifest
 
 object CommandMetaGenerator {
-    private const val MIN_JSON_FILE_SIZE = 1024L
     private val variables = listOf("var", "saveVar", "profile", "db", "config")
 
     private val cmdlineOptions = initCmdlineOptions()
@@ -178,14 +177,13 @@ object CommandMetaGenerator {
             return varCommandsJson
         }
 
-        val varCommandJson = File(JSON_FOLDER + VAR_CMD_JSON)
-        FileUtils.write(varCommandJson, varCommandsJson, DEF_FILE_ENCODING)
-        if (!FileUtil.isFileReadable(varCommandJson, MIN_JSON_FILE_SIZE)) {
-            error("Generated command metadata file is not readable or is invalid: $varCommandJson")
+        FileUtils.write(COMMAND_VAR_JSON_FILE, varCommandsJson, DEF_FILE_ENCODING)
+        if (!FileUtil.isFileReadable(COMMAND_VAR_JSON_FILE, MIN_JSON_FILE_SIZE)) {
+            error("Generated command metadata file is not readable or is invalid: $COMMAND_VAR_JSON_FILE")
             System.exit(RC_FILE_GEN_FAILED)
         }
 
-        verbose("Variable metadata created", varCommandJson)
+        verbose("Variable metadata created", COMMAND_VAR_JSON_FILE)
         return varCommandsJson
     }
 
@@ -230,7 +228,7 @@ object CommandMetaGenerator {
         FileUtils.deleteQuietly(jarFile.parentFile)
     }
 
-    private fun verbose(label: String, data: Any) {
+    fun verbose(label: String, data: Any) {
         if (verbose) log(label, data)
     }
 

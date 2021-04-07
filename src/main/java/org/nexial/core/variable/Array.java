@@ -17,6 +17,9 @@
 
 package org.nexial.core.variable;
 
+import java.util.Arrays;
+import java.util.stream.Stream;
+
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
@@ -24,58 +27,55 @@ import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.ExecutionThread;
 import org.nexial.core.model.ExecutionContext;
 
-import java.util.Arrays;
-import java.util.stream.Stream;
-
 import static org.nexial.core.NexialConst.Data.TEXT_DELIM;
 import static org.nexial.core.SystemVariables.getDefault;
 
 public class Array {
 
-    public String item(String array, String index) {
-        return StringUtils.isEmpty(array) ? "" : item(toArray(array), index);
+    public String item(String input, String index) {
+        return StringUtils.isEmpty(input) ? "" : item(toArray(input), index);
     }
 
-    public String length(String array) {
-        return StringUtils.isEmpty(array) ? "0" : toArray(array).length + "";
+    public String length(String input) {
+        return StringUtils.isEmpty(input) ? "0" : toArray(input).length + "";
     }
 
-    public String reverse(String array) {
-        if (StringUtils.isEmpty(array)) { return array; }
+    public String reverse(String input) {
+        if (StringUtils.isEmpty(input)) { return input; }
 
-        String[] arr = toArray(array);
+        String[] arr = toArray(input);
         ArrayUtils.reverse(arr);
         return toString(Arrays.stream(arr));
     }
 
-    public String subarray(String array, String start, String end) {
-        return StringUtils.isEmpty(array) ? "" : toString(subarray(toArray(array), start, end));
+    public String subarray(String input, String start, String end) {
+        return StringUtils.isEmpty(input) ? "" : toString(subarray(toArray(input), start, end));
     }
 
-    public String distinct(String array) {
-        return StringUtils.isEmpty(array) ? "" : toString(Arrays.stream(toArray(array)).distinct());
+    public String distinct(String input) {
+        return StringUtils.isEmpty(input) ? "" : toString(Arrays.stream(toArray(input)).distinct());
     }
 
-    public String ascending(String array) {
-        return StringUtils.isEmpty(array) ? "" : toString(sort(toArray(array), true));
+    public String ascending(String input) {
+        return StringUtils.isEmpty(input) ? "" : toString(sort(toArray(input), true));
     }
 
-    public String descending(String array) {
-        return StringUtils.isEmpty(array) ? "" : toString(sort(toArray(array), false));
+    public String descending(String input) {
+        return StringUtils.isEmpty(input) ? "" : toString(sort(toArray(input), false));
     }
 
     public static Stream<String> sort(String[] array, boolean ascending) {
         return Arrays.stream(array).sorted((o1, o2) -> ascending ? compare(o1, o2) : compare(o2, o1));
     }
 
-    public String remove(String array, String index) {
-        if (StringUtils.isEmpty(array)) { return ""; }
+    public String remove(String input, String index) {
+        if (StringUtils.isEmpty(input)) { return ""; }
         if (!NumberUtils.isDigits(index)) { return ""; }
 
         int idx = NumberUtils.toInt(index);
         if (idx < 0) { return ""; }
 
-        String[] arr = toArray(array);
+        String[] arr = toArray(input);
         if (arr.length <= idx) { return ""; }
 
         String delim = getDelim();
@@ -88,15 +88,15 @@ public class Array {
         return StringUtils.removeEnd(buffer.toString(), delim);
     }
 
-    public String insert(String array, String index, String item) {
-        if (StringUtils.isEmpty(array)) { return ""; }
+    public String insert(String input, String index, String item) {
+        if (StringUtils.isEmpty(input)) { return ""; }
         if (StringUtils.isEmpty(item)) { return ""; }
         if (!NumberUtils.isDigits(index)) { return ""; }
 
         int idx = NumberUtils.toInt(index);
         if (idx < 0) { return ""; }
 
-        String[] arr = toArray(array);
+        String[] arr = toArray(input);
         if (arr.length <= idx) { return ""; }
 
         String delim = getDelim();
@@ -109,24 +109,24 @@ public class Array {
         return StringUtils.removeEnd(buffer.toString(), delim);
     }
 
-    public String prepend(String array, String item) {
-        if (StringUtils.isEmpty(array)) { return ""; }
+    public String prepend(String input, String item) {
+        if (StringUtils.isEmpty(input)) { return ""; }
         if (StringUtils.isEmpty(item)) { return ""; }
-        return item + getDelim() + array;
+        return item + getDelim() + input;
     }
 
-    public String append(String array, String item) {
-        if (StringUtils.isEmpty(array)) { return ""; }
+    public String append(String input, String item) {
+        if (StringUtils.isEmpty(input)) { return ""; }
         if (StringUtils.isEmpty(item)) { return ""; }
         String delim = getDelim();
-        return StringUtils.removeEnd(array, delim) + delim + item;
+        return StringUtils.removeEnd(input, delim) + delim + item;
     }
 
-    public String index(String array, String item) {
-        if (StringUtils.isEmpty(array)) { return ""; }
+    public String index(String input, String item) {
+        if (StringUtils.isEmpty(input)) { return ""; }
         if (StringUtils.isEmpty(item)) { return ""; }
 
-        String[] arr = toArray(array);
+        String[] arr = toArray(input);
         for (int i = 0; i < arr.length; i++) {
             if (StringUtils.equals(arr[i], item)) { return i + ""; }
         }
@@ -134,25 +134,25 @@ public class Array {
         return "";
     }
 
-    /** remove empty or null items from {@code array} */
-    public String pack(String array) {
-        if (StringUtils.isEmpty(array)) { return ""; }
+    /** remove empty or null items from {@code input} */
+    public String pack(String input) {
+        if (StringUtils.isEmpty(input)) { return ""; }
 
-        String[] arr = pack(toArray(array));
+        String[] arr = pack(toArray(input));
         if (ArrayUtils.isEmpty(arr)) { return ""; }
         return toString(Arrays.stream(arr));
     }
 
-    public String replica(String array, String count) {
-        if (StringUtils.isEmpty(array)) { return ""; }
-        String[] replica = replica(toArray(array), count);
+    public String replica(String input, String count) {
+        if (StringUtils.isEmpty(input)) { return ""; }
+        String[] replica = replica(toArray(input), count);
         if (ArrayUtils.isEmpty(replica)) { return ""; }
         return toString(Arrays.stream(replica));
     }
 
-    public String replicaUntil(String array, String size) {
-        if (StringUtils.isEmpty(array)) { return ""; }
-        String[] replica = replicaUntil(toArray(array), size);
+    public String replicaUntil(String input, String size) {
+        if (StringUtils.isEmpty(input)) { return ""; }
+        String[] replica = replicaUntil(toArray(input), size);
         if (ArrayUtils.isEmpty(replica)) { return ""; }
         return toString(Arrays.stream(replica));
     }

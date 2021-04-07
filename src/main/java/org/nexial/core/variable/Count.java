@@ -84,16 +84,16 @@ public class Count {
 
     public String punctuation(String text) { return count(text, PUNCTUATION); }
 
-    public String any(String text, String any) { return count(text, new TypedMatcher(any)); }
+    public String any(String text, String include) { return count(text, new TypedMatcher(include)); }
 
     public String size(String text) { return StringUtils.length(text) + ""; }
 
     public String omit(String text, String omitChars) { return count(text, new NegateMatcher(omitChars)); }
 
-    public String sequence(String text, String sequence) {
+    public String sequence(String text, String search) {
         if (StringUtils.isEmpty(text)) { return "0"; }
-        if (StringUtils.isEmpty(sequence)) { return "0"; }
-        return StringUtils.countMatches(text, sequence) + "";
+        if (StringUtils.isEmpty(search)) { return "0"; }
+        return StringUtils.countMatches(text, search) + "";
     }
 
     protected void init() { }

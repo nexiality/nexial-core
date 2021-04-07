@@ -17,7 +17,15 @@
 
 package org.nexial.core.variable;
 
-import com.google.gson.JsonElement;
+import java.io.IOException;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.set.ListOrderedSet;
 import org.apache.commons.lang3.ArrayUtils;
@@ -29,16 +37,17 @@ import org.jdom2.JDOMException;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Document.OutputSettings.Syntax;
-import org.nexial.commons.utils.*;
+import org.nexial.commons.utils.FileUtil;
+import org.nexial.commons.utils.RegexUtils;
+import org.nexial.commons.utils.ResourceUtils;
+import org.nexial.commons.utils.TextUtils;
+import org.nexial.commons.utils.XmlUtils;
 import org.nexial.core.ExecutionThread;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.plugins.ws.WsCommand;
 import org.nexial.core.utils.ConsoleUtils;
 
-import java.io.IOException;
-import java.lang.reflect.Method;
-import java.util.*;
-import java.util.stream.Collectors;
+import com.google.gson.JsonElement;
 
 import static org.nexial.core.NexialConst.Data.EXPRESSION_RESOLVE_URL;
 import static org.nexial.core.NexialConst.Data.TEXT_DELIM;
@@ -73,22 +82,22 @@ public class TextTransformer<T extends TextDataType> extends Transformer<T> {
         return data;
     }
 
-    public T after(T data, String after) {
-        if (data == null || StringUtils.isEmpty(data.getValue()) || StringUtils.isEmpty(after)) { return data; }
-        data.setValue(StringUtils.substringAfter(data.getValue(), fixControlChars(after)));
+    public T after(T data, String text) {
+        if (data == null || StringUtils.isEmpty(data.getValue()) || StringUtils.isEmpty(text)) { return data; }
+        data.setValue(StringUtils.substringAfter(data.getValue(), fixControlChars(text)));
         return data;
     }
 
-    public T before(T data, String before) {
-        if (data == null || StringUtils.isEmpty(data.getValue()) || StringUtils.isEmpty(before)) { return data; }
-        data.setValue(StringUtils.substringBefore(data.getValue(), fixControlChars(before)));
+    public T before(T data, String text) {
+        if (data == null || StringUtils.isEmpty(data.getValue()) || StringUtils.isEmpty(text)) { return data; }
+        data.setValue(StringUtils.substringBefore(data.getValue(), fixControlChars(text)));
         return data;
     }
 
-    public T between(T data, String after, String before) {
+    public T between(T data, String before, String after) {
         if (data == null || StringUtils.isEmpty(data.getValue()) ||
-            StringUtils.isEmpty(after) || StringUtils.isEmpty(before)) { return data; }
-        data.setValue(StringUtils.substringBetween(data.getValue(), fixControlChars(after), fixControlChars(before)));
+            StringUtils.isEmpty(before) || StringUtils.isEmpty(after)) { return data; }
+        data.setValue(StringUtils.substringBetween(data.getValue(), fixControlChars(before), fixControlChars(after)));
         return data;
     }
 
@@ -213,16 +222,13 @@ public class TextTransformer<T extends TextDataType> extends Transformer<T> {
         return data;
     }
 
-    public T removeRegex(T data, String... options) {
+    public T removeRegex(T data, String regex, String... options) {
         if (data == null || StringUtils.isEmpty(data.getTextValue())) { return data; }
-        if (ArrayUtils.isEmpty(options)) { return data; }
 
-        // first param is the regex
-        String regex = options[0];
-        // second param is multi line, default is false
-        boolean multiLine = options.length > 1 && BooleanUtils.toBoolean(options[1]);
-        // third param is case-sensitive, default is true
-        boolean caseSensitive = options.length <= 2 || BooleanUtils.toBoolean(options[2]);
+        // first param of option is multi line, default is false
+        boolean multiLine = options.length > 0 && BooleanUtils.toBoolean(options[0]);
+        // second param of option is case-sensitive, default is true
+        boolean caseSensitive = options.length <= 1 || BooleanUtils.toBoolean(options[1]);
 
         data.setValue(RegexUtils.removeMatches(data.getTextValue(), fixControlChars(regex), multiLine, caseSensitive));
         return data;
