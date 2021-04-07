@@ -2355,11 +2355,14 @@ public class DesktopElement {
     protected void execEscape(WebElement elem) { driver.executeScript(SCRIPT_PREFIX_SHORTCUT + "<[ESC]>", elem); }
 
     @Nonnull
-    protected List<String> listOptions() {
-        List<WebElement> options = element.findElements(By.xpath(LOCATOR_LIST_ITEMS));
+    protected List<String> listOptions() { return listComboOptions(element, getLabel()); }
+
+    @Nonnull
+    protected static List<String> listComboOptions(WebElement combo, String label) {
+        List<WebElement> options = combo.findElements(By.xpath(LOCATOR_LIST_ITEMS));
         return CollectionUtils.isEmpty(options) ?
                new ArrayList<>() :
-               options.stream().map(option -> getValue(option, getLabel() + " option")).collect(Collectors.toList());
+               options.stream().map(option -> getValue(option, label + " option")).collect(Collectors.toList());
     }
 
     @Nonnull

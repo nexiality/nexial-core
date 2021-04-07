@@ -336,8 +336,7 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
 
         String warningSuffix = "likely unable to invoke application menu " + menu;
 
-        String controlType = elem.getAttribute("ControlType");
-        if (!StringUtils.equals(controlType, "ControlType.Window")) {
+        if (!isAttributeMatched(elem, "ControlType", WINDOW)) {
             log("[WARNING] target element does not resolve to a Window component; " + warningSuffix);
         }
 
@@ -534,8 +533,7 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
             WebElement titleBar = dialog.findElement(By.xpath(LOCATOR_DIALOG_TITLE));
             if (titleBar == null) { return StepResult.fail("No title bar found for current modal dialog"); }
 
-            String actualTitle = titleBar.getAttribute("Name");
-            return assertEqual(StringUtils.trim(title), StringUtils.trim(actualTitle));
+            return assertEqual(StringUtils.trim(title), StringUtils.trim(titleBar.getAttribute("Name")));
         } catch (WebDriverException e) {
             return StepResult.fail("Error when accessing current modal dialog title bar: " + e.getMessage());
         }
@@ -791,9 +789,7 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
         WebElement elem = findFirstElement(locator);
         if (elem == null) { return StepResult.fail("No component can be resolved via locator " + locator); }
 
-        List<String> dimension = TextUtils.toList(elem.getAttribute("BoundingRectangle"), ",", true);
-        File imageFile = screenshot(file, dimension);
-
+        File imageFile = toScreenshot(elem, file);
         return StepResult.success("Screenshot captured for " + locator + ": " + imageFile);
     }
 
@@ -819,9 +815,7 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
 
         if (elem == null) { return StepResult.fail("No component can be resolved via its name " + name); }
 
-        List<String> dimension = TextUtils.toList(elem.getAttribute("BoundingRectangle"), ",", true);
-        File imageFile = screenshot(file, dimension);
-
+        File imageFile = toScreenshot(elem, file);
         return StepResult.success("Screenshot captured for " + name + ": " + imageFile);
     }
 
@@ -888,16 +882,9 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
         if (element == null) { return StepResult.fail("element NOT found via " + locator);}
 
         try {
-            String text = null;
-            String controlType = element.getAttribute("ControlType");
-            if (StringUtils.equals(controlType, CHECK_BOX) || StringUtils.equals(controlType, RADIO)) {
-                if (BooleanUtils.toBoolean(element.getAttribute("IsTogglePatternAvailable"))) {
-                    text = element.isSelected() ? "True" : "False";
-                }
-            }
-
-            if (text == null) { text = StringUtils.defaultIfEmpty(element.getText(), element.getAttribute("Name")); }
-
+            String text = isAttributeMatched(element, "ControlType", CHECK_BOX, RADIO) &&
+                          BooleanUtils.toBoolean(element.getAttribute("IsTogglePatternAvailable")) ?
+                          element.isSelected() ? "True" : "False" : deriveText(element);
             if (StringUtils.isNotEmpty(text)) {
                 updateDataVariable(var, text);
                 return StepResult.success("text content saved to '" + var + "'");
@@ -958,20 +945,61 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
 
         ElementType elementType = component.getElementType();
         if (!elementType.isCombo()) {
-            return StepResult.fail("Unable to resolve a combo component via '" + name + "'");
+            return StepResult.fail("Unable to resolve a ComboBox component via '" + name + "'");
         }
         if (elementType != SingleSelectCombo && elementType != SingleSelectList) {
             return StepResult.fail("This command is only applicable for SingleSelectCombo or SingleSelectList");
         }
 
         List<String> options = component.listOptions();
-        if (options == null) {
+        if (CollectionUtils.isEmpty(options)) {
             context.removeData(var);
-            return StepResult.fail("No options found for Combo '" + name + "'");
         } else {
             context.setData(var, options);
-            return StepResult.success("Options for Combo '" + name + "' saved to data variable '" + var + "'");
         }
+        return StepResult.success("Options for ComboBox '" + name + "' saved to data variable '" + var + "'");
+    }
+
+    /**
+     * locator should point to a Combo component (ie. ControlType="ControlType.ComboBox").
+     */
+    public StepResult saveComboOptionsByLocator(String var, String locator) {
+        requiresValidVariableName(var);
+        requiresNotBlank(locator, "invalid locator", locator);
+
+        By findBy = findBy(locator);
+        if (findBy == null) { return StepResult.fail("Unsupported/unknown locator " + locator); }
+
+        List<WebElement> matched = getDriver().findElements(findBy);
+        int count = CollectionUtils.size(matched);
+        if (count < 1) { return StepResult.fail("No component matched to '" + locator + "'"); }
+
+        if (count > 1) {
+            ConsoleUtils.log(context.getRunId(),
+                             "%s components matched to %s, but only first ComboBox is considered",
+                             count, locator);
+        }
+
+        WebElement combo = matched.stream()
+                                  .filter(element -> isAttributeMatched(element, "ControlType", COMBO))
+                                  .findFirst()
+                                  .orElseThrow(
+                                      () -> new IllegalArgumentException("None of the components matching to '" +
+                                                                         locator + "' is a ComboBox component."));
+
+        List<String> options = DesktopElement.listComboOptions(combo, "ComboBox");
+        if (CollectionUtils.isEmpty(options)) {
+            context.removeData(var);
+        } else {
+            context.setData(var, options);
+        }
+        return StepResult.success("Options for ComboBox '" + locator + "' saved to data variable '" + var + "'");
+    }
+
+    private boolean isAttributeMatched(WebElement element, String attribute, String... matchedTo) {
+        if (element == null || StringUtils.isBlank(attribute) || ArrayUtils.isEmpty(matchedTo)) { return false; }
+        String value = StringUtils.trim(element.getAttribute(attribute));
+        return Arrays.stream(matchedTo).anyMatch(match -> StringUtils.equals(match, value));
     }
 
     public StepResult waitFor(String name, String maxWaitMs) {
@@ -1654,24 +1682,6 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
         return assertArrayEqual(Arrays.toString(criterion), Arrays.toString(actualValues), "true");
     }
 
-    private String[] formatActualHierData(Map<String, String> rowData) { return formatActualHierData(rowData.values());}
-
-    private String[] formatActualHierData(Collection<String> data) {
-        return data.stream().map(StringUtils::trim).toArray(String[]::new);
-    }
-
-    @Nonnull
-    private String[] formatExpectedHierData(String expected) {
-        final String TMP = "!@#-#@!";
-        String delim = context.getTextDelim();
-        expected = StringUtils.replace(StringUtils.trim(expected), "\\" + delim, TMP);
-        String[] criterion = StringUtils.contains(expected, delim) ?
-                             StringUtils.splitByWholeSeparator(expected, delim) :
-                             new String[]{expected};
-        return Arrays.stream(criterion).map(s -> StringUtils.trim(StringUtils.replace(s, TMP, ",")))
-                     .toArray(String[]::new);
-    }
-
     public StepResult assertHierCells(String matchBy, String column, String expected, String nestedOnly) {
         requiresNotBlank(matchBy, "Invalid 'matchBy' specified", matchBy);
         requiresNotBlank(column, "Invalid 'column' specified", column);
@@ -1829,6 +1839,71 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
         }
     }
 
+    public DesktopElement getRequiredElement(String name, ElementType expectedType) {
+        requiresNotBlank(name, "Invalid name", name);
+
+        DesktopElement container = getCurrentContainer();
+        requiresNotNull(container, "No active form found");
+
+        String delim = context.getTextDelim();
+        if (StringUtils.contains(name, delim)) { name = StringUtils.replace(name, delim, NESTED_CONTAINER_SEP); }
+
+        DesktopElement component = container.getComponent(name);
+        requiresNotNull(component, "No element '" + name + "' in current form '" + container.getLabel() + "'");
+        requiresNotBlank(component.getXpath(), "Element '" + name + "' has no XPATH; Unable to proceed");
+
+        if (component.getElement() == null) { component.refetchComponents(); }
+
+        if (expectedType == null || expectedType == Any) { return component; }
+
+        if (expectedType.isCombo()) {
+            if (!component.getElementType().isCombo()) { warnTypeMismatch(name, component, "ComboBox"); }
+            return component;
+        }
+
+        if (expectedType.isTextbox()) {
+            if (!component.getElementType().isTextbox()) { warnTypeMismatch(name, component, "Textbox"); }
+            return component;
+        }
+
+        if (component.getElementType() != expectedType) { warnTypeMismatch(name, component, expectedType.name()); }
+
+        return component;
+    }
+
+    protected File toScreenshot(WebElement elem, String file) {
+        return screenshot(file, TextUtils.toList(elem.getAttribute("BoundingRectangle"), ",", true));
+    }
+
+    protected static String deriveText(WebElement element) {
+        String name = element.getAttribute("Name");
+        String text;
+        try {
+            text = element.getText();
+        } catch (WebDriverException e) {
+            text = name;
+        }
+        return StringUtils.defaultIfEmpty(text, name);
+    }
+
+    protected String[] formatActualHierData(Map<String, String> rowData) { return formatActualHierData(rowData.values());}
+
+    protected String[] formatActualHierData(Collection<String> data) {
+        return data.stream().map(StringUtils::trim).toArray(String[]::new);
+    }
+
+    @Nonnull
+    private String[] formatExpectedHierData(String expected) {
+        final String TMP = "!@#-#@!";
+        String delim = context.getTextDelim();
+        expected = StringUtils.replace(StringUtils.trim(expected), "\\" + delim, TMP);
+        String[] criterion = StringUtils.contains(expected, delim) ?
+                             StringUtils.splitByWholeSeparator(expected, delim) :
+                             new String[]{expected};
+        return Arrays.stream(criterion).map(s -> StringUtils.trim(StringUtils.replace(s, TMP, ",")))
+                     .toArray(String[]::new);
+    }
+
     protected StepResult saveHierCellChildData(String var, String matchBy, String fetchColumn) {
         requiresValidAndNotReadOnlyVariableName(var);
         requiresNotBlank(matchBy, "Invalid 'matchBy' specified", matchBy);
@@ -1968,38 +2043,6 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
     protected DesktopElement getCurrentContainer() {
         Object obj = context.getObjectData(CURRENT_DESKTOP_CONTAINER);
         return obj instanceof DesktopElement ? (DesktopElement) obj : null;
-    }
-
-    public DesktopElement getRequiredElement(String name, ElementType expectedType) {
-        requiresNotBlank(name, "Invalid name", name);
-
-        DesktopElement container = getCurrentContainer();
-        requiresNotNull(container, "No active form found");
-
-        String delim = context.getTextDelim();
-        if (StringUtils.contains(name, delim)) { name = StringUtils.replace(name, delim, NESTED_CONTAINER_SEP); }
-
-        DesktopElement component = container.getComponent(name);
-        requiresNotNull(component, "No element '" + name + "' in current form '" + container.getLabel() + "'");
-        requiresNotBlank(component.getXpath(), "Element '" + name + "' has no XPATH; Unable to proceed");
-
-        if (component.getElement() == null) { component.refetchComponents(); }
-
-        if (expectedType == null || expectedType == Any) { return component; }
-
-        if (expectedType.isCombo()) {
-            if (!component.getElementType().isCombo()) { warnTypeMismatch(name, component, "ComboBox"); }
-            return component;
-        }
-
-        if (expectedType.isTextbox()) {
-            if (!component.getElementType().isTextbox()) { warnTypeMismatch(name, component, "Textbox"); }
-            return component;
-        }
-
-        if (component.getElementType() != expectedType) { warnTypeMismatch(name, component, expectedType.name()); }
-
-        return component;
     }
 
     protected DesktopMenuBar resolveMenuBar() {
