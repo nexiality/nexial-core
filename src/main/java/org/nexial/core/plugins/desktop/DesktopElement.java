@@ -507,7 +507,7 @@ public class DesktopElement {
     public boolean isSelected() { return element != null && element.isSelected(); }
 
     protected static String getElementText(WebElement element) {
-        if (!isTextPatternAvailable(element)) { return null; }
+//        if (!isTextPatternAvailable(element)) { return null; }
         try {
             return element.getText();
         } catch (WebDriverException e) {
@@ -529,8 +529,8 @@ public class DesktopElement {
             String name = element.getAttribute("Name");
             String text = getElementText(element);
             return controlType.equals(LIST_ITEM) ?
-                   StringUtils.defaultIfEmpty(name, text) :
-                   StringUtils.defaultIfEmpty(text, name);
+                   StringUtils.defaultIfBlank(name, text) :
+                   StringUtils.defaultIfBlank(text, name);
         }
 
         WebElement targetElement;
@@ -2519,10 +2519,10 @@ public class DesktopElement {
 
     protected static String getValue(WebElement element, String label) {
         try {
-            return StringUtils.defaultIfEmpty(getElementText(element), element.getAttribute("Name"));
+            return StringUtils.trim(StringUtils.defaultIfBlank(getElementText(element), element.getAttribute("Name")));
         } catch (WebDriverException e) {
             ConsoleUtils.log("Unable to resolve text content for '" + label + "', retrying via @Name attribute...");
-            return element.getAttribute("Name");
+            return StringUtils.trim(element.getAttribute("Name"));
         }
     }
 
