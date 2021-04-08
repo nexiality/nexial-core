@@ -32,17 +32,17 @@ public class HeadlessExpressionTests extends ExcelBasedTests {
     }
 
     @Test
-    public void macro() throws Exception {
-        ExecutionSummary executionSummary = testViaExcel("unitTest_base_macro2.xlsx", "ImportMacro");
-        assertPassFail(executionSummary, "ImportMacro", TestOutcomeStats.allPassed());
-    }
-
-    @Test
-    public void testViaExcel1() throws Exception {
-        ExecutionSummary executionSummary = testViaExcel("unitTest_expressions1.xlsx");
+    public void testViaExcel_more() throws Exception {
+        ExecutionSummary executionSummary = testViaExcel("unitTest_expressions_more.xlsx");
         assertPassFail(executionSummary, "TEXT", TestOutcomeStats.allPassed());
         assertPassFail(executionSummary, "CSV", TestOutcomeStats.allPassed());
         assertPassFail(executionSummary, "LIST", TestOutcomeStats.allPassed());
+    }
+
+    @Test
+    public void macro() throws Exception {
+        ExecutionSummary executionSummary = testViaExcel("unitTest_base_macro2.xlsx", "ImportMacro");
+        assertPassFail(executionSummary, "ImportMacro", TestOutcomeStats.allPassed());
     }
 
     @Test

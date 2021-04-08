@@ -1,4 +1,4 @@
-SSN,Name,Position,Age
+NUM,Name,WORD,NUM2
 345678901,"Johnson, Adam",Inspector General,23
 456789012,Jenny,Cashier,23
 123456789,James,Accountant,41
