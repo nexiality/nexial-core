@@ -132,11 +132,11 @@ public class TextUtilsTest {
 
     @Test
     public void testToListWith2Spaces() {
-        String fixture = "Active     SSN            Name             Client  Type    FSO ID          FSO Name";
+        String fixture = "Active     NUM            Name             Client  Type    FSO ID          FSO Name";
         List<String> actual = TextUtils.toList(fixture, "  ", true);
         assertEquals(actual.size(), 7);
         assertEquals(actual.get(0), "Active");
-        assertEquals(actual.get(1), "SSN");
+        assertEquals(actual.get(1), "NUM");
         assertEquals(actual.get(2), "Name");
         assertEquals(actual.get(3), "Client");
         assertEquals(actual.get(4), "Type");
@@ -146,11 +146,11 @@ public class TextUtilsTest {
 
     @Test
     public void testToListWithMultipleTabs() {
-        String fixture = "Active\tSSN\t\tName\t\t\tClient\tType\t\t\t\t\tFSO ID\t\tFSO Name";
+        String fixture = "Active\tNUM\t\tName\t\t\tClient\tType\t\t\t\t\tFSO ID\t\tFSO Name";
         List<String> actual = TextUtils.toList(fixture, "\t", true);
         assertEquals(actual.size(), 7);
         assertEquals(actual.get(0), "Active");
-        assertEquals(actual.get(1), "SSN");
+        assertEquals(actual.get(1), "NUM");
         assertEquals(actual.get(2), "Name");
         assertEquals(actual.get(3), "Client");
         assertEquals(actual.get(4), "Type");
