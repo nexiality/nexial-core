@@ -517,7 +517,7 @@ public class DesktopElement {
 
     public String getText() {
         if (elementType == null || elementType == Any) { return getValue(element); }
-        if (!element.isEnabled() && elementType.isTextPatternAvailable()) { return getValue(element); }
+//        if (!element.isEnabled()) { return getValue(element); }
 
         if (elementType == SingleSelectList) {
             if (!controlType.equals(LIST_ITEM)) {
