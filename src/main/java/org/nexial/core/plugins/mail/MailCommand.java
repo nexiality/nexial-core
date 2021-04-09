@@ -177,7 +177,7 @@ public class MailCommand extends BaseCommand {
      * @param var     name of the mail configuration variable.
      * @return {@link StepResult} stating whether the email is sent successfully or failed due to some reason.
      */
-    public StepResult sendComposed(final String profile, final String var) {
+    public StepResult sendComposed(final String profile, final String var) throws MessagingException {
         requiresNotBlank(profile, "Invalid profile", profile);
 
         Object objectData = context.getObjectData(getContextVariable(var));
@@ -406,7 +406,7 @@ public class MailCommand extends BaseCommand {
     private StepResult sendEmail(@NotNull final String profile,
                                  @NotNull final EmailSettings emailSettings,
                                  @NotNull final MailProfile mailProfile,
-                                 @NotNull final MailObjectSupport mailer) {
+                                 @NotNull final MailObjectSupport mailer) throws MessagingException {
         mailer.setMailProps(mailProfile.toProperties());
         MailSender sender = MailSender.newInstance(mailer);
         String from = mailProfile.getFrom();
@@ -415,18 +415,18 @@ public class MailCommand extends BaseCommand {
             return StepResult.fail("The profile '" + profile + "' does not contain the 'from' address.");
         }
 
-        try {
+        // try {
             sender.sendMail(emailSettings.getToRecipients(),
                             emailSettings.getCcRecipients(),
                             emailSettings.getBccRecipients(),
                             from, emailSettings.getSubject(),
                             emailSettings.getBody(),
                             emailSettings.getAttachments());
-        } catch (MessagingException e) {
-            return StepResult.fail("Email failed to get delivered. Error is " + e.getMessage());
-        }
-
-        return StepResult.success("Email dispatched successfully.");
+            return StepResult.success("Email dispatched successfully.");
+        // we'll let Nexial catch the error and generate error log
+        // } catch (MessagingException e) {
+        //     return StepResult.fail("Email failed to get delivered. Error is " + e.getMessage());
+        // }
     }
 
     /**
