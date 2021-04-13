@@ -468,6 +468,7 @@ public final class NexialConst {
         public static final String QUIET = registerSysVar(NAMESPACE + "quiet", false);
         public static final String NULL_VALUE = registerSysVar(NAMESPACE + "nullValue", "(null)");
         public static final String TEXT_DELIM = registerSysVar(NAMESPACE + "textDelim", ",");
+        public static final String PROJ_PROP_TRIM_KEY = registerSysVar(NAMESPACE + "projectProperties.trimKey", false);
 
         public static final String FAIL_IMMEDIATE = registerSysVar(NAMESPACE + "failImmediate", false);
         public static final String END_IMMEDIATE = registerSysVar(NAMESPACE + "endImmediate");

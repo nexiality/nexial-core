@@ -17,23 +17,25 @@
 
 package org.nexial.core.model;
 
+import java.io.File;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Set;
+import javax.annotation.Nonnull;
 import org.apache.commons.collections4.MapUtils;
+import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.nexial.commons.utils.FileUtil;
 import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.ExecUtils;
 
-import javax.annotation.Nonnull;
-import java.io.File;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Set;
-
 import static java.io.File.separator;
 import static org.nexial.core.NexialConst.Data.ENV_NAME;
+import static org.nexial.core.NexialConst.Data.PROJ_PROP_TRIM_KEY;
 import static org.nexial.core.NexialConst.OPT_PROJECT_BASE;
 import static org.nexial.core.NexialConst.Project.*;
+import static org.nexial.core.SystemVariables.getDefault;
 
 /**
  * object representation of the standard Nexial project structure.
@@ -184,16 +186,18 @@ public class TestProject {
     protected void loadProjectProperties() {
         Map<String, String> properties = new LinkedHashMap<>();
 
+        boolean trimKey = BooleanUtils.toBoolean(System.getProperty(PROJ_PROP_TRIM_KEY, getDefault(PROJ_PROP_TRIM_KEY)));
+
         // if user specified env-specific properties, then we'll load default `project.properties` first
         if (!StringUtils.endsWith(projectProps, DEF_PROJECT_PROPS)) {
             String propBase = StringUtils.appendIfMissing(projectHome, separator) + DEF_REL_LOC_ARTIFACT;
             String defaultProjectProperties = propBase + DEF_PROJECT_PROPS;
-            Map<String, String> props = TextUtils.loadProperties(defaultProjectProperties);
+            Map<String, String> props = TextUtils.loadProperties(defaultProjectProperties, trimKey);
             if (MapUtils.isNotEmpty(props)) { properties.putAll(props); }
         }
 
         // override anything found in env-specific properties
-        Map<String, String> props = TextUtils.loadProperties(projectProps);
+        Map<String, String> props = TextUtils.loadProperties(projectProps, trimKey);
         if (MapUtils.isNotEmpty(props)) { properties.putAll(props); }
 
         if (MapUtils.isNotEmpty(properties)) {

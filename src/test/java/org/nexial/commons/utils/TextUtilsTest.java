@@ -17,14 +17,17 @@
 
 package org.nexial.commons.utils;
 
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.SystemUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.junit.Test;
-
-import java.io.File;
-import java.util.*;
 
 import static java.io.File.separator;
 import static org.junit.Assert.*;
@@ -442,23 +445,23 @@ public class TextUtilsTest {
 
     @Test
     public void testLoadProperties() throws Exception {
-        String propContent = "nexial.lenientStringCompare=${nexial.web.alwaysWait}\n" +
-                             "nexial.runID.prefix=MyOneAndOnlyTest-Part2\n" +
-                             "nexial.web.alwaysWait=true\n" +
-                             "nexial.ws.digest.user=User1\n" +
+        String propContent = "nexial.lenientStringCompare   =${nexial.web.alwaysWait}\n" +
+                             "nexial.runID.prefix           =MyOneAndOnlyTest-Part2\n" +
+                             "nexial.web.alwaysWait         =true\n" +
+                             "nexial.ws.digest.user         =User1\n" +
                              "\n" +
-                             "nexial.browserstack.browser=chrome\n" +
-                             "nexial.browser=${nexial.browserstack.browser}\n" +
+                             "nexial.browserstack.browser   =chrome\n" +
+                             "nexial.browser                =${nexial.browserstack.browser}\n" +
                              "nexial.scope.fallbackToPrevious=${nexial.lenientStringCompare}\n" +
                              "\n" +
-                             "mydata.type=hsqldb\n" +
-                             "mydata.url=mem:\n" +
+                             "mydata.type       =hsqldb\n" +
+                             "mydata.url        =mem:\n" +
                              "mydata.treatNullAs==[NULL]\n" +
                              "\n" +
-                             "myData=yourData\n" +
-                             "ourData=Theirs\n" +
-                             "all.the.kings.horse=and king's men\n" +
-                             "couldn't put=Humpty Dumpty together again\n" +
+                             "myData                =yourData\n" +
+                             "ourData               =Theirs\n" +
+                             "all.the.kings.horse   =and king's men\n" +
+                             "couldn't put          =Humpty Dumpty together again\n" +
                              "\n" +
                              "my.datasource.url=jdbc://myserver:1099/dbname;prop1=value1;prop2=#hash2;prop3=!what\n" +
                              "broken==\n" +
@@ -471,7 +474,7 @@ public class TextUtilsTest {
         File tmpProp = new File(tmpPropFile);
         FileUtils.writeStringToFile(tmpProp, propContent, DEF_FILE_ENCODING);
 
-        Map<String, String> propMap = TextUtils.loadProperties(tmpPropFile);
+        Map<String, String> propMap = TextUtils.loadProperties(tmpPropFile, true);
         assertEquals("Humpty Dumpty together again", propMap.get("couldn't put"));
         assertEquals("=[NULL]", propMap.get("mydata.treatNullAs"));
         assertEquals("=", propMap.get("broken"));
