@@ -60,7 +60,6 @@ public class NumberDataType extends ExpressionDataType<Number> {
         try {
             String text = TextUtils.cleanNumber(textValue, REAL);
             if (StringUtils.contains(text, ".")) {
-                // setValue(NumberUtils.createBigDecimal(text));
                 setValue(NumberUtils.createDouble(text));
                 setTextValue(BigDecimal.valueOf(value.doubleValue()).toPlainString());
             } else {

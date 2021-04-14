@@ -170,7 +170,7 @@ public class TextTransformer<T extends TextDataType> extends Transformer<T> {
         if (data == null || StringUtils.isBlank(data.getValue())) { return null; }
 
         String text = data.getValue();
-        if (!NumberUtils.isDigits(text) && !NumberUtils.isCreatable(data.getValue())) {
+        if (StringUtils.isBlank(text)) {
             ConsoleUtils.log("Unable to convert '" + text + "' into number");
             return null;
         }

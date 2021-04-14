@@ -152,7 +152,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         // todo: consider this http://seleniumhq.github.io/selenium/docs/api/javascript/module/selenium-webdriver/lib/logging.html
         logToBrowser = !browser.isRunChrome() &&
                        context.getBooleanData(OPT_BROWSER_CONSOLE_LOG, getDefaultBool(OPT_BROWSER_CONSOLE_LOG));
-        tableHelper = new TableHelper(this);
+        tableHelper  = new TableHelper(this);
     }
 
     @Override
@@ -694,10 +694,10 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
         long maxWaitMs = context.getPollWaitMs();
         List<String> notPresent =
-            TextUtils.toList(locators, "\n", true)
-                     .stream()
-                     .filter(locator -> !waitForCondition(maxWaitMs, object -> isElementPresent(locator)))
-                     .collect(Collectors.toList());
+                TextUtils.toList(locators, "\n", true)
+                         .stream()
+                         .filter(locator -> !waitForCondition(maxWaitMs, object -> isElementPresent(locator)))
+                         .collect(Collectors.toList());
         if (CollectionUtils.isEmpty(notPresent)) {
             return StepResult.success("All specified locators are present within %s ms (each)", maxWaitMs);
         } else {
@@ -1118,15 +1118,15 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
             int green = 0;
             int blue = 0;
             if (value.length() == 3) {
-                red = Integer.parseInt(StringUtils.repeat(value.charAt(0), 2), 16);
+                red   = Integer.parseInt(StringUtils.repeat(value.charAt(0), 2), 16);
                 green = Integer.parseInt(StringUtils.repeat(value.charAt(1), 2), 16);
-                blue = Integer.parseInt(StringUtils.repeat(value.charAt(2), 2), 16);
+                blue  = Integer.parseInt(StringUtils.repeat(value.charAt(2), 2), 16);
             } else if (value.length() == 6) {
                 System.out.println("" + StringUtils.substring(value, 0, 2) + "=" +
                                    Integer.parseInt(StringUtils.substring(value, 0, 2), 16));
-                red = Integer.parseInt(StringUtils.substring(value, 0, 2), 16);
+                red   = Integer.parseInt(StringUtils.substring(value, 0, 2), 16);
                 green = Integer.parseInt(StringUtils.substring(value, 2, 4), 16);
-                blue = Integer.parseInt(StringUtils.substring(value, 4, 6), 16);
+                blue  = Integer.parseInt(StringUtils.substring(value, 4, 6), 16);
             }
 
             return "rgba(" + red + ", " + green + ", " + blue + ", 1)";
@@ -1882,6 +1882,19 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         }
     }
 
+    /** use PolyMatcher to verify current URL */
+    public StepResult assertLocation(String search) {
+        requiresNotEmpty(search, "Invalid search term", search);
+
+        ensureReady();
+        String url = driver.getCurrentUrl();
+        if (TextUtils.polyMatch(url, search)) {
+            return StepResult.success("Current URL matched the specifie search '%s'", search);
+        } else {
+            return StepResult.fail("Current URL DID NOT matched the specifie search '%s'", search);
+        }
+    }
+
     public StepResult saveLocation(String var) {
         requiresValidAndNotReadOnlyVariableName(var);
 
@@ -2044,14 +2057,14 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
     protected List<WebElement> findCssMatchingElements(String attribute, String value) {
         Object returnObject = jsExecutor.executeScript(
-            "var targets = Array(); " +
-            "document.querySelectorAll(\"*\").forEach(function(elem, index) { " +
-            "   if (elem.style." + attribute + " === '" + value + "' || " +
-            "       window.getComputedStyle(elem).getPropertyValue(\"" + attribute + "\") === '" + value + "') { " +
-            "       targets.push(elem); " +
-            "   }" +
-            "});" +
-            "return targets;");
+                "var targets = Array(); " +
+                "document.querySelectorAll(\"*\").forEach(function(elem, index) { " +
+                "   if (elem.style." + attribute + " === '" + value + "' || " +
+                "       window.getComputedStyle(elem).getPropertyValue(\"" + attribute + "\") === '" + value + "') { " +
+                "       targets.push(elem); " +
+                "   }" +
+                "});" +
+                "return targets;");
         if (returnObject == null) { return null; }
 
         if (returnObject instanceof List) { return (List<WebElement>) returnObject; }
@@ -2080,8 +2093,8 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
             log("using full screen capturing approach with scroll timeout " + timeout + "...");
 
             Screenshot screenshot = new AShot()
-                                        .shootingStrategy(ShootingStrategies.viewportPasting(timeout))
-                                        .takeScreenshot(driver);
+                                            .shootingStrategy(ShootingStrategies.viewportPasting(timeout))
+                                            .takeScreenshot(driver);
             try {
                 boolean screenshotTaken = ImageIO.write(screenshot.getImage(), "PNG", screenshotFile);
                 if (screenshotTaken) {
@@ -2312,10 +2325,10 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
             jsExecutor.executeScript("arguments[0].removeAttribute(arguments[1])", element, attrName);
         } else {
             jsExecutor.executeScript(
-                "arguments[0].setAttribute(arguments[1], arguments[2])",
-                element,
-                attrName,
-                value);
+                    "arguments[0].setAttribute(arguments[1], arguments[2])",
+                    element,
+                    attrName,
+                    value);
         }
         return StepResult.success(attrName + " with value " + value + " updated successfully for '" + locator + "'");
     }
@@ -2353,7 +2366,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
             if (clientPerfCollector == null) {
                 synchronized (this) {
                     clientPerfCollector = new ClientPerformanceCollector(
-                        this, new Syspath().out("fullpath") + separator + WEB_METRICS_JSON);
+                            this, new Syspath().out("fullpath") + separator + WEB_METRICS_JSON);
                 }
             }
             clientPerfCollector.collect();
@@ -2625,7 +2638,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
             // special treatment for body tag
             if (StringUtils.equalsIgnoreCase(element.getTagName(), "body")) {
                 exists = BooleanUtils.toBoolean(Objects.toString(jsExecutor.executeScript(
-                    "document.documentElement.clientHeight < document.documentElement.scrollHeight"))
+                        "document.documentElement.clientHeight < document.documentElement.scrollHeight"))
                                                );
             } else {
                 exists = NumberUtils.toInt(element.getAttribute("clientHeight")) <
@@ -2648,7 +2661,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
             // special treatment for body tag
             if (StringUtils.equalsIgnoreCase(element.getTagName(), "body")) {
                 exists = BooleanUtils.toBoolean(Objects.toString(jsExecutor.executeScript(
-                    "return document.documentElement.clientWidth < document.documentElement.scrollWidth")));
+                        "return document.documentElement.clientWidth < document.documentElement.scrollWidth")));
             } else {
                 exists = NumberUtils.toInt(element.getAttribute("clientWidth")) <
                          NumberUtils.toInt(element.getAttribute("scrollWidth"));
@@ -2888,12 +2901,12 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
         if (driver == null || currentDriver != driver) {
             driver = currentDriver;
-            alert = null;
+            alert  = null;
             cookie = null;
         }
 
-        jsExecutor = (JavascriptExecutor) this.driver;
-        screenshot = (TakesScreenshot) this.driver;
+        jsExecutor  = (JavascriptExecutor) this.driver;
+        screenshot  = (TakesScreenshot) this.driver;
         frameHelper = new FrameHelper(this, this.driver);
 
         if (alert == null) {
@@ -3202,7 +3215,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
             try {
                 // fail-safe retry
                 readyState = (String) jsExecutor.executeScript(
-                    "return selenium.browserbot.getCurrentWindow().document.readyState");
+                        "return selenium.browserbot.getCurrentWindow().document.readyState");
             } catch (Exception e1) {
                 log("Unable to evaluate browser readyState: " + e1.getMessage());
                 return false;

@@ -21,7 +21,9 @@ if (isNavigation) {
 } else {
   var g = JSON.parse(localStorage.getItem('g'));
   g.push(performance.getEntries());
-  localStorage.setItem('g', JSON.stringify(g.flat()));
+  localStorage.setItem('g', JSON.stringify(g.flat(), function(key, value) {
+    return key.indexOf('jQuery') === 0 ? null : value;
+  }));
 
   var n = JSON.parse(localStorage.getItem('n'));
   n.push(performance.getEntriesByType('navigation'));
