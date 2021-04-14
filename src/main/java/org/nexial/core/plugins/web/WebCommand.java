@@ -17,12 +17,29 @@
 
 package org.nexial.core.plugins.web;
 
+import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
+import java.time.Duration;
+import java.util.List;
+import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import javax.imageio.ImageIO;
+import javax.validation.constraints.NotNull;
 import com.google.gson.JsonObject;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.IterableUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.*;
+import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.BooleanUtils;
+import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.SystemUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.commons.lang3.time.StopWatch;
 import org.nexial.commons.utils.CollectionUtil;
@@ -63,20 +80,6 @@ import ru.yandex.qatools.ashot.AShot;
 import ru.yandex.qatools.ashot.Screenshot;
 import ru.yandex.qatools.ashot.coordinates.WebDriverCoordsProvider;
 import ru.yandex.qatools.ashot.shooting.ShootingStrategies;
-
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-import javax.imageio.ImageIO;
-import javax.validation.constraints.NotNull;
-import java.awt.*;
-import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.IOException;
-import java.time.Duration;
-import java.util.List;
-import java.util.*;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import static java.awt.Image.SCALE_DEFAULT;
 import static java.io.File.separator;
@@ -442,9 +445,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         requiresNotBlank(prefix, "Invalid prefix", prefix);
 
         Map<String, String> locators = context.getDataByPrefix(prefix);
-        if (MapUtils.isEmpty(locators)) {
-            return StepResult.fail("No data variables found via prefix '" + prefix + "'");
-        }
+        if (MapUtils.isEmpty(locators)) { return StepResult.fail("No data variables with prefix '" + prefix + "'"); }
 
         String runId = context.getRunId();
         boolean allPassed = true;
@@ -490,6 +491,8 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
             }
         }
 
+        waitForHighlightsToFadeOff();
+
         if (locatorsFound < 1) {
             return StepResult.fail("No data variables found via prefix '" + prefix + "' contains the required " +
                                    "'" + SUFFIX_LOCATOR + "' suffix");
@@ -507,6 +510,17 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         }
 
         return allPassed ? StepResult.success(message) : StepResult.fail(errorsFound);
+    }
+
+    /** if highlight is enable, then let's wait for highlight to fade off before moving on to next command */
+    private void waitForHighlightsToFadeOff() {
+        if (!isHighlightEnabled()) { return; }
+        int waitMs = context.getIntConfig(getTarget(), getProfile(), HIGHLIGHT_WAIT_MS);
+        try {
+            Thread.sleep(waitMs + 500);
+        } catch (InterruptedException e) {
+            // don't worry about it
+        }
     }
 
     public StepResult saveTextSubstringAfter(String var, String locator, String delim) {
@@ -1969,10 +1983,10 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         WebElement element = null;
         if (StringUtils.isNotBlank(locator)) {
             element = findElement(locator);
-            if (element == null) {
-                return StepResult.fail("No web element can be found via locator '" + locator + "'");
-            }
+            if (element == null) { return StepResult.fail("No web element found via locator '" + locator + "'"); }
         }
+
+        waitForHighlightsToFadeOff();
 
         int time = Integer.parseInt(timeout);
         boolean forceCssChange = CheckUtils.toBoolean(removeFixed);
