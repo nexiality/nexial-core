@@ -202,7 +202,7 @@ dependencies {
 	compile("com.networknt:json-schema-validator:1+")
 	compile("com.google.code.gson:gson:${gsonVersion}")
 	compile("org.danilopianini:gson-extras:+")
-	compile("com.jayway.jsonpath:json-path:+")
+	compile("com.jayway.jsonpath:json-path:${jsonpathVersion}")
 	compile("org.jdom:jdom2:+")
 	compile("org.jsoup:jsoup:+")
 	// v23r* is not compatible with selenium 3.4.0

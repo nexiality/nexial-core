@@ -1292,7 +1292,7 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
             } else {
                 ConsoleUtils.log(matches.size() + " match(es) found");
                 context.setData(var, matches);
-                ConsoleUtils.log("saving current textpane as '" + DESKTOP_CURRENT_TEXTPANE + "'");
+                ConsoleUtils.log("saving current Text Pane as '" + DESKTOP_CURRENT_TEXTPANE + "'");
                 context.setData(DESKTOP_CURRENT_TEXTPANE, component);
                 return StepResult.success(matches.size() + " match(es) found");
             }
@@ -1636,9 +1636,9 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
     public StepResult useHierTable(String var, String name) { return saveHierTableMetaData(var, name); }
 
     public StepResult collapseHierTable() {
-        DesktopHierTable hiertable = getCurrentHierTable();
-        requiresNotNull(hiertable, "No Hierarchical Table element referenced or scanned");
-        hiertable.collapseAll();
+        DesktopHierTable table = getCurrentHierTable();
+        requiresNotNull(table, "No Hierarchical Table element referenced or scanned");
+        table.collapseAll();
         return StepResult.success();
     }
 
@@ -1707,12 +1707,12 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
         requiresNotBlank(nameValues, "Invalid name-value pairs specified", nameValues);
         requires(StringUtils.contains(nameValues, "="), "Name-values MUST be in the form of name=value", nameValues);
 
-        DesktopHierTable hiertable = getCurrentHierTable();
-        requiresNotNull(hiertable, "No Hierarchical Table element referenced or scanned");
+        DesktopHierTable table = getCurrentHierTable();
+        requiresNotNull(table, "No Hierarchical Table element referenced or scanned");
 
         String delim = context.getTextDelim();
         List<String> matchData = TextUtils.toList(matchBy, delim, true);
-        Map<String, String> result = hiertable.editHierCell(matchData, nameValuesToMap(nameValues));
+        Map<String, String> result = table.editHierCell(matchData, nameValuesToMap(nameValues));
         if (MapUtils.isEmpty(result)) {
             context.removeData(var);
             return StepResult.fail("Unable to edit Hierarchical Table; unmatched specified hierarchy:" + matchBy);
@@ -1954,25 +1954,25 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
     }
 
     protected String getHierCell(String matchBy, String column) {
-        DesktopHierTable hiertable = getCurrentHierTable();
-        requiresNotNull(hiertable, "No Hierarchical Table element referenced or scanned");
+        DesktopHierTable table = getCurrentHierTable();
+        requiresNotNull(table, "No Hierarchical Table element referenced or scanned");
 
-        if (!hiertable.getHeaders().contains(column)) {CheckUtils.fail("Specified column '" + column + "' not found.");}
+        if (!table.getHeaders().contains(column)) {CheckUtils.fail("Specified column '" + column + "' not found.");}
 
-        Map<String, String> row = hiertable.getHierRow(TextUtils.toList(matchBy, context.getTextDelim(), true));
+        Map<String, String> row = table.getHierRow(TextUtils.toList(matchBy, context.getTextDelim(), true));
         if (row == null) { CheckUtils.fail("Unable to fetch data from Hierarchical Table"); }
 
         return row.get(column);
     }
 
     protected List<String> getHierCellChildData(String matchBy, String fetchColumn) {
-        DesktopHierTable hiertable = getCurrentHierTable();
-        requiresNotNull(hiertable, "No Hierarchical Table element referenced or scanned");
+        DesktopHierTable table = getCurrentHierTable();
+        requiresNotNull(table, "No Hierarchical Table element referenced or scanned");
 
-        requires(hiertable.containsHeader(fetchColumn), "Unmatched column specified", fetchColumn);
+        requires(table.containsHeader(fetchColumn), "Unmatched column specified", fetchColumn);
 
         List<String> matchData = TextUtils.toList(matchBy, context.getTextDelim(), true);
-        List<String> cellData = hiertable.getHierCellChildData(matchData, fetchColumn);
+        List<String> cellData = table.getHierCellChildData(matchData, fetchColumn);
         if (cellData == null) { CheckUtils.fail("Unable to fetch data from Hierarchical Table"); }
 
         return cellData;
@@ -2398,10 +2398,10 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
         context.addScriptReferenceData("process id", session.getProcessId());
 
         String appVersion = StringUtils.defaultString(session.getApplicationVersion());
-        String buildnum = context.getStringData(SCRIPT_REF_PREFIX + BUILD_NO, appVersion);
+        String buildNo = context.getStringData(SCRIPT_REF_PREFIX + BUILD_NO, appVersion);
 
         if (StringUtils.isNotBlank(appVersion)) { context.addScriptReferenceData("app version", appVersion); }
-        if (StringUtils.isNotBlank(buildnum)) { context.addScriptReferenceData(BUILD_NO, buildnum); }
+        if (StringUtils.isNotBlank(buildNo)) { context.addScriptReferenceData(BUILD_NO, buildNo); }
 
         context.addScriptReferenceData("app", session.getAppId());
     }
