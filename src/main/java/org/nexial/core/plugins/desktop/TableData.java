@@ -17,6 +17,13 @@
 
 package org.nexial.core.plugins.desktop;
 
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.map.ListOrderedMap;
 import org.apache.commons.lang3.StringUtils;
@@ -26,19 +33,13 @@ import org.json.JSONObject;
 import org.nexial.core.utils.CheckUtils;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.JsonUtils;
+import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
-
-import java.time.Duration;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import static org.apache.commons.lang3.StringUtils.rightPad;
 import static org.json.JSONObject.NULL;
 import static org.nexial.core.NexialConst.NL;
+import static org.nexial.core.plugins.desktop.ElementType.*;
 
 public class TableData {
     private static final String REGEX_LOWER_UPPER = "[0-9a-z]\\s[A-Z]";
@@ -73,18 +74,18 @@ public class TableData {
 
     public TableData(Object tableDataObject, Duration duration) {
         elapsedTime = duration.toMillis() / 1000;
-        data = readTableData(tableDataObject);
-        rowCount = data.size();
+        data        = readTableData(tableDataObject);
+        rowCount    = data.size();
         columnCount = columns.size();
     }
 
     public static TableData fromTreeViewRows(List<String> headers, List<WebElement> rowData, Duration duration) {
         TableData tableData = new TableData();
         tableData.elapsedTime = duration.toMillis() / 1000;
-        tableData.data = tableData.readTreeViewData(headers, rowData);
-        tableData.columns = headers;
+        tableData.data        = tableData.readTreeViewData(headers, rowData);
+        tableData.columns     = headers;
         tableData.columnCount = CollectionUtils.size(headers);
-        tableData.rowCount = tableData.data == null ? 0 : tableData.data.size();
+        tableData.rowCount    = tableData.data == null ? 0 : tableData.data.size();
         return tableData;
     }
 
@@ -163,7 +164,7 @@ public class TableData {
 
             JSONArray data = jsonObject.getJSONArray("data");
             for (int i = 0; i < data.length(); i++) {
-                rowData = new ArrayList<>();
+                rowData      = new ArrayList<>();
                 columnValues = new TableRow();
                 if (data.get(i) instanceof JSONArray) {
                     rowCollection = JsonUtils.toList(data.getJSONArray(i));
@@ -201,7 +202,7 @@ public class TableData {
         TableRow columnValues = new TableRow();
         for (WebElement rowDatum : rowData) {
             String header = headers.get(headerIndex++);
-            columnValues.put(Integer.toString(headerIndex), header, StringUtils.defaultString(rowDatum.getText()));
+            columnValues.put(Integer.toString(headerIndex), header, resolveCellValue(rowDatum));
             if (headerIndex >= headers.size()) {
                 headerIndex = 0;
                 rows.add(columnValues);
@@ -211,6 +212,46 @@ public class TableData {
 
         if (!columnValues.isEmpty()) { rows.add(columnValues); }
         return rows;
+    }
+
+    private String resolveCellValue(WebElement cell) {
+        if (cell == null) { return ""; }
+
+        String controlType = cell.getAttribute("ControlType");
+
+        // todo: need to support tri-state checkboxes
+        if (StringUtils.equals(controlType, CHECK_BOX) || StringUtils.equals(controlType, RADIO)) {
+            return cell.isSelected() ? "True" : getElementText(cell, "False");
+        }
+
+        String cellText = getElementText(cell, "");
+
+        if (StringUtils.equals(controlType, COMBO) || StringUtils.equals(controlType, LIST)) {
+            // anything selected?
+            if (StringUtils.isEmpty(cellText)) { return cellText; }
+
+            List<WebElement> children = cell.findElements(By.xpath("*[@ControlType='ControlType.ListItem']"));
+            if (CollectionUtils.isEmpty(children)) { return cellText; }
+
+            String xpathSelected = "*[@ControlType='ControlType.ListItem' and @IsSelected='True']";
+            List<WebElement> selectedElements = cell.findElements(By.xpath(xpathSelected));
+
+            // if none selected or no list item found
+            if (CollectionUtils.isEmpty(selectedElements)) { return cellText; }
+            return StringUtils.trim(StringUtils.defaultString(selectedElements.get(0).getAttribute("Name")));
+        }
+
+        if (StringUtils.equals(controlType, BUTTON)) { return cell.getAttribute("Name"); }
+
+        return cellText;
+    }
+
+    private String getElementText(WebElement cell, String defaultText) {
+        try {
+            return StringUtils.trim(cell.getText());
+        } catch (Exception e) {
+            return defaultText;
+        }
     }
 
     private String applyPattern(String column) {

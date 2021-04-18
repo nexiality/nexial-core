@@ -507,7 +507,6 @@ public class DesktopElement {
     public boolean isSelected() { return element != null && element.isSelected(); }
 
     protected static String getElementText(WebElement element) {
-//        if (!isTextPatternAvailable(element)) { return null; }
         try {
             return element.getText();
         } catch (WebDriverException e) {
@@ -517,7 +516,6 @@ public class DesktopElement {
 
     public String getText() {
         if (elementType == null || elementType == Any) { return getValue(element); }
-//        if (!element.isEnabled()) { return getValue(element); }
 
         if (elementType == SingleSelectList) {
             if (!controlType.equals(LIST_ITEM)) {
@@ -545,21 +543,16 @@ public class DesktopElement {
                 targetElement = element.findElement(By.xpath(LOCATOR_DOCUMENT));
             }
         } else if (elementType == Checkbox || elementType == Radio) {
-            if (isTogglePatternAvailable(element)) {
-                // todo: need to support tri-state checkboxes
-                return isSelected() ? "True" : "False";
-            } else {
-                targetElement = element;
-            }
+            // todo: need to support tri-state checkboxes
+            if (isTogglePatternAvailable(element)) { return isSelected() ? "True" : "False"; }
+            targetElement = element;
         } else {
             targetElement = element;
         }
 
-        if (targetElement == null) {
-            throw new IllegalArgumentException("Cannot resolve target element for '" + getLabel() + "'");
-        }
+        if (targetElement != null) { return getValue(targetElement); }
 
-        return getValue(targetElement);
+        throw new IllegalArgumentException("Cannot resolve target element for '" + getLabel() + "'");
     }
 
     public WebElement findModalDialog() {
