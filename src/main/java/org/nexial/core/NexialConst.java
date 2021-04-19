@@ -78,6 +78,9 @@ public final class NexialConst {
 
     // default values
     public static final String DOCUMENTATION_URL = "https://nexiality.github.io/documentation";
+    public static final String FUNCTIONS_DOCS_URL = DOCUMENTATION_URL + "/functions/";
+    public static final String EXPRESSIONS_DOCS_URL = DOCUMENTATION_URL + "/expressions/";
+    public static final String SYSVAR_DOCS_URL = DOCUMENTATION_URL + "/systemvars/";
     public static final String DATE_FORMAT_NOW = "yyyy-MM-dd-HH-mm-ss.S";
     public static final String COOKIE_DATE_FORMAT = "EEE, dd MMM yyyy HH:mm:ss ZZZ";
     public static final String COOKIE_DATE_FORMAT2 = "EEE, dd-MMM-yyyy HH:mm:ss ZZZ";
