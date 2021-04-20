@@ -14,6 +14,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import static org.apache.commons.lang3.StringUtils.*;
+import static org.nexial.core.NexialConst.Doc.DOCUMENTATION_URL;
+import static org.nexial.core.NexialConst.Doc.FUNCTIONS_DOCS_URL;
 import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.tools.docs.MinifyGenerator.*;
 
@@ -79,6 +81,7 @@ public class FunctionMinifyGenerator {
                 operationCount = 0;
             } catch (IOException exception) {
                 System.out.println("Error occurred while processing file " + file.getName());
+                // todo: what is the actual error? any reason to hide that?
             }
         }
     }
@@ -89,6 +92,7 @@ public class FunctionMinifyGenerator {
         String uiImageName = UI_IMAGE_PREFIX + imageName;
         String imageLocation = functionsLocation + "/image";
         line = line.replace("](", "](" + FUNCTIONS_DOCS_URL);
+        // todo: listFiles() may return null list; NPE alert
         if (new File(imageLocation).listFiles(pathname -> pathname.getName().equals(uiImageName + ".png")).length > 0) {
             line = line.replace(imageName, uiImageName);
         }
@@ -96,6 +100,7 @@ public class FunctionMinifyGenerator {
     }
 
     private String fixLinks(String line, String pageName) {
+        // todo: essentially the same code as  ExpressionMinifyGenerator; THINK REFACTOR!
         Pattern pattern = Pattern.compile(RELATIVE_LINK_REGEX);
         Matcher matcher = pattern.matcher(line);
         List<String> linkMatches = new ArrayList<>();
@@ -137,6 +142,7 @@ public class FunctionMinifyGenerator {
 
     @Nullable
     private List<File> getMdFiles() {
+        // todo: essentially the same code as ExpressionMinifyGenerator; THINK REFACTOR!
         File directory = new File(functionsLocation);
         if (isEmpty(functionsLocation) || !directory.exists()) {
             System.err.println("Invalid target path " + functionsLocation);

@@ -14,12 +14,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import static org.apache.commons.lang3.StringUtils.*;
-import static org.nexial.core.NexialConst.DOCUMENTATION_URL;
-import static org.nexial.core.NexialConst.EXPRESSIONS_DOCS_URL;
+import static org.nexial.core.NexialConst.Doc.DOCUMENTATION_URL;
+import static org.nexial.core.NexialConst.Doc.EXPRESSIONS_DOCS_URL;
 import static org.nexial.core.tools.docs.MinifyGenerator.*;
 
 public class ExpressionMinifyGenerator {
 
+    // todo: constants over hardcoding
     private static final String EXPRESSION_SUFFIX = "expression.md";
     private static final String OPERATIONS_STARTED = "### Operations";
 
@@ -40,6 +41,7 @@ public class ExpressionMinifyGenerator {
 
         for (File file : mdFiles) {
             try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+                // todo: essentially the same code as FunctionMinifyGenerator; NEED TO REFACTOR!
                 String line = reader.readLine();
 
                 while (line != null && !line.trim().equals(OPERATIONS_STARTED)) { line = reader.readLine(); }
@@ -79,16 +81,21 @@ public class ExpressionMinifyGenerator {
                 operationCount = 0;
             } catch (IOException exception) {
                 System.out.println("Error occurred while processing file " + file.getName());
+                // todo: what is the actual error? any reason to hide that?
             }
         }
     }
 
     @NotNull
     private String replaceImageLinks(String line) {
+        line = line.replace("](", "](" + EXPRESSIONS_DOCS_URL);
+
+        // todo: essentially the same code as SysVarMinifyGenerator; THINK REFACTOR!
         String imageName = substringBetween(line, "image/", ")");
         String amplifyImageName = UI_IMAGE_PREFIX + imageName;
         String imageLocation = expressionsLocation + "/image";
-        line = line.replace("](", "](" + EXPRESSIONS_DOCS_URL);
+
+        // todo: listFiles() may return null list; NPE alert
         if (new File(imageLocation).listFiles(pathname -> pathname.getName().equals(amplifyImageName)).length > 0) {
             line = line.replace(imageName, amplifyImageName);
         }
@@ -125,6 +132,7 @@ public class ExpressionMinifyGenerator {
 
     @Nullable
     private List<File> getMdFiles() {
+        // todo: essentially the same code as FunctionMinifyGenerator; THINK REFACTOR!
         File directory = new File(expressionsLocation);
         if (isEmpty(expressionsLocation) || !directory.exists()) {
             System.err.println("Invalid target path " + expressionsLocation);

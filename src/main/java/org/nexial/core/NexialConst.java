@@ -26,7 +26,8 @@ import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.*;
 import javax.validation.constraints.NotNull;
-
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import org.apache.commons.cli.Options;
 import org.apache.commons.collections4.ListUtils;
 import org.apache.commons.collections4.MapUtils;
@@ -40,7 +41,6 @@ import org.jdom2.output.XMLOutputter;
 import org.nexial.commons.utils.FileUtil;
 import org.nexial.commons.utils.RegexUtils;
 import org.nexial.commons.utils.TextUtils;
-import org.nexial.core.NexialConst.Data.*;
 import org.nexial.core.excel.ExcelConfig;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.model.ExecutionDefinition;
@@ -49,11 +49,9 @@ import org.nexial.core.model.TestProject;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.ExecUtils;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-
 import static java.awt.Color.*;
-import static java.awt.image.BufferedImage.*;
+import static java.awt.image.BufferedImage.TYPE_INT_ARGB;
+import static java.awt.image.BufferedImage.TYPE_INT_RGB;
 import static java.io.File.separator;
 import static java.math.RoundingMode.*;
 import static javax.naming.Context.*;
@@ -62,13 +60,16 @@ import static org.apache.commons.lang3.SystemUtils.USER_HOME;
 import static org.nexial.core.NexialConst.AwsSettings.*;
 import static org.nexial.core.NexialConst.CommonColor.COLOR_NAMES;
 import static org.nexial.core.NexialConst.Data.*;
+import static org.nexial.core.NexialConst.Doc.DOCUMENTATION_URL;
 import static org.nexial.core.NexialConst.Exec.*;
 import static org.nexial.core.NexialConst.Image.OPT_IMAGE_DIFF_COLOR;
 import static org.nexial.core.NexialConst.Integration.MAIL_PREFIX;
+import static org.nexial.core.NexialConst.Iteration.*;
 import static org.nexial.core.NexialConst.Web.NS_BROWSER;
 import static org.nexial.core.NexialConst.Web.NS_WEB;
 import static org.nexial.core.NexialConst.Ws.WS_JSON_CONTENT_TYPE;
 import static org.nexial.core.SystemVariables.*;
+import static org.nexial.core.model.ExecutionEvent.*;
 
 /**
  * constants
@@ -76,11 +77,6 @@ import static org.nexial.core.SystemVariables.*;
 public final class NexialConst {
     // @formatter:off
 
-    // default values
-    public static final String DOCUMENTATION_URL = "https://nexiality.github.io/documentation";
-    public static final String FUNCTIONS_DOCS_URL = DOCUMENTATION_URL + "/functions/";
-    public static final String EXPRESSIONS_DOCS_URL = DOCUMENTATION_URL + "/expressions/";
-    public static final String SYSVAR_DOCS_URL = DOCUMENTATION_URL + "/systemvars/";
     public static final String DATE_FORMAT_NOW = "yyyy-MM-dd-HH-mm-ss.S";
     public static final String COOKIE_DATE_FORMAT = "EEE, dd MMM yyyy HH:mm:ss ZZZ";
     public static final String COOKIE_DATE_FORMAT2 = "EEE, dd-MMM-yyyy HH:mm:ss ZZZ";
@@ -305,31 +301,22 @@ public final class NexialConst {
     public static final String MSG_STEP_FAIL_FAST = MSG_ABORT + "due to execution failure and fail-fast in effect";
     public static final String MSG_ACTIVITY_FAIL_FAST = MSG_ABORT + "skipping test activity due to previous failure";
     public static final String MSG_ACTIVITY_FAIL_END = MSG_ABORT + "skipping test activity due to previous end";
-    public static final String MSG_ACTIVITY_FAIL_END_LOOP =
-        MSG_ABORT + "skipping test activity due to break-loop in effect";
-    public static final String MSG_ACTIVITY_ENDING_IF =
-        MSG_ABORT + "activity ending due to EndIf() flow control activated.";
-    public static final String MSG_ACTIVITY_ENDING_LOOP_IF =
-        MSG_ABORT + "activity ending due to EndLoopIf() flow control activated or unrecoverable execution failure.";
-    public static final String MSG_SCENARIO_FAIL_FAST =
-        MSG_ABORT + "scenario failed and fail-fast is in effect" + MSG_ALL_SCENARIOS_SKIPPED;
-    public static final String MSG_SCENARIO_FAIL_IMMEDIATE =
-        MSG_ABORT + "scenario failed and fail-immediate is in effect" + MSG_ALL_SCENARIOS_SKIPPED;
+    public static final String MSG_ACTIVITY_FAIL_END_LOOP = MSG_ABORT + "skipping test activity due to break-loop in effect";
+    public static final String MSG_ACTIVITY_ENDING_IF = MSG_ABORT + "activity ending due to EndIf() flow control activated.";
+    public static final String MSG_ACTIVITY_ENDING_LOOP_IF = MSG_ABORT + "activity ending due to EndLoopIf() flow control activated or unrecoverable execution failure.";
+    public static final String MSG_SCENARIO_FAIL_FAST = MSG_ABORT + "scenario failed and fail-fast is in effect" + MSG_ALL_SCENARIOS_SKIPPED;
+    public static final String MSG_SCENARIO_FAIL_IMMEDIATE = MSG_ABORT + "scenario failed and fail-immediate is in effect" + MSG_ALL_SCENARIOS_SKIPPED;
     public static final String MSG_SCENARIO_END_IF = MSG_ABORT + "scenario ended due to EndIf() flow control";
     public static final String MSG_SCRIPT_END_IF = "script execution ended due to end immediate in effect";
     public static final String MSG_SCENARIO_END_LOOP_IF = MSG_ABORT + "scenario ended due to EndLoopIf() flow control";
-    public static final String MSG_EXEC_FAIL_FAST =
-        MSG_ABORT + "failure found and fail-fast is in effect" + MSG_EXEC_STOP;
+    public static final String MSG_EXEC_FAIL_FAST = MSG_ABORT + "failure found and fail-fast is in effect" + MSG_EXEC_STOP;
     public static final String MSG_EXEC_FAIL_IMMEDIATE = MSG_ABORT + "fail-immediate in effect" + MSG_EXEC_STOP;
     public static final String MSG_EXEC_END_IF = MSG_ABORT + "EndIf() flow control activated" + MSG_EXEC_STOP;
-    public static final String MSG_EXEC_END_LOOP_IF =
-        MSG_ABORT + "EndLoopIf() flow control activated" + MSG_ITERATION_STOP;
+    public static final String MSG_EXEC_END_LOOP_IF = MSG_ABORT + "EndLoopIf() flow control activated" + MSG_ITERATION_STOP;
     public static final String MSG_CRITICAL_COMMAND_FAIL = MSG_ABORT + "due to failure on fail-fast command: ";
     public static final String MSG_REPEAT_UNTIL = "[repeat-until] ";
-    public static final String MSG_REPEAT_UNTIL_BREAK =
-        MSG_REPEAT_UNTIL + "loop terminating due to break-loop condition";
-    public static final String NESTED_SECTION_STEP_SKIPPED =
-        "current step skipped due to the enclosing section command being skipped";
+    public static final String MSG_REPEAT_UNTIL_BREAK = MSG_REPEAT_UNTIL + "loop terminating due to break-loop condition";
+    public static final String NESTED_SECTION_STEP_SKIPPED = "current step skipped due to the enclosing section command being skipped";
     public static final String MSG_PROBLMATIC_NAME = "leading/trailing non-printable characters (whitespaces, tabs " +
                                                      "or newlines) found in %s name '%s' will likely cause " +
                                                      "execution-time issue.";
@@ -344,7 +331,7 @@ public final class NexialConst {
     public static final String MATCH_BY_STARTS_WITH = "STARTS-WITH";
     public static final String MATCH_BY_ENDS_WITH = "ENDS-WITH";
     public static final List<String> MATCH_BY_RULES =
-        Arrays.asList(MATCH_BY_EXACT, MATCH_BY_CONTAINS, MATCH_BY_STARTS_WITH, MATCH_BY_ENDS_WITH);
+            Arrays.asList(MATCH_BY_EXACT, MATCH_BY_CONTAINS, MATCH_BY_STARTS_WITH, MATCH_BY_ENDS_WITH);
 
     // dev-focused logging
     public static final String OPT_DEVMODE_LOGGING = NAMESPACE + "devLogging";
@@ -372,13 +359,13 @@ public final class NexialConst {
 
     // convert windows characters to ascii characters
     public static final Map<String, String> replaceWindowsChars =
-        TextUtils.toMap("=",
-                        "\\u2013=-",
-                        "\\u2018='",
-                        "\\u2019='",
-                        "\\u2026=...",
-                        "\\u201C=\"",
-                        "\\u201D=\"");
+            TextUtils.toMap("=",
+                            "\\u2013=-",
+                            "\\u2018='",
+                            "\\u2019='",
+                            "\\u2026=...",
+                            "\\u201C=\"",
+                            "\\u201D=\"");
     // we MUST not use OS-specific separator because the same log file MUST be usable for all OS;
     // the same log file may be viewed on different systems. As such, the `\n` approach seems to be the best option
     // since it's usable on all OSes. On Windows, user should be using notepad++ (or similar) instead of the standard
@@ -413,10 +400,10 @@ public final class NexialConst {
                     boolean timeoutChangesEnabled,
                     boolean jsEventFavored,
                     boolean switchWindowSupported) {
-            this.profileSupported = profileSupported;
+            this.profileSupported      = profileSupported;
             this.consoleLoggingEnabled = consoleLoggingEnabled;
             this.timeoutChangesEnabled = timeoutChangesEnabled;
-            this.jsEventFavored = jsEventFavored;
+            this.jsEventFavored        = jsEventFavored;
             this.switchWindowSupported = switchWindowSupported;
         }
 
@@ -617,12 +604,11 @@ public final class NexialConst {
         public static final String MAX_CONSOLE_DISPLAY = registerSysVar(NAMESPACE + "maxConsoleDisplay", 500);
 
         // nexial.scope.*
-        public static final Map<String, String> SCOPE_SETTING_DEFAULTS =
-            TextUtils.toMap("=",
-                            Iteration.ITERATION + "=1",
-                            Iteration.FALLBACK_TO_PREVIOUS + "=true",
-                            Iteration.REFETCH_DATA_FILE + "=true",
-                            POST_EXEC_MAIL_TO + "=");
+        public static final Map<String, String> SCOPE_SETTING_DEFAULTS = TextUtils.toMap("=",
+                                                                                         ITERATION + "=1",
+                                                                                         FALLBACK_TO_PREVIOUS + "=true",
+                                                                                         REFETCH_DATA_FILE + "=true",
+                                                                                         POST_EXEC_MAIL_TO + "=");
         public static final String NULL = "(null)";
         public static final String EMPTY = "(empty)";
         public static final String BLANK = "(blank)";
@@ -669,7 +655,7 @@ public final class NexialConst {
 
         private Data() { }
 
-        public static final String withProfile(String profile, String key) {
+        public static String withProfile(String profile, String key) {
             if (StringUtils.isBlank(profile) || StringUtils.equals(profile, CMD_PROFILE_DEFAULT)) { return key; }
             if (StringUtils.startsWith(key, NS_BROWSER)) {return TextUtils.insertAfter(key, NS_BROWSER, "." + profile);}
             if (StringUtils.startsWith(key, NS_WEB)) { return TextUtils.insertAfter(key, NS_WEB, "." + profile); }
@@ -756,7 +742,7 @@ public final class NexialConst {
         public static final String CONDITION_DISABLE = "SkipIf(true) ";
 
         public static final String REGEX_IS_UNARY_FILTER =
-            "(true|false|\\$\\{[^\\}]+\\}|\\!\\$\\{[^\\}]+\\}|not\\s+\\$\\{[^\\}]+\\})";
+                "(true|false|\\$\\{[^\\}]+\\}|\\!\\$\\{[^\\}]+\\}|not\\s+\\$\\{[^\\}]+\\})";
 
         private FlowControls() {}
 
@@ -907,12 +893,12 @@ public final class NexialConst {
             private final boolean right;
 
             CaptionPositions(boolean top, boolean middle, boolean bottom, boolean left, boolean center, boolean right) {
-                this.top = top;
+                this.top    = top;
                 this.middle = middle;
                 this.bottom = bottom;
-                this.left = left;
+                this.left   = left;
                 this.center = center;
-                this.right = right;
+                this.right  = right;
             }
 
             public boolean isTop() { return top; }
@@ -1013,11 +999,11 @@ public final class NexialConst {
         public static final File COMMAND_VAR_JSON_FILE = new File(JSON_FOLDER + VAR_CMD_JSON);
         public static final File TEMP_JSON_JAR = new File(TEMP + "nexial-json-jar/nexial-json.jar");
 
-        public static final String USER_NEXIAL_HOME =
-            StringUtils.appendIfMissing(new File(USER_HOME).getAbsolutePath(), separator) + ".nexial" + separator;
+        public static final String USER_NEXIAL_HOME = StringUtils.appendIfMissing(new File(USER_HOME).getAbsolutePath(), separator) + ".nexial" + separator;
         public static final String USER_NEXIAL_INSTALL_HOME = USER_NEXIAL_HOME + "install" + separator;
-        public static final String USER_PROJECTS_DIR =
-            IS_OS_WINDOWS ? "C:\\projects" + separator : USER_HOME + "/projects" + separator;
+        public static final String USER_PROJECTS_DIR = IS_OS_WINDOWS ?
+                                                       "C:\\projects" + separator :
+                                                       USER_HOME + "/projects" + separator;
         public static final String NEXIAL_INSTALLER_MIN_VERSION = "1.4.5";
         public static final String PROJECT_CACHE_LOCATION = USER_NEXIAL_HOME + "projectCache" + separator;
         public static final String BROWSER_META_CACHE_PATH = USER_NEXIAL_HOME + "browser-meta.json";
@@ -1220,55 +1206,59 @@ public final class NexialConst {
 
         // standalone smtp config
         public static final List<String> SMTP_KEYS = Arrays.asList(
-            MAIL_KEY_BUFF_SIZE, MAIL_KEY_PROTOCOL, MAIL_KEY_MAIL_HOST, MAIL_KEY_MAIL_PORT, MAIL_KEY_TLS_ENABLE,
-            MAIL_KEY_AUTH, MAIL_KEY_DEBUG, MAIL_KEY_CONTENT_TYPE, MAIL_KEY_USERNAME, MAIL_KEY_PASSWORD,
-            MAIL_KEY_FROM, MAIL_KEY_FROM_DEF, MAIL_KEY_CC, MAIL_KEY_BCC, MAIL_KEY_XMAILER);
+                MAIL_KEY_BUFF_SIZE, MAIL_KEY_PROTOCOL, MAIL_KEY_MAIL_HOST, MAIL_KEY_MAIL_PORT, MAIL_KEY_TLS_ENABLE,
+                MAIL_KEY_AUTH, MAIL_KEY_DEBUG, MAIL_KEY_CONTENT_TYPE, MAIL_KEY_USERNAME, MAIL_KEY_PASSWORD,
+                MAIL_KEY_FROM, MAIL_KEY_FROM_DEF, MAIL_KEY_CC, MAIL_KEY_BCC, MAIL_KEY_XMAILER);
 
         public static final String MAIL_KEY_MAIL_JNDI_URL = registerSysVar(MAIL_PREFIX + "jndi.url");
         // jndi smtp config
         public static final List<String> JNDI_KEYS = Arrays.asList(
-            MAIL_KEY_MAIL_JNDI_URL, INITIAL_CONTEXT_FACTORY, OBJECT_FACTORIES, STATE_FACTORIES,
-            URL_PKG_PREFIXES, PROVIDER_URL, DNS_URL, AUTHORITATIVE, BATCHSIZE, REFERRAL, SECURITY_PROTOCOL,
-            SECURITY_AUTHENTICATION, SECURITY_PRINCIPAL, SECURITY_CREDENTIALS, LANGUAGE);
+                MAIL_KEY_MAIL_JNDI_URL, INITIAL_CONTEXT_FACTORY, OBJECT_FACTORIES, STATE_FACTORIES,
+                URL_PKG_PREFIXES, PROVIDER_URL, DNS_URL, AUTHORITATIVE, BATCHSIZE, REFERRAL, SECURITY_PROTOCOL,
+                SECURITY_AUTHENTICATION, SECURITY_PRINCIPAL, SECURITY_CREDENTIALS, LANGUAGE);
 
         // ses api config
         public static final String SES_PREFIX = "nexial-mailer." + SUFFIX + ".";
         public static final List<String> SES_KEYS = Arrays.asList(
-            SES_PREFIX + AWS_ACCESS_KEY,
-            SES_PREFIX + AWS_SECRET_KEY,
-            SES_PREFIX + AWS_REGION,
-            SES_PREFIX + AWS_STS_ROLE_ARN,
-            SES_PREFIX + AWS_STS_ROLE_SESSION,
-            SES_PREFIX + AWS_STS_ROLE_DURATION,
-            SES_PREFIX + AWS_SES_FROM,
-            SES_PREFIX + AWS_SES_REPLY_TO,
-            SES_PREFIX + AWS_SES_CC,
-            SES_PREFIX + AWS_SES_BCC,
-            SES_PREFIX + AWS_SES_CONFIG_SET,
-            SES_PREFIX + AWS_XMAILER);
+                SES_PREFIX + AWS_ACCESS_KEY,
+                SES_PREFIX + AWS_SECRET_KEY,
+                SES_PREFIX + AWS_REGION,
+                SES_PREFIX + AWS_STS_ROLE_ARN,
+                SES_PREFIX + AWS_STS_ROLE_SESSION,
+                SES_PREFIX + AWS_STS_ROLE_DURATION,
+                SES_PREFIX + AWS_SES_FROM,
+                SES_PREFIX + AWS_SES_REPLY_TO,
+                SES_PREFIX + AWS_SES_CC,
+                SES_PREFIX + AWS_SES_BCC,
+                SES_PREFIX + AWS_SES_CONFIG_SET,
+                SES_PREFIX + AWS_XMAILER);
         public static final String SES_ENFORCE_NO_CERT = registerSysVar(NAMESPACE + "sesNoCert", true);
 
         // enable for email notification?
         public static final List<String> MAILER_KEYS =
-            ListUtils.sum(ListUtils.sum(ListUtils.sum(Arrays.asList(ENABLE_EMAIL,
-                                                                    POST_EXEC_MAIL_TO,
-                                                                    POST_EXEC_EMAIL_SUBJECT,
-                                                                    POST_EXEC_EMAIL_HEADER,
-                                                                    POST_EXEC_EMAIL_FOOTER),
-                                                      SMTP_KEYS), JNDI_KEYS), SES_KEYS);
+                ListUtils.sum(ListUtils.sum(ListUtils.sum(Arrays.asList(ENABLE_EMAIL,
+                                                                        POST_EXEC_MAIL_TO,
+                                                                        POST_EXEC_EMAIL_SUBJECT,
+                                                                        POST_EXEC_EMAIL_HEADER,
+                                                                        POST_EXEC_EMAIL_FOOTER),
+                                                          SMTP_KEYS), JNDI_KEYS), SES_KEYS);
 
         public static final String NOT_READY_PREFIX = "nexial mailer not enabled: ";
         public static final String DOC_REF_SUFFIX = " Please check " + DOCUMENTATION_URL +
                                                     "/tipsandtricks/IntegratingNexialWithEmail.html for more details";
 
-        public static final String JNDI_NOT_READY =
-            NOT_READY_PREFIX + "missing required JNDI configurations." + DOC_REF_SUFFIX;
-        public static final String SMTP_NOT_READY =
-            NOT_READY_PREFIX + "missing required smtp/imap configurations." + DOC_REF_SUFFIX;
-        public static final String SES_NOT_READY =
-            NOT_READY_PREFIX + "missing required AWS SES configurations." + DOC_REF_SUFFIX;
-        public static final String MAILER_NOT_READY =
-            NOT_READY_PREFIX + "unable to resolve any valid mailer configurations." + DOC_REF_SUFFIX;
+        public static final String JNDI_NOT_READY = NOT_READY_PREFIX +
+                                                    "missing required JNDI configurations." +
+                                                    DOC_REF_SUFFIX;
+        public static final String SMTP_NOT_READY = NOT_READY_PREFIX +
+                                                    "missing required smtp/imap configurations." +
+                                                    DOC_REF_SUFFIX;
+        public static final String SES_NOT_READY = NOT_READY_PREFIX +
+                                                   "missing required AWS SES configurations." +
+                                                   DOC_REF_SUFFIX;
+        public static final String MAILER_NOT_READY = NOT_READY_PREFIX +
+                                                      "unable to resolve any valid mailer configurations." +
+                                                      DOC_REF_SUFFIX;
 
         private Mailer() {}
 
@@ -1649,9 +1639,7 @@ public final class NexialConst {
         public static final String SCOPE_EXECUTION = "execution";
         public static final String SCOPE_DEFAULT = SCOPE_EXECUTION;
         public static final List<ExecutionEvent> SUPPORTED_SCOPES =
-            Arrays.asList(ExecutionEvent.IterationComplete,
-                          ExecutionEvent.ScriptComplete,
-                          ExecutionEvent.ExecutionComplete);
+                Arrays.asList(IterationComplete, ScriptComplete, ExecutionComplete);
 
         public static boolean isValidReportScope(String scope) {
             return StringUtils.equals(scope, SCOPE_EXECUTION) || StringUtils.equals(scope, SCOPE_ITERATION);
@@ -1664,7 +1652,7 @@ public final class NexialConst {
     public static final class BrowserStack extends CloudWebTesting {
         public static final String BASE_URL = "@hub.browserstack.com/wd/hub";
         public static final String SESSION_URL =
-            "https://${username}:${automatekey}@api.browserstack.com/automate/sessions/${sessionId}.json";
+                "https://${username}:${automatekey}@api.browserstack.com/automate/sessions/${sessionId}.json";
 
         private static final String NS = NAMESPACE + "browserstack.";
 
@@ -1700,7 +1688,7 @@ public final class NexialConst {
 
         // https://help.crossbrowsertesting.com/selenium-testing/tutorials/crossbrowsertesting-automation-capabilities/
         public static final String REFERENCE_URL =
-            "https://help.crossbrowsertesting.com/selenium-testing/tutorials/crossbrowsertesting-automation-capabilities/";
+                "https://help.crossbrowsertesting.com/selenium-testing/tutorials/crossbrowsertesting-automation-capabilities/";
 
         // credential
         public static final String KEY_USERNAME = "username";
@@ -1869,11 +1857,9 @@ public final class NexialConst {
                                                          "}";
         // various browser behavior/settings
         public static final String FORCE_JS_CLICK = registerSysVar(NS_BROWSER + ".forceJSClick", false);
-        public static final String BROWSER_ACCEPT_INVALID_CERTS =
-            registerSysVar(NS_BROWSER + ".acceptInsecureCerts", false);
+        public static final String BROWSER_ACCEPT_INVALID_CERTS = registerSysVar(NS_BROWSER + ".acceptInsecureCerts", false);
         public static final String BROWSER_POST_CLOSE_WAIT = registerSysVar(NS_BROWSER + ".postCloseWaitMs", 3000);
-        public static final String ENFORCE_PAGE_SOURCE_STABILITY =
-            registerSysVar(NAMESPACE + "enforcePageSourceStability", true);
+        public static final String ENFORCE_PAGE_SOURCE_STABILITY = registerSysVar(NAMESPACE + "enforcePageSourceStability", true);
         public static final String OPT_DELAY_BROWSER = registerSysVar(NAMESPACE + "delayBrowser", false);
         public static final String BROWSER_DEFAULT_WINDOW_SIZE = registerSysVar(NS_BROWSER + ".defaultWindowSize");
         public static final String BROWSER_WINDOW_SIZE = registerSysVar(NS_BROWSER + ".windowSize");
@@ -2000,13 +1986,11 @@ public final class NexialConst {
         if (ExecUtils.isRunningInZeroTouchEnv()) { return false; }
 
         ExecutionContext context = ExecutionThread.get();
+        boolean def = getDefaultBool(ASSISTANT_MODE);
         if (context != null) {
-            return context.getBooleanData(OPT_OPEN_RESULT,
-                                          context.getBooleanData(ASSISTANT_MODE, getDefaultBool(ASSISTANT_MODE)));
+            return context.getBooleanData(OPT_OPEN_RESULT, context.getBooleanData(ASSISTANT_MODE, def));
         } else {
-            return BooleanUtils.toBoolean(
-                System.getProperty(OPT_OPEN_RESULT,
-                                   System.getProperty(ASSISTANT_MODE, getDefaultBool(ASSISTANT_MODE) + "")));
+            return BooleanUtils.toBoolean(System.getProperty(OPT_OPEN_RESULT, System.getProperty(ASSISTANT_MODE, def + "")));
         }
     }
 
@@ -2027,7 +2011,7 @@ public final class NexialConst {
         // only `EMPTY`, `BLANK`, `TAB` or `NL` or combination of these are found
         if (RegexUtils.match(text1[0], REGEX_ONLY_NON_DISPLAYABLES)) {
             NON_DISPLAYABLE_REPLACEMENTS.forEach(
-                (shorthand, replacement) -> text1[0] = StringUtils.replace(text1[0], shorthand, replacement));
+                    (shorthand, replacement) -> text1[0] = StringUtils.replace(text1[0], shorthand, replacement));
         }
 
         return text1[0];
@@ -2038,6 +2022,16 @@ public final class NexialConst {
                "Nexial Cloud Integration is not properly configured. See " +
                DOCUMENTATION_URL + "/systemvars/index.html#nexial.outputToCloud " +
                "for more details.";
+    }
+
+    public class Doc {
+        private Doc() { }
+
+        // default values
+        public static final String DOCUMENTATION_URL = "https://nexiality.github.io/documentation";
+        public static final String SYSVAR_DOCS_URL = DOCUMENTATION_URL + "/systemvars/";
+        public static final String EXPRESSIONS_DOCS_URL = DOCUMENTATION_URL + "/expressions/";
+        public static final String FUNCTIONS_DOCS_URL = DOCUMENTATION_URL + "/functions/";
     }
 
     static {
@@ -2075,4 +2069,5 @@ public final class NexialConst {
             System.setProperty("nashorn.args", "--no-deprecation-warning");
         }
     }
+
 }

@@ -45,27 +45,27 @@ public class MinifyGenerator {
         File newFile = new File(fileName);
         try {
             FileUtils.write(newFile, sb.toString().trim(), DEF_FILE_ENCODING);
+            // todo: what is the actual error? any reason to hide that?
             System.out.println("Created " + newFile.getName());
         } catch (IOException e) {
+            // todo: what is the actual error? any reason to hide that?
             System.out.println("Error writing file " + newFile.getName());
+            // todo: what is the actual error? any reason to hide that?
         }
         sb.setLength(0);
         operationCount++;
     }
 
     public static String getFrontMatter(String operationName, String pageName) {
+        // todo: externalize to ease maintenance; use token if needed
         return "---\n" +
-               "layout: minified" +
-               "\n" +
-               "title: " +
-               operationName +
-               "\n" +
-               "parent: " +
-               pageName +
-               "\n---\n\n";
+               "layout: minified\n" +
+               "title: " + operationName + "\n" +
+               "parent: " + pageName + "\n---\n\n";
     }
 
     private static void initOptions() {
+        // todo: why give option?! there should never be option because this generator is NOT meant for general users.
         cmdOptions.addOption(newArgOption("t",
                                           "target",
                                           "[REQUIRED] Location of the Nexial Documentation on the local file system.",
