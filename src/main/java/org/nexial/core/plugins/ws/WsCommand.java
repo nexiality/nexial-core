@@ -24,7 +24,10 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import javax.validation.constraints.NotNull;
-
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import io.jsonwebtoken.*;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.io.FileUtils;
@@ -40,11 +43,6 @@ import org.nexial.core.plugins.base.BaseCommand;
 import org.nexial.core.utils.CheckUtils;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.OutputResolver;
-
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import io.jsonwebtoken.*;
 
 import static io.jsonwebtoken.SignatureAlgorithm.HS256;
 import static io.jsonwebtoken.impl.TextCodec.BASE64URL;
@@ -261,10 +259,10 @@ public class WsCommand extends BaseCommand {
      * is returned by the server has access to only those services mentioned in the scope.</li>
      * <li>grant_type: This needs to be set to client_credentials representing the client credentials grant.</li>
      * </ul>
-     *
+     * <p>
      * Each of the above details are to be specified in name=value form, and each pair in separate lines.
      * However in some cases, the value could be expressed as JSON array or JSON object.
-     *
+     * <p>
      * With all proper parameters properly specified, the target {@code url} would return back, among other things, a
      * one-use, time-bound access_token.  This token can be subsequently used as a header parameter
      * ({@literal Authorization}) to access protected resources.
@@ -368,20 +366,41 @@ public class WsCommand extends BaseCommand {
 
     /** download content of {@code @url}, assuming the content is of text nature. */
     public static String resolveWebContent(String url) throws IOException {
+        if (StringUtils.isBlank(url)) { throw new IOException("Unable to retrieve content from URL [" + url + "]"); }
         WebServiceClient wsClient = new WebServiceClient(null);
         Response response = wsClient.get(url, null);
         int returnCode = response.getReturnCode();
-        if (returnCode > 199 && returnCode < 300) { return response.getBody(); }
-        throw new IOException("Unable to retrieve content from '" + url + "': " + response.getStatusText());
+        if (returnCode <= 199 || returnCode >= 300) {
+            // sleep and try again...
+            try { Thread.sleep(5000); } catch (InterruptedException e) { }
+            response   = wsClient.get(url, null);
+            returnCode = response.getReturnCode();
+            if (returnCode <= 199 || returnCode >= 300) {
+                // give up...
+                throw new IOException("Unable to retrieve content from '" + url + "': " + response.getStatusText());
+            }
+        }
+        return response.getBody();
     }
 
     /** download content of {@code @url}, assuming the content can be text or binary in nature */
     public static byte[] resolveWebContentBytes(String url) throws IOException {
+        if (StringUtils.isBlank(url)) { throw new IOException("Unable to retrieve content from URL [" + url + "]"); }
+
         WebServiceClient wsClient = new WebServiceClient(null);
         Response response = wsClient.get(url, null);
         int returnCode = response.getReturnCode();
-        if (returnCode > 199 && returnCode < 300) { return response.getRawBody(); }
-        throw new IOException("Unable to retrieve content from '" + url + "': " + response.getStatusText());
+        if (returnCode <= 199 || returnCode >= 300) {
+            // sleep and try again...
+            try { Thread.sleep(5000); } catch (InterruptedException e) { }
+            response   = wsClient.get(url, null);
+            returnCode = response.getReturnCode();
+            if (returnCode <= 199 || returnCode >= 300) {
+                // give up
+                throw new IOException("Unable to retrieve content from '" + url + "': " + response.getStatusText());
+            }
+        }
+        return response.getRawBody();
     }
 
     /**
