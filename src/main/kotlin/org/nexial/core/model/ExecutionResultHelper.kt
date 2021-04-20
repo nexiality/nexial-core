@@ -22,7 +22,10 @@ import org.apache.commons.lang3.math.NumberUtils
 import org.apache.poi.ss.usermodel.CellType.STRING
 import org.apache.poi.ss.usermodel.Row.MissingCellPolicy.CREATE_NULL_AS_BLANK
 import org.apache.poi.ss.util.CellRangeAddress
-import org.apache.poi.xssf.usermodel.*
+import org.apache.poi.xssf.usermodel.XSSFCell
+import org.apache.poi.xssf.usermodel.XSSFCellStyle
+import org.apache.poi.xssf.usermodel.XSSFRow
+import org.apache.poi.xssf.usermodel.XSSFSheet
 import org.nexial.core.CommandConst.CMD_REPEAT_UNTIL
 import org.nexial.core.CommandConst.CMD_SECTION
 import org.nexial.core.CommandConst.CMD_VERBOSE
@@ -46,8 +49,6 @@ class ExecutionResultHelper(private val allSteps: List<TestStep>, val worksheet:
                             val executionSummary: ExecutionSummary) {
 
     fun updateScenarioResults() {
-//        val watch = StopWatch()
-//        watch.start()
         worksheet.sheet.workbook.missingCellPolicy = CREATE_NULL_AS_BLANK
         var currentRow = ADDR_COMMAND_START.rowStartIndex
         var lastRow = worksheet.findLastDataRow(ADDR_COMMAND_START)
@@ -75,8 +76,6 @@ class ExecutionResultHelper(private val allSteps: List<TestStep>, val worksheet:
         formatDescriptionCell(ADDR_COMMAND_START.rowStartIndex, lastRow)
         // update execution summary in the scenario sheet
         writeTestScenarioResult(worksheet, executionSummary)
-//        watch.stop()
-//        println("Time taken to write ${worksheet.name} :: ${watch.time}")
     }
 
     private fun formatDescriptionCell(startRow: Int, lastRow: Int): Int {
@@ -131,13 +130,14 @@ class ExecutionResultHelper(private val allSteps: List<TestStep>, val worksheet:
             }
 
             CMD_SECTION      -> {
-                val indent = if (StringUtils.containsAny(prefix1, REPEAT_DESCRIPTION_PREFIX,
+                val indent = if (StringUtils.containsAny(prefix1,
+                                                         REPEAT_DESCRIPTION_PREFIX,
                                                          SECTION_DESCRIPTION_PREFIX)) "  " else ""
                 prefix1 += if (StringUtils.contains(prefix1,
                                                     SECTION_DESCRIPTION_PREFIX)) "" else SECTION_DESCRIPTION_PREFIX
                 ExcelStyleHelper.formatDescriptionCell(row.getCell(COL_IDX_DESCRIPTION), prefix1)
                 prefix1 = indent + prefix1
-                var numOfSteps = Integer.parseInt(row.getCell(COL_IDX_PARAMS_START).stringCellValue)
+                var numOfSteps = NumberUtils.toInt(Excel.readCellValue(row, COL_IDX_PARAMS_START))
                 var j = 0
                 while (true) {
                     if (j == numOfSteps) break
@@ -207,7 +207,9 @@ class ExecutionResultHelper(private val allSteps: List<TestStep>, val worksheet:
                     repeatUntilStartIndex = j
                     repeatUntilEndIndex = j + steps
                     // just in case repeat until is inside section, don't add nested steps as its already been added
-                    if(sectionEndIndex == -1) { nestedSteps += steps }
+                    if (sectionEndIndex == -1) {
+                        nestedSteps += steps
+                    }
                 }
 
                 // ignore sections inside repeatuntil and section inside section as well
@@ -226,7 +228,9 @@ class ExecutionResultHelper(private val allSteps: List<TestStep>, val worksheet:
                 }
 
                 // check section inside macro ended or not
-                if(sectionEndIndex != -1 && j > sectionEndIndex) { sectionEndIndex = -1 }
+                if (sectionEndIndex != -1 && j > sectionEndIndex) {
+                    sectionEndIndex = -1
+                }
 
                 copyMacroSteps(macroStep, currentRow++ + 1, lastDataRow, isRepeatUntil)
                 mergeVerboseOutput(macroStep, currentRow)
@@ -284,10 +288,6 @@ class ExecutionResultHelper(private val allSteps: List<TestStep>, val worksheet:
             val cellComment = oldCell.cellComment
             if (cellComment != null) Excel.createComment(newCell, cellComment.string.string, cellComment.author)
 
-            /*// cell copy policy to copy value and formula
-            val cellCopyPolicy = CellCopyPolicy().createBuilder().copyHyperlink(false).cellStyle(false).build()
-            newCell.copyCellFrom(oldCell, cellCopyPolicy)*/
-
             // to avoid copying hyperlink
             Excel.copyCellValue(oldCell, newCell)
 
@@ -303,12 +303,14 @@ class ExecutionResultHelper(private val allSteps: List<TestStep>, val worksheet:
         }
     }
 
-    private fun handleNestedMessages(worksheet: Worksheet, testStep: TestStep, currentRow: Int,
+    private fun handleNestedMessages(worksheet: Worksheet,
+                                     testStep: TestStep,
+                                     currentRow: Int,
                                      lastRow: Int): Pair<Int, Int> {
         val nestedTestResults = testStep.nestedTestResults
 
-        if (testStep.commandFQN == CMD_VERBOSE || CollectionUtils.isEmpty(nestedTestResults)) return Pair(currentRow,
-                                                                                                          lastRow)
+        if (testStep.commandFQN == CMD_VERBOSE || CollectionUtils.isEmpty(nestedTestResults))
+            return Pair(currentRow, lastRow)
 
         var lastDataRow = lastRow
         val excelSheet = worksheet.sheet
@@ -394,7 +396,7 @@ class ExecutionResultHelper(private val allSteps: List<TestStep>, val worksheet:
         }
         if (!alreadyMerged) {
             excelSheet.addMergedRegion(
-                    CellRangeAddress(rowIndex, rowIndex, COL_IDX_MERGE_RESULT_START, COL_IDX_MERGE_RESULT_END))
+                CellRangeAddress(rowIndex, rowIndex, COL_IDX_MERGE_RESULT_START, COL_IDX_MERGE_RESULT_END))
         }
         if (cellMerge.cellTypeEnum == STRING) cellMerge.cellStyle = worksheet.getStyle(STYLE_MESSAGE)
         cellMerge.setCellValue(Excel.getCellValue(cellMerge))
@@ -424,9 +426,9 @@ class ExecutionResultHelper(private val allSteps: List<TestStep>, val worksheet:
 
         val cellDescription = row.getCell(COL_IDX_DESCRIPTION)
         val numOfLines = NumberUtils.max(
-                StringUtils.countMatches(Excel.getCellValue(row.getCell(COL_IDX_TESTCASE)), '\n'),
-                StringUtils.countMatches(Excel.getCellValue(cellDescription), '\n'), maxParamLine,
-                StringUtils.countMatches(Excel.getCellValue(row.getCell(COL_IDX_FLOW_CONTROLS)), '\n')) + 1
+            StringUtils.countMatches(Excel.getCellValue(row.getCell(COL_IDX_TESTCASE)), '\n'),
+            StringUtils.countMatches(Excel.getCellValue(cellDescription), '\n'), maxParamLine,
+            StringUtils.countMatches(Excel.getCellValue(row.getCell(COL_IDX_FLOW_CONTROLS)), '\n')) + 1
         worksheet.setMinHeight(cellDescription, numOfLines)
     }
 
@@ -455,10 +457,6 @@ class ExecutionResultHelper(private val allSteps: List<TestStep>, val worksheet:
 
             val summary = executionSummary.toString()
             summaryCell.setCellValue(summary)
-
-            // XSSFCellStyle summaryStyle = worksheet.newCellStyle();
-            // ExcelStyleHelper.setCellBorder(summaryStyle, BorderStyle.MEDIUM, new XSSFColor(new Color(117, 113, 113)));
-            // summaryCell.setCellStyle(summaryStyle);
             worksheet.setMinHeight(summaryCell, StringUtils.countMatches(summary, '\n'))
         }
 
