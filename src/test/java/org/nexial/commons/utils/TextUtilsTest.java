@@ -17,17 +17,14 @@
 
 package org.nexial.commons.utils;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.SystemUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.junit.Test;
+
+import java.io.File;
+import java.util.*;
 
 import static java.io.File.separator;
 import static org.junit.Assert.*;
@@ -104,6 +101,15 @@ public class TextUtilsTest {
         assertEquals(actual.get(3), "");
         assertEquals(actual.get(4), "c");
         assertEquals(actual.get(5), "d");
+    }
+
+    @Test
+    public void testToList_single_item() {
+        String fixture = "this is one single item without delimiter";
+
+        List<String> actual = TextUtils.toList(fixture, ",", true);
+        assertEquals(1, actual.size());
+        assertEquals(fixture, actual.get(0));
     }
 
     @Test

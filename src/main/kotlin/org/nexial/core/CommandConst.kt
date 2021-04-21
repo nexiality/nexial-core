@@ -90,6 +90,8 @@ object CommandConst {
     @JvmStatic
     val replacedCommands = mapOf(
             "base.assertNotContains(text,substring)" to "base.assertNotContain(text,substring)",
+            "base.assertVarPresent(var)" to "base.assertVarsPresent(vars)",
+            "base.assertVarNotPresent(var)" to "base.assertVarsNotPresent(vars)",
 
             "desktop.getRowCount(var)" to "desktop.saveRowCount(var)",
             "desktop.saveAllTableRows(var)" to "desktop.saveAllTableRows(var,csv)",
@@ -125,7 +127,9 @@ object CommandConst {
             //        "desktop.useTable(var,name)" to "$SUGGESTION_PREFIX desktop » editTableCells(row,nameValues) instead",
             "desktop.editCurrentRow(nameValues)" to "$SUGGESTION_PREFIX desktop » editTableCells(row,nameValues) instead",
             "web.scrollLeft(locator,pixel)" to "$SUGGESTION_PREFIX web » scrollElement(locator,xOffset,yOffset) instead",
-            "web.scrollRight(locator,pixel)" to "$SUGGESTION_PREFIX web » scrollElement(locator,xOffset,yOffset) instead"
+            "web.scrollRight(locator,pixel)" to "$SUGGESTION_PREFIX web » scrollElement(locator,xOffset,yOffset) instead",
+            "base.assertVarPresent(var)" to "$SUGGESTION_PREFIX base » assertVarsPresent(vars) instead",
+            "base.assertVarNotPresent(var)" to "$SUGGESTION_PREFIX base » assertVarsNotPresent(vars) instead"
     )
 
     @JvmField

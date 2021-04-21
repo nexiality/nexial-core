@@ -37,6 +37,7 @@ import org.nexial.core.tools.CommandDiscovery;
 import org.nexial.core.utils.*;
 import org.nexial.core.variable.Syspath;
 
+import javax.annotation.Nonnull;
 import javax.imageio.ImageIO;
 import javax.validation.constraints.NotNull;
 import java.awt.image.BufferedImage;
@@ -641,16 +642,38 @@ public class BaseCommand implements NexialCommand {
                StepResult.fail("One or more items in 'unexpected' are found in 'array': " + unexpectedList);
     }
 
-    public StepResult assertVarPresent(String var) {
-        requiresValidVariableName(var);
-        boolean found = context.hasData(var);
-        return new StepResult(found, "Variable '" + var + "' " + (found ? "" : "DOES NOT ") + "exist", null);
-    }
+    public StepResult assertVarPresent(String var) { return assertVarsExist(var, true); }
 
-    public StepResult assertVarNotPresent(String var) {
-        requiresValidVariableName(var);
-        boolean found = context.hasData(var);
-        return new StepResult(!found, "Variable '" + var + "' " + (found ? "INDEED" : "does not") + " exist", null);
+    public StepResult assertVarsPresent(String vars) { return assertVarsExist(vars, true); }
+
+    public StepResult assertVarNotPresent(String var) { return assertVarsExist(var, false); }
+
+    public StepResult assertVarsNotPresent(String vars) { return assertVarsExist(vars, false); }
+
+    @Nonnull
+    private StepResult assertVarsExist(String vars, boolean assertPresent) {
+        requiresNotBlank(vars, "Invalid variable names", vars);
+
+        StringBuilder errors = new StringBuilder();
+        List<String> variableNames = toList(vars, context.getTextDelim(), true);
+        variableNames.forEach(variableName -> {
+            requiresValidVariableName(variableName);
+            if (assertPresent) {
+                if (!context.hasData(variableName)) {
+                    errors.append("Variable ").append(variableName).append(" DOES NOT exist\n");
+                }
+            } else {
+                if (context.hasData(variableName)) {
+                    errors.append("Variable ").append(variableName).append(" INDEED exist\n");
+                }
+            }
+        });
+
+        if (errors.length() < 1) {
+            return StepResult.success("CONFIRMED all specified variables " + (assertPresent ? "exist" : "DO NOT exist"));
+        } else {
+            return StepResult.fail(errors.toString());
+        }
     }
 
     public StepResult saveVariablesByRegex(String var, String regex) {
