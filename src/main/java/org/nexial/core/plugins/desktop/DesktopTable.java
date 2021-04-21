@@ -17,6 +17,14 @@
 
 package org.nexial.core.plugins.desktop;
 
+import java.time.Duration;
+import java.time.Instant;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.collections4.map.ListOrderedMap;
@@ -39,15 +47,6 @@ import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.WebDriverException;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.interactions.Actions;
-
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-import java.time.Duration;
-import java.time.Instant;
-import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 import static org.nexial.core.NexialConst.Desktop.CLEAR_TABLE_CELL_BEFORE_EDIT;
 import static org.nexial.core.NexialConst.NL;
@@ -185,11 +184,11 @@ public class DesktopTable extends DesktopElement {
                 List<WebElement> columns = element.findElements(By.xpath(xpath));
                 if (CollectionUtils.isEmpty(columns)) {
                     ConsoleUtils.log("No data found; re-scanning for table structure via " + xpath);
-                    xpath = LOCATOR_HIER_HEADER_COLUMNS;
+                    xpath   = LOCATOR_HIER_HEADER_COLUMNS;
                     columns = element.findElements(By.xpath(xpath));
                 }
 
-                headers = columns.stream().map(elem -> elem.getAttribute(ATTR_NAME)).collect(Collectors.toList());
+                headers     = columns.stream().map(elem -> elem.getAttribute(ATTR_NAME)).collect(Collectors.toList());
                 columnCount = headers.size();
 
             } else {
@@ -197,9 +196,9 @@ public class DesktopTable extends DesktopElement {
                 if (StringUtils.isNotEmpty(row)) {
                     xpath = "*[@Name='" + row + "']/*[@Name!='Column Headers']";
                     ConsoleUtils.log("scanning for table structure via " + xpath);
-                    headers = element.findElements(By.xpath(xpath)).stream()
-                                     .map(elem -> elem.getAttribute(ATTR_NAME))
-                                     .collect(Collectors.toList());
+                    headers     = element.findElements(By.xpath(xpath)).stream()
+                                         .map(elem -> elem.getAttribute(ATTR_NAME))
+                                         .collect(Collectors.toList());
                     columnCount = headers.size();
                 }
             }
@@ -354,7 +353,7 @@ public class DesktopTable extends DesktopElement {
         ExecutionContext context = ExecutionThread.get();
 
         List<WebElement> dataElements =
-            element.findElements(By.xpath(isTreeView ? LOCATOR_HIER_TABLE_ROWS : LOCATOR_TABLE_DATA));
+                element.findElements(By.xpath(isTreeView ? LOCATOR_HIER_TABLE_ROWS : LOCATOR_TABLE_DATA));
         if (CollectionUtils.isEmpty(dataElements)) { ConsoleUtils.log("No rows found for data grid " + element); }
 
         if (isTreeView && dataElements.size() == 1) {
@@ -374,7 +373,7 @@ public class DesktopTable extends DesktopElement {
         boolean newRow = false;
         ConsoleUtils.log("current row count: " + rowCount);
         if (row >= rowCount) {
-            row = rowCount;
+            row    = rowCount;
             newRow = true;
         }
 
@@ -395,16 +394,16 @@ public class DesktopTable extends DesktopElement {
                     if (CollectionUtils.isEmpty(matches)) {
                         // try clicking on first row
                         WebElement firstRow =
-                            element.findElements(By.xpath("*")).stream()
-                                   .filter(elem -> StringUtils.containsIgnoreCase(elem.getAttribute("Name"), "row"))
-                                   .findFirst().orElse(null);
+                                element.findElements(By.xpath("*")).stream()
+                                       .filter(elem -> StringUtils.containsIgnoreCase(elem.getAttribute("Name"), "row"))
+                                       .findFirst().orElse(null);
                         if (firstRow != null) {
                             firstRow.click();
                             matches = element.findElements(By.xpath(LOCATOR_NEW_ROW));
                         }
                         if (CollectionUtils.isEmpty(matches)) {
                             throw new IllegalArgumentException(
-                                msgPrefix + "Unable to retrieve any row; no 'Add Row' found");
+                                    msgPrefix + "Unable to retrieve any row; no 'Add Row' found");
                         }
                     }
                 } else {
@@ -526,16 +525,17 @@ public class DesktopTable extends DesktopElement {
         StringBuilder messageBuffer = new StringBuilder();
 
         ExecutionContext context = ExecutionThread.get();
-        boolean tabAfterEdit = context.getBooleanData(CURRENT_DESKTOP_TABLE_TAB_AFTER_EDIT, DEF_DESKTOP_TABLE_TAB_AFTER_EDIT);
+        boolean tabAfterEdit =
+                context.getBooleanData(CURRENT_DESKTOP_TABLE_TAB_AFTER_EDIT, DEF_DESKTOP_TABLE_TAB_AFTER_EDIT);
 
         // loop through each nameValues pairs
+        WebElement lastElement = null;
         WebElement cellElement;
 
         boolean focused = true;
         boolean setFocusOut = false;
         for (Map.Entry<String, String> nameValue : nameValues.entrySet()) {
 
-            //todo: support function keys along with [CLICK]? and [CHECK]
             if (context.getBooleanData(DESKTOP_DIALOG_LOOKUP, DEF_DESKTOP_DIALOG_LOOKUP)) {
                 // fail if any modal dialog present
                 WebElement modal = DesktopCommand.getModalDialog(getCurrentSession().getApp().getElement());
@@ -553,12 +553,17 @@ public class DesktopTable extends DesktopElement {
             cellElement = columnMapping.get(column);
             if (cellElement == null) { return StepResult.fail("Unable to edit " + msgPrefix2 + ": NOT FOUND"); }
 
+            // scrollToView(columnMapping, lastElement, cellElement);
+
+            //todo: support function keys along with [CLICK]? and [CHECK]
+
             if (StringUtils.equals(value, TABLE_CELL_CLICK)) {
                 ConsoleUtils.log("clicked on " + msgPrefix2);
                 focused = false;
                 context.setData(CURRENT_DESKTOP_TABLE_ROW, tableRow);
 
                 actionClick(cellElement);
+                lastElement = cellElement;
                 continue;
             }
 
@@ -567,7 +572,6 @@ public class DesktopTable extends DesktopElement {
             ConsoleUtils.log("clicked at (0,0) on " + msgPrefix2);
 
             if (StringUtils.equals(value, TABLE_CELL_CHECK) || StringUtils.equals(value, TABLE_CELL_UNCHECK)) {
-
                 WebElement checkboxElement;
                 boolean isChecked = false;
 
@@ -577,7 +581,7 @@ public class DesktopTable extends DesktopElement {
                 if (CollectionUtils.isNotEmpty(matches)) {
                     ConsoleUtils.log(msgPrefix2 + " found surrogate (inner) element");
                     checkboxElement = matches.get(0);
-                    isChecked = BooleanUtils.toBoolean(StringUtils.trim(checkboxElement.getText()));
+                    isChecked       = BooleanUtils.toBoolean(StringUtils.trim(checkboxElement.getText()));
                     ConsoleUtils.log("checkbox element is currently " + (isChecked ? "CHECKED" : "UNCHECKED"));
                 } else {
                     checkboxElement = findCellCheckboxElement(cellElement);
@@ -596,7 +600,7 @@ public class DesktopTable extends DesktopElement {
 
                 if (isChecked) {
                     if (StringUtils.equals(value, TABLE_CELL_UNCHECK)) {
-                        ConsoleUtils.log("unchecking it...");
+                        ConsoleUtils.log(msgPrefix2 + "unchecking it...");
 
                         driver.executeScript(toShortcuts("SPACE", "TAB"), checkboxElement);
 
@@ -611,7 +615,7 @@ public class DesktopTable extends DesktopElement {
                     }
                 } else {
                     if (StringUtils.equals(value, TABLE_CELL_CHECK)) {
-                        ConsoleUtils.log("checking it...");
+                        ConsoleUtils.log(msgPrefix2 + "checking it...");
 
                         driver.executeScript(toShortcuts("SPACE", "TAB"), checkboxElement);
 
@@ -635,6 +639,8 @@ public class DesktopTable extends DesktopElement {
                 messageBuffer.append(msgPrefix2).append("entered text '").append(value).append("'").append(NL);
                 if (tabAfterEdit) { driver.executeScript(toShortcuts("TAB"), cellElement); }
             }
+
+            lastElement = cellElement;
         }
 
         if (focused) {
@@ -716,7 +722,7 @@ public class DesktopTable extends DesktopElement {
         int columnWidth = 0;
         if (columnBoundary != null) {
             columnXoffset = columnBoundary.getX();
-            columnWidth = columnBoundary.getWidth();
+            columnWidth   = columnBoundary.getWidth();
         }
 
         if (clickOffsetX > (columnXoffset - tableXoffset) &&
@@ -847,6 +853,51 @@ public class DesktopTable extends DesktopElement {
         }
 
         return pos;
+    }
+
+    protected void scrollToView(Map<String, WebElement> columns, WebElement lastElement, WebElement currentElement) {
+        if (currentElement == null) { return; }
+        if (currentElement.isDisplayed()) { return; }
+        if (MapUtils.isEmpty(columns)) { return; }
+
+        // List<String> names = new ArrayList<>(columns.keySet());
+        List<WebElement> columnElements = new ArrayList<>(columns.values());
+        if (lastElement == null) { lastElement = columnElements.get(0); }
+
+        // if last element is visible, then we'll start tab'ing from there. Otherwise we'll start from the beginning
+        int numberOfTabs = 0;
+        if (lastElement.isDisplayed()) {
+            driver.executeScript(SCRIPT_CLICK, lastElement);
+            numberOfTabs = columnElements.size() - columnElements.indexOf(lastElement);
+        }
+
+        boolean currentElementVisible = false;
+
+        // start tab'ing
+        for (int tabCount = 0; tabCount <= numberOfTabs; tabCount++) {
+            driver.executeScript(toShortcuts("TAB"), currentElement);
+            if (currentElement.isDisplayed()) {
+                driver.executeScript(toShortcuts("TAB"), currentElement);
+                currentElementVisible = true;
+                break;
+            }
+        }
+
+        if (currentElementVisible) { return; }
+
+        // since we can't get the current element to be visible, let's go the other way
+        for (int tabCount = 0; tabCount <= columnElements.size(); tabCount++) {
+            driver.executeScript(toShortcuts("SHIFT-TAB"), currentElement);
+            if (currentElement.isDisplayed()) {
+                driver.executeScript(toShortcuts("SHIFT-TAB"), currentElement);
+                currentElementVisible = true;
+                break;
+            }
+        }
+
+        if (currentElementVisible) { return; }
+
+        ConsoleUtils.error("Unable to forward the current row so that target column is visible for automation");
     }
 
     protected boolean isValidRow(List<String> data, int row) {

@@ -17,6 +17,8 @@
 
 package org.nexial.core.plugins.desktop;
 
+import java.util.Arrays;
+import java.util.List;
 import com.google.gson.ExclusionStrategy;
 import com.google.gson.FieldAttributes;
 import com.google.gson.Gson;
@@ -25,9 +27,6 @@ import com.google.gson.typeadapters.RuntimeTypeAdapterFactory;
 import org.apache.commons.lang3.StringUtils;
 import org.nexial.core.utils.ConsoleUtils;
 import org.openqa.selenium.WebElement;
-
-import java.util.Arrays;
-import java.util.List;
 
 import static org.nexial.core.NexialConst.NAMESPACE;
 import static org.nexial.core.NexialConst.NL;
@@ -130,6 +129,8 @@ public class DesktopConst {
     public static final String XPATH_ROW_BY_CATEGORY_INFRAG4 = "*[@ControlType='" + TREE_VIEW_ROW + "' and " +
                                                                "./*[" + XPATH_CELL_ATTR + " and @Value='{value}']]";
     public static final String XPATH_CELL_INFRAG4 = "*[" + XPATH_CELL_ATTR + "]";
+    public static final String INFRAG4_ITEM_STATUS_PREFIX = "^IG_TOKEN_DELIMETER^DisplayText^IG_TOKEN_SEPERATOR^";
+    public static final String INFRAG4_ITEM_STATUS_POSTFIX = "^IG_TOKEN_DELIMETER^!IG_DATA_END!";
 
     public final static String LOCATOR_TABLE_DATA = "*[contains(@Name, 'row ')]";
     public final static String LOCATOR_ROW = "*[contains(@Name, 'row {row}')][1]";
