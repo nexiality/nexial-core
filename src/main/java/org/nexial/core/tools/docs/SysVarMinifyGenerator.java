@@ -1,9 +1,9 @@
 package org.nexial.core.tools.docs;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.List;
-
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.NotNull;
@@ -16,17 +16,11 @@ import org.nexial.commons.utils.ResourceUtils;
 
 import static org.nexial.core.NexialConst.DEF_FILE_ENCODING;
 import static org.nexial.core.NexialConst.Doc.*;
-import static org.nexial.core.tools.docs.MinifyGenerator.*;
+import static org.nexial.core.tools.docs.MiniDocConst.*;
+import static org.nexial.core.tools.docs.MinifyGenerator.addMappings;
+import static org.nexial.core.tools.docs.MinifyGenerator.operationCount;
 
 public class SysVarMinifyGenerator {
-    private static final String HEADER_ROW = "{header-row}";
-    private static final String CONFIGURATION_ROW = "{configuration-row}";
-    private static final String SYSVAR = "{sysvar}";
-    public static final String CONTENT_HTML = "content.html";
-    public static final String HTML_TEMPLATE = "/HtmlTemplate.html";
-    public static final String IMAGE_REGEX = "src=\\\"image\\/.+?.(png|jpg)\\\"";
-    public static final String HREF_PREFIX = "href=\"";
-    public static final String HREF_LINK_PREFIX = HREF_PREFIX + "#";
 
     private final String sysvarLocation;
 
@@ -49,6 +43,7 @@ public class SysVarMinifyGenerator {
 
     /**
      * Process the tables in the current document and create the minified files for each system variables
+     *
      * @param document the document to parse
      */
     private void processTables(Document document) throws IOException {
@@ -74,9 +69,10 @@ public class SysVarMinifyGenerator {
 
     /**
      * Write the contents of the html into a new file
+     *
      * @param configurationId the configuration id the current system variable
-     * @param headerRow the header row of the table currently being read
-     * @param html the contents to be written into the file
+     * @param headerRow       the header row of the table currently being read
+     * @param html            the contents to be written into the file
      */
     private void writeFile(String configurationId, String headerRow, String html) throws IOException {
         File configurationFile = new File(getFileName(configurationId));
@@ -85,8 +81,7 @@ public class SysVarMinifyGenerator {
             html = replaceLinks(html, configurationFile.getPath());
         }
         String htmlTemplatePath = getClass().getPackage().getName().replace(".", "/") + HTML_TEMPLATE;
-        String htmlTemplate =
-                ResourceUtils.loadResource(htmlTemplatePath);
+        String htmlTemplate = ResourceUtils.loadResource(htmlTemplatePath);
         if (htmlTemplate == null) {
             throw new RuntimeException("HTML template could not be resolved");
         }
@@ -101,7 +96,8 @@ public class SysVarMinifyGenerator {
 
     /**
      * Replace the local documentation link with global links
-     * @param html the contents of the current html under processing
+     *
+     * @param html              the contents of the current html under processing
      * @param configurationFile the file in which the links are occurring
      * @return the html with updated links
      */
@@ -123,6 +119,7 @@ public class SysVarMinifyGenerator {
 
     /**
      * Replace the local links in the html with global links
+     *
      * @param html the html containing the image links
      * @return the updated html with global image links
      */
@@ -143,22 +140,22 @@ public class SysVarMinifyGenerator {
 
     /**
      * Return the file name of the minified doc for the system variable
+     *
      * @param text the text to be written into the new file
      * @return the name of the minified doc
      */
-    private String getFileName(String text) {
-        return sysvarLocation + StringUtils.replace(text, ".*", "") + MINI_HTML;
-    }
+    private String getFileName(String text) { return sysvarLocation + StringUtils.replace(text, ".*", "") + MINI_HTML; }
 
     /**
      * Get the html specified the location and return the {@link Document} object
+     *
      * @return the html {@link Document} object
      */
     private Document getDocument() throws IOException {
-        File file = new File(sysvarLocation + CONTENT_HTML);
-        if (!file.exists()) {
-            System.err.println("File does not exist");
-            return null;
+        String location = sysvarLocation + CONTENT_HTML;
+        File file = new File(location);
+        if (!file.exists() || !file.canRead()) {
+            throw new FileNotFoundException("File does not exist or cannot be read: " + location);
         }
         return Jsoup.parse(file, DEF_FILE_ENCODING);
     }

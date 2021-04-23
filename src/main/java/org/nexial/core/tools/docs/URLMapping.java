@@ -11,7 +11,6 @@ public class URLMapping {
         this.fullDocUrl  = fullDocUrl;
     }
 
-
     @Override
     public String toString() {
         return "URLMapping{" +
@@ -21,28 +20,16 @@ public class URLMapping {
                '}';
     }
 
-    public String getMiniDocUrl() {
-        return miniDocUrl;
-    }
+    public String getMiniDocUrl() {return miniDocUrl;}
 
-    public void setMiniDocUrl(String miniDocUrl) {
-        this.miniDocUrl = miniDocUrl;
-    }
+    public void setMiniDocUrl(String miniDocUrl) {this.miniDocUrl = miniDocUrl;}
 
-    public String getMiniDocFile() {
-        return miniDocFile;
-    }
+    public String getMiniDocFile() {return miniDocFile;}
 
-    public void setMiniDocFile(String miniDocFile) {
-        this.miniDocFile = miniDocFile;
-    }
+    public void setMiniDocFile(String miniDocFile) {this.miniDocFile = miniDocFile;}
 
-    public String getFullDocUrl() {
-        return fullDocUrl;
-    }
+    public String getFullDocUrl() {return fullDocUrl;}
 
-    public void setFullDocUrl(String fullDocUrl) {
-        this.fullDocUrl = fullDocUrl;
-    }
+    public void setFullDocUrl(String fullDocUrl) {this.fullDocUrl = fullDocUrl;}
 
 }

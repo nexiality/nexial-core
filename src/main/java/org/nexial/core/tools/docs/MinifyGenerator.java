@@ -8,7 +8,6 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -18,45 +17,27 @@ import static org.apache.commons.lang3.StringUtils.*;
 import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.NexialConst.Doc.*;
 import static org.nexial.core.NexialConst.FlowControls.ARG_PREFIX;
+import static org.nexial.core.tools.docs.MiniDocConst.*;
 
 /**
  * Parses the functions, expressions and system variable files from the documentation
  * and create minified files.
  */
 public class MinifyGenerator {
-    public static final String EXPRESSION_SUFFIX = "expression";
-    public static final String EXPRESSION_FILE1_SUFFIX = EXPRESSION_SUFFIX + MD_EXTENSION;
-    public static final String FUNCTION_SUFFIX = TOKEN_FUNCTION_END + MD_EXTENSION;
 
-    public static final String IMAGE = "image";
-
-    public static final String H4 = "#### ";
-    public static final String H5 = "#####";
-    public static final String UI_IMAGE_PREFIX = "UI.";
-    public static final String SEE_ALSO = "### See Also";
-    public static final String AVAILABLE_FUNCTIONS = "### Available Functions";
-    public static final String OPERATIONS_STARTED = "### Operations";
-    public static final String RELATIVE_LINK_REGEX = "((!?\\[[^\\]]*?\\])\\((?:(?!http).)*?\\))";
-    public static final String OPERATION_SEP = "_";
-
-    public static final String SCRIPT = "<script>";
-    public static final String TITLE = "{title}";
-    public static final String PARENT = "{parent}";
     public static int operationCount = 0;
 
     public static Map<String, Set<URLMapping>> fileUrlMappings = new HashMap<>();
     public static String target;
-    public static final int MIN_FUNCTION_SIZE = 3;
 
     public static void main(String[] args) throws IOException {
         if (args.length == 0) {
             throw new IllegalArgumentException("The location of Nexial Documentation on local machine is required");
         }
+
         target = args[0];
         File docLocation = new File(target);
-        if (!docLocation.exists()) {
-            throw new IllegalArgumentException("The path specified does not exist");
-        }
+        if (!docLocation.exists()) { throw new IllegalArgumentException("The path specified does not exist"); }
         MinifyGenerator generator = new MinifyGenerator();
         generator.deletePreExistingFiles();
         generator.processFiles(target + "/" + FUNCTIONS);
@@ -67,14 +48,13 @@ public class MinifyGenerator {
 
     /**
      * Add the url mappings corresponding to each fileName
+     *
      * @param fileName the name of the file in which links are occurring
-     * @param mapping {@link URLMapping} object corresponding to the fileName passed in
+     * @param mapping  {@link URLMapping} object corresponding to the fileName passed in
      */
     public static void addMappings(String fileName, URLMapping mapping) {
         Set<URLMapping> urlMappings = new HashSet<>();
-        if (fileUrlMappings.containsKey(fileName)) {
-            urlMappings = fileUrlMappings.get(fileName);
-        }
+        if (fileUrlMappings.containsKey(fileName)) { urlMappings = fileUrlMappings.get(fileName); }
         urlMappings.add(mapping);
         fileUrlMappings.put(fileName, urlMappings);
     }
@@ -89,8 +69,7 @@ public class MinifyGenerator {
         existingMinifiedFiles.addAll(getFiles(target + "/" + SYSTEMVARS + "/"));
         System.out.println("Deleting pre-existing minified docs");
         existingMinifiedFiles.stream()
-                             .filter(file -> StringUtils.endsWithAny(file.getName(), MINI + MD_EXTENSION,
-                                                                     MINI_HTML))
+                             .filter(file -> StringUtils.endsWithAny(file.getName(), MINI + MD_EXTENSION, MINI_HTML))
                              .forEach(file -> {
                                  if (!FileUtils.deleteQuietly(file)) {
                                      System.out.println("Unable to delete file " + file.getName());
@@ -102,6 +81,7 @@ public class MinifyGenerator {
 
     /**
      * Parse the original documentation files based on the fileLocation passed in and create minified docs
+     *
      * @param fileLocation the fileLocation to look for target files
      */
     private void processFiles(String fileLocation) {
@@ -137,21 +117,25 @@ public class MinifyGenerator {
                         String operation = substringBetween(line, "`").trim();
                         operationFileName = fileType.equals(FUNCTIONS) ? getFunctionOperationName(operation) :
                                             getExpressionOperationFileName(file.getName(), operation);
-                        fileName = fileLocation + "/" + operationFileName + MINI + MD_EXTENSION;
+                        fileName          = fileLocation + "/" + operationFileName + MINI + MD_EXTENSION;
                         sb.append(getFrontMatter(operation, pageName));
                         line = reader.readLine();
                         while (!line.startsWith(H5) && !line.startsWith(H4)) {
                             if (line.startsWith(SCRIPT) || line.startsWith(SEE_ALSO)) {
                                 endOfFile = true;
                                 break;
-                            } else if (line.startsWith("![")) {
+                            }
+
+                            if (line.startsWith("![")) {
                                 line = replaceImageLinks(fileType, line);
                             } else {
                                 line = fixLinks(fileType, line, pageName, fileName);
                             }
+
                             sb.append(line).append(NL);
                             line = reader.readLine();
                         }
+
                         writeToFile(sb, fileName);
                         System.out.println("Created " + fileName);
                         operationCount++;
@@ -162,8 +146,7 @@ public class MinifyGenerator {
                 System.out.println("\nOperation count for " + file.getName() + " is " + operationCount);
                 operationCount = 0;
             } catch (Exception exception) {
-                System.out.println(
-                        "Error occurred while processing file " + file.getName() + "; Error: " + exception.getMessage());
+                System.out.println("Error occurred while processing file " + file + ": " + exception.getMessage());
                 System.exit(-1);
             }
         }
@@ -171,24 +154,23 @@ public class MinifyGenerator {
 
     /**
      * Write the contents of the {@link StringBuilder} into a new {@link File}
-     * @param sb the {@link StringBuilder} containing the contents of the new {@link File}
+     *
+     * @param sb       the {@link StringBuilder} containing the contents of the new {@link File}
      * @param fileName the name of the new {@link File}
      */
     private static void writeToFile(StringBuilder sb, String fileName) throws IOException {
-        File newFile = new File(fileName);
-        FileUtils.write(newFile, sb.toString().trim(), DEF_FILE_ENCODING);
+        FileUtils.write(new File(fileName), sb.toString().trim(), DEF_FILE_ENCODING);
     }
 
     /**
      * Retrieve the front matter for the markdown files from the template
+     *
      * @param operationName the name of the current operation to be written into the front matter
-     * @param pageName the name of the parent page to be written into the front matter
+     * @param pageName      the name of the parent page to be written into the front matter
      * @return the updated front matter
      */
     private String getFrontMatter(String operationName, String pageName) throws IOException {
-        String frontMatterPath =
-                getClass().getPackage().getName().replace(".", "/") + "/MinifiedFrontMatterTemplate.md";
-        String frontMatter = ResourceUtils.loadResource(frontMatterPath);
+        String frontMatter = ResourceUtils.loadResource(FRONT_MATTER_TEMLATE);
         frontMatter = replace(frontMatter, TITLE, operationName);
         frontMatter = replace(frontMatter, PARENT, pageName);
         return frontMatter;
@@ -196,7 +178,8 @@ public class MinifyGenerator {
 
     /**
      * Check the passed in fileLocation for the passed in fileType and retrieve the required markdown files
-     * @param fileType the type of the file passed in
+     *
+     * @param fileType     the type of the file passed in
      * @param fileLocation the location to check for the files
      * @return List of required files
      */
@@ -216,6 +199,7 @@ public class MinifyGenerator {
 
     /**
      * Return the files fom the passed in fileLocation
+     *
      * @param fileLocation the location to retrieve files from
      * @return return the files from the location
      */
@@ -231,6 +215,7 @@ public class MinifyGenerator {
 
     /**
      * Return the title of the current function operation
+     *
      * @param line the line currently under processing
      * @return the title of the current operation
      */
@@ -241,6 +226,7 @@ public class MinifyGenerator {
             System.err.println("Function signature is wrong");
             System.exit(-1);
         }
+
         String function = TOKEN_FUNCTION_START + functionElements.get(0) + TOKEN_FUNCTION_END;
         String operation = functionElements.get(1);
         StringBuilder param = new StringBuilder(functionElements.get(2));
@@ -253,7 +239,8 @@ public class MinifyGenerator {
 
     /**
      * Return the title of the current expression operation
-     * @param file the parent file of the current operation
+     *
+     * @param file      the parent file of the current operation
      * @param operation the operation name
      * @return the title of the current expression operation
      */
@@ -268,8 +255,9 @@ public class MinifyGenerator {
 
     /**
      * Replace the local image links with global image links
+     *
      * @param fileType the type of the file currently being processed
-     * @param line the line currently under processing
+     * @param line     the line currently under processing
      * @return the line with updated image links
      */
     private static String replaceImageLinks(String fileType, String line) {
@@ -293,8 +281,9 @@ public class MinifyGenerator {
 
     /**
      * Substitute the local links in the line with global working links
+     *
      * @param fileType the type of the file currently under processing
-     * @param line the line currently under processing
+     * @param line     the line currently under processing
      * @param pageName the name of the page where the link is occurring
      * @param fileName the parent file which is currently being read
      * @return the updated line with replaced links
@@ -303,11 +292,10 @@ public class MinifyGenerator {
         String originPageName = pageName;
         Pattern pattern = Pattern.compile(RELATIVE_LINK_REGEX);
         Matcher matcher = pattern.matcher(line);
+
         List<String> linkMatches = new ArrayList<>();
-        while (matcher.find()) {
-            String match = matcher.group();
-            linkMatches.add(match);
-        }
+        while (matcher.find()) { linkMatches.add(matcher.group()); }
+
         if (CollectionUtils.isNotEmpty(linkMatches)) {
             for (String link : linkMatches) {
                 String element = link;
@@ -317,9 +305,7 @@ public class MinifyGenerator {
                     link = link.replace(substringAfter(link, "#"), "");
                     String operation = substringBetween(link, "[", "]");
 
-                    if (operation.startsWith("`") && operation.endsWith("`")) {
-                        operation = substringBetween(link, "`");
-                    }
+                    if (operation.startsWith("`") && operation.endsWith("`")) {operation = substringBetween(link, "`");}
 
                     pageName = fileType.equals(EXPRESSIONS) ?
                                getExpressionOperationFileName(pageName + MD_EXTENSION, operation) :
@@ -340,22 +326,22 @@ public class MinifyGenerator {
 
     /**
      * Add {@link URLMapping} objects for each local link that points to location in the same document
-     * @param pageName the minified document name for the current operation
-     * @param fileType the type of the file currently under processing
-     * @param anchor the location where the link points to
+     *
+     * @param pageName   the minified document name for the current operation
+     * @param fileType   the type of the file currently under processing
+     * @param anchor     the location where the link points to
      * @param miniDocUrl the url of the minified document for the current operation
-     * @param fileName the name of minified document in which the link is occurring
+     * @param fileName   the name of minified document in which the link is occurring
      */
-    private static void setUrlMapping(String pageName, String fileType, String anchor,
-                                      String miniDocUrl, String fileName) {
+    private static void setUrlMapping(String pageName, String fileType, String anchor, String miniDocUrl,
+                                      String fileName) {
         String miniDocFile = target + "/" + fileType + "/" + pageName + MINI + MD_EXTENSION;
         pageName = substringBefore(pageName, OPERATION_SEP);
         if (fileType.equals(EXPRESSIONS)) { pageName = pageName + EXPRESSION_SUFFIX; }
-        String fullDocUrl = replace(miniDocUrl, substringAfter(miniDocUrl, fileType),
-                                    "/" + pageName + "#" + anchor) + TOKEN_FUNCTION_END;
-        URLMapping urlMapping = new URLMapping(miniDocUrl, miniDocFile, fullDocUrl);
+        String fullDocUrl = replace(miniDocUrl, substringAfter(miniDocUrl, fileType), "/" + pageName + "#" + anchor) +
+                            TOKEN_FUNCTION_END;
 
-        addMappings(fileName, urlMapping);
+        addMappings(fileName, new URLMapping(miniDocUrl, miniDocFile, fullDocUrl));
     }
 
     /**
