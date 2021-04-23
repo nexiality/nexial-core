@@ -180,7 +180,7 @@ public class IoCommand extends BaseCommand {
 
         // list files
         List<String> files = new IOFilePathFilter(recursive, includeSubdir).filterFiles(pattern);
-        if (files == null) { return new ArrayList<>(); }
+        if (CollectionUtils.isEmpty(files)) { return new ArrayList<>(); }
 
         // filter out office temp files
         files.removeIf(this::isMSOfficeTempFile);

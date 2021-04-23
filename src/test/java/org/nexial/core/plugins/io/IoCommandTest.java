@@ -17,6 +17,9 @@
 
 package org.nexial.core.plugins.io;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.map.HashedMap;
 import org.apache.commons.io.FileUtils;
@@ -41,10 +44,6 @@ import org.nexial.core.plugins.image.ImageCommandTest;
 import org.nexial.core.variable.Random;
 import org.nexial.core.variable.Sysdate;
 import org.nexial.core.variable.Syspath;
-
-import java.io.File;
-import java.io.IOException;
-import java.util.*;
 
 import static java.io.File.separator;
 import static java.lang.System.lineSeparator;
@@ -332,10 +331,10 @@ public class IoCommandTest {
 
         File dir = new File(testDestination1);
         Collection<File> files =
-            FileUtils.listFiles(dir, new RegexFileFilter("testDeleteFile.+"), FalseFileFilter.INSTANCE);
+                FileUtils.listFiles(dir, new RegexFileFilter("testDeleteFile.+"), FalseFileFilter.INSTANCE);
         Assert.assertTrue(CollectionUtils.isEmpty(files));
 
-        dir = new File(testDestination1 + separator + "sub");
+        dir   = new File(testDestination1 + separator + "sub");
         files = FileUtils.listFiles(dir, TrueFileFilter.INSTANCE, FalseFileFilter.INSTANCE);
         assertEquals(CollectionUtils.size(files), 2);
     }
@@ -535,7 +534,7 @@ public class IoCommandTest {
         result = io.writeFile(testFile1, propContent, "false");
         Assert.assertTrue(result.isSuccess());
         content = FileUtils.readFileToString(file1, DEF_FILE_ENCODING);
-        eol = "\n";
+        eol     = "\n";
         assertEquals("prop1=a" + eol +
                      "prop2=b" + eol +
                      "prop3=-" + eol,
@@ -546,7 +545,7 @@ public class IoCommandTest {
         result = io.writeFile(testFile1, propContent, "false");
         Assert.assertTrue(result.isSuccess());
         content = FileUtils.readFileToString(file1, DEF_FILE_ENCODING);
-        eol = "\r\n";
+        eol     = "\r\n";
         assertEquals("prop1=a" + eol +
                      "prop2=b" + eol +
                      "prop3=-" + eol,
@@ -557,7 +556,7 @@ public class IoCommandTest {
         result = io.writeFile(testFile1, propContent, "false");
         Assert.assertTrue(result.isSuccess());
         content = FileUtils.readFileToString(file1, DEF_FILE_ENCODING);
-        eol = "\n";
+        eol     = "\n";
         assertEquals("prop1=a" + eol +
                      "prop2=b" + eol +
                      "prop3=-" + eol,
@@ -598,7 +597,7 @@ public class IoCommandTest {
         result = io.writeFile(testFile1, propContent, "false");
         Assert.assertTrue(result.isSuccess());
         content = FileUtils.readFileToString(file1, DEF_FILE_ENCODING);
-        eol = "\n";
+        eol     = "\n";
         assertEquals("Now is the time for all good men to come to the aid of his country" + eol +
                      "The lazy brown fox jump over the dog, " + eol +
                      "or something like that." + eol + eol +
@@ -611,7 +610,7 @@ public class IoCommandTest {
         result = io.writeFile(testFile1, propContent, "false");
         Assert.assertTrue(result.isSuccess());
         content = FileUtils.readFileToString(file1, DEF_FILE_ENCODING);
-        eol = "\r\n";
+        eol     = "\r\n";
         assertEquals("Now is the time for all good men to come to the aid of his country" + eol +
                      "The lazy brown fox jump over the dog, " + eol +
                      "or something like that." + eol + eol +
@@ -624,7 +623,7 @@ public class IoCommandTest {
         result = io.writeFile(testFile1, propContent, "false");
         Assert.assertTrue(result.isSuccess());
         content = FileUtils.readFileToString(file1, DEF_FILE_ENCODING);
-        eol = "\n";
+        eol     = "\n";
         assertEquals("Now is the time for all good men to come to the aid of his country" + eol +
                      "The lazy brown fox jump over the dog, " + eol +
                      "or something like that." + eol + eol +

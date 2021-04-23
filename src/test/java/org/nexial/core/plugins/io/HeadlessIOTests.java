@@ -29,10 +29,21 @@ public class HeadlessIOTests extends ExcelBasedTests {
         // System.setProperty(OPT_RUN_ID_PREFIX, "unitTest_io");
         // System.setProperty(OPT_OPEN_RESULT, "off");
 
-        ExecutionSummary executionSummary = testViaExcel("unitTest_io.xlsx", "filter", "saveMatches");
+        ExecutionSummary executionSummary = testViaExcel("unitTest_io.xlsx",
+                                                         "filter",
+                                                         "saveMatches",
+                                                         "saveMatches_2",
+                                                         "compareExtended",
+                                                         "checksum");
         assertPassFail(executionSummary, "filter", TestOutcomeStats.allPassed());
         Assert.assertEquals(0, executionSummary.getFailCount());
         assertPassFail(executionSummary, "saveMatches", TestOutcomeStats.allPassed());
+        Assert.assertEquals(0, executionSummary.getFailCount());
+        assertPassFail(executionSummary, "saveMatches_2", TestOutcomeStats.allPassed());
+        Assert.assertEquals(0, executionSummary.getFailCount());
+        assertPassFail(executionSummary, "compareExtended", TestOutcomeStats.allPassed());
+        Assert.assertEquals(0, executionSummary.getFailCount());
+        assertPassFail(executionSummary, "checksum", TestOutcomeStats.allPassed());
         Assert.assertEquals(0, executionSummary.getFailCount());
     }
 }
