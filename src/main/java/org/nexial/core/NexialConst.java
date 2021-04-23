@@ -2029,10 +2029,19 @@ public final class NexialConst {
         private Doc() { }
 
         // default values
+        public static final String FUNCTIONS = "functions";
+        public static final String EXPRESSIONS = "expressions";
+        public static final String SYSTEMVARS = "systemvars";
+
         public static final String DOCUMENTATION_URL = "https://nexiality.github.io/documentation";
-        public static final String SYSVAR_DOCS_URL = DOCUMENTATION_URL + "/systemvars/";
-        public static final String EXPRESSIONS_DOCS_URL = DOCUMENTATION_URL + "/expressions/";
-        public static final String FUNCTIONS_DOCS_URL = DOCUMENTATION_URL + "/functions/";
+        public static final String SYSVAR_DOCS_URL = DOCUMENTATION_URL + "/" + SYSTEMVARS + "/";
+        public static final String EXPRESSIONS_DOCS_URL = DOCUMENTATION_URL + "/" +  EXPRESSIONS + "/";
+        public static final String FUNCTIONS_DOCS_URL = DOCUMENTATION_URL + "/" + FUNCTIONS + "/";
+        public static final String MD_EXTENSION = ".md";
+        public static final String HTML_EXTENSION = ".html";
+        public static final String MINI = ".mini";
+        public static final String MINI_HTML = MINI + HTML_EXTENSION;
+
     }
 
     static {

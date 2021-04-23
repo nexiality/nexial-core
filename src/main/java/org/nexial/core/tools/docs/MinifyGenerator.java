@@ -1,96 +1,389 @@
 package org.nexial.core.tools.docs;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
-import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.DefaultParser;
-import org.apache.commons.cli.HelpFormatter;
-import org.apache.commons.cli.Options;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.nexial.commons.utils.ResourceUtils;
 
-import static org.apache.commons.lang3.StringUtils.isEmpty;
-import static org.nexial.core.NexialConst.DEF_FILE_ENCODING;
-import static org.nexial.core.NexialConst.ExitStatus.RC_BAD_CLI_ARGS;
-import static org.nexial.core.NexialConst.NL;
-import static org.nexial.core.tools.CliUtils.newArgOption;
+import static org.apache.commons.lang3.StringUtils.*;
+import static org.nexial.core.NexialConst.*;
+import static org.nexial.core.NexialConst.Doc.*;
+import static org.nexial.core.NexialConst.FlowControls.ARG_PREFIX;
 
+/**
+ * Parses the functions, expressions and system variable files from the documentation
+ * and create minified files.
+ */
 public class MinifyGenerator {
+    public static final String EXPRESSION_SUFFIX = "expression";
+    public static final String EXPRESSION_FILE1_SUFFIX = EXPRESSION_SUFFIX + MD_EXTENSION;
+    public static final String FUNCTION_SUFFIX = TOKEN_FUNCTION_END + MD_EXTENSION;
 
-    public static final String MD_EXTENSION = ".md";
+    public static final String IMAGE = "image";
+
     public static final String H4 = "#### ";
     public static final String H5 = "#####";
     public static final String UI_IMAGE_PREFIX = "UI.";
     public static final String SEE_ALSO = "### See Also";
+    public static final String AVAILABLE_FUNCTIONS = "### Available Functions";
+    public static final String OPERATIONS_STARTED = "### Operations";
+    public static final String RELATIVE_LINK_REGEX = "((!?\\[[^\\]]*?\\])\\((?:(?!http).)*?\\))";
+    public static final String OPERATION_SEP = "_";
+
     public static final String SCRIPT = "<script>";
-    public static final String RELATIVE_LINK_REGEX = "\\*?\\*?((!?\\[[^\\]]*?\\])\\((?:(?!http).)*?\\))\\*?\\*?";
+    public static final String TITLE = "{title}";
+    public static final String PARENT = "{parent}";
     public static int operationCount = 0;
 
-    private static final Options cmdOptions = new Options();
-    private String target;
+    public static Map<String, Set<URLMapping>> fileUrlMappings = new HashMap<>();
+    public static String target;
+    public static final int MIN_FUNCTION_SIZE = 3;
 
-
-    public static void main(String[] args) {
-        initOptions();
-
-        MinifyGenerator generator = newInstance(args);
-        if (generator == null) { System.exit(RC_BAD_CLI_ARGS); }
-
-        new FunctionMinifyGenerator(generator.target + "/functions").processFiles();
-        new ExpressionMinifyGenerator(generator.target + "/expressions").processFiles();
-        new SysVarMinifyGenerator(generator.target + "/systemvars/").processDocument();
-
+    public static void main(String[] args) throws IOException {
+        if (args.length == 0) {
+            throw new IllegalArgumentException("The location of Nexial Documentation on local machine is required");
+        }
+        target = args[0];
+        File docLocation = new File(target);
+        if (!docLocation.exists()) {
+            throw new IllegalArgumentException("The path specified does not exist");
+        }
+        MinifyGenerator generator = new MinifyGenerator();
+        generator.deletePreExistingFiles();
+        generator.processFiles(target + "/" + FUNCTIONS);
+        generator.processFiles(target + "/" + EXPRESSIONS);
+        new SysVarMinifyGenerator(target + "/" + SYSTEMVARS).processDocument();
+        generator.replaceOldLinks();
     }
 
-    public static void writeToFile(StringBuilder sb, String fileName) {
+    /**
+     * Add the url mappings corresponding to each fileName
+     * @param fileName the name of the file in which links are occurring
+     * @param mapping {@link URLMapping} object corresponding to the fileName passed in
+     */
+    public static void addMappings(String fileName, URLMapping mapping) {
+        Set<URLMapping> urlMappings = new HashSet<>();
+        if (fileUrlMappings.containsKey(fileName)) {
+            urlMappings = fileUrlMappings.get(fileName);
+        }
+        urlMappings.add(mapping);
+        fileUrlMappings.put(fileName, urlMappings);
+    }
+
+    /**
+     * Delete the pre existing minified files prior to generating new files
+     */
+    private void deletePreExistingFiles() {
+        List<File> existingMinifiedFiles = new ArrayList<>();
+        existingMinifiedFiles.addAll(getFiles(target + "/" + FUNCTIONS));
+        existingMinifiedFiles.addAll(getFiles(target + "/" + EXPRESSIONS));
+        existingMinifiedFiles.addAll(getFiles(target + "/" + SYSTEMVARS + "/"));
+        System.out.println("Deleting pre-existing minified docs");
+        existingMinifiedFiles.stream()
+                             .filter(file -> StringUtils.endsWithAny(file.getName(), MINI + MD_EXTENSION,
+                                                                     MINI_HTML))
+                             .forEach(file -> {
+                                 if (!FileUtils.deleteQuietly(file)) {
+                                     System.out.println("Unable to delete file " + file.getName());
+                                     System.exit(-1);
+                                 }
+                             });
+        System.out.println("Deleted pre-existing minified docs");
+    }
+
+    /**
+     * Parse the original documentation files based on the fileLocation passed in and create minified docs
+     * @param fileLocation the fileLocation to look for target files
+     */
+    private void processFiles(String fileLocation) {
+        String fileType = fileLocation.substring(lastIndexOf(fileLocation, "/") + 1).trim();
+        List<File> mdFiles = getMdFiles(fileType, fileLocation);
+
+        if (mdFiles.isEmpty()) {
+            System.err.println("There are no markdown files in the target location " + fileLocation);
+            System.exit(-1);
+        }
+
+        for (File file : mdFiles) {
+            try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+                String line = reader.readLine();
+
+                while (line != null && !equalsAny(line.trim(), AVAILABLE_FUNCTIONS, OPERATIONS_STARTED)) {
+                    line = reader.readLine();
+                }
+                while (line != null && !line.trim().startsWith(H4)) {
+                    line = reader.readLine();
+                }
+
+                System.out.println("\nCreating markdown file for " + file.getName() + " operations\n");
+                String pageName = substringBefore(file.getName(), MD_EXTENSION);
+
+                StringBuilder sb = new StringBuilder();
+                String fileName;
+                String operationFileName;
+                boolean endOfFile = false;
+
+                while (line != null) {
+                    if (line.startsWith(H4)) {
+                        String operation = substringBetween(line, "`").trim();
+                        operationFileName = fileType.equals(FUNCTIONS) ? getFunctionOperationName(operation) :
+                                            getExpressionOperationFileName(file.getName(), operation);
+                        fileName = fileLocation + "/" + operationFileName + MINI + MD_EXTENSION;
+                        sb.append(getFrontMatter(operation, pageName));
+                        line = reader.readLine();
+                        while (!line.startsWith(H5) && !line.startsWith(H4)) {
+                            if (line.startsWith(SCRIPT) || line.startsWith(SEE_ALSO)) {
+                                endOfFile = true;
+                                break;
+                            } else if (line.startsWith("![")) {
+                                line = replaceImageLinks(fileType, line);
+                            } else {
+                                line = fixLinks(fileType, line, pageName, fileName);
+                            }
+                            sb.append(line).append(NL);
+                            line = reader.readLine();
+                        }
+                        writeToFile(sb, fileName);
+                        System.out.println("Created " + fileName);
+                        operationCount++;
+                        sb.setLength(0);
+                    }
+                    line = endOfFile ? null : line.startsWith(H4) ? line : reader.readLine();
+                }
+                System.out.println("\nOperation count for " + file.getName() + " is " + operationCount);
+                operationCount = 0;
+            } catch (Exception exception) {
+                System.out.println(
+                        "Error occurred while processing file " + file.getName() + "; Error: " + exception.getMessage());
+                System.exit(-1);
+            }
+        }
+    }
+
+    /**
+     * Write the contents of the {@link StringBuilder} into a new {@link File}
+     * @param sb the {@link StringBuilder} containing the contents of the new {@link File}
+     * @param fileName the name of the new {@link File}
+     */
+    private static void writeToFile(StringBuilder sb, String fileName) throws IOException {
         File newFile = new File(fileName);
-        try {
-            FileUtils.write(newFile, sb.toString().trim(), DEF_FILE_ENCODING);
-            // todo: what is the actual error? any reason to hide that?
-            System.out.println("Created " + newFile.getName());
-        } catch (IOException e) {
-            // todo: what is the actual error? any reason to hide that?
-            System.out.println("Error writing file " + newFile.getName());
-            // todo: what is the actual error? any reason to hide that?
-        }
-        sb.setLength(0);
-        operationCount++;
+        FileUtils.write(newFile, sb.toString().trim(), DEF_FILE_ENCODING);
     }
 
-    public static String getFrontMatter(String operationName, String pageName) {
-        // todo: externalize to ease maintenance; use token if needed
-        return "---\n" +
-               "layout: minified\n" +
-               "title: " + operationName + "\n" +
-               "parent: " + pageName + "\n---\n\n";
+    /**
+     * Retrieve the front matter for the markdown files from the template
+     * @param operationName the name of the current operation to be written into the front matter
+     * @param pageName the name of the parent page to be written into the front matter
+     * @return the updated front matter
+     */
+    private String getFrontMatter(String operationName, String pageName) throws IOException {
+        String frontMatterPath =
+                getClass().getPackage().getName().replace(".", "/") + "/MinifiedFrontMatterTemplate.md";
+        String frontMatter = ResourceUtils.loadResource(frontMatterPath);
+        frontMatter = replace(frontMatter, TITLE, operationName);
+        frontMatter = replace(frontMatter, PARENT, pageName);
+        return frontMatter;
     }
 
-    private static void initOptions() {
-        // todo: why give option?! there should never be option because this generator is NOT meant for general users.
-        cmdOptions.addOption(newArgOption("t",
-                                          "target",
-                                          "[REQUIRED] Location of the Nexial Documentation on the local file system.",
-                                          true));
-    }
-
-    private static MinifyGenerator newInstance(String[] args) {
-        try {
-            MinifyGenerator generator = new MinifyGenerator();
-            generator.parseCLIOptions(new DefaultParser().parse(cmdOptions, args));
-            return generator;
-        } catch (Exception e) {
-            System.err.println(NL + "ERROR: " + e.getMessage() + NL);
-            HelpFormatter formatter = new HelpFormatter();
-            formatter.printHelp(MinifyGenerator.class.getName(), cmdOptions, true);
-            return null;
+    /**
+     * Check the passed in fileLocation for the passed in fileType and retrieve the required markdown files
+     * @param fileType the type of the file passed in
+     * @param fileLocation the location to check for the files
+     * @return List of required files
+     */
+    private static List<File> getMdFiles(String fileType, String fileLocation) {
+        List<File> fileList = getFiles(fileLocation);
+        if (fileList.isEmpty()) { return fileList; }
+        if (fileType.equals(FUNCTIONS)) {
+            return fileList.stream().filter(file -> file.getName().startsWith(TOKEN_FUNCTION_START) &&
+                                                    file.getName().endsWith(FUNCTION_SUFFIX) &&
+                                                    !file.getName().contains(")" + OPERATION_SEP))
+                           .collect(Collectors.toList());
+        } else {
+            return fileList.stream().filter(file -> file.getName().endsWith(EXPRESSION_FILE1_SUFFIX))
+                           .collect(Collectors.toList());
         }
     }
 
-    private void parseCLIOptions(CommandLine cmd) {
-        if (!cmd.hasOption("t")) { throw new RuntimeException("[target] is a required argument and is missing"); }
+    /**
+     * Return the files fom the passed in fileLocation
+     * @param fileLocation the location to retrieve files from
+     * @return return the files from the location
+     */
+    private static List<File> getFiles(String fileLocation) {
+        File directory = new File(fileLocation);
+        if (isEmpty(fileLocation) || !directory.exists()) {
+            System.err.println("Invalid target path " + fileLocation);
+            return new ArrayList<>();
+        }
+        File[] files = directory.listFiles();
+        return files == null || files.length == 0 ? new ArrayList<>() : Arrays.asList(files);
+    }
 
-        target = cmd.getOptionValue("t");
-        if (isEmpty(target) || !new File(target).exists()) {
-            throw new RuntimeException("specified target - " + target + " is not accessible");
+    /**
+     * Return the title of the current function operation
+     * @param line the line currently under processing
+     * @return the title of the current operation
+     */
+    private static String getFunctionOperationName(String line) {
+        List<String> functionElements =
+                Arrays.asList(substringBetween(line, TOKEN_FUNCTION_START, TOKEN_FUNCTION_END).split("\\|"));
+        if (functionElements.size() < MIN_FUNCTION_SIZE) {
+            System.err.println("Function signature is wrong");
+            System.exit(-1);
+        }
+        String function = TOKEN_FUNCTION_START + functionElements.get(0) + TOKEN_FUNCTION_END;
+        String operation = functionElements.get(1);
+        StringBuilder param = new StringBuilder(functionElements.get(2));
+
+        for (int i = MIN_FUNCTION_SIZE; i < functionElements.size(); i++) {
+            param.append(",").append(functionElements.get(i));
+        }
+        return function + OPERATION_SEP + operation + ARG_PREFIX + param.toString() + TOKEN_FUNCTION_END;
+    }
+
+    /**
+     * Return the title of the current expression operation
+     * @param file the parent file of the current operation
+     * @param operation the operation name
+     * @return the title of the current expression operation
+     */
+    private static String getExpressionOperationFileName(String file, String operation) {
+        String expressionName = substringBefore(file, EXPRESSION_FILE1_SUFFIX);
+        if (contains(operation, ARG_PREFIX) && contains(operation, TOKEN_FUNCTION_END)) {
+            return expressionName + OPERATION_SEP + substringBefore(operation, ARG_PREFIX);
+        } else {
+            return expressionName + OPERATION_SEP + operation;
+        }
+    }
+
+    /**
+     * Replace the local image links with global image links
+     * @param fileType the type of the file currently being processed
+     * @param line the line currently under processing
+     * @return the line with updated image links
+     */
+    private static String replaceImageLinks(String fileType, String line) {
+        line = line.replace("](", "](" + DOCUMENTATION_URL + "/" + fileType + "/");
+        String imageName = substringBetween(line, IMAGE + "/", SCREENSHOT_EXT + TOKEN_FUNCTION_END);
+        String uiImageName = UI_IMAGE_PREFIX + imageName;
+        String imageLocation = target + "/" + fileType + "/" + IMAGE;
+        File imageDirectory = new File(imageLocation);
+        if (!imageDirectory.exists()) {
+            throw new RuntimeException("Invalid path for " + IMAGE + " location" + imageLocation);
+        }
+        File[] imageFiles = imageDirectory.listFiles();
+        if (imageFiles == null || imageFiles.length == 0) {
+            throw new RuntimeException("No " + IMAGE + " files found in location : " + imageLocation);
+        }
+        if (Arrays.stream(imageFiles).anyMatch(file -> file.getName().equals(uiImageName + SCREENSHOT_EXT))) {
+            line = line.replace(imageName, uiImageName);
+        }
+        return line;
+    }
+
+    /**
+     * Substitute the local links in the line with global working links
+     * @param fileType the type of the file currently under processing
+     * @param line the line currently under processing
+     * @param pageName the name of the page where the link is occurring
+     * @param fileName the parent file which is currently being read
+     * @return the updated line with replaced links
+     */
+    private static String fixLinks(String fileType, String line, String pageName, String fileName) {
+        String originPageName = pageName;
+        Pattern pattern = Pattern.compile(RELATIVE_LINK_REGEX);
+        Matcher matcher = pattern.matcher(line);
+        List<String> linkMatches = new ArrayList<>();
+        while (matcher.find()) {
+            String match = matcher.group();
+            linkMatches.add(match);
+        }
+        if (CollectionUtils.isNotEmpty(linkMatches)) {
+            for (String link : linkMatches) {
+                String element = link;
+                if (link.contains("](../")) {
+                    link = link.replace("](../", "](" + DOCUMENTATION_URL + "/");
+                } else if (link.contains("](#")) {
+                    link = link.replace(substringAfter(link, "#"), "");
+                    String operation = substringBetween(link, "[", "]");
+
+                    if (operation.startsWith("`") && operation.endsWith("`")) {
+                        operation = substringBetween(link, "`");
+                    }
+
+                    pageName = fileType.equals(EXPRESSIONS) ?
+                               getExpressionOperationFileName(pageName + MD_EXTENSION, operation) :
+                               getFunctionOperationName(operation);
+
+                    link = link.replace("](#", "](" + DOCUMENTATION_URL + "/" + fileType + "/" + pageName + MINI + ")");
+                    setUrlMapping(pageName, fileType, substringBetween(element, "#", ")"), link, fileName);
+                    pageName = originPageName;
+
+                } else {
+                    link = replaceImageLinks(fileType, link);
+                }
+                line = line.replace(element, link);
+            }
+        }
+        return line;
+    }
+
+    /**
+     * Add {@link URLMapping} objects for each local link that points to location in the same document
+     * @param pageName the minified document name for the current operation
+     * @param fileType the type of the file currently under processing
+     * @param anchor the location where the link points to
+     * @param miniDocUrl the url of the minified document for the current operation
+     * @param fileName the name of minified document in which the link is occurring
+     */
+    private static void setUrlMapping(String pageName, String fileType, String anchor,
+                                      String miniDocUrl, String fileName) {
+        String miniDocFile = target + "/" + fileType + "/" + pageName + MINI + MD_EXTENSION;
+        pageName = substringBefore(pageName, OPERATION_SEP);
+        if (fileType.equals(EXPRESSIONS)) { pageName = pageName + EXPRESSION_SUFFIX; }
+        String fullDocUrl = replace(miniDocUrl, substringAfter(miniDocUrl, fileType),
+                                    "/" + pageName + "#" + anchor) + TOKEN_FUNCTION_END;
+        URLMapping urlMapping = new URLMapping(miniDocUrl, miniDocFile, fullDocUrl);
+
+        addMappings(fileName, urlMapping);
+    }
+
+    /**
+     * Correct the local links which point to a different location within the same document. If the minified
+     * file for the link exists, leave it be. If the minified file does not exist, replace the current link with
+     * a full documentation url pointing to the original documentation
+     */
+    private void replaceOldLinks() throws IOException {
+        Set<String> fileList = fileUrlMappings.keySet();
+        for (String fileToFix : fileList) {
+            if (!new File(fileToFix).exists()) { continue; }
+
+            Set<URLMapping> mappingSet = fileUrlMappings.get(fileToFix);
+            StringBuilder sb = new StringBuilder();
+            BufferedReader br = new BufferedReader(new FileReader(fileToFix));
+            String line = br.readLine();
+            while (line != null) {
+                for (URLMapping mapping : mappingSet) {
+                    if (line.contains(mapping.getMiniDocUrl())) {
+                        if (!new File(mapping.getMiniDocFile()).exists()) {
+                            line = line.replace(mapping.getMiniDocUrl(), mapping.getFullDocUrl());
+                        }
+                    }
+                }
+                sb.append(line).append(NL);
+                line = br.readLine();
+            }
+            writeToFile(sb, fileToFix);
         }
     }
 }

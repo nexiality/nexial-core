@@ -2,6 +2,8 @@ package org.nexial.core.tools.docs;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
+
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.NotNull;
@@ -9,49 +11,47 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import org.nexial.commons.utils.RegexUtils;
+import org.nexial.commons.utils.ResourceUtils;
 
 import static org.nexial.core.NexialConst.DEF_FILE_ENCODING;
-import static org.nexial.core.NexialConst.Doc.DOCUMENTATION_URL;
-import static org.nexial.core.NexialConst.Doc.SYSVAR_DOCS_URL;
-import static org.nexial.core.tools.docs.MinifyGenerator.UI_IMAGE_PREFIX;
-import static org.nexial.core.tools.docs.MinifyGenerator.operationCount;
+import static org.nexial.core.NexialConst.Doc.*;
+import static org.nexial.core.tools.docs.MinifyGenerator.*;
 
 public class SysVarMinifyGenerator {
     private static final String HEADER_ROW = "{header-row}";
     private static final String CONFIGURATION_ROW = "{configuration-row}";
     private static final String SYSVAR = "{sysvar}";
-    // todo: move to external files to simplify maintenance
-    private static final String HTML_TEMPLATE = "<table>\n" +
-                                                "    " + HEADER_ROW + "\n" +
-                                                "    " + CONFIGURATION_ROW + "\n" +
-                                                "</table>\n" +
-                                                "<footer>\n" +
-                                                "    <ul>\n" +
-                                                "        <li class=\"doc_home\" title=\"Click here to view Nexial Documentation\"><a href=\"" + DOCUMENTATION_URL +
-                                                "\" target=\"_blank\">Nexial</a></li>\n" +
-                                                "        <li class=\"doc_parent\" title=\"Click here to view System Variable Documentation\"><a href=\"" + SYSVAR_DOCS_URL + "#" + SYSVAR +
-                                                "\" target=\"_blank\">" + SYSVAR + "</a></li>\n" +
-                                                "    </ul>\n" +
-                                                "</footer>\n";
+    public static final String CONTENT_HTML = "content.html";
+    public static final String HTML_TEMPLATE = "/HtmlTemplate.html";
+    public static final String IMAGE_REGEX = "src=\\\"image\\/.+?.(png|jpg)\\\"";
+    public static final String HREF_PREFIX = "href=\"";
+    public static final String HREF_LINK_PREFIX = HREF_PREFIX + "#";
 
     private final String sysvarLocation;
-    private final String targetFile;
-    private final String imageLocation;
 
     public SysVarMinifyGenerator(String sysvarLocation) {
-        this.sysvarLocation = sysvarLocation;
-        // todo: constants over hardcoding
-        targetFile    = sysvarLocation + "content.html";
-        imageLocation = sysvarLocation + "image";
+        this.sysvarLocation = StringUtils.appendIfMissing(sysvarLocation, "/");
     }
 
-
+    /**
+     * Process the html document containing the system variables
+     */
     public void processDocument() {
-        Document document = getDocument();
-        if (document != null) { processTables(document); }
+        try {
+            Document document = getDocument();
+            if (document != null) { processTables(document); }
+        } catch (Exception exception) {
+            System.err.println("An error occurred while parsing " + exception.getMessage());
+            System.exit(-1);
+        }
     }
 
-    private void processTables(Document document) {
+    /**
+     * Process the tables in the current document and create the minified files for each system variables
+     * @param document the document to parse
+     */
+    private void processTables(Document document) throws IOException {
         Elements tables = document.select("table.sysvar");
         Element headerRow = tables.first().children().first().child(0);
         for (Element table : tables) {
@@ -72,54 +72,94 @@ public class SysVarMinifyGenerator {
         }
     }
 
-    private void writeFile(String configurationId, String headerRow, String html) {
+    /**
+     * Write the contents of the html into a new file
+     * @param configurationId the configuration id the current system variable
+     * @param headerRow the header row of the table currently being read
+     * @param html the contents to be written into the file
+     */
+    private void writeFile(String configurationId, String headerRow, String html) throws IOException {
         File configurationFile = new File(getFileName(configurationId));
         if (html.contains("src=\"image/")) { html = replaceImageLinks(html); }
-        String content = HTML_TEMPLATE.replace(CONFIGURATION_ROW, html)
-                                      .replace(HEADER_ROW, headerRow)
-                                      .replace(SYSVAR, configurationId);
-
-        try {
-            FileUtils.write(configurationFile, content, DEF_FILE_ENCODING);
-            System.out.println("Successfully wrote file " + configurationFile.getName());
-            operationCount++;
-        } catch (IOException e) {
-            System.out.println("Error occurred during writing file : " + configurationFile.getName());
-            // todo: what is the actual error? any reason to hide that?
+        if (html.contains(HREF_PREFIX)) {
+            html = replaceLinks(html, configurationFile.getPath());
         }
+        String htmlTemplatePath = getClass().getPackage().getName().replace(".", "/") + HTML_TEMPLATE;
+        String htmlTemplate =
+                ResourceUtils.loadResource(htmlTemplatePath);
+        if (htmlTemplate == null) {
+            throw new RuntimeException("HTML template could not be resolved");
+        }
+        String content = htmlTemplate.replace(CONFIGURATION_ROW, html)
+                                     .replace(HEADER_ROW, headerRow)
+                                     .replace(SYSVAR, configurationId);
+        FileUtils.write(configurationFile, content, DEF_FILE_ENCODING);
+        System.out.println("Created " + configurationFile.getAbsolutePath());
+        operationCount++;
+
     }
 
-    @NotNull
-    private String replaceImageLinks(String html) {
-        html = html.replace("src=\"image/", "src=\"" + SYSVAR_DOCS_URL + "image/");
-
-        String imageName = StringUtils.substringBetween(html, "image/", "\"/>");
-        String uiImageName = UI_IMAGE_PREFIX + imageName;
-
-        // todo: listFiles() may return null list; NPE alert
-        if (new File(imageLocation).listFiles(pathname -> pathname.getName().equals(uiImageName)).length > 0) {
-            html = html.replace(imageName, uiImageName);
+    /**
+     * Replace the local documentation link with global links
+     * @param html the contents of the current html under processing
+     * @param configurationFile the file in which the links are occurring
+     * @return the html with updated links
+     */
+    private String replaceLinks(String html, String configurationFile) {
+        if (html.contains(HREF_PREFIX + "../")) {
+            html = StringUtils.replace(html, HREF_PREFIX + "..", HREF_PREFIX + DOCUMENTATION_URL);
         }
-
+        while (html.contains(HREF_LINK_PREFIX)) {
+            String pageName = StringUtils.substringBetween(html, HREF_LINK_PREFIX, "\"");
+            String fullDocUrl = SYSVAR_DOCS_URL + "#" + pageName;
+            String miniDocUrl = SYSVAR_DOCS_URL + StringUtils.replace(pageName, ".*", "") + MINI_HTML;
+            String miniDocFile = getFileName(pageName);
+            URLMapping urlMapping = new URLMapping(miniDocUrl, miniDocFile, fullDocUrl);
+            addMappings(configurationFile, urlMapping);
+            html = StringUtils.replace(html, HREF_LINK_PREFIX + pageName, HREF_PREFIX + miniDocUrl);
+        }
         return html;
     }
 
-    private String getFileName(String text) {
-        return sysvarLocation + StringUtils.replace(text, ".*", "") + ".html";
+    /**
+     * Replace the local links in the html with global links
+     * @param html the html containing the image links
+     * @return the updated html with global image links
+     */
+    @NotNull
+    private String replaceImageLinks(String html) {
+        List<String> imageLinks = RegexUtils.eagerCollectGroups(html, IMAGE_REGEX, true, true);
+        for (String imageLink : imageLinks) {
+            String imageName = StringUtils.substringBetween(imageLink, "image/", "\"");
+            String uiImageName = UI_IMAGE_PREFIX + imageName;
+            if (new File(sysvarLocation + IMAGE + "/" + uiImageName).exists()) {
+                html = html.replace(imageName, uiImageName);
+            }
+        }
+        html = html.replace("src=\"image/", "src=\"" + SYSVAR_DOCS_URL + "image/");
+        return html;
     }
 
-    private Document getDocument() {
-        try {
-            File file = new File(targetFile);
-            if (!file.exists()) {
-                System.err.println("File does not exist");
-                return null;
-            }
-            return Jsoup.parse(file, DEF_FILE_ENCODING);
-        } catch (IOException exception) {
-            System.err.println("Error occurred during parsing of file " + targetFile);
-            // todo: what is the actual error? any reason to hide that?
+
+    /**
+     * Return the file name of the minified doc for the system variable
+     * @param text the text to be written into the new file
+     * @return the name of the minified doc
+     */
+    private String getFileName(String text) {
+        return sysvarLocation + StringUtils.replace(text, ".*", "") + MINI_HTML;
+    }
+
+    /**
+     * Get the html specified the location and return the {@link Document} object
+     * @return the html {@link Document} object
+     */
+    private Document getDocument() throws IOException {
+        File file = new File(sysvarLocation + CONTENT_HTML);
+        if (!file.exists()) {
+            System.err.println("File does not exist");
             return null;
         }
+        return Jsoup.parse(file, DEF_FILE_ENCODING);
     }
 }
