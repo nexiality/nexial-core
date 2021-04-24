@@ -153,7 +153,7 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
             }
 
             List<String> dimension = null;
-            if (!context.getBooleanData(DESKTOP_SCREENSHOT_FULLSCREEN, DEF_DESKTOP_SCREENSHOT_FULLSCREEN)) {
+            if (!context.getBooleanData(SCREENSHOT_FULLSCREEN, getDefaultBool(SCREENSHOT_FULLSCREEN))) {
                 dimension = TextUtils.toList(application.getAttribute(ATTR_BOUNDING_RECTANGLE), ",", true);
             }
 
@@ -2286,7 +2286,20 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
 
     protected StepResult click(String name, ElementType expectedType) {
         DesktopElement component = getRequiredElement(name, expectedType);
-        component.getElement().click();
+
+        boolean simulateClick = getDefaultBool(PREFER_BRC_OVER_CLICK);
+        if (context.hasData(PREFER_BRC_OVER_CLICK)) {
+            simulateClick = context.getBooleanData(PREFER_BRC_OVER_CLICK);
+        } else if (component.extra.containsKey(PREFER_BRC_OVER_CLICK)) {
+            simulateClick = BooleanUtils.toBoolean(component.extra.get(PREFER_BRC_OVER_CLICK));
+        }
+
+        if (simulateClick) {
+            winiumDriver.executeScript(SCRIPT_CLICK, component.getElement());
+        } else {
+            component.getElement().click();
+        }
+
         autoClearModalDialog(component);
         return StepResult.success("Element '" + name + "' clicked");
     }
@@ -2560,7 +2573,7 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
     }
 
     public void autoClearModalDialog(String xpath) {
-        if (!context.getBooleanData(DESKTOP_AUTO_CLEAR_MODAL_DIALOG, DEF_AUTO_CLEAR_MODAL_DIALOG)) { return; }
+        if (!context.getBooleanData(AUTO_CLEAR_MODAL_DIALOG, getDefaultBool(AUTO_CLEAR_MODAL_DIALOG))) { return; }
         if (StringUtils.isBlank(xpath)) { return; }
 
         String baseXpath = "/" + StringUtils.substringBefore(xpath.substring(1), "/");

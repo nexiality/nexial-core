@@ -1790,7 +1790,7 @@ public class DesktopElement {
         }
 
         ExecutionContext context = ExecutionThread.get();
-        if (context != null && context.getBooleanData(DESKTOP_USE_TYPE_KEYS, DEF_DESKTOP_USE_TYPE_KEYS)) {
+        if (context != null && context.getBooleanData(USE_TYPE_KEYS, getDefaultBool(USE_TYPE_KEYS))) {
             String keystrokes = (append ? "[CTRL-END]\n" : "") + TextUtils.toString(text, "\n", "", "");
             keystrokes = NativeInputParser.handleKeys(keystrokes);
             NativeInputHelper.typeKeys(TextUtils.toList(StringUtils.remove(keystrokes, "\r"), "\n", false));
@@ -2425,7 +2425,7 @@ public class DesktopElement {
         ExecutionContext context = ExecutionThread.get();
         if (context == null) { return; }
 
-        if (!context.getBooleanData(DESKTOP_AUTO_CLEAR_MODAL_DIALOG, DEF_AUTO_CLEAR_MODAL_DIALOG)) { return; }
+        if (!context.getBooleanData(AUTO_CLEAR_MODAL_DIALOG, getDefaultBool(AUTO_CLEAR_MODAL_DIALOG))) { return; }
         if (StringUtils.isBlank(xpath)) { return; }
         DesktopUtils.clearModalDialog(getDriver(), "/" + StringUtils.substringBefore(xpath.substring(1), "/"));
     }

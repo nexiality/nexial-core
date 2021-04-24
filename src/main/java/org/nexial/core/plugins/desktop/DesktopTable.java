@@ -492,7 +492,7 @@ public class DesktopTable extends DesktopElement {
 
     private boolean clickBeforeEdit() {
         ExecutionContext context = ExecutionThread.get();
-        return context.getBooleanData(CURRENT_DESKTOP_TABLE_CLICK_BEFORE_EDIT, DEF_DESKTOP_TABLE_CLICK_BEFORE_EDIT);
+        return context.getBooleanData(TABLE_CLICK_BEFORE_EDIT, getDefaultBool(TABLE_CLICK_BEFORE_EDIT));
     }
 
     public StepResult editCells(Integer row, Map<String, String> nameValues) {
@@ -525,8 +525,7 @@ public class DesktopTable extends DesktopElement {
         StringBuilder messageBuffer = new StringBuilder();
 
         ExecutionContext context = ExecutionThread.get();
-        boolean tabAfterEdit =
-                context.getBooleanData(CURRENT_DESKTOP_TABLE_TAB_AFTER_EDIT, DEF_DESKTOP_TABLE_TAB_AFTER_EDIT);
+        boolean tabAfterEdit = context.getBooleanData(TABLE_TAB_AFTER_EDIT, getDefaultBool(TABLE_TAB_AFTER_EDIT));
 
         // loop through each nameValues pairs
         WebElement lastElement = null;
@@ -536,7 +535,7 @@ public class DesktopTable extends DesktopElement {
         boolean setFocusOut = false;
         for (Map.Entry<String, String> nameValue : nameValues.entrySet()) {
 
-            if (context.getBooleanData(DESKTOP_DIALOG_LOOKUP, DEF_DESKTOP_DIALOG_LOOKUP)) {
+            if (context.getBooleanData(DIALOG_LOOKUP, getDefaultBool(DIALOG_LOOKUP))) {
                 // fail if any modal dialog present
                 WebElement modal = DesktopCommand.getModalDialog(getCurrentSession().getApp().getElement());
                 if (modal != null) {

@@ -30,6 +30,7 @@ import org.openqa.selenium.WebElement;
 
 import static org.nexial.core.NexialConst.NAMESPACE;
 import static org.nexial.core.NexialConst.NL;
+import static org.nexial.core.SystemVariables.registerSysVar;
 import static org.nexial.core.plugins.desktop.DesktopUtils.printDetails;
 import static org.nexial.core.plugins.desktop.ElementType.*;
 
@@ -53,27 +54,25 @@ public class DesktopConst {
     public static final String CURRENT_DESKTOP_CONTAINER_NAME = NS_DESKTOP + "container.name";
     public static final String CURRENT_DESKTOP_LIST = NS_DESKTOP + "list";
     public static final String CURRENT_DESKTOP_LIST_NAME = NS_DESKTOP + "list.name";
-    public static final String CURRENT_DESKTOP_TABLE = NS_DESKTOP + "table";
-    public static final String CURRENT_DESKTOP_TABLE_NAME = NS_DESKTOP + "table.name";
-    public static final String CURRENT_DESKTOP_TABLE_ROW = NS_DESKTOP + "table.row";
-    public static final String CURRENT_DESKTOP_TABLE_ROW_NAME = NS_DESKTOP + "table.row.name";
-    public static final String CURRENT_DESKTOP_TABLE_EDITABLE_COLUMN_NAME = CURRENT_DESKTOP_TABLE + "editable.column.name";
-    public static final String CURRENT_DESKTOP_TABLE_EDITABLE_COLUMN_FOUND = CURRENT_DESKTOP_TABLE + "editable.column.found";
-    public static final String CURRENT_DESKTOP_TABLE_CLICK_BEFORE_EDIT = CURRENT_DESKTOP_TABLE + ".clickBeforeEdit";
-    public static final boolean DEF_DESKTOP_TABLE_CLICK_BEFORE_EDIT = true;
-    public static final String CURRENT_DESKTOP_TABLE_TAB_AFTER_EDIT = CURRENT_DESKTOP_TABLE + ".tabAfterEdit";
-    public static final boolean DEF_DESKTOP_TABLE_TAB_AFTER_EDIT = false;
+    public static final String NS_TABLE = NS_DESKTOP + "table";
+    public static final String CURRENT_DESKTOP_TABLE = NS_TABLE;
+    public static final String CURRENT_DESKTOP_TABLE_NAME = NS_TABLE + ".name";
+    public static final String NS_TABLE_ROW = NS_TABLE + ".row";
+    public static final String CURRENT_DESKTOP_TABLE_ROW = NS_TABLE_ROW;
+    public static final String CURRENT_DESKTOP_TABLE_ROW_NAME = NS_TABLE_ROW + ".name";
+    public static final String CURRENT_DESKTOP_TABLE_EDITABLE_COLUMN_NAME = NS_TABLE + "editable.column.name";
+    public static final String CURRENT_DESKTOP_TABLE_EDITABLE_COLUMN_FOUND = NS_TABLE + "editable.column.found";
+
     public static final String CURRENT_DESKTOP_HIER_TABLE = NS_DESKTOP + "hiertable";
     public static final String CURRENT_DESKTOP_HIER_TABLE_NAME = NS_DESKTOP + "hiertable.name";
-    public static final String DESKTOP_SCREENSHOT_FULLSCREEN = NS_DESKTOP + "fullScreenCapture";
-    public static final boolean DEF_DESKTOP_SCREENSHOT_FULLSCREEN = false;
-    public static final String DESKTOP_AUTO_CLEAR_MODAL_DIALOG = NS_DESKTOP + "autoClearModalDialog";
-    public static final boolean DEF_AUTO_CLEAR_MODAL_DIALOG = false;
-    public static final String DESKTOP_DIALOG_LOOKUP = NS_DESKTOP + "dialogLookup";
-    public static final boolean DEF_DESKTOP_DIALOG_LOOKUP = false;
 
-    public static final String DESKTOP_USE_TYPE_KEYS = NS_DESKTOP + "useTypeKeys";
-    public static final boolean DEF_DESKTOP_USE_TYPE_KEYS = false;
+    public static final String TABLE_CLICK_BEFORE_EDIT = registerSysVar(NS_TABLE + ".clickBeforeEdit", true);
+    public static final String TABLE_TAB_AFTER_EDIT = registerSysVar(NS_TABLE + ".tabAfterEdit", false);
+    public static final String SCREENSHOT_FULLSCREEN = registerSysVar(NS_DESKTOP + "fullScreenCapture", false);
+    public static final String AUTO_CLEAR_MODAL_DIALOG = registerSysVar(NS_DESKTOP + "autoClearModalDialog", false);
+    public static final String PREFER_BRC_OVER_CLICK = registerSysVar(NS_DESKTOP + "simulateClick", false);
+    public static final String DIALOG_LOOKUP = registerSysVar(NS_DESKTOP + "dialogLookup", false);
+    public static final String USE_TYPE_KEYS = registerSysVar(NS_DESKTOP + "useTypeKeys", false);
 
     public static final String DEF_CONFIG_HOME = "/desktop/";
     public static final String DEF_CONFIG_FILENAME = "application.json";
