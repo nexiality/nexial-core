@@ -17,22 +17,6 @@
 
 package org.nexial.core.plugins.io;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.text.NumberFormat;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.*;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-import javax.validation.constraints.NotNull;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.io.FileUtils;
@@ -51,11 +35,7 @@ import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.nexial.commons.utils.*;
 import org.nexial.core.excel.Excel;
 import org.nexial.core.excel.Excel.Worksheet;
-import org.nexial.core.model.ExecutionContext;
-import org.nexial.core.model.NexialFilter;
-import org.nexial.core.model.NexialFilterComparator;
-import org.nexial.core.model.NexialFilterList;
-import org.nexial.core.model.StepResult;
+import org.nexial.core.model.*;
 import org.nexial.core.plugins.base.BaseCommand;
 import org.nexial.core.plugins.filevalidation.RecordData;
 import org.nexial.core.plugins.filevalidation.parser.FileParserFactory;
@@ -66,6 +46,23 @@ import org.nexial.core.utils.CheckUtils;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.OutputFileUtils;
 import org.nexial.core.utils.OutputResolver;
+
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import javax.validation.constraints.NotNull;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.text.NumberFormat;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import static java.io.File.separator;
 import static java.io.File.separatorChar;
@@ -156,7 +153,8 @@ public class IoCommand extends BaseCommand {
         // save matches
         File searchPath = new File(path);
         boolean recursive = context.getBooleanData(OPT_IO_MATCH_RECURSIVE, getDefaultBool(OPT_IO_MATCH_RECURSIVE));
-        boolean includeSubdir = context.getBooleanData(OPT_IO_MATCH_INCL_SUBDIR, getDefaultBool(OPT_IO_MATCH_INCL_SUBDIR));
+        boolean includeSubdir =
+            context.getBooleanData(OPT_IO_MATCH_INCL_SUBDIR, getDefaultBool(OPT_IO_MATCH_INCL_SUBDIR));
         context.setData(var, listMatchingFiles(searchPath, fileFilter, textFilter, recursive, includeSubdir));
         return StepResult.success("saving matching file list to ${" + var + "}");
     }
@@ -787,8 +785,10 @@ public class IoCommand extends BaseCommand {
             }
         }
 
-        String prolog = action + " done [source '" + source + "', target '" + target + "']";
-        String errorProlog = action + " failed [source '" + source + "', target '" + target + "']: ";
+        String prologDetail = (StringUtils.isBlank(source) ? "source '" + source + "', " : "") +
+                              (StringUtils.isBlank(target) ? "target '" + target + "'" : "");
+        String prolog = action + " done [" + prologDetail + "]";
+        String errorProlog = action + " failed [" + prologDetail + "]: ";
 
         String config = context.getStringData(OPT_IO_COPY_CONFIG, getDefault(OPT_IO_COPY_CONFIG));
         action.setCopyConfig(config);

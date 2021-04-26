@@ -17,14 +17,6 @@
 
 package org.nexial.core.plugins.desktop;
 
-import java.time.Duration;
-import java.time.Instant;
-import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.collections4.map.ListOrderedMap;
@@ -34,11 +26,13 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.nexial.commons.utils.DateUtility;
 import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.ExecutionThread;
 import org.nexial.core.NexialConst.PolyMatcher;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.model.StepResult;
+import org.nexial.core.plugins.desktop.TableData.TableRow;
 import org.nexial.core.plugins.desktop.ig.IgExplorerBar;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.JsonUtils;
@@ -47,6 +41,17 @@ import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.WebDriverException;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.interactions.Actions;
+
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import java.text.DecimalFormat;
+import java.text.ParseException;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import static org.nexial.core.NexialConst.Desktop.CLEAR_TABLE_CELL_BEFORE_EDIT;
 import static org.nexial.core.NexialConst.NL;
@@ -184,11 +189,11 @@ public class DesktopTable extends DesktopElement {
                 List<WebElement> columns = element.findElements(By.xpath(xpath));
                 if (CollectionUtils.isEmpty(columns)) {
                     ConsoleUtils.log("No data found; re-scanning for table structure via " + xpath);
-                    xpath   = LOCATOR_HIER_HEADER_COLUMNS;
+                    xpath = LOCATOR_HIER_HEADER_COLUMNS;
                     columns = element.findElements(By.xpath(xpath));
                 }
 
-                headers     = columns.stream().map(elem -> elem.getAttribute(ATTR_NAME)).collect(Collectors.toList());
+                headers = columns.stream().map(elem -> elem.getAttribute(ATTR_NAME)).collect(Collectors.toList());
                 columnCount = headers.size();
 
             } else {
@@ -196,9 +201,9 @@ public class DesktopTable extends DesktopElement {
                 if (StringUtils.isNotEmpty(row)) {
                     xpath = "*[@Name='" + row + "']/*[@Name!='Column Headers']";
                     ConsoleUtils.log("scanning for table structure via " + xpath);
-                    headers     = element.findElements(By.xpath(xpath)).stream()
-                                         .map(elem -> elem.getAttribute(ATTR_NAME))
-                                         .collect(Collectors.toList());
+                    headers = element.findElements(By.xpath(xpath)).stream()
+                                     .map(elem -> elem.getAttribute(ATTR_NAME))
+                                     .collect(Collectors.toList());
                     columnCount = headers.size();
                 }
             }
@@ -295,6 +300,7 @@ public class DesktopTable extends DesktopElement {
     /** As of v3.7, we will support HierTable (aka ControlType.Tree) as well */
     public TableData fetch(int begin, int end) {
         sanityCheck();
+        TableData tableData;
         Instant startTime = Instant.now();
         if (isTreeView) {
             String index = begin == end ?
@@ -302,11 +308,48 @@ public class DesktopTable extends DesktopElement {
                            "position()>=" + (begin + 1) + " and position()<=" + (end + 1);
             String xpath = "*[@ControlType='ControlType.DataItem'][" + index + "]/*";
             List<WebElement> rowData = element.findElements(By.xpath(xpath));
-            return TableData.fromTreeViewRows(headers, rowData, Duration.between(startTime, Instant.now()));
+            tableData = TableData.fromTreeViewRows(headers, rowData, Duration.between(startTime, Instant.now()));
         } else {
             String object = (String) driver.executeScript(SCRIPT_DATAGRID_FETCH, element, begin, end);
-            return new TableData(object, Duration.between(startTime, Instant.now()));
+            tableData = new TableData(object, Duration.between(startTime, Instant.now()));
         }
+
+        List<String> columnNames = tableData.getColumns();
+        List<TableRow> data = tableData.getData();
+        for (TableRow row : data) {
+            for (int i = 0; i < columnNames.size(); i++) {
+                String columnName = columnNames.get(i);
+                if (row.size() <= i) { continue; }
+
+                String formatKey = columnName + ".format";
+                if (!extra.containsKey(formatKey)) { continue; }
+
+                String formatRule = extra.get(formatKey);
+                if (!StringUtils.contains(formatRule, ",")) { continue; }
+
+                String[] formats = StringUtils.split(formatRule, ",");
+                String value = row.get(columnName);
+                if (StringUtils.containsAny(formatRule, "MdyHhms")) {
+                    // date format
+                    value = DateUtility.formatTo(value, formats[0], formats[1]);
+                }
+
+                if (StringUtils.containsAny(formatRule, "0#")) {
+                    // number format
+                    try {
+                        Number parsed = new DecimalFormat(formats[0]).parse(value);
+                        value = new DecimalFormat(formats[1]).format(parsed);
+                    } catch (ParseException e) {
+                        ConsoleUtils.error("Unable to parse/reformat Row " + (i + 1) + " Column " + columnName + ": " +
+                                           e.getMessage());
+                    }
+                }
+
+                row.put(i + "", columnName, value);
+            }
+        }
+
+        return tableData;
     }
 
     /** As of v3.7, we will support HierTable (aka ControlType.Tree) as well */
@@ -353,7 +396,7 @@ public class DesktopTable extends DesktopElement {
         ExecutionContext context = ExecutionThread.get();
 
         List<WebElement> dataElements =
-                element.findElements(By.xpath(isTreeView ? LOCATOR_HIER_TABLE_ROWS : LOCATOR_TABLE_DATA));
+            element.findElements(By.xpath(isTreeView ? LOCATOR_HIER_TABLE_ROWS : LOCATOR_TABLE_DATA));
         if (CollectionUtils.isEmpty(dataElements)) { ConsoleUtils.log("No rows found for data grid " + element); }
 
         if (isTreeView && dataElements.size() == 1) {
@@ -373,7 +416,7 @@ public class DesktopTable extends DesktopElement {
         boolean newRow = false;
         ConsoleUtils.log("current row count: " + rowCount);
         if (row >= rowCount) {
-            row    = rowCount;
+            row = rowCount;
             newRow = true;
         }
 
@@ -388,22 +431,22 @@ public class DesktopTable extends DesktopElement {
                 if (row == 0) {
                     if (clickBeforeEdit()) {
                         clickOffset(element, clickOffsetX, (headerHeight + (TABLE_ROW_HEIGHT / 2)));
-                        try { Thread.sleep(2000);} catch (InterruptedException e) {}
+                        try { Thread.sleep(2000); } catch (InterruptedException e) {}
                     }
                     matches = element.findElements(By.xpath(LOCATOR_NEW_ROW));
                     if (CollectionUtils.isEmpty(matches)) {
                         // try clicking on first row
                         WebElement firstRow =
-                                element.findElements(By.xpath("*")).stream()
-                                       .filter(elem -> StringUtils.containsIgnoreCase(elem.getAttribute("Name"), "row"))
-                                       .findFirst().orElse(null);
+                            element.findElements(By.xpath("*")).stream()
+                                   .filter(elem -> StringUtils.containsIgnoreCase(elem.getAttribute("Name"), "row"))
+                                   .findFirst().orElse(null);
                         if (firstRow != null) {
                             firstRow.click();
                             matches = element.findElements(By.xpath(LOCATOR_NEW_ROW));
                         }
                         if (CollectionUtils.isEmpty(matches)) {
                             throw new IllegalArgumentException(
-                                    msgPrefix + "Unable to retrieve any row; no 'Add Row' found");
+                                msgPrefix + "Unable to retrieve any row; no 'Add Row' found");
                         }
                     }
                 } else {
@@ -580,7 +623,7 @@ public class DesktopTable extends DesktopElement {
                 if (CollectionUtils.isNotEmpty(matches)) {
                     ConsoleUtils.log(msgPrefix2 + " found surrogate (inner) element");
                     checkboxElement = matches.get(0);
-                    isChecked       = BooleanUtils.toBoolean(StringUtils.trim(checkboxElement.getText()));
+                    isChecked = BooleanUtils.toBoolean(StringUtils.trim(checkboxElement.getText()));
                     ConsoleUtils.log("checkbox element is currently " + (isChecked ? "CHECKED" : "UNCHECKED"));
                 } else {
                     checkboxElement = findCellCheckboxElement(cellElement);
@@ -721,7 +764,7 @@ public class DesktopTable extends DesktopElement {
         int columnWidth = 0;
         if (columnBoundary != null) {
             columnXoffset = columnBoundary.getX();
-            columnWidth   = columnBoundary.getWidth();
+            columnWidth = columnBoundary.getWidth();
         }
 
         if (clickOffsetX > (columnXoffset - tableXoffset) &&

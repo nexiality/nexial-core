@@ -17,16 +17,6 @@
 
 package org.nexial.core.plugins.desktop;
 
-import java.awt.*;
-import java.io.File;
-import java.io.IOException;
-import java.lang.reflect.Array;
-import java.lang.reflect.InvocationTargetException;
-import java.util.List;
-import java.util.*;
-import java.util.stream.Collectors;
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.ArrayUtils;
@@ -55,18 +45,27 @@ import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.NativeInputHelper;
 import org.nexial.core.utils.OutputFileUtils;
 import org.nexial.seeknow.SeeknowData;
-import org.openqa.selenium.By;
+import org.openqa.selenium.*;
 import org.openqa.selenium.By.ByClassName;
 import org.openqa.selenium.By.ById;
 import org.openqa.selenium.By.ByName;
-import org.openqa.selenium.By.ByXPath;
 import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.Rectangle;
-import org.openqa.selenium.WebDriverException;
-import org.openqa.selenium.WebElement;
+import org.openqa.selenium.By.ByXPath;
 import org.openqa.selenium.interactions.Actions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import org.openqa.selenium.winium.WiniumDriver;
+
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import java.awt.Point;
+import java.io.File;
+import java.io.IOException;
+import java.lang.reflect.Array;
+import java.lang.reflect.InvocationTargetException;
+import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import static java.io.File.separator;
 import static java.lang.Integer.MAX_VALUE;
@@ -358,13 +357,13 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
         // move into position
         new Actions(winiumDriver).moveToElement(menuParent, 10, 10).perform();
 
+        boolean useIndex = StringUtils.startsWith(menu, CONTEXT_MENU_VIA_INDEX);
+        if (useIndex) { menu = StringUtils.trim(StringUtils.substringAfter(menu, CONTEXT_MENU_VIA_INDEX)); }
+
         // split menu into its individual levels
         String[] menuItems = StringUtils.splitByWholeSeparator(menu, context.getTextDelim());
         for (int i = 0; i < menuItems.length; i++) {
             String item = menuItems[i];
-            boolean useIndex = StringUtils.startsWith(item, CONTEXT_MENU_VIA_INDEX);
-            if (useIndex) { item = StringUtils.trim(StringUtils.substringAfter(item, CONTEXT_MENU_VIA_INDEX)); }
-
             String xpath = i == 0 ? "" : "*[@ControlType='ControlType.Menu']/";
             if (useIndex) {
                 if (!NumberUtils.isDigits(item)) {
