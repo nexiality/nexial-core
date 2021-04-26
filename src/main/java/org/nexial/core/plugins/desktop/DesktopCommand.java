@@ -357,14 +357,14 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
         // move into position
         new Actions(winiumDriver).moveToElement(menuParent, 10, 10).perform();
 
-        boolean useIndex = StringUtils.startsWith(menu, CONTEXT_MENU_VIA_INDEX);
-        if (useIndex) { menu = StringUtils.trim(StringUtils.substringAfter(menu, CONTEXT_MENU_VIA_INDEX)); }
-
         // split menu into its individual levels
         String[] menuItems = StringUtils.splitByWholeSeparator(menu, context.getTextDelim());
         for (int i = 0; i < menuItems.length; i++) {
-            String item = menuItems[i];
             String xpath = i == 0 ? "" : "*[@ControlType='ControlType.Menu']/";
+
+            String item = menuItems[i];
+            boolean useIndex = StringUtils.startsWith(item, CONTEXT_MENU_VIA_INDEX);
+            if (useIndex) { item = StringUtils.trim(StringUtils.substringAfter(item, CONTEXT_MENU_VIA_INDEX)); }
             if (useIndex) {
                 if (!NumberUtils.isDigits(item)) {
                     throw new IllegalArgumentException("Invalid context menu index: " + item);
