@@ -30,6 +30,9 @@ final class MiniDocConst {
     static final String SYSVAR = "{sysvar}";
     static final String FRONT_MATTER_TEMLATE = MinifyGenerator.class.getPackage().getName().replace(".", "/") +
                                                "/MinifiedFrontMatterTemplate.md";
+    public static final String TABLE_ROW_START = "<tr>\n";
+    public static final String TABLE_ROW_END = "\n</tr>";
+    public static final String TARGET_ATTR = "target";
 
     private MiniDocConst() { }
 

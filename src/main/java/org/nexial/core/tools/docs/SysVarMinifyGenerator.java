@@ -3,7 +3,9 @@ package org.nexial.core.tools.docs;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.NotNull;
@@ -36,7 +38,7 @@ public class SysVarMinifyGenerator {
             Document document = getDocument();
             if (document != null) { processTables(document); }
         } catch (Exception exception) {
-            System.err.println("An error occurred while parsing " + exception.getMessage());
+            System.err.println("An error occurred while parsing: " + exception.getMessage());
             System.exit(-1);
         }
     }
@@ -48,22 +50,71 @@ public class SysVarMinifyGenerator {
      */
     private void processTables(Document document) throws IOException {
         Elements tables = document.select("table.sysvar");
-        Element headerRow = tables.first().children().first().child(0);
         for (Element table : tables) {
-            System.out.println("\nProcessing table : ");
+
+            Elements headers = table.child(0).child(0).children();
+            int headerSize = headers.size();
+            headers.remove(0);
+
+            System.out.println("\nProcessing table");
             Elements rows = table.children().first().children();
+            Elements prevDataRow = new Elements();
+
             for (Element row : rows) {
                 if (!row.child(0).tag().getName().equals("th")) {
+
                     String configurationId = row.child(0).child(0).id();
+
                     if (!configurationId.equals("")) {
+                        Elements rowChildren = document.getElementById(configurationId).parent().parent().children();
+                        fixColumns(rowChildren, prevDataRow, headerSize);
+                        addTargetToLinks(rowChildren);
+                        rowChildren.remove(0);
                         writeFile(configurationId,
-                                  headerRow.outerHtml(),
-                                  document.getElementById(configurationId).parent().parent().outerHtml());
+                                  TABLE_ROW_START + headers.outerHtml() + TABLE_ROW_END,
+                                  TABLE_ROW_START + rowChildren.outerHtml() + TABLE_ROW_END);
                     }
                 }
             }
             System.out.println("\nOperation count for current table is " + operationCount);
             operationCount = 0;
+        }
+    }
+
+    /**
+     * Some table rows have missing columns. This method fixes this by adding the columns from the last row to have
+     * full number of columns.
+     *
+     * @param rowChildren the contents of the current row
+     * @param prevDataRow the contents of the last row to have all columns
+     * @param headerSize the nymber of headers for the current table
+     */
+    private void fixColumns(Elements rowChildren, Elements prevDataRow, int headerSize) {
+        int columns = CollectionUtils.size(rowChildren);
+        if (columns == headerSize) {
+            prevDataRow.clear();
+            prevDataRow.addAll(rowChildren);
+        } else if (columns < headerSize && CollectionUtils.size(prevDataRow) == headerSize) {
+            for (int i = columns; i < headerSize; i++) {
+                rowChildren.add(prevDataRow.get(i));
+            }
+        }
+    }
+
+    /**
+     * Adds a target attribute to the links in the current row if they do not have a target attribute defined already
+     * @param rowChildren the contents of the current row
+     */
+    private void addTargetToLinks(Elements rowChildren) {
+        List<Element> hrefs = new ArrayList<>();
+        for (Element child : rowChildren){
+            if(child.hasAttr("href"))
+                hrefs.add(child);
+        }
+        if (CollectionUtils.isNotEmpty(hrefs)) {
+            hrefs.forEach(element -> {
+                if (!element.hasAttr(TARGET_ATTR)) { element.attr(TARGET_ATTR, "_nexial_link"); }
+            });
         }
     }
 
@@ -114,6 +165,7 @@ public class SysVarMinifyGenerator {
             addMappings(configurationFile, urlMapping);
             html = StringUtils.replace(html, HREF_LINK_PREFIX + pageName, HREF_PREFIX + miniDocUrl);
         }
+        html = StringUtils.replace(html, " href=", " target=\"_nexial_link\" href=");
         return html;
     }
 
