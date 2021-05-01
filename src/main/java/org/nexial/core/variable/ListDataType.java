@@ -17,11 +17,11 @@
 
 package org.nexial.core.variable;
 
-import javax.validation.constraints.NotNull;
-
 import org.apache.commons.lang3.StringUtils;
 import org.nexial.core.ExecutionThread;
 import org.nexial.core.model.ExecutionContext;
+
+import javax.validation.constraints.NotNull;
 
 import static org.nexial.core.NexialConst.Data.TEXT_DELIM;
 import static org.nexial.core.SystemVariables.getDefault;
@@ -72,6 +72,11 @@ public class ListDataType extends ExpressionDataType<String[]> {
     protected void init() { parse(); }
 
     protected void parse() {
+        if (StringUtils.isEmpty(textValue)) {
+            value = new String[0];
+            return;
+        }
+
         if (StringUtils.isEmpty(delim)) {
             ExecutionContext context = ExecutionThread.get();
             delim = context == null ? getDefault(TEXT_DELIM) : context.getTextDelim();

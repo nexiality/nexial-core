@@ -821,7 +821,6 @@ public class ExpressionProcessorTest {
                                                " divide( 5.0190 , 0.07092  )]"));
     }
 
-
     @Test
     public void processNumber3() throws Exception {
         ExpressionProcessor subject = new ExpressionProcessor(context);

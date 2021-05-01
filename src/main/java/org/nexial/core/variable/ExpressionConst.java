@@ -17,11 +17,11 @@
 
 package org.nexial.core.variable;
 
+import org.nexial.commons.utils.TextUtils;
+
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-
-import org.nexial.commons.utils.TextUtils;
 
 final class ExpressionConst {
     static final String DATATYPE_START = "(";
@@ -32,7 +32,7 @@ final class ExpressionConst {
     // min function name (aka operation) is 3 character
     static final String REGEX_FUNCTION = "(\\s*[A-Za-z][0-9A-Za-z_\\-]{2,})(\\s*\\([^)]+\\)\\s*)?";
     static final String REGEX_VALID_TYPE_PREFIX = ".*\\[(";
-    static final String REGEX_VALID_TYPE_SUFFIX = ")(\\(.+?\\))(\\s*\\=\\>\\s*)(.+)\\].*";
+    static final String REGEX_VALID_TYPE_SUFFIX = ")(\\(.*?\\))(\\s*\\=\\>\\s*)(.+)\\].*";
     static final Map<String, String> FUNCTION_PARAM_SUBSTITUTIONS = TextUtils.toMap("=",
                                                                                     "\\(=§•9•§",
                                                                                     "\\)=§•0•§",

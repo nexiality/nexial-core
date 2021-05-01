@@ -17,17 +17,10 @@
 
 package org.nexial.core.variable;
 
-import java.io.File;
-import java.io.IOException;
-import java.lang.reflect.Method;
-import java.math.BigDecimal;
-import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
-import javax.validation.constraints.NotNull;
-
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
+import com.univocity.parsers.common.record.Record;
+import com.univocity.parsers.common.record.RecordMetaData;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.IterableUtils;
 import org.apache.commons.collections4.MapUtils;
@@ -47,10 +40,16 @@ import org.nexial.core.model.NexialFilter.ListItemConverterImpl;
 import org.nexial.core.plugins.io.ExcelHelper;
 import org.nexial.core.utils.ConsoleUtils;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
-import com.univocity.parsers.common.record.Record;
-import com.univocity.parsers.common.record.RecordMetaData;
+import javax.validation.constraints.NotNull;
+import java.io.File;
+import java.io.IOException;
+import java.lang.reflect.Method;
+import java.math.BigDecimal;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import static java.lang.System.lineSeparator;
 import static org.nexial.core.NexialConst.*;
@@ -390,6 +389,44 @@ public class CsvTransformer<T extends CsvDataType> extends Transformer<CsvDataTy
             }
 
             csvModified.append(StringUtils.removeEnd(rowModified.toString(), delim)).append(recordDelim);
+        });
+
+        data.setTextValue(StringUtils.removeEnd(csvModified.toString(), recordDelim));
+        data.parse();
+        return data;
+    }
+
+    /**
+     * reorder columns so that CSV can be presented as such. Actual content will not be modified; just the column
+     * ordering will be changed.
+     */
+    public T reorder(T data, String... columnNamesOrIndices) throws TypeConversionException {
+        if (data == null || data.getValue() == null) { return data; }
+        if (ArrayUtils.isEmpty(columnNamesOrIndices)) { return data; }
+
+        List<Integer> indices = toRepeatableIndices(data, columnNamesOrIndices);
+        if (CollectionUtils.isEmpty(indices)) { return data; }
+
+        String recordDelim = data.getRecordDelim();
+        String delim = data.getDelim();
+
+        StringBuilder csvModified = new StringBuilder();
+
+        if (data.isHeader()) {
+            List<String> headers = data.getHeaders();
+            csvModified.append(indices.stream()
+                                      .map(index -> TextUtils.csvSafe(headers.get(index), delim, true))
+                                      .collect(Collectors.joining(delim)))
+                       .append(recordDelim);
+        }
+
+        List<Record> csvRecords = data.getValue();
+        csvRecords.forEach(row -> {
+            String[] values = row.getValues();
+            csvModified.append(indices.stream()
+                                      .map(index -> TextUtils.csvSafe(values[index], delim, true))
+                                      .collect(Collectors.joining(delim)))
+                       .append(recordDelim);
         });
 
         data.setTextValue(StringUtils.removeEnd(csvModified.toString(), recordDelim));
@@ -1009,7 +1046,12 @@ public class CsvTransformer<T extends CsvDataType> extends Transformer<CsvDataTy
 
     @NotNull
     protected Set<Integer> toIndices(T data, String... columnNamesOrIndices) {
-        Set<Integer> indices = new TreeSet<>();
+        return new TreeSet<>(toRepeatableIndices(data, columnNamesOrIndices));
+    }
+
+    @NotNull
+    protected List<Integer> toRepeatableIndices(T data, String... columnNamesOrIndices) {
+        List<Integer> indices = new ArrayList<>();
 
         // treat varargs and pipe-delimited list evenly.
         String[] selected = StringUtils.split(TextUtils.toString(columnNamesOrIndices, PAIR_DELIM, "", ""), PAIR_DELIM);
@@ -1019,19 +1061,14 @@ public class CsvTransformer<T extends CsvDataType> extends Transformer<CsvDataTy
 
         // special case: * means _ALL_ columns
         if (selected.length == 1 && StringUtils.equals(selected[0], "*")) {
-            return IntStream.range(0, maxColumnIndex + 1).boxed().collect(Collectors.toCollection(TreeSet::new));
+            return IntStream.range(0, maxColumnIndex + 1).boxed().collect(Collectors.toList());
         }
 
         Arrays.stream(selected).forEach(column -> {
             if (NumberUtils.isDigits(column)) {
-                // expects numeric indices (zero-based)
-                if (!NumberUtils.isDigits(column)) {
-                    throw new IllegalArgumentException(column + " is not a valid column index (zero-based)");
-                }
-
                 int index = NumberUtils.createNumber(column).intValue();
                 if (index > maxColumnIndex) {
-                    throw new IllegalArgumentException("column index " + column + " is invalid");
+                    throw new IllegalArgumentException("column index " + column + " is invalid (zero-based)");
                 }
 
                 indices.add(index);
@@ -1147,7 +1184,7 @@ public class CsvTransformer<T extends CsvDataType> extends Transformer<CsvDataTy
                 // no more records in `to` but still some more in `from`
                 recordBuffer.append(createBlankToPortion(toColumnCount, toRefColumnPos, fromRef, toDelim))
                             .append(prepareMergingValues(fromValues, fromRefColumnPos, toDelim));
-                toBuffer.append(recordBuffer.toString()).append(toRecordDelim);
+                toBuffer.append(recordBuffer).append(toRecordDelim);
                 continue;
             }
 
@@ -1167,7 +1204,7 @@ public class CsvTransformer<T extends CsvDataType> extends Transformer<CsvDataTy
                 recordBuffer.append(TextUtils.toString(toRecord.getValues(), toDelim, "", ""))
                             .append(toDelim)
                             .append(prepareMergingValues(fromValues, fromRefColumnPos, toDelim));
-                toBuffer.append(recordBuffer.toString()).append(toRecordDelim);
+                toBuffer.append(recordBuffer).append(toRecordDelim);
                 // we can proceed to next record of `to`
                 j++;
                 continue;
@@ -1178,7 +1215,7 @@ public class CsvTransformer<T extends CsvDataType> extends Transformer<CsvDataTy
                 // we'll create a line with 'blank' portion of `to` and then the actual values of `from`
                 recordBuffer.append(createBlankToPortion(toColumnCount, toRefColumnPos, fromRef, toDelim))
                             .append(prepareMergingValues(fromValues, fromRefColumnPos, toDelim));
-                toBuffer.append(recordBuffer.toString()).append(toRecordDelim);
+                toBuffer.append(recordBuffer).append(toRecordDelim);
 
                 if (i >= (fromRecords.size() - 1)) {
                     // last record of `from`.. we need to handle this otherwise dangling record of `to`
@@ -1191,7 +1228,7 @@ public class CsvTransformer<T extends CsvDataType> extends Transformer<CsvDataTy
                 // ref in `to` is less than that of `from`
                 // add nothing from non-existent `from` record
                 recordBuffer.append(TextUtils.toString(toRecord.getValues(), toDelim, "", ""));
-                toBuffer.append(recordBuffer.toString()).append(toRecordDelim);
+                toBuffer.append(recordBuffer).append(toRecordDelim);
                 // revisit the same `from` record again to compare with the next `to` record
                 j++;
                 i--;
@@ -1419,6 +1456,6 @@ public class CsvTransformer<T extends CsvDataType> extends Transformer<CsvDataTy
             if (!isMatched) { break; }
         }
 
-        return filterText.toString() + filter;
+        return filterText + filter;
     }
 }
