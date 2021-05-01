@@ -72,15 +72,16 @@ public class ListDataType extends ExpressionDataType<String[]> {
     protected void init() { parse(); }
 
     protected void parse() {
+        if (StringUtils.isEmpty(delim)) {
+            ExecutionContext context = ExecutionThread.get();
+            delim = context == null ? getDefault(TEXT_DELIM) : context.getTextDelim();
+        }
+
         if (StringUtils.isEmpty(textValue)) {
             value = new String[0];
             return;
         }
 
-        if (StringUtils.isEmpty(delim)) {
-            ExecutionContext context = ExecutionThread.get();
-            delim = context == null ? getDefault(TEXT_DELIM) : context.getTextDelim();
-        }
         value = Array.toArray(textValue, delim);
         textValue = Array.toString(value);
     }

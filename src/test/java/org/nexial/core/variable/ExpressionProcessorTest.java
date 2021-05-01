@@ -160,7 +160,7 @@ public class ExpressionProcessorTest {
         ExpressionProcessor subject = new ExpressionProcessor(context);
 
         // invalid expression since there's no data assign as data type
-        assertEquals("[TEXT() => remove(a)]", subject.process("[TEXT() => remove(a)]"));
+        assertEquals("", subject.process("[TEXT() => remove(a)]"));
 
         // invalid data variable
         assertEquals("", subject.process("[TEXT(${no_such_data}) => remove(a)]"));
