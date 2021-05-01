@@ -17,29 +17,12 @@
 
 package org.nexial.core.plugins.web;
 
-import java.awt.*;
-import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.IOException;
-import java.time.Duration;
-import java.util.List;
-import java.util.*;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-import javax.imageio.ImageIO;
-import javax.validation.constraints.NotNull;
 import com.google.gson.JsonObject;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.IterableUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.ArrayUtils;
-import org.apache.commons.lang3.BooleanUtils;
-import org.apache.commons.lang3.RandomStringUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.SystemUtils;
+import org.apache.commons.lang3.*;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.commons.lang3.time.StopWatch;
 import org.nexial.commons.utils.CollectionUtil;
@@ -80,6 +63,20 @@ import ru.yandex.qatools.ashot.AShot;
 import ru.yandex.qatools.ashot.Screenshot;
 import ru.yandex.qatools.ashot.coordinates.WebDriverCoordsProvider;
 import ru.yandex.qatools.ashot.shooting.ShootingStrategies;
+
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import javax.imageio.ImageIO;
+import javax.validation.constraints.NotNull;
+import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
+import java.time.Duration;
+import java.util.List;
+import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import static java.awt.Image.SCALE_DEFAULT;
 import static java.io.File.separator;
@@ -2118,7 +2115,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
             // proceed... with caution (or not!)
             waitForBrowserStability(deriveBrowserStabilityWaitMs(context));
             if (alert.isDialogPresent()) {
-                if (browser.isRunBrowserStack() || browser.isRunCrossBrowserTesting()) {
+                if (browser.isCloudBrowser() || browser.isHeadless()) {
                     alert.dismiss();
                 } else {
                     useNativeCapture = true;
@@ -3247,9 +3244,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     }
 
     protected void scrollIntoView(WebElement element) {
-        if (element == null) { return; }
-        if (browser.isRunChromeHeadless() || browser.isRunFirefoxHeadless()) { return; }
-
+        if (element == null || browser.isHeadless()) { return; }
         if (context.getBooleanConfig(getTarget(), getProfile(), SCROLL_INTO_VIEW)) {
             jsExecutor.executeScript(SCROLL_INTO_VIEW_JS, element);
         }

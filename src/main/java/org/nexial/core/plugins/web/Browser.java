@@ -30,7 +30,6 @@ import org.nexial.commons.proc.RuntimeUtils;
 import org.nexial.commons.utils.EnvUtils;
 import org.nexial.commons.utils.FileUtil;
 import org.nexial.commons.utils.TextUtils;
-import org.nexial.core.NexialConst.*;
 import org.nexial.core.ShutdownAdvisor;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.plugins.CanTakeScreenshot;
@@ -69,10 +68,10 @@ import java.util.regex.Pattern;
 import static java.io.File.separator;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.apache.commons.lang3.SystemUtils.*;
+import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.NexialConst.BrowserType.*;
 import static org.nexial.core.NexialConst.Data.TEST_LOG_PATH;
 import static org.nexial.core.NexialConst.Data.withProfile;
-import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.NexialConst.Web.*;
 import static org.nexial.core.SystemVariables.getDefaultBool;
 import static org.nexial.core.plugins.web.WebDriverCapabilityUtils.initCapabilities;
@@ -186,6 +185,8 @@ public class Browser implements ForcefulTerminate {
 
     public boolean isRunChrome() { return browserType == chrome; }
 
+    public boolean isHeadless() { return isRunChromeHeadless() || isRunFirefoxHeadless(); }
+
     public boolean isRunChromeHeadless() { return browserType == chromeheadless; }
 
     public boolean isRunChromeEmbedded() { return browserType == chromeembedded; }
@@ -193,6 +194,8 @@ public class Browser implements ForcefulTerminate {
     public boolean isRunElectron() { return browserType == electron; }
 
     public boolean isRunSafari() { return browserType == safari; }
+
+    public boolean isCloudBrowser() { return isRunBrowserStack() || isRunCrossBrowserTesting(); }
 
     public boolean isRunBrowserStack() { return browserType == browserstack; }
 
@@ -960,7 +963,7 @@ public class Browser implements ForcefulTerminate {
 
         StringBuilder log = new StringBuilder("Edge WebDriver capabilities:" + NL);
         capabilities.asMap().forEach((key, val) -> log.append("\t").append(key).append("\t=").append(val).append(NL));
-        ConsoleUtils.log(log.toString() + NL);
+        ConsoleUtils.log(log + NL);
 
         return edge;
     }
@@ -1152,7 +1155,7 @@ public class Browser implements ForcefulTerminate {
 
     protected void setWindowSizeForcefully(WebDriver driver) {
         String windowSize = context.getStringConfig("web", profile, BROWSER_WINDOW_SIZE);
-        if ((isRunChromeHeadless() || isRunFirefoxHeadless()) && StringUtils.isBlank(windowSize)) {
+        if ((isHeadless()) && StringUtils.isBlank(windowSize)) {
             // window size required for headless browser
             windowSize = context.getStringConfig("web", profile, BROWSER_DEFAULT_WINDOW_SIZE);
             ConsoleUtils.log("No '" + BROWSER_WINDOW_SIZE + "' defined for headless browser; default to " + windowSize);
