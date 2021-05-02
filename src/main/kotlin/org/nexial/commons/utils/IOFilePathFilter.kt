@@ -39,7 +39,13 @@ class IOFilePathFilter @JvmOverloads constructor(private val recurse: Boolean = 
         var baseDir = File(pattern)
 
         // when the pattern is a complete file name like c:/xyz/abc/blah_doc.txt
-        if (baseDir.isFile) return listOf(pattern)
+        if (baseDir.isFile) {
+            // can't use listOf(pattern) because the underlying implementation is SingletonList, which can't be modified
+            // return listOf(pattern)
+            val list = ArrayList<String>()
+            list.add(pattern)
+            return list
+        }
 
         // When the pattern is a complete directory like c:/xyz/abc/ or c:/xyz/abc
         // or When the pattern is like c:/xyz/*
@@ -67,20 +73,19 @@ class IOFilePathFilter @JvmOverloads constructor(private val recurse: Boolean = 
         }
 
         val matches =
-            if (matchDirectories) FileUtils.listFilesAndDirs(baseDir, fileFilter, dirFilter)
-            else FileUtils.listFiles(baseDir, fileFilter, dirFilter)
+                if (matchDirectories) FileUtils.listFilesAndDirs(baseDir, fileFilter, dirFilter)
+                else FileUtils.listFiles(baseDir, fileFilter, dirFilter)
         if (CollectionUtils.isEmpty(matches)) return emptyList()
 
         // not sure why apache io is adding `searchFrom` into the match list... we are taking it out
         if (matchDirectories) matches.remove(baseDir)
 
         // `FileUtils` likely to return all directories too. Need to filter them down..
-        return matches
-                .filter { if (StringUtils.isNotBlank(regex)) RegexUtils.match(it.name, regex, false, !IS_OS_WINDOWS) else true }
+        return matches.filter {
+            if (StringUtils.isNotBlank(regex)) RegexUtils.match(it.name, regex, false, !IS_OS_WINDOWS) else true
+        }
                 .filter { if (!recurse) StringUtils.equals(it.parent, baseDir.absolutePath) else true }
                 .map { it.absolutePath }
-        //        else
-        //            matches.map { it.absolutePath }
     }
 
     private fun deriveDirFilter(baseDir: File, fileRegex: String): IOFileFilter {
@@ -100,6 +105,5 @@ class IOFilePathFilter @JvmOverloads constructor(private val recurse: Boolean = 
                 }
             }
         } else subDirFilter
-        //        return subDirFilter
     }
 }
