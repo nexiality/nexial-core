@@ -440,7 +440,8 @@ public class ExecutionContext {
     public ExecutionEventListener getExecutionEventListener() { return executionEventListener; }
 
     public boolean isScreenshotOnError() {
-        return getBooleanData(OPT_SCREENSHOT_ON_ERROR, getDefaultBool(OPT_SCREENSHOT_ON_ERROR));
+        return getBooleanData(OPT_SCREENSHOT_ON_ERROR, getDefaultBool(OPT_SCREENSHOT_ON_ERROR)) &&
+               getBooleanData(OPT_SCREENSHOT_ENABLED, getDefaultBool(OPT_SCREENSHOT_ENABLED));
     }
 
     public void registerScreenshotAgent(CanTakeScreenshot agent) { screenshotAgent = agent; }

@@ -65,6 +65,7 @@ import static org.nexial.core.CommandConst.*;
 import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.NexialConst.Data.*;
 import static org.nexial.core.NexialConst.ImageCaption.*;
+import static org.nexial.core.SystemVariables.getDefaultBool;
 import static org.nexial.core.excel.ExcelConfig.MSG_PASS;
 import static org.nexial.core.plugins.base.ComparisonFormatter.displayAssertionResult;
 import static org.nexial.core.plugins.base.ComparisonFormatter.displayForCompare;
@@ -998,6 +999,15 @@ public class BaseCommand implements NexialCommand {
 
         // return local file if `output-to-cloud` is disabled or failed to transfer to cloud
         return file.getAbsolutePath();
+    }
+
+    protected boolean isScreenshotEnabled() {
+        if (!context.getBooleanData(OPT_SCREENSHOT_ENABLED, getDefaultBool(OPT_SCREENSHOT_ENABLED))) {
+            log("screen capturing has been disabled via ${" + OPT_SCREENSHOT_ENABLED + "}");
+            return false;
+        } else {
+            return true;
+        }
     }
 
     private StepResult executeMacro(Macro macro, String input, String output) {

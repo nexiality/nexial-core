@@ -17,15 +17,6 @@
 
 package org.nexial.core;
 
-import java.awt.*;
-import java.io.File;
-import java.io.IOException;
-import java.math.RoundingMode;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.List;
-import java.util.*;
-import javax.validation.constraints.NotNull;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.apache.commons.cli.Options;
@@ -48,6 +39,16 @@ import org.nexial.core.model.ExecutionEvent;
 import org.nexial.core.model.TestProject;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.ExecUtils;
+
+import javax.validation.constraints.NotNull;
+import java.awt.*;
+import java.io.File;
+import java.io.IOException;
+import java.math.RoundingMode;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.List;
+import java.util.*;
 
 import static java.awt.Color.*;
 import static java.awt.image.BufferedImage.TYPE_INT_ARGB;
@@ -168,6 +169,7 @@ public final class NexialConst {
     public static final String OPT_SCREENSHOT_FULL_TIMEOUT = registerSysVar(NAMESPACE + "screenshotInFullTimeout",
                                                                             5000);
     public static final String SCREENSHOT_EXT = ".png";
+    public static final String OPT_SCREENSHOT_ENABLED = registerSysVar(NAMESPACE + "screenshotEnabled", true);
 
     // outcome
     public static final String OPT_LAST_OUTCOME = registerSysVar(NAMESPACE + "lastOutcome");
@@ -1860,7 +1862,8 @@ public final class NexialConst {
         public static final String FORCE_JS_CLICK = registerSysVar(NS_BROWSER + ".forceJSClick", false);
         public static final String BROWSER_ACCEPT_INVALID_CERTS = registerSysVar(NS_BROWSER + ".acceptInsecureCerts", false);
         public static final String BROWSER_POST_CLOSE_WAIT = registerSysVar(NS_BROWSER + ".postCloseWaitMs", 3000);
-        public static final String ENFORCE_PAGE_SOURCE_STABILITY = registerSysVar(NAMESPACE + "enforcePageSourceStability", true);
+        // default to false to improve performance
+        public static final String ENFORCE_PAGE_SOURCE_STABILITY = registerSysVar(NAMESPACE + "enforcePageSourceStability", false);
         public static final String OPT_DELAY_BROWSER = registerSysVar(NAMESPACE + "delayBrowser", false);
         public static final String BROWSER_DEFAULT_WINDOW_SIZE = registerSysVar(NS_BROWSER + ".defaultWindowSize");
         public static final String BROWSER_WINDOW_SIZE = registerSysVar(NS_BROWSER + ".windowSize");

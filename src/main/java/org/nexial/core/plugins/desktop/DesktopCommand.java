@@ -129,6 +129,8 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
     public String takeScreenshot(TestStep testStep) {
         if (testStep == null) { return null; }
 
+        if (!isScreenshotEnabled()) { return null; }
+
         String filename = generateScreenshotFilename(testStep);
         if (StringUtils.isBlank(filename)) {
             error("Unable to generate screen capture filename!");
@@ -783,6 +785,9 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
     public StepResult screenshotByLocator(String locator, String file) {
         requiresNotNull(locator, "Invalid locator", locator);
         requiresNotNull(file, "Invalid screenshot file", file);
+
+        if (!isScreenshotEnabled()) { return StepResult.skipped("screen capturing disabled"); }
+
         if (FileUtil.isDirectoryReadable(file)) {
             return StepResult.fail("Invalid file specified: " + file + " points to a directory");
         }
@@ -796,8 +801,10 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
 
     public StepResult screenshot(String name, String file) {
         requiresNotBlank(name, "Invalid component name", name);
-
         requiresNotNull(file, "Invalid screenshot file", file);
+
+        if (!isScreenshotEnabled()) { return StepResult.skipped("screen capturing disabled"); }
+
         if (FileUtil.isDirectoryReadable(file)) {
             return StepResult.fail("Invalid file specified: " + file + " points to a directory");
         }

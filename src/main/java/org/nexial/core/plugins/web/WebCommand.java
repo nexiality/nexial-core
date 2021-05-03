@@ -1990,6 +1990,8 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         requiresNotBlank(file, "invalid file", file);
         requiresInteger(timeout, "invalid timeout duration", timeout);
 
+        if (!isScreenshotEnabled()) { return StepResult.skipped("screen capturing disabled"); }
+
         WebElement element = null;
         if (StringUtils.isNotBlank(locator)) {
             element = findElement(locator);
@@ -2073,6 +2075,8 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     @Override
     public String takeScreenshot(TestStep testStep) {
         if (testStep == null) { return null; }
+
+        if (!isScreenshotEnabled()) { return null; }
 
         String filename = generateScreenshotFilename(testStep);
         if (StringUtils.isBlank(filename)) {

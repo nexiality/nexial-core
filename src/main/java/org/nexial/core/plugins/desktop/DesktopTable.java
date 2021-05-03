@@ -504,8 +504,7 @@ public class DesktopTable extends DesktopElement {
             if (isTreeView) {
                 cellsXpath = StringUtils.replace(LOCATOR_HIER_CELLS, "{row}", (row + 1) + "");
             } else {
-                String rowName = getMatchingRowName("row " + (row + 1));
-                cellsXpath = "*[@Name='" + rowName + "']/*[@Name!='Column Headers']";
+                cellsXpath = "*[@Name='" + getMatchingRowName("row " + (row + 1)) + "']/*[@Name!='Column Headers']";
             }
 
             ConsoleUtils.log("fetching columns for " + msgPrefix + "via " + cellsXpath);
