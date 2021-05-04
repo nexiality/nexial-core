@@ -83,6 +83,7 @@ import static java.io.File.separator;
 import static java.lang.Thread.sleep;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.apache.commons.lang3.SystemUtils.IS_OS_MAC;
+import static org.apache.commons.lang3.SystemUtils.IS_OS_MAC_OSX;
 import static org.nexial.core.NexialConst.BrowserType.safari;
 import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.NexialConst.Data.*;
@@ -1411,10 +1412,10 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         WebElement elem = toElement(locator);
         if (StringUtils.isBlank(elem.getText())) { return StepResult.fail("Element found without text to select."); }
 
-        String id = elem.getAttribute("id");
-        if (StringUtils.isBlank(id)) { return StepResult.fail("Element found without 'id'; REQUIRED"); }
+        // String id = elem.getAttribute("id");
+        // if (StringUtils.isBlank(id)) { return StepResult.fail("Element found without 'id'; REQUIRED"); }
 
-        jsExecutor.executeScript("window.getSelection().selectAllChildren(document.getElementById('" + id + "'));");
+        jsExecutor.executeScript("window.getSelection().selectAllChildren(arguments[0]);", elem);
         return StepResult.success("selected text at '" + locator + "'");
     }
 
@@ -1444,7 +1445,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         if (window == null) { return StepResult.fail("No current window found"); }
 
         try {
-            if (browser.isRunChrome() && SystemUtils.IS_OS_MAC_OSX) {
+            if (browser.isRunChrome() && IS_OS_MAC_OSX) {
                 nativeMaximizeScreen(window);
             } else {
                 window.maximize();

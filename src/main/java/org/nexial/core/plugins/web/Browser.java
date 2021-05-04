@@ -452,7 +452,7 @@ public class Browser implements ForcefulTerminate {
         try {
             ConsoleUtils.log("Quit this driver, closing every associated window.");
             driver.quit();
-            Thread.sleep(2000);
+            Thread.sleep(1000);
         } catch (Throwable e) {
             ConsoleUtils.error("Error occurred while shutting down webdriver:" + ExceptionUtils.getRootCauseMessage(e));
         } finally {
@@ -768,10 +768,16 @@ public class Browser implements ForcefulTerminate {
 
         Map<String, Object> chromePrefs = new HashMap<>();
         //prefs.put("download.prompt_for_download", "true");
-        chromePrefs.put("profile.content_settings.pattern_pairs.*.multiple-automatic-downloads", "1");
+        chromePrefs.put("profile.content_settings.pattern_pairs.*.multiple-automatic-downloads", 1 );
+        // chromePrefs.put("profile.content_settings.pattern_pairs.*.multiple-automatic-downloads", "1");
         chromePrefs.put("profile.content_settings.pattern_pairs.,.multiple-automatic-downloads", 1);
         chromePrefs.put("profile.default_content_settings.multiple-automatic-downloads", "1");
-        chromePrefs.put("profile.default_content_setting_values.automatic_downloads", "1");
+        chromePrefs.put("profile.default_content_setting_values.automatic_downloads", 1);
+        // chromePrefs.put("profile.default_content_setting_values.automatic_downloads", "1");
+        // chromePrefs.put("profile.content_settings.exceptions.automatic_downloads.*.setting", 1 );
+        // preferences.put("profile.default_content_settings.popups", 0);
+        // preferences.put("profile.content_settings.exceptions.automatic_downloads.*.setting", 4 );
+
         chromePrefs.put("multiple-automatic-downloads", "1");
         chromePrefs.put("profile.default_content_settings.popups", 0);
         //Turns off download prompt
