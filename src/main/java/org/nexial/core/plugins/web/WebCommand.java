@@ -2118,7 +2118,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
             useNativeCapture = true;
         } else {
             // proceed... with caution (or not!)
-            waitForBrowserStability(deriveBrowserStabilityWaitMs(context));
+            waitForBrowserStability(deriveBrowserStabilityWaitMs(context), true);
             if (alert.isDialogPresent()) {
                 if (browser.isCloudBrowser() || browser.isHeadless()) {
                     alert.dismiss();
@@ -3130,7 +3130,9 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         return CollectionUtil.toList(driver.getWindowHandles());
     }
 
-    protected boolean waitForBrowserStability(long maxWait) {
+    protected boolean waitForBrowserStability(long maxWait) { return waitForBrowserStability(maxWait, false); }
+
+    protected boolean waitForBrowserStability(long maxWait, boolean forceWait) {
         if (browser == null || browser.isRunElectron()) { return false; }
 
         try {
@@ -3157,7 +3159,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         }
 
         int successCount = 0;
-        int speed = context.getIntData(OPT_WAIT_SPEED, getDefaultInt(OPT_WAIT_SPEED));
+        int checkSourceCount = context.getIntData(OPT_WAIT_SPEED, getDefaultInt(OPT_WAIT_SPEED));
         long endTime = System.currentTimeMillis() + maxWait;
 
         try {
@@ -3165,13 +3167,13 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
             do {
                 sleep(MIN_STABILITY_WAIT_MS);
-                alert.preemptiveCheckAlert();
+                alert.preemptiveDismissAlert();
                 String newSource = driver.getPageSource();
 
                 if (isBrowserLoadComplete() && StringUtils.equals(oldSource, newSource)) {
                     successCount += 1;
                     // compare is successful, but we'll keep trying until COMPARE_TOLERANCE is reached
-                    if (successCount >= speed) { return true; }
+                    if (successCount >= checkSourceCount) { return true; }
                 } else {
                     successCount = 0;
                     // compare didn't work.. but let's wait until maxWait is reached before declaring failure
@@ -3192,8 +3194,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
                     ConsoleUtils.log("browser stability unknown; exceeded allotted page load timeout");
                     return isBrowserLoadComplete();
                 } else {
-                    WebDriverWait waiter = new WebDriverWait(driver, maxWait);
-                    return waiter.until(driver -> isBrowserLoadComplete());
+                    return new WebDriverWait(driver, maxWait).until(driver -> isBrowserLoadComplete());
                 }
             }
 

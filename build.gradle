@@ -264,6 +264,8 @@ dependencies {
 	// ashot
 	compile("ru.yandex.qatools.ashot:ashot:${ashotVersion}")
 
+	compile("com.github.romankh3:image-comparison:${imageComparisonVersion}")
+
 	// fmpeg (NOTE: THIS IS IN CONFLICT AGAINST THE SAME isoparser PULLED IN VIA THE TIKA DEPEDNENCIES)
 	// https://mvnrepository.com/artifact/org.bytedeco/ffmpeg
 	// compile group: 'org.bytedeco', name: 'ffmpeg', version: '4.2.1-1.5.2'

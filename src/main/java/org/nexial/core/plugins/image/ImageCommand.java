@@ -17,16 +17,6 @@
 
 package org.nexial.core.plugins.image;
 
-import java.awt.*;
-import java.awt.image.*;
-import java.io.File;
-import java.io.IOException;
-import java.text.DecimalFormat;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Collectors;
-import javax.imageio.ImageIO;
-
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.commons.lang3.time.StopWatch;
@@ -39,6 +29,15 @@ import org.nexial.core.plugins.ForcefulTerminate;
 import org.nexial.core.plugins.base.BaseCommand;
 import org.nexial.core.services.external.ImageOcrApi;
 import org.nexial.core.utils.ConsoleUtils;
+
+import javax.imageio.ImageIO;
+import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
+import java.text.DecimalFormat;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import static org.nexial.core.NexialConst.Image.*;
 import static org.nexial.core.NexialConst.Image.ImageType.png;
@@ -153,48 +152,40 @@ public class ImageCommand extends BaseCommand implements ForcefulTerminate {
         watch.start();
 
         try {
-            BufferedImage image1 = ImageIO.read(baselineFile);
-            if (image1 == null) { return StepResult.fail("File '" + baseline + "' CANNOT be read as an image"); }
+            BufferedImage imgBaseline = ImageIO.read(baselineFile);
+            if (imgBaseline == null) { return StepResult.fail("File '" + baseline + "' CANNOT be read as an image"); }
 
-            BufferedImage image2 = ImageIO.read(testFile);
-            if (image2 == null) { return StepResult.fail("File '" + actual + "' CANNOT be read as an image"); }
+            BufferedImage imgActual = ImageIO.read(testFile);
+            if (imgActual == null) { return StepResult.fail("File '" + actual + "' CANNOT be read as an image"); }
 
             Color trimColor = resolveTrimColor();
             if (trimColor != null) {
-                image1 = ImageUtils.trimOffOuterColor(image1, trimColor);
-                image2 = ImageUtils.trimOffOuterColor(image2, trimColor);
+                imgBaseline = ImageUtils.trimOffOuterColor(imgBaseline, trimColor);
+                imgActual = ImageUtils.trimOffOuterColor(imgActual, trimColor);
             }
 
-            ImageComparison imageComparison = new ImageComparison(image1, image2);
-            float matchPercent = imageComparison.getMatchPercent();
+            ImageComparison imageComparison = new ImageComparison(imgBaseline, imgActual);
+            float matchPercent = imageComparison.compareImages(color);
             String stats = formatToleranceMessage(matchPercent, imageTol);
+
+            // show all differences (if any) in images
+            context.setData(var, new ImageComparisonMeta(baselineFile.getAbsolutePath(),
+                                                         testFile.getAbsolutePath(),
+                                                         imageComparison.getDifferences(),
+                                                         matchPercent,
+                                                         imageTol,
+                                                         trimColor != null));
+            log("Image comparison meta is saved to variable '" + var + "'");
+
             if ((matchPercent + imageTol) < 100) {
-                BufferedImage outImage = imageComparison.compareImages(color);
-
-                // find all differences in images
-                context.setData(var, new ImageComparisonMeta(baselineFile.getAbsolutePath(),
-                                                             testFile.getAbsolutePath(),
-                                                             imageComparison.getDifferences(),
-                                                             matchPercent,
-                                                             imageTol,
-                                                             trimColor != null));
-                log("Image comparison meta is saved to variable '" + var + "'");
-
+                // BufferedImage outImage = imageComparison.compareImages(color);
                 String msg = "Difference between baseline and actual BEYOND tolerance " + stats;
-                addOutputAsLink(msg, outImage, png.toString());
+                addOutputAsLink(msg, imageComparison.getDiffImage(), png.toString());
                 return StepResult.fail(msg);
             } else {
                 String msg = "Difference between baseline and actual within tolerance " + stats;
                 log(msg);
-
-                context.setData(var, new ImageComparisonMeta(baselineFile.getAbsolutePath(),
-                                                             testFile.getAbsolutePath(),
-                                                             new ArrayList<>(),
-                                                             matchPercent,
-                                                             imageTol,
-                                                             trimColor != null));
-                log("Image comparison meta is saved to variable '" + var + "'");
-                return StepResult.success("baseline and test images are same " + stats);
+                return StepResult.success(msg);
             }
         } catch (IOException e) {
             return StepResult.fail("ERROR reading image file: " + e.getMessage());
