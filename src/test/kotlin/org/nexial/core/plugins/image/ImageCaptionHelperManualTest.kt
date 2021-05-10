@@ -28,6 +28,7 @@ import org.nexial.core.NexialConst.ImageCaption.CaptionPositions.*
 import org.nexial.core.plugins.image.ImageCaptionHelper.CaptionModel
 import org.nexial.core.plugins.image.ImageCaptionHelper.addCaptionToImage
 import org.nexial.core.utils.ExecUtils
+import java.awt.Color.red
 import java.io.File
 import java.io.File.separator
 import java.io.IOException
@@ -69,6 +70,9 @@ class ImageCaptionHelperManualTest {
             val model = CaptionModel()
             model.addCaptions(lines)
             model.position = BOTTOM_RIGHT
+            // model.fontSize = 14
+            model.withBackground = false
+            model.alpha = 0.7f
             val actual = newBaseFixture(fixtureFile1, "actual1.jpg")
 
             // add caption
@@ -339,6 +343,7 @@ class ImageCaptionHelperManualTest {
     @Throws(IOException::class)
     private fun assertMatchAgainstExpected(expected: File, actual: File): ImageComparison {
         val imageComparison = ImageComparison(ImageIO.read(expected), ImageIO.read(actual))
+        imageComparison.compareImages(red)
         val matchPercent = imageComparison.matchPercent
         Assert.assertEquals(100f, matchPercent, 0f)
         return imageComparison

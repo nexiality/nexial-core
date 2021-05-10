@@ -17,11 +17,6 @@
 
 package org.nexial.core.plugins.image;
 
-import java.awt.image.*;
-import java.io.File;
-import java.io.IOException;
-import javax.imageio.ImageIO;
-
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.SystemUtils;
@@ -34,6 +29,11 @@ import org.nexial.commons.utils.ResourceUtils;
 import org.nexial.core.model.MockExecutionContext;
 import org.nexial.core.model.StepResult;
 import org.nexial.core.model.TestStep;
+
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
 
 import static java.io.File.separator;
 import static org.apache.commons.lang3.SystemUtils.JAVA_IO_TMPDIR;
@@ -49,7 +49,7 @@ public class ImageCommandTest {
                                    this.getClass().getSimpleName();
     private final String resourceBasePath = StringUtils.replace(this.getClass().getPackage().getName(), ".", "/");
 
-    private MockExecutionContext context = new MockExecutionContext() {
+    private final MockExecutionContext context = new MockExecutionContext() {
         @Override
         public TestStep getCurrentTestStep() {
             return new TestStep() {
@@ -165,12 +165,14 @@ public class ImageCommandTest {
         Assert.assertTrue(command.saveDiff("compareMeta1", imageFile1, imageFile2).failed());
         ImageComparisonMeta compareMeta = (ImageComparisonMeta) context.getObjectData("compareMeta1");
         Assert.assertNotNull(compareMeta);
-        Assert.assertEquals(58, compareMeta.getCount());
+        Assert.assertEquals(1, compareMeta.getCount());
+        System.out.println("compareMeta = " + compareMeta);
 
         Assert.assertTrue(command.saveDiff("compareMeta2", imageFile2, imageFile3).failed());
         compareMeta = (ImageComparisonMeta) context.getObjectData("compareMeta2");
         Assert.assertNotNull(compareMeta);
-        Assert.assertEquals(46, compareMeta.getCount());
+        Assert.assertEquals(1, compareMeta.getCount());
+        System.out.println("compareMeta = " + compareMeta);
 
         Assert.assertTrue(command.saveDiff("compareMeta2", imageFile4, imageFile5).failed());
         context.setData(OPT_TRIM_BEFORE_DIFF, true);
