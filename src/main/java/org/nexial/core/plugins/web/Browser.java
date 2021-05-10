@@ -648,10 +648,8 @@ public class Browser implements ForcefulTerminate {
             if (context.getBooleanConfig("web", profile, OPT_DOWNLOAD_PDF)) {
                 prefs.put("plugins.always_open_pdf_externally", true);
             }
-            prefs.put("download.prompt_for_download", false);
             prefs.put("download.default_directory", downloadTo);
             // prefs.put("download.extensions_to_open", "application/pdf");
-            prefs.put("profile.default_content_settings.popups", 0);
         }
 
         // https://stackoverflow.com/questions/40244670/disable-geolocation-in-selenium-chromedriver-with-python
@@ -659,6 +657,12 @@ public class Browser implements ForcefulTerminate {
         prefs.put("geolocation", enableGeoLocation);
         prefs.put("profile.default_content_setting_values.geolocation", enableGeoLocation ? 1 : 2);
         prefs.put("profile.managed_default_content_settings.geolocation", enableGeoLocation ? 1 : 2);
+
+        // To Turns off multiple download warning
+        prefs.put("profile.default_content_settings.popups", 0);
+        prefs.put("profile.default_content_setting_values.automatic_downloads", 1);
+        // Turns off download prompt
+        prefs.put("download.prompt_for_download", false);
 
         options.setExperimentalOption("prefs", prefs);
 
@@ -743,18 +747,6 @@ public class Browser implements ForcefulTerminate {
             ConsoleUtils.log("unable to page load strategy to EAGER; resetting back to default");
         }
 
-        // if (activateLogging) {
-        //     LoggingPreferences logOptions = new LoggingPreferences();
-        //     // logOptions.enable(LogType.BROWSER, Level.ALL);
-        //     // logOptions.enable(LogType.PERFORMANCE, Level.INFO);
-        //     logOptions.enable(LogType.CLIENT, Level.ALL);
-        //     // logOptions.enable(LogType.DRIVER, Level.INFO);
-        //     options.setCapability(LOGGING_PREFS, logOptions);
-        // }
-
-        // WebDriver chrome = new Augmenter().augment(new RemoteWebDriver(driverUrl, options));
-        // Capabilities capabilities = ((HasCapabilities) chrome).getCapabilities();
-        // ChromeDriver chrome = new ChromeDriver(options);
         ChromeDriver chrome;
         ChromeDriverService driverService;
         try {
@@ -765,25 +757,6 @@ public class Browser implements ForcefulTerminate {
         }
         Capabilities capabilities = chrome.getCapabilities();
         initCapabilities(context, (MutableCapabilities) capabilities);
-
-        Map<String, Object> chromePrefs = new HashMap<>();
-        //prefs.put("download.prompt_for_download", "true");
-        chromePrefs.put("profile.content_settings.pattern_pairs.*.multiple-automatic-downloads", 1 );
-        // chromePrefs.put("profile.content_settings.pattern_pairs.*.multiple-automatic-downloads", "1");
-        chromePrefs.put("profile.content_settings.pattern_pairs.,.multiple-automatic-downloads", 1);
-        chromePrefs.put("profile.default_content_settings.multiple-automatic-downloads", "1");
-        chromePrefs.put("profile.default_content_setting_values.automatic_downloads", 1);
-        // chromePrefs.put("profile.default_content_setting_values.automatic_downloads", "1");
-        // chromePrefs.put("profile.content_settings.exceptions.automatic_downloads.*.setting", 1 );
-        // preferences.put("profile.default_content_settings.popups", 0);
-        // preferences.put("profile.content_settings.exceptions.automatic_downloads.*.setting", 4 );
-
-        chromePrefs.put("multiple-automatic-downloads", "1");
-        chromePrefs.put("profile.default_content_settings.popups", 0);
-        //Turns off download prompt
-        chromePrefs.put("download.prompt_for_download", false);
-
-        ((MutableCapabilities) capabilities).setCapability("chrome.prefs", chromePrefs);
 
         browserVersion = capabilities.getVersion();
         browserPlatform = capabilities.getPlatform();
@@ -848,9 +821,6 @@ public class Browser implements ForcefulTerminate {
             initCapabilities(context, capabilities);
             options.merge(capabilities);
 
-            // disable saving password dialog
-            options.addPreference("signon.rememberSignons", false);
-
             Proxy proxy = (Proxy) capabilities.getCapability(PROXY);
             if (proxy != null) {
                 options.addPreference("network.proxy.type", 1);
@@ -877,7 +847,18 @@ public class Browser implements ForcefulTerminate {
             // merge configured prefs (spring) to `options` instance
             if (MapUtils.isNotEmpty(firefoxBooleanPrefs)) { firefoxBooleanPrefs.forEach(options::addPreference); }
             if (MapUtils.isNotEmpty(firefoxIntPrefs)) { firefoxIntPrefs.forEach(options::addPreference); }
-            if (MapUtils.isNotEmpty(firefoxStringPrefs)) { firefoxStringPrefs.forEach(options::addPreference); }
+            if (MapUtils.isNotEmpty(firefoxStringPrefs)) {
+                boolean downloadPdf = context.getBooleanConfig("web", profile, OPT_DOWNLOAD_PDF);
+                firefoxStringPrefs.forEach((key, value) -> {
+                    if (StringUtils.equals(key, "browser.helperApps.neverAsk.saveToDisk")) {
+                        options.addPreference(key, value + (downloadPdf ? ",application/x-pdf" : ""));
+                    } else if (StringUtils.equals(key, "browser.helperApps.neverAsk.openFile")) {
+                        options.addPreference(key, value + (downloadPdf ? ",application/x-pdf" : ""));
+                    } else {
+                        options.addPreference(key, value);
+                    }
+                });
+            }
             if (CollectionUtils.isNotEmpty(firefoxBinArgs)) { firefoxBinArgs.forEach(options::addArguments); }
 
             boolean ignoreAlert = BooleanUtils.toBoolean(context.getBooleanData(OPT_ALERT_IGNORE_FLAG));

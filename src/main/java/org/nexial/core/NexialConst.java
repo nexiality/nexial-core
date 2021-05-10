@@ -1846,7 +1846,7 @@ public final class NexialConst {
         public static final String BROWSER_USER_DATA = registerSysVar(NS_BROWSER + ".userData");
         public static final String OPT_CHROME_PROFILE = registerSysVar(NAMESPACE + "chrome.profile");
         public static final String OPT_DOWNLOAD_TO = registerSysVar(NS_BROWSER + ".downloadTo");
-        public static final String OPT_DOWNLOAD_PDF = registerSysVar(NS_BROWSER + ".downloadPdf", false);
+        public static final String OPT_DOWNLOAD_PDF = registerSysVar(NS_BROWSER + ".downloadPdf", true);
         public static final String OPT_POSITION = registerSysVar(NS_BROWSER + ".position");
 
         // web: scroll into view

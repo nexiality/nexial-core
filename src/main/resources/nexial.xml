@@ -451,13 +451,15 @@
                 <entry key="dom.vr.osvr.enabled" value="false"/>
                 <entry key="dom.vr.poseprediction.enabled" value="false"/>
                 <entry key="dom.allow_scripts_to_close_windows" value="true"/>
+                <!-- disable saving password dialog -->
+                <entry key="signon.rememberSignons" value="false"/>
             </map>
         </property>
         <property name="firefoxStringPrefs">
             <map key-type="java.lang.String" value-type="java.lang.String">
                 <entry key="extensions.firebug.allPagesActivation" value="on"/>
-                <entry key="browser.helperApps.neverAsk.saveToDisk" value="text/xml,text/csv,text/html,text/plain,text/log,application/zlib,application/x-gzip,application/gzip,application/x-compressed,application/x-gtar,multipart/x-gzip,application/tgz,application/gnutar,application/x-tar,application/xml,application/x-msexcel,application/excel,application/x-excel,application/vnd.ms-excel,image/png,image/jpeg,application/msword,application/pdf,application/octet-stream,application/x-pdf"/>
-                <entry key="browser.helperApps.neverAsk.openFile" value="text/xml,text/csv,text/html,text/plain,text/log,application/zlib,application/x-gzip,application/gzip,application/x-compressed,application/x-gtar,multipart/x-gzip,application/tgz,application/gnutar,application/x-tar,application/xml,application/x-msexcel,application/excel,application/x-excel,application/vnd.ms-excel,image/png,image/jpeg,application/msword,application/pdf,application/octet-stream,application/x-pdf"/>
+                <entry key="browser.helperApps.neverAsk.saveToDisk" value="text/xml,text/csv,text/html,text/plain,text/log,application/zlib,application/x-gzip,application/gzip,application/x-compressed,application/x-gtar,multipart/x-gzip,application/tgz,application/gnutar,application/x-tar,application/xml,application/x-msexcel,application/excel,application/x-excel,application/vnd.ms-excel,image/png,image/jpeg,application/msword,application/pdf,application/octet-stream"/>
+                <entry key="browser.helperApps.neverAsk.openFile" value="text/xml,text/csv,text/html,text/plain,text/log,application/zlib,application/x-gzip,application/gzip,application/x-compressed,application/x-gtar,multipart/x-gzip,application/tgz,application/gnutar,application/x-tar,application/xml,application/x-msexcel,application/excel,application/x-excel,application/vnd.ms-excel,image/png,image/jpeg,application/msword,application/pdf,application/octet-stream"/>
                 <entry key="security.ssl.errorReporting.url" value=""/>
                 <entry key="marionette.log.level" value="off"/>
                 <entry key="marionette.logging" value="off"/>
@@ -467,6 +469,7 @@
             <map key-type="java.lang.String" value-type="java.lang.Integer">
                 <entry key="browser.link.open_newwindow" value="3"/>
                 <entry key="browser.link.open_newwindow.restriction" value="0"/>
+                <!-- don't use the default download directory when downloading file -->
                 <entry key="browser.download.folderList" value="2"/>
                 <entry key="security.cert_pinning.enforcement_level" value="0"/>
                 <entry key="security.OCSP.enabled" value="0"/>
