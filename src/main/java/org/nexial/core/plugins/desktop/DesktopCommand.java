@@ -52,6 +52,7 @@ import org.openqa.selenium.By.ByName;
 import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.Rectangle;
 import org.openqa.selenium.By.ByXPath;
+import org.openqa.selenium.WebDriver.Timeouts;
 import org.openqa.selenium.interactions.Actions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import org.openqa.selenium.winium.WiniumDriver;
@@ -70,12 +71,14 @@ import java.util.stream.Collectors;
 import static java.io.File.separator;
 import static java.lang.Integer.MAX_VALUE;
 import static java.lang.System.lineSeparator;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.apache.commons.lang3.SystemUtils.*;
 import static org.nexial.core.NexialConst.Data.BUILD_NO;
 import static org.nexial.core.NexialConst.Data.SCRIPT_REF_PREFIX;
 import static org.nexial.core.NexialConst.Desktop.*;
 import static org.nexial.core.NexialConst.NL;
 import static org.nexial.core.NexialConst.OS;
+import static org.nexial.core.NexialConst.Web.WEB_ALWAYS_WAIT;
 import static org.nexial.core.SystemVariables.getDefaultBool;
 import static org.nexial.core.SystemVariables.getDefaultInt;
 import static org.nexial.core.plugins.desktop.DesktopConst.*;
@@ -222,6 +225,7 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
             session = DesktopSession.newInstance(appId, configLocation);
             syncSessionDataToContext(session);
             winiumDriver = session.getDriver();
+            prepDriver(winiumDriver);
         } catch (IOException e) {
             return StepResult.fail("Error loading application " + appId + ": " + e.getMessage(), e);
         }
@@ -390,23 +394,27 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
         }
     }
 
-    public StepResult contextMenu(String name, String menu) {
+    // public StepResult contextMenu(String name, String menu) { return contextMenuOffset(name, menu, "", ""); }
+
+    public StepResult contextMenu(String name, String menu, String xOffset, String yOffset) {
         requiresNotBlank(name, "Invalid name/label", name);
         DesktopElement component = getRequiredElement(name, Any);
         if (component == null) { return StepResult.fail("Element '" + name + "' NOT found"); }
 
         try {
-            contextMenu(component.getElement(), menu);
+            contextMenu(component.getElement(), menu, xOffset, yOffset);
             return StepResult.success("Successfully invoke context menu " + menu + " on '" + name + "'");
         } catch (IllegalArgumentException e) {
             return StepResult.fail(e.getMessage());
         }
     }
 
-    public StepResult contextMenuByLocator(String locator, String menu) {
+    // public StepResult contextMenuByLocator(String locator, String menu) { return contextMenuOffsetByLocator(locator, menu, "", "");}
+
+    public StepResult contextMenuByLocator(String locator, String menu, String xOffset, String yOffset) {
         requiresNotBlank(locator, "Invalid locator", locator);
         try {
-            contextMenu(findElement(locator), menu);
+            contextMenu(findElement(locator), menu, xOffset, yOffset);
             return StepResult.success("Successfully invoke context menu " + menu + " on locator " + locator);
         } catch (IllegalArgumentException e) {
             return StepResult.fail(e.getMessage());
@@ -414,11 +422,38 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
     }
 
     public void contextMenu(WebElement elem, String menu) throws IllegalArgumentException {
-        if (elem == null) { throw new IllegalArgumentException("element NOT found"); }
+        contextMenu(elem, menu, "", "");
+    }
+
+    public void contextMenu(WebElement elem, String menu, String xOffset, String yOffset)
+        throws IllegalArgumentException {
+        requiresNotNull(elem, "Unable to reference target element", elem);
         requiresNotBlank(menu, "Invalid menu", menu);
 
+        // determine offset, if specified
+        int x;
+        if (StringUtils.isNotBlank(xOffset)) {
+            requiresInteger(xOffset, "Invalid xOffset", xOffset);
+            x = NumberUtils.toInt(xOffset);
+        } else {
+            x = -1;
+        }
+
+        int y;
+        if (StringUtils.isNotBlank(yOffset)) {
+            requiresInteger(yOffset, "Invalid yOffset", yOffset);
+            y = NumberUtils.toInt(yOffset);
+        } else {
+            y = -1;
+        }
+
         // invoke context menu
-        new Actions(winiumDriver).contextClick(elem).perform();
+        Actions actions = new Actions(getDriver());
+        if (x != -1 && y != -1) {
+            actions.moveToElement(elem, x, y).contextClick().perform();
+        } else {
+            actions.contextClick(elem).perform();
+        }
 
         String xpath = "";
         String previousMenuContainer = "Menu";
@@ -734,13 +769,33 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
 
     public StepResult clickElementOffset(String name, String xOffset, String yOffset) {
         DesktopElement component = getRequiredElement(name, null);
-
         WebElement element = component.getElement();
         if (element == null) { return StepResult.fail("element NOT found via '" + name + "'");}
 
         clickOffset(element, xOffset, yOffset);
         autoClearModalDialog(component);
         return StepResult.success("Clicked offset (" + xOffset + "," + yOffset + ") from element '" + name + "'");
+    }
+
+    public StepResult rightClickOffset(String locator, String xOffset, String yOffset) {
+        requiresNotBlank(locator, "Invalid locator", locator);
+
+        WebElement elem = findElement(locator);
+        if (elem == null) { return StepResult.fail("element NOT found via " + locator);}
+
+        rightClickOffset(elem, xOffset, yOffset);
+        autoClearModalDialog(locator);
+        return StepResult.success("Right-clicked offset (" + xOffset + "," + yOffset + ") from element " + locator);
+    }
+
+    public StepResult rightClickElementOffset(String name, String xOffset, String yOffset) {
+        DesktopElement component = getRequiredElement(name, null);
+        WebElement element = component.getElement();
+        if (element == null) { return StepResult.fail("element NOT found via '" + name + "'");}
+
+        rightClickOffset(element, xOffset, yOffset);
+        autoClearModalDialog(component);
+        return StepResult.success("Right-clicked offset (" + xOffset + "," + yOffset + ") from element '" + name + "'");
     }
 
     public StepResult clickScreen(String button, String modifiers, String x, String y) {
@@ -2022,6 +2077,7 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
         if (winiumDriver != null) { return winiumDriver; }
 
         winiumDriver = WiniumUtils.joinRunningApp();
+        prepDriver(winiumDriver);
         return winiumDriver;
     }
 
@@ -2318,7 +2374,15 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
         return StepResult.success("Element '" + name + "' double-clicked");
     }
 
-    protected StepResult clickOffset(WebElement elem, String xOffset, String yOffset) {
+    protected void clickOffset(WebElement elem, String xOffset, String yOffset) {
+        clickOffset(elem, xOffset, yOffset, false);
+    }
+
+    protected void rightClickOffset(WebElement elem, String xOffset, String yOffset) {
+        clickOffset(elem, xOffset, yOffset, true);
+    }
+
+    protected void clickOffset(WebElement elem, String xOffset, String yOffset, boolean rightClick) {
         requiresNotNull(elem, "Unable to reference target element", elem);
         requiresInteger(xOffset, "Invalid xOffset", xOffset);
         requiresInteger(yOffset, "Invalid yOffset", yOffset);
@@ -2326,9 +2390,13 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
         int x = NumberUtils.toInt(xOffset);
         int y = NumberUtils.toInt(yOffset);
 
-        Actions actions = new Actions(getDriver()).moveToElement(elem, x, y).click();
+        Actions actions = new Actions(getDriver()).moveToElement(elem, x, y);
+        if (rightClick) {
+            actions = actions.contextClick();
+        } else {
+            actions = actions.click();
+        }
         actions.perform();
-        return StepResult.success("Clicked offset (" + x + "," + y + ") from element " + elem);
     }
 
     // todo: not used?
@@ -2621,6 +2689,22 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
         map.put("name", ByName.class);
         map.put("xpath", ByXPath.class);
         return map;
+    }
+
+    protected void prepDriver(WiniumDriver driver) {
+        // if browser supports implicit wait and we are not using explicit wait (`WEB_ALWAYS_WAIT`), then
+        // we'll change timeout's implicit wait time
+        Timeouts timeouts = driver.manage().timeouts();
+
+        long pollWaitMs = 30000;
+        boolean alwaysWait = true;
+        if (alwaysWait) {
+            ConsoleUtils.log("detected " + WEB_ALWAYS_WAIT + "; " +
+                             "use fluent-wait (up to " + pollWaitMs + " ms) during desktop automation");
+        } else {
+            timeouts.implicitlyWait(pollWaitMs, MILLISECONDS);
+            ConsoleUtils.log("setting browser polling wait time to " + pollWaitMs + " ms");
+        }
     }
 
     private void tableRowsRangeCheck(int beginRow, int endRow) {

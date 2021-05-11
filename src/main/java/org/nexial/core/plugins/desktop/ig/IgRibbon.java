@@ -17,14 +17,14 @@
 
 package org.nexial.core.plugins.desktop.ig;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.nexial.core.model.StepResult;
 import org.nexial.core.plugins.desktop.ThirdPartyComponent;
 import org.nexial.core.utils.ConsoleUtils;
+
+import java.util.HashMap;
+import java.util.Map;
 
 import static org.apache.commons.lang3.builder.ToStringStyle.JSON_STYLE;
 import static org.nexial.core.NexialConst.GSON;
@@ -117,7 +117,8 @@ public class IgRibbon extends ThirdPartyComponent {
             return StepResult.fail(msgPrefix + "cannot be clicked via offset (" + xOffset + "," + yOffset + ")");
         }
 
-        return clickOffset(component.getElement(), xOffset + "", yOffset + "");
+        clickOffset(component.getElement(), xOffset + "", yOffset + "");
+        return StepResult.success("Clicked offset (" + xOffset + "," + yOffset + ") from icon '" + name + "'");
     }
 
     @Override

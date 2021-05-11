@@ -98,6 +98,8 @@ object CommandConst {
             "desktop.scanTable(var,name)" to "desktop.useTable(var,name)",
             "desktop.saveTableRows(var,contains)" to "desktop.saveTableRows(var,contains,csv)",
             "desktop.saveTableRowsRange(var,beginRow,endRow)" to "desktop.saveTableRowsRange(var,beginRow,endRow,csv)",
+            "desktop.contextMenu(name,menu)" to "desktop.contextMenu(name,menu,xOffset,yOffset)",
+            "desktop.contextMenuByLocator(locator,menu)" to "desktop.contextMenuByLocator(locator,menu,xOffset,yOffset)",
 
             "image.colorbit(source,bit,saveTo)" to "image.colorbit(image,bit,saveTo)",
 
@@ -144,6 +146,8 @@ object CommandConst {
             "desktop.typeAppendTextBox",
             "desktop.typeTextArea",
             "desktop.typeTextBox",
+            "desktop.contextMenu",
+            "desktop.contextMenuByLocator",
 
             "io.saveMatches",
 

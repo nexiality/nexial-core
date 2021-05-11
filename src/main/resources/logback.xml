@@ -20,6 +20,10 @@
     <conversionRule conversionWord="color" converterClass="org.springframework.boot.logging.logback.ColorConverter"/>
     <conversionRule conversionWord="resultColor" converterClass="org.nexial.commons.logging.ResultColorConverter"/>
 
+    <contextListener class="ch.qos.logback.classic.jul.LevelChangePropagator">
+        <resetJUL>true</resetJUL>
+    </contextListener>
+
     <statusListener class="ch.qos.logback.core.status.NopStatusListener"/>
 
     <appender name="console" class="ch.qos.logback.core.ConsoleAppender">
@@ -262,6 +266,14 @@
     </logger>
 
     <!-- selenium -->
+    <logger name="org.openqa.selenium.interactions" additivity="false" level="WARN">
+        <appender-ref ref="console-catchall"/>
+        <appender-ref ref="file-testexecution"/>
+    </logger>
+    <logger name="org.openqa.selenium.remote" additivity="false" level="WARN">
+        <appender-ref ref="console-catchall"/>
+        <appender-ref ref="file-testexecution"/>
+    </logger>
     <logger name="org.openqa.selenium" additivity="false" level="WARN">
         <appender-ref ref="console-catchall"/>
         <appender-ref ref="file-testexecution"/>

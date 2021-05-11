@@ -545,9 +545,7 @@ public final class WiniumUtils {
             throw new RuntimeException(winiumExePath + " is not valid winium executable. Unable to proceed");
         }
 
-        if (terminateRunningInstance(WINIUM_EXE)) {
-            try { Thread.sleep(3000); } catch (InterruptedException e) { }
-        }
+        terminateRunningInstance(WINIUM_EXE);
 
         ExecutionContext context = ExecutionThread.get();
 

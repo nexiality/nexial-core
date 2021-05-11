@@ -17,16 +17,16 @@
 
 package org.nexial.commons.proc;
 
-import java.io.IOException;
-import java.util.*;
-import java.util.stream.Collectors;
-
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.SystemUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.nexial.commons.utils.RegexUtils;
 import org.nexial.core.utils.ConsoleUtils;
+
+import java.io.IOException;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import static java.io.File.separator;
 import static java.lang.System.lineSeparator;
@@ -70,13 +70,17 @@ public final class RuntimeUtils {
                 return false;
             }
             ConsoleUtils.log(outcome.getStdout());
-            try { Thread.sleep(2000); } catch (InterruptedException e) { }
+
+            // exit code 128 means process not found
+            // (https://docs.microsoft.com/en-us/windows/win32/debug/system-error-codes--0-499-)
+            if (IS_OS_WINDOWS && (outcome.getExitStatus() == 127 || outcome.getExitStatus() == 128)) { return true; }
+
+            try { Thread.sleep(3000); } catch (InterruptedException e) { }
+            return true;
         } catch (IOException | InterruptedException e) {
             ConsoleUtils.error("Unable to terminate any running " + exeName + ": " + e.getMessage());
             return false;
         }
-
-        return true;
     }
 
     public static boolean terminateInstance(int processId) {

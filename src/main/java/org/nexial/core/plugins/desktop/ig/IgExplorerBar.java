@@ -17,11 +17,6 @@
 
 package org.nexial.core.plugins.desktop.ig;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
@@ -34,6 +29,11 @@ import org.nexial.core.utils.ConsoleUtils;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.interactions.Actions;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import static org.nexial.core.NexialConst.GSON;
 import static org.nexial.core.plugins.desktop.DesktopConst.*;
@@ -197,22 +197,15 @@ public class IgExplorerBar extends ThirdPartyComponent {
 
         ConsoleUtils.log("Click on Explorer Bar group " + group);
         WebElement element = component.getElement();
-        StepResult result = clickOffset(element, offsetX + "", yOffset + "");
-        if (result.failed()) {
-            error(result.getMessage());
-            return result;
-        }
-        ConsoleUtils.log(result.toString());
+        clickOffset(element, offsetX + "", yOffset + "");
+        ConsoleUtils.log("Clicked offset (" + offsetX + "," + yOffset + ") from '" + group + "'");
 
         // click on item via its resolved offsets
         ConsoleUtils.log("Opening new tab from Explorer Bar " + item);
-        result = clickOffset(element, offsetX + "", (offsetY + itemHeight / 2 + itemHeight * itemIndex) + "");
-        if (result.failed()) {
-            error(result.getMessage());
-            return result;
-        }
+        yOffset = offsetY + itemHeight / 2 + itemHeight * itemIndex;
+        clickOffset(element, offsetX + "", yOffset + "");
+        ConsoleUtils.log("Clicked offset (" + offsetX + "," + yOffset + ") from item '" + item + "'");
 
-        ConsoleUtils.log(result.toString());
         waitFor(config.getDefaultWaitMs());
         return StepResult.success("Explorer Bar (" + group + "," + item + ") clicked");
     }
