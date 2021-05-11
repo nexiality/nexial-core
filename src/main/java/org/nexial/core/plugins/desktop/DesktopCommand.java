@@ -2384,19 +2384,37 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
 
     protected void clickOffset(WebElement elem, String xOffset, String yOffset, boolean rightClick) {
         requiresNotNull(elem, "Unable to reference target element", elem);
-        requiresInteger(xOffset, "Invalid xOffset", xOffset);
-        requiresInteger(yOffset, "Invalid yOffset", yOffset);
 
-        int x = NumberUtils.toInt(xOffset);
-        int y = NumberUtils.toInt(yOffset);
-
-        Actions actions = new Actions(getDriver()).moveToElement(elem, x, y);
-        if (rightClick) {
-            actions = actions.contextClick();
+        int x;
+        if (StringUtils.isNotBlank(xOffset)) {
+            requiresInteger(xOffset, "Invalid xOffset", xOffset);
+            x = NumberUtils.toInt(xOffset);
         } else {
-            actions = actions.click();
+            x = -1;
         }
-        actions.perform();
+
+        int y;
+        if (StringUtils.isNotBlank(yOffset)) {
+            requiresInteger(yOffset, "Invalid yOffset", yOffset);
+            y = NumberUtils.toInt(yOffset);
+        } else {
+            y = -1;
+        }
+
+        Actions actions = new Actions(getDriver());
+        if (x != -1 && y != -1) {
+            if (rightClick) {
+                actions.moveToElement(elem, x, y).contextClick().perform();
+            } else {
+                actions.moveToElement(elem, x, y).click().perform();
+            }
+        } else {
+            if (rightClick) {
+                actions.contextClick(elem).perform();
+            } else {
+                actions.click(elem).perform();
+            }
+        }
     }
 
     // todo: not used?

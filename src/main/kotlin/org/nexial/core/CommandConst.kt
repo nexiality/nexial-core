@@ -148,6 +148,10 @@ object CommandConst {
             "desktop.typeTextBox",
             "desktop.contextMenu",
             "desktop.contextMenuByLocator",
+            "desktop.clickElementOffset",
+            "desktop.clickOffset",
+            "desktop.rightClickElementOffset",
+            "desktop.rightClickOffset",
 
             "io.saveMatches",
 
