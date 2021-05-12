@@ -17,13 +17,6 @@
 
 package org.nexial.core.plugins.desktop;
 
-import java.time.Duration;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.map.ListOrderedMap;
 import org.apache.commons.lang3.StringUtils;
@@ -38,6 +31,14 @@ import org.nexial.core.utils.JsonUtils;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
 
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import static org.apache.commons.lang3.StringUtils.rightPad;
 import static org.json.JSONObject.NULL;
 import static org.nexial.core.NexialConst.Desktop.AUTOSCAN_INFRAGISTICS4_AWARE;
@@ -45,6 +46,7 @@ import static org.nexial.core.NexialConst.NL;
 import static org.nexial.core.SystemVariables.getDefaultBool;
 import static org.nexial.core.plugins.desktop.DesktopConst.INFRAG4_ITEM_STATUS_POSTFIX;
 import static org.nexial.core.plugins.desktop.DesktopConst.INFRAG4_ITEM_STATUS_PREFIX;
+import static org.nexial.core.plugins.desktop.DesktopUtils.getElementText;
 import static org.nexial.core.plugins.desktop.ElementType.*;
 
 public class TableData {
@@ -266,14 +268,6 @@ public class TableData {
         if (StringUtils.isBlank(itemStatus)) { return null; }
 
         return StringUtils.substringBetween(itemStatus, INFRAG4_ITEM_STATUS_PREFIX, INFRAG4_ITEM_STATUS_POSTFIX);
-    }
-
-    private String getElementText(WebElement cell, String defaultText) {
-        try {
-            return StringUtils.trim(cell.getText());
-        } catch (Exception e) {
-            return defaultText;
-        }
     }
 
     private String applyPattern(String column) {

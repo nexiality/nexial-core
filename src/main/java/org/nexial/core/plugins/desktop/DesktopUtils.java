@@ -24,6 +24,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.utils.ConsoleUtils;
 import org.openqa.selenium.By;
+import org.openqa.selenium.WebDriverException;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.winium.WiniumDriver;
 
@@ -32,6 +33,7 @@ import java.util.List;
 
 import static org.nexial.core.NexialConst.NL;
 import static org.nexial.core.plugins.desktop.DesktopConst.*;
+import static org.nexial.core.plugins.desktop.ElementType.CHECK_BOX;
 
 final class DesktopUtils {
     private DesktopUtils() { }
@@ -80,14 +82,6 @@ final class DesktopUtils {
         return script.toString();
     }
 
-//    protected static String appendShortcuts(String shortcut, String... shortcuts) {
-//        if (ArrayUtils.isEmpty(shortcuts)) { return shortcut; }
-//
-//        StringBuilder script = new StringBuilder(StringUtils.defaultIfEmpty(shortcut, SCRIPT_PREFIX_SHORTCUT));
-//        Arrays.stream(shortcuts).forEach(s -> script.append(SHORTCUT_PREFIX).append(s).append(SHORTCUT_POSTFIX));
-//        return script.toString();
-//    }
-
     /**
      * {@code shortcuts} could be a mix of function keys and 'normal' keys
      */
@@ -101,11 +95,6 @@ final class DesktopUtils {
         }
         return shortcut;
     }
-
-//    protected static String treatShortcutSyntax(String text) {
-//        if (!TextUtils.isBetween(text, "[", "]")) { return text; }
-//        return StringUtils.replace(StringUtils.replace(text, "[", SHORTCUT_PREFIX), "]", SHORTCUT_POSTFIX);
-//    }
 
     protected static String forceShortcutSyntax(String text) {
         if (StringUtils.isEmpty(text)) { return text; }
@@ -248,4 +237,35 @@ final class DesktopUtils {
         return elements.get(0);
     }
 
+    protected static boolean isAttributeMatched(WebElement element, String attribute, String... matchedTo) {
+        if (element == null || StringUtils.isBlank(attribute) || ArrayUtils.isEmpty(matchedTo)) { return false; }
+        String value = StringUtils.trim(element.getAttribute(attribute));
+        return Arrays.stream(matchedTo).anyMatch(match -> StringUtils.equals(match, value));
+    }
+
+    protected static boolean isCheckbox(WebElement elem) {
+        return elem != null && StringUtils.equals(elem.getAttribute("ControlType"), CHECK_BOX);
+    }
+
+    protected static int countChildren(WebElement elem) {
+        return elem == null ? 0 : CollectionUtils.size(elem.findElements(By.xpath("*")));
+    }
+
+    protected static String getElementText(WebElement element, String defaultText) {
+        if (element == null) { return defaultText; }
+        try {
+            return StringUtils.trim(element.getText());
+        } catch (Exception e) {
+            return defaultText;
+        }
+    }
+
+    protected static String getElementText(WebElement element) {
+        if (element == null) { return null; }
+        try {
+            return StringUtils.trim(element.getText());
+        } catch (WebDriverException e) {
+            return null;
+        }
+    }
 }

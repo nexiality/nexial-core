@@ -570,7 +570,7 @@ public class DesktopTable extends DesktopElement {
         boolean tabAfterEdit = context.getBooleanData(TABLE_TAB_AFTER_EDIT, getDefaultBool(TABLE_TAB_AFTER_EDIT));
 
         // loop through each nameValues pairs
-        WebElement lastElement = null;
+        // WebElement lastElement = null;
         WebElement cellElement;
 
         boolean focused = true;
@@ -604,71 +604,47 @@ public class DesktopTable extends DesktopElement {
                 context.setData(CURRENT_DESKTOP_TABLE_ROW, tableRow);
 
                 actionClick(cellElement);
-                lastElement = cellElement;
+                // lastElement = cellElement;
                 continue;
             }
 
             ConsoleUtils.log("editing " + msgPrefix2);
-            if (isInvokePatternAvailable(cellElement)) { cellElement.click(); }
-            ConsoleUtils.log("clicked at (0,0) on " + msgPrefix2);
+            if (isInvokePatternAvailable(cellElement)) {
+                new Actions(getDriver()).moveToElement(cellElement, 0, 2).click().perform();
+                ConsoleUtils.log("clicked at (0,0) on " + msgPrefix2);
+            }
 
             if (StringUtils.equals(value, TABLE_CELL_CHECK) || StringUtils.equals(value, TABLE_CELL_UNCHECK)) {
-                WebElement checkboxElement;
-                boolean isChecked = false;
-
-                // sometimes the checkbox hides under another element by the same name (WEIRD .NET CRAP)
-                String columnXpath = resolveColumnXpath(column);
-                List<WebElement> matches = cellElement.findElements(By.xpath(columnXpath));
-                if (CollectionUtils.isNotEmpty(matches)) {
-                    ConsoleUtils.log(msgPrefix2 + " found surrogate (inner) element");
-                    checkboxElement = matches.get(0);
-                    isChecked = BooleanUtils.toBoolean(StringUtils.trim(checkboxElement.getText()));
-                    ConsoleUtils.log("checkbox element is currently " + (isChecked ? "CHECKED" : "UNCHECKED"));
-                } else {
-                    checkboxElement = findCellCheckboxElement(cellElement);
-                    if (checkboxElement != null) { isChecked = checkboxElement.isSelected(); }
-                }
-
+                WebElement checkboxElement = findCellCheckboxElement(cellElement, column);
                 if (checkboxElement == null) {
                     messageBuffer.append(msgPrefix2).append("contains NO checkbox or radio element" + NL);
                     return StepResult.fail(messageBuffer.toString());
                 }
+
+                boolean isChecked = isTogglePatternAvailable(checkboxElement) ?
+                                    checkboxElement.isSelected() :
+                                    BooleanUtils.toBoolean(getElementText(checkboxElement));
+                ConsoleUtils.log("checkbox element is currently " + (isChecked ? "CHECKED" : "UNCHECKED"));
 
                 if (!checkboxElement.isEnabled()) {
                     messageBuffer.append(msgPrefix2).append("is NOT ENABLED" + NL);
                     return StepResult.fail(messageBuffer.toString());
                 }
 
-                if (isChecked) {
-                    if (StringUtils.equals(value, TABLE_CELL_UNCHECK)) {
-                        ConsoleUtils.log(msgPrefix2 + "unchecking it...");
+                boolean proceed = isChecked && StringUtils.equals(value, TABLE_CELL_UNCHECK) ||
+                                  !isChecked && StringUtils.equals(value, TABLE_CELL_CHECK);
+                if (proceed) {
+                    ConsoleUtils.log(msgPrefix2 + (isChecked ? "unchecking" : "checking") + " it...");
 
-                        driver.executeScript(toShortcuts("SPACE", "TAB"), checkboxElement);
-
-                        if (context.getBooleanData(CURRENT_DESKTOP_TABLE_EDITABLE_COLUMN_FOUND) &&
-                            context.getStringData(CURRENT_DESKTOP_TABLE_EDITABLE_COLUMN_NAME).contentEquals(column)) {
-                            setFocusOut = true;
-                        }
-
-                        messageBuffer.append(msgPrefix2).append("unchecked").append(NL);
-                    } else {
-                        if (tabAfterEdit) { driver.executeScript(toShortcuts("TAB"), checkboxElement); }
+                    driver.executeScript(toShortcuts("ENTER"), checkboxElement);
+                    if (context.getBooleanData(CURRENT_DESKTOP_TABLE_EDITABLE_COLUMN_FOUND) &&
+                        context.getStringData(CURRENT_DESKTOP_TABLE_EDITABLE_COLUMN_NAME).contentEquals(column)) {
+                        setFocusOut = true;
                     }
+
+                    messageBuffer.append(msgPrefix2).append(isChecked ? "unchecked" : "checked").append(NL);
                 } else {
-                    if (StringUtils.equals(value, TABLE_CELL_CHECK)) {
-                        ConsoleUtils.log(msgPrefix2 + "checking it...");
-
-                        driver.executeScript(toShortcuts("SPACE", "TAB"), checkboxElement);
-
-                        if (context.getBooleanData(CURRENT_DESKTOP_TABLE_EDITABLE_COLUMN_FOUND) &&
-                            context.getStringData(CURRENT_DESKTOP_TABLE_EDITABLE_COLUMN_NAME).contentEquals(column)) {
-                            setFocusOut = true;
-                        }
-
-                        messageBuffer.append(msgPrefix2).append("checked").append(NL);
-                    } else {
-                        if (tabAfterEdit) { driver.executeScript(toShortcuts("TAB"), checkboxElement); }
-                    }
+                    if (tabAfterEdit) { driver.executeScript(toShortcuts("TAB"), checkboxElement); }
                 }
             } else if (StringUtils.isEmpty(value) || StringUtils.equals(value, TABLE_CELL_CLEAR)) {
                 clearCellContent(cellElement);
@@ -681,7 +657,7 @@ public class DesktopTable extends DesktopElement {
                 if (tabAfterEdit) { driver.executeScript(toShortcuts("TAB"), cellElement); }
             }
 
-            lastElement = cellElement;
+            // lastElement = cellElement;
         }
 
         if (focused) {
@@ -780,24 +756,41 @@ public class DesktopTable extends DesktopElement {
         return null;
     }
 
-    protected WebElement findCellCheckboxElement(WebElement cellElement) {
+    protected WebElement findCellCheckboxElement(WebElement cellElement, String column) {
+        // 1. the cell element could just be a checkbox
+        if (isCheckbox(cellElement)) {
+            ConsoleUtils.log("Found element as CHECKBOX");
+            return cellElement;
+        }
+
+        // 2. sometimes the checkbox hides under another element by the same name (WEIRD .NET CRAP)
+        if (DesktopUtils.countChildren(cellElement) > 0) {
+            String columnXpath = resolveColumnXpath(column);
+            List<WebElement> matches = cellElement.findElements(By.xpath(columnXpath));
+            if (CollectionUtils.isNotEmpty(matches)) {
+                ConsoleUtils.log("Found surrogate (inner) element; binding to first nested element");
+                return matches.get(0);
+            }
+        }
+
         // search for the CHECKBOX child element
         String xpath = "*[@ControlType='" + CHECK_BOX + "']";
 
-        // 1. could be under cell (esp. if the target cell is a TEXTBOX)
+        // 3. could be under cell (esp. if the target cell is a TEXTBOX)
         List<WebElement> matches = cellElement.findElements(By.xpath(xpath));
         if (!CollectionUtils.isEmpty(matches)) {
             ConsoleUtils.log("Found CHECKBOX element via CELL");
             return matches.get(0);
         }
 
-        // 2. could be under TABLE (esp. if the target cell is a COMBO)
+        // 4. could be under TABLE (esp. if the target cell is a COMBO)
         matches = element.findElements(By.xpath(xpath));
         if (!CollectionUtils.isEmpty(matches)) {
             ConsoleUtils.log("Found CHECKBOX element via TABLE");
             return matches.get(0);
         }
 
+        // give up
         return null;
     }
 
@@ -1064,9 +1057,7 @@ public class DesktopTable extends DesktopElement {
         return CollectionUtils.size(dataElements);
     }
 
-    private String treatColumnHeader(String header) {
-        return normalizeSpace ? TextUtils.xpathNormalize(header) : header;
-    }
+    private String treatColumnHeader(String header) {return normalizeSpace ? TextUtils.xpathNormalize(header) : header;}
 
     private String resolveColumnXpath(String column) { return "*[" + resolveColumnXpathCondition(column) + "]"; }
 

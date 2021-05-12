@@ -83,8 +83,7 @@ import static org.nexial.core.SystemVariables.getDefaultBool;
 import static org.nexial.core.SystemVariables.getDefaultInt;
 import static org.nexial.core.plugins.desktop.DesktopConst.*;
 import static org.nexial.core.plugins.desktop.DesktopNotification.NotificationLevel.info;
-import static org.nexial.core.plugins.desktop.DesktopUtils.toShortcuts;
-import static org.nexial.core.plugins.desktop.DesktopUtils.treatQuoteString;
+import static org.nexial.core.plugins.desktop.DesktopUtils.*;
 import static org.nexial.core.plugins.desktop.ElementType.*;
 import static org.nexial.core.plugins.web.WebDriverExceptionHelper.resolveErrorMessage;
 import static org.nexial.core.utils.CheckUtils.*;
@@ -946,8 +945,9 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
 
         try {
             String text = isAttributeMatched(element, "ControlType", CHECK_BOX, RADIO) &&
-                          BooleanUtils.toBoolean(element.getAttribute("IsTogglePatternAvailable")) ?
-                          element.isSelected() ? "True" : "False" : deriveText(element);
+                          isTogglePatternAvailable(element) ?
+                          element.isSelected() ? "True" : "False" :
+                          deriveText(element);
             if (StringUtils.isNotEmpty(text)) {
                 updateDataVariable(var, text);
                 return StepResult.success("text content saved to '" + var + "'");
@@ -1057,12 +1057,6 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
             context.setData(var, options);
         }
         return StepResult.success("Options for ComboBox '" + locator + "' saved to data variable '" + var + "'");
-    }
-
-    private boolean isAttributeMatched(WebElement element, String attribute, String... matchedTo) {
-        if (element == null || StringUtils.isBlank(attribute) || ArrayUtils.isEmpty(matchedTo)) { return false; }
-        String value = StringUtils.trim(element.getAttribute(attribute));
-        return Arrays.stream(matchedTo).anyMatch(match -> StringUtils.equals(match, value));
     }
 
     public StepResult waitFor(String name, String maxWaitMs) {

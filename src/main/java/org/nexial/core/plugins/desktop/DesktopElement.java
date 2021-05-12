@@ -506,14 +506,6 @@ public class DesktopElement {
 
     public boolean isSelected() { return element != null && element.isSelected(); }
 
-    protected static String getElementText(WebElement element) {
-        try {
-            return element.getText();
-        } catch (WebDriverException e) {
-            return null;
-        }
-    }
-
     public String getText() {
         if (elementType == null || elementType == Any) { return getValue(element); }
 
@@ -2511,11 +2503,12 @@ public class DesktopElement {
     protected String getValue(WebElement element) { return getValue(element, getLabel()); }
 
     protected static String getValue(WebElement element, String label) {
+        String name = StringUtils.trim(element.getAttribute("Name"));
         try {
-            return StringUtils.trim(StringUtils.defaultIfBlank(getElementText(element), element.getAttribute("Name")));
+            return getElementText(element, name);
         } catch (WebDriverException e) {
             ConsoleUtils.log("Unable to resolve text content for '" + label + "', retrying via @Name attribute...");
-            return StringUtils.trim(element.getAttribute("Name"));
+            return name;
         }
     }
 
