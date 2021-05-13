@@ -1,5 +1,13 @@
 package org.nexial.core;
 
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.math.NumberUtils;
+import org.nexial.commons.utils.FileUtil;
+import org.nexial.core.utils.ConsoleUtils;
+import org.nexial.core.utils.ExecUtils;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -11,14 +19,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.ArrayUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.math.NumberUtils;
-import org.nexial.commons.utils.FileUtil;
-import org.nexial.core.utils.ConsoleUtils;
-import org.nexial.core.utils.ExecUtils;
 
 import static java.io.File.separator;
 import static org.nexial.core.NexialConst.DEF_CHARSET;
@@ -42,7 +42,6 @@ public class NexialUpdate {
                 try {
                     String strChoice = CompletableFuture.supplyAsync(NexialUpdate::promptUserForInstallation)
                                                         .get(timeoutSeconds, TimeUnit.SECONDS);
-                    ;
                     choice = Integer.parseInt(StringUtils.trim(strChoice));
                 } catch (NumberFormatException nfe) {
                     choice = 0; // Invalid option, re-prompt
@@ -202,7 +201,7 @@ public class NexialUpdate {
         }
     }
 
-    private static boolean isInstallDirectory(File f) { return f.getName().matches(INSTALLER_DIR_NAME); }
+    private static boolean isInstallDirectory(File f) { return f.getName().toLowerCase().matches(INSTALLER_DIR_NAME); }
 
     // private static String downloadNexialInstaller() {
     //

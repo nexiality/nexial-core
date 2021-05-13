@@ -19,7 +19,6 @@ package org.nexial.core.plugins.desktop;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
-import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
@@ -2412,24 +2411,24 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
     }
 
     // todo: not used?
-    protected StepResult type(String name, ElementType expectedType, String... text) {
-        requires(ArrayUtils.isNotEmpty(text), "at least one text parameter is required");
-
-        DesktopElement component = getRequiredElement(name, expectedType);
-        // combine shortcut sequences into 1 string for performance.
-        String shortcut = TextUtils.toString(
-            DesktopElement.parseTextInputWithShortcuts(TextUtils.toString(text, "", "", ""), true), "");
-
-        try {
-            component.getElement().click();
-        } catch (WebDriverException e) {
-            ConsoleUtils.error("Unable to click on component %s; might be ok...: %s", name, resolveErrorMessage(e));
-        }
-
-        if (StringUtils.isNotEmpty(shortcut)) { component.type(shortcut, false); }
-        autoClearModalDialog(component.getXpath());
-        return StepResult.success("text entered to element '" + name + "'");
-    }
+    // protected StepResult type(String name, ElementType expectedType, String... text) {
+    //     requires(ArrayUtils.isNotEmpty(text), "at least one text parameter is required");
+    //
+    //     DesktopElement component = getRequiredElement(name, expectedType);
+    //     // combine shortcut sequences into 1 string for performance.
+    //     String shortcut = TextUtils.toString(
+    //         DesktopElement.parseTextInputWithShortcuts(TextUtils.toString(text, "", "", ""), true), "");
+    //
+    //     try {
+    //         component.getElement().click();
+    //     } catch (WebDriverException e) {
+    //         ConsoleUtils.error("Unable to click on component %s; might be ok...: %s", name, resolveErrorMessage(e));
+    //     }
+    //
+    //     if (StringUtils.isNotEmpty(shortcut)) { component.type(shortcut, false); }
+    //     autoClearModalDialog(component.getXpath());
+    //     return StepResult.success("text entered to element '" + name + "'");
+    // }
 
     public void
     type(WebElement elem, String text) {
