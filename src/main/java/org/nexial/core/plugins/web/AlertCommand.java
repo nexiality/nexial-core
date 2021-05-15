@@ -34,7 +34,6 @@ import javax.validation.constraints.NotNull;
 import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.NexialConst.Web.OPT_LAST_ALERT_TEXT;
 import static org.nexial.core.NexialConst.Web.WEB_PREEMPTIVE_ALERT_CHECK;
-import static org.nexial.core.SystemVariables.getDefaultBool;
 import static org.nexial.core.utils.CheckUtils.requires;
 
 public class AlertCommand extends BaseCommand implements RequireBrowser {
@@ -139,8 +138,9 @@ public class AlertCommand extends BaseCommand implements RequireBrowser {
     protected void preemptiveDismissAlert() { if (preemptiveCheckAlert()) { accept(); } }
 
     protected boolean preemptiveCheckAlert() {
-        if (browser == null || browser.isRunElectron()) { return false; }
-        return context.getBooleanData(WEB_PREEMPTIVE_ALERT_CHECK, getDefaultBool(WEB_PREEMPTIVE_ALERT_CHECK)) &&
+        return browser != null &&
+               !browser.isRunElectron() &&
+               context.getBooleanConfig("web", browser.profile, WEB_PREEMPTIVE_ALERT_CHECK) &&
                isDialogPresent();
     }
 

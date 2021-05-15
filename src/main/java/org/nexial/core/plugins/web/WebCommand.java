@@ -22,7 +22,10 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.IterableUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.*;
+import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.BooleanUtils;
+import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.commons.lang3.time.StopWatch;
 import org.nexial.commons.utils.CollectionUtil;
@@ -150,7 +153,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         // todo: consider this http://seleniumhq.github.io/selenium/docs/api/javascript/module/selenium-webdriver/lib/logging.html
         logToBrowser = !browser.isRunChrome() &&
                        context.getBooleanData(OPT_BROWSER_CONSOLE_LOG, getDefaultBool(OPT_BROWSER_CONSOLE_LOG));
-        tableHelper  = new TableHelper(this);
+        tableHelper = new TableHelper(this);
     }
 
     @Override
@@ -692,10 +695,10 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
         long maxWaitMs = context.getPollWaitMs();
         List<String> notPresent =
-                TextUtils.toList(locators, "\n", true)
-                         .stream()
-                         .filter(locator -> !waitForCondition(maxWaitMs, object -> isElementPresent(locator)))
-                         .collect(Collectors.toList());
+            TextUtils.toList(locators, "\n", true)
+                     .stream()
+                     .filter(locator -> !waitForCondition(maxWaitMs, object -> isElementPresent(locator)))
+                     .collect(Collectors.toList());
         if (CollectionUtils.isEmpty(notPresent)) {
             return StepResult.success("All specified locators are present within %s ms (each)", maxWaitMs);
         } else {
@@ -796,22 +799,26 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
      */
     public StepResult saveAttributeList(String var, String locator, String attrName) {
         requiresValidAndNotReadOnlyVariableName(var);
-        requiresNotBlank(locator, "invalid locator", locator);
-        requiresNotBlank(attrName, "invalid attribute name", attrName);
-
-        List<WebElement> elements = findElements(locator);
-        if (CollectionUtils.isEmpty(elements)) { return StepResult.fail("No element matched to '" + locator + "'"); }
-
-        String[] attrValues = elements.stream().map(element -> element.getAttribute(attrName)).toArray(String[]::new);
-
+        String[] attrValues = getAttributeValues(locator, attrName);
         if (ArrayUtils.isEmpty(attrValues)) {
             context.removeData(var);
-            return StepResult.success("matching elements do not contain attribute '" + attrName + "'");
+            return StepResult.success("No element matched to '" + locator + "' or matched elements do not contain " +
+                                      "attribute '" + attrName + "'");
         } else {
             context.setData(var, attrValues);
             return StepResult.success("attribute '%s' for elements that matched '%s' saved to '%s'",
                                       attrName, locator, var);
         }
+    }
+
+    @NotNull
+    protected String[] getAttributeValues(String locator, String attrName) {
+        requiresNotBlank(locator, "invalid locator", locator);
+        requiresNotBlank(attrName, "invalid attribute name", attrName);
+
+        List<WebElement> elements = findElements(locator);
+        return CollectionUtils.isEmpty(elements) ? new String[0] :
+               elements.stream().map(element -> element.getAttribute(attrName)).toArray(String[]::new);
     }
 
     public StepResult saveCount(String var, String locator) {
@@ -1116,15 +1123,15 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
             int green = 0;
             int blue = 0;
             if (value.length() == 3) {
-                red   = Integer.parseInt(StringUtils.repeat(value.charAt(0), 2), 16);
+                red = Integer.parseInt(StringUtils.repeat(value.charAt(0), 2), 16);
                 green = Integer.parseInt(StringUtils.repeat(value.charAt(1), 2), 16);
-                blue  = Integer.parseInt(StringUtils.repeat(value.charAt(2), 2), 16);
+                blue = Integer.parseInt(StringUtils.repeat(value.charAt(2), 2), 16);
             } else if (value.length() == 6) {
                 System.out.println("" + StringUtils.substring(value, 0, 2) + "=" +
                                    Integer.parseInt(StringUtils.substring(value, 0, 2), 16));
-                red   = Integer.parseInt(StringUtils.substring(value, 0, 2), 16);
+                red = Integer.parseInt(StringUtils.substring(value, 0, 2), 16);
                 green = Integer.parseInt(StringUtils.substring(value, 2, 4), 16);
-                blue  = Integer.parseInt(StringUtils.substring(value, 4, 6), 16);
+                blue = Integer.parseInt(StringUtils.substring(value, 4, 6), 16);
             }
 
             return "rgba(" + red + ", " + green + ", " + blue + ", 1)";
@@ -1513,7 +1520,12 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         ensureReady();
 
         url = validateUrl(url);
-        driver.get(url);
+        try {
+            driver.get(url);
+        } catch (UnhandledAlertException e) {
+            alert.harvestDialogText();
+            driver.get(url);
+        }
         waitForBrowserStability(toPositiveLong(waitMs, "waitMs"));
         postOpen(url);
 
@@ -1779,7 +1791,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
         if (StringUtils.isNotEmpty(value)) {
             // onchange event will not fire until a different element is selected
-            if (context.getBooleanData(WEB_UNFOCUS_AFTER_TYPE, getDefaultBool(WEB_UNFOCUS_AFTER_TYPE))) {
+            if (context.getBooleanConfig("web", getProfile(), WEB_UNFOCUS_AFTER_TYPE)) {
                 // element.sendKeys();
                 new Actions(driver).moveToElement(element)
                                    .sendKeys(element, value)
@@ -1810,9 +1822,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
             waitFor(MIN_STABILITY_WAIT_MS);
             Actions actions = WebDriverUtils.toSendKeyAction(driver, element, value);
             if (actions != null) {
-                if (context.getBooleanData(WEB_UNFOCUS_AFTER_TYPE, getDefaultBool(WEB_UNFOCUS_AFTER_TYPE))) {
-                    actions.sendKeys(TAB);
-                }
+                if (context.getBooleanConfig("web", getProfile(), WEB_UNFOCUS_AFTER_TYPE)) { actions.sendKeys(TAB); }
                 actions.build().perform();
             }
         } else {
@@ -2057,14 +2067,14 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
     protected List<WebElement> findCssMatchingElements(String attribute, String value) {
         Object returnObject = jsExecutor.executeScript(
-                "var targets = Array(); " +
-                "document.querySelectorAll(\"*\").forEach(function(elem, index) { " +
-                "   if (elem.style." + attribute + " === '" + value + "' || " +
-                "       window.getComputedStyle(elem).getPropertyValue(\"" + attribute + "\") === '" + value + "') { " +
-                "       targets.push(elem); " +
-                "   }" +
-                "});" +
-                "return targets;");
+            "var targets = Array(); " +
+            "document.querySelectorAll(\"*\").forEach(function(elem, index) { " +
+            "   if (elem.style." + attribute + " === '" + value + "' || " +
+            "       window.getComputedStyle(elem).getPropertyValue(\"" + attribute + "\") === '" + value + "') { " +
+            "       targets.push(elem); " +
+            "   }" +
+            "});" +
+            "return targets;");
         if (returnObject == null) { return null; }
 
         if (returnObject instanceof List) { return (List<WebElement>) returnObject; }
@@ -2095,8 +2105,8 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
             log("using full screen capturing approach with scroll timeout " + timeout + "...");
 
             Screenshot screenshot = new AShot()
-                                            .shootingStrategy(ShootingStrategies.viewportPasting(timeout))
-                                            .takeScreenshot(driver);
+                .shootingStrategy(ShootingStrategies.viewportPasting(timeout))
+                .takeScreenshot(driver);
             try {
                 boolean screenshotTaken = ImageIO.write(screenshot.getImage(), "PNG", screenshotFile);
                 if (screenshotTaken) {
@@ -2243,7 +2253,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         WebElement source = findElement(fromLocator);
         WebElement target = findElement(toLocator);
 
-        boolean dragNative = context.getBooleanData(OPT_DND_NATIVE, getDefaultBool(OPT_DND_NATIVE));
+        boolean dragNative = context.getBooleanConfig("web", getProfile(), OPT_DND_NATIVE);
         if (dragNative) {
             nativeDragTo(deriveNativeDragPoint(source), deriveDragDistance(source, target));
         } else {
@@ -2270,7 +2280,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         int moveX = NumberUtils.toInt(xOffset);
         int moveY = NumberUtils.toInt(yOffset);
 
-        boolean dragNative = context.getBooleanData(OPT_DND_NATIVE, getDefaultBool(OPT_DND_NATIVE));
+        boolean dragNative = context.getBooleanConfig("web", getProfile(), OPT_DND_NATIVE);
         if (dragNative) {
             nativeDragTo(deriveNativeDragPoint(source), moveX, moveY);
         } else {
@@ -2327,10 +2337,10 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
             jsExecutor.executeScript("arguments[0].removeAttribute(arguments[1])", element, attrName);
         } else {
             jsExecutor.executeScript(
-                    "arguments[0].setAttribute(arguments[1], arguments[2])",
-                    element,
-                    attrName,
-                    value);
+                "arguments[0].setAttribute(arguments[1], arguments[2])",
+                element,
+                attrName,
+                value);
         }
         return StepResult.success(attrName + " with value " + value + " updated successfully for '" + locator + "'");
     }
@@ -2368,7 +2378,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
             if (clientPerfCollector == null) {
                 synchronized (this) {
                     clientPerfCollector = new ClientPerformanceCollector(
-                            this, new Syspath().out("fullpath") + separator + WEB_METRICS_JSON);
+                        this, new Syspath().out("fullpath") + separator + WEB_METRICS_JSON);
                 }
             }
             clientPerfCollector.collect();
@@ -2380,7 +2390,12 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     protected void postOpen(String url) {
         context.setData(BROWSER_OPENED, true);
         context.setData(CURRENT_BROWSER, browser.getBrowserType().name());
-        updateWinHandle();
+        try {
+            updateWinHandle();
+        } catch (UnhandledAlertException e) {
+            alert.harvestDialogText();
+            updateWinHandle();
+        }
         resizeSafariAfterOpen();
         NexialListenerFactory.fireEvent(NexialExecutionEvent.newUrlInvokedEvent(browser.getBrowserType().name(), url));
         syncBrowserMeta();
@@ -2421,7 +2436,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     }
 
     protected int deriveBrowserStabilityWaitMs(ExecutionContext context) {
-        return context.getIntData(OPT_UI_RENDER_WAIT_MS, getDefaultInt(OPT_UI_RENDER_WAIT_MS));
+        return context.getIntConfig("web", getProfile(), OPT_UI_RENDER_WAIT_MS);
     }
 
     protected void clearValue(WebElement element) {
@@ -2495,8 +2510,8 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     }
 
     protected void resizeSafariAfterOpen() {
-        if ((browser.isRunBrowserStack() && browser.getBrowserstackHelper().getBrowser() == safari) ||
-            (browser.isRunCrossBrowserTesting() && browser.getCbtHelper().getBrowser() == safari)) {
+        if ((browser.isRunBrowserStack() && browser.getBrowserstackHelper().browser == safari) ||
+            (browser.isRunCrossBrowserTesting() && browser.getCbtHelper().browser == safari)) {
             if (!context.getBooleanData(SAFARI_RESIZED, getDefaultBool(SAFARI_RESIZED))) {
                 // time to resize it now
                 browser.setWindowSizeForcefully(driver);
@@ -2640,7 +2655,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
             // special treatment for body tag
             if (StringUtils.equalsIgnoreCase(element.getTagName(), "body")) {
                 exists = BooleanUtils.toBoolean(Objects.toString(jsExecutor.executeScript(
-                        "document.documentElement.clientHeight < document.documentElement.scrollHeight"))
+                    "document.documentElement.clientHeight < document.documentElement.scrollHeight"))
                                                );
             } else {
                 exists = NumberUtils.toInt(element.getAttribute("clientHeight")) <
@@ -2663,7 +2678,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
             // special treatment for body tag
             if (StringUtils.equalsIgnoreCase(element.getTagName(), "body")) {
                 exists = BooleanUtils.toBoolean(Objects.toString(jsExecutor.executeScript(
-                        "return document.documentElement.clientWidth < document.documentElement.scrollWidth")));
+                    "return document.documentElement.clientWidth < document.documentElement.scrollWidth")));
             } else {
                 exists = NumberUtils.toInt(element.getAttribute("clientWidth")) <
                          NumberUtils.toInt(element.getAttribute("scrollWidth"));
@@ -2903,12 +2918,12 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
         if (driver == null || currentDriver != driver) {
             driver = currentDriver;
-            alert  = null;
+            alert = null;
             cookie = null;
         }
 
-        jsExecutor  = (JavascriptExecutor) this.driver;
-        screenshot  = (TakesScreenshot) this.driver;
+        jsExecutor = (JavascriptExecutor) this.driver;
+        screenshot = (TakesScreenshot) this.driver;
         frameHelper = new FrameHelper(this, this.driver);
 
         if (alert == null) {
@@ -3135,6 +3150,9 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     protected boolean waitForBrowserStability(long maxWait, boolean forceWait) {
         if (browser == null || browser.isRunElectron()) { return false; }
 
+        // for firefox we can't be calling driver.getPageSource() or driver.findElement() when alert dialog is present
+        if (!alert.preemptiveCheckAlert() && alert.isDialogPresent()) { return false; }
+
         try {
             // test if this window has no URL or HTML, such as new window popup for downloading file.
             driver.getCurrentUrl();
@@ -3143,10 +3161,9 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
             return false;
         }
 
-        // for firefox we can't be calling driver.getPageSource() or driver.findElement() when alert dialog is present
-        if (alert.preemptiveCheckAlert()) { return true; }
-        if (alert.isDialogPresent()) { return false; }
-        if (!context.getBooleanConfig(getTarget(), getProfile(), ENFORCE_PAGE_SOURCE_STABILITY)) { return false; }
+        if (!context.getBooleanConfig(getTarget(), getProfile(), ENFORCE_PAGE_SOURCE_STABILITY) && !forceWait) {
+            return false;
+        }
 
         // force at least 1 compare
         if (maxWait < MIN_STABILITY_WAIT_MS) { maxWait = MIN_STABILITY_WAIT_MS + 1; }
@@ -3159,7 +3176,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         }
 
         int successCount = 0;
-        int checkSourceCount = context.getIntData(OPT_WAIT_SPEED, getDefaultInt(OPT_WAIT_SPEED));
+        int checkSourceCount = context.getIntConfig("web", getProfile(), OPT_WAIT_SPEED);
         long endTime = System.currentTimeMillis() + maxWait;
 
         try {
@@ -3218,7 +3235,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
             try {
                 // fail-safe retry
                 readyState = (String) jsExecutor.executeScript(
-                        "return selenium.browserbot.getCurrentWindow().document.readyState");
+                    "return selenium.browserbot.getCurrentWindow().document.readyState");
             } catch (Exception e1) {
                 log("Unable to evaluate browser readyState: " + e1.getMessage());
                 return false;
@@ -3511,7 +3528,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         return context.getBooleanConfig(getTarget(), getProfile(), OPT_DEBUG_HIGHLIGHT);
     }
 
-    protected boolean shouldWait() { return context.getBooleanData(WEB_ALWAYS_WAIT, getDefaultBool(WEB_ALWAYS_WAIT)); }
+    protected boolean shouldWait() { return context.getBooleanConfig("web", getProfile(), WEB_ALWAYS_WAIT); }
 
     protected StepResult saveTextSubstring(String var, String locator, String delimStart, String delimEnd) {
         List<WebElement> matches = findElements(locator);

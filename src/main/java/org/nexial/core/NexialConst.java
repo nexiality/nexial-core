@@ -1633,35 +1633,25 @@ public final class NexialConst {
     }
 
     public static final class WebMail {
-        public static final String NEXIAL_WEBMAIL_BROWSER_CONFIG = "nexial.browser=chrome.headless";
+        public static final String NEXIAL_WEBMAIL_BROWSER_CONFIG = "nexial.browser=chrome.headless\n" +
+                                                                   "nexial.web.alwaysWait=true\n" +
+                                                                   "nexial.pollWaitMs=5000\n" +
+                                                                   "nexial.web.preemptiveAlertCheck=true";
         public static final long MAX_DURATION = 24 * 60;
 
         public static final String WEBMAIL_MAILINAOR = "mailinator";
         public static final String WEBMAIL_TEMPORARYMAIL = "temporaryMail";
 
         // Mailinator Constants.
-        public static final String NEXIAL_WEBMAIL_MAILINATOR_BROWSER_PROFILE = "nexial.mailinator.browser";
-        public static final String NEXIAL_WEBMAIL_MAILINATOR_EMAIL_MATCHING_SIZE = "nexial.mailinator.matchingemailsize";
-        public static final String NEXIAL_WEBMAIL_MAILINATOR_MAIL_ROW_CONTENT = "nexial.mailinator.mailrow";
-        public static final String NEXIAL_WEBMAIL_MAILINATOR_EMAIL_CONTENT = "nexial.mailinator.mailcontent";
-        public static final String NEXIAL_WEBMAIL_MAILINATOR_EMAIL_LINKS = "nexial.mailinator.maillinks";
-        public static final String NEXIAL_WEBMAIL_MAILINATOR_MAIL_IDS = "nexial.mailinator.ids";
+        public static final String MAILINATOR_BROWSER = "nexial.mailinator.browser";
 
         //Temporary Mail Constants.
-        public static final String NEXIAL_WEBMAIL_TEMPORARYMAIL_BROWSER_PROFILE = "nexial.temporarymailnet.browser";
-        public static final String NEXIAL_WEBMAIL_TEMPORARYMAIL_EMAIL_CONTENT = "nexial.temporarymailnet.mailcontent";
-        public static final String NEXIAL_WEBMAIL_TEMPORARYMAIL_EMAIL_LINKS = "nexial.temporarymailnet.maillinks";
-        public static final String NEXIAL_WEBMAIL_TEMPORARYMAIL_MAIL_IDS = "nexial.temporarymailnet.mailids";
-        public static final String NEXIAL_TEMPORARY_MAIL_NET_SUBJECT = "nexial.temporarymailnet.subject";
-        public static final String NEXIAL_TEMPORARY_MAIL_NET_FROM = "nexial.temporarymailnet.from";
-        public static final String NEXIAL_TEMPORARY_MAIL_NET_RECEIVED_TIME = "nexial.temporarymailnet.receivedTime";
+        public static final String TEMPORARYMAIL_BROWSERE = "nexial.temporarymailnet.browser";
 
-        private WebMail() {
-        }
+        private WebMail() { }
 
         // reference by enclosing class to force initialization (possibly prior to any reference at runtime)
-        static void init() {
-        }
+        static void init() { }
     }
 
     public static class CloudWebTesting {

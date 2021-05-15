@@ -51,6 +51,7 @@ import org.nexial.core.plugins.NexialCommand;
 import org.nexial.core.plugins.pdf.CommonKeyValueIdentStrategies;
 import org.nexial.core.plugins.sound.SoundMachine;
 import org.nexial.core.plugins.web.Browser;
+import org.nexial.core.plugins.web.WebMailer;
 import org.nexial.core.reports.ExecutionMailConfig;
 import org.nexial.core.spi.NexialExecutionEvent;
 import org.nexial.core.spi.NexialListenerFactory;
@@ -170,6 +171,7 @@ public class ExecutionContext {
     protected CanTakeScreenshot screenshotAgent;
     protected Syspath syspath;
     protected Map<String, String> currentCommandProfiles = new HashMap<>();
+    protected Map<String, WebMailer> webMails;
     // protected ProfileHelper profileHelper;
 
     // spring-managed map of webdriver related configs.
@@ -397,6 +399,8 @@ public class ExecutionContext {
 
     public TemplateEngine getTemplateEngine() { return templateEngine; }
 
+    public Map<String, WebMailer> getWebMails() { return webMails; }
+
     public boolean isPluginLoaded(String target) { return plugins.isPluginLoaded(target); }
 
     public NexialCommand findPlugin(String target) {
@@ -431,7 +435,9 @@ public class ExecutionContext {
             ".");
     }
 
-    public boolean isDelayBrowser() { return getBooleanData(OPT_DELAY_BROWSER, getDefaultBool(OPT_DELAY_BROWSER)); }
+    public boolean isDelayBrowser() {
+        return getBooleanConfig("web", currentCommandProfiles.get("web"), OPT_DELAY_BROWSER);
+    }
 
     public Excel getTestScript() { return testScript; }
 
@@ -551,7 +557,7 @@ public class ExecutionContext {
     @NotNull
     public String getNullValueToken() { return getRawStringData(NULL_VALUE, NULL); }
 
-    public long getPollWaitMs() { return getIntData(POLL_WAIT_MS, getDefaultInt(POLL_WAIT_MS)); }
+    public long getPollWaitMs() { return getIntConfig("web", currentCommandProfiles.get("web"), POLL_WAIT_MS); }
 
     public long getSLAElapsedTimeMs() { return getIntData(OPT_ELAPSED_TIME_SLA); }
 
@@ -2166,6 +2172,9 @@ public class ExecutionContext {
 
         // thymeleaf template engine
         templateEngine = springContext.getBean("htmlTemplateEngine", TemplateEngine.class);
+
+        // webmails
+        webMails = springContext.getBean("webMails", HashMap.class);
     }
 
     @NotNull

@@ -1132,8 +1132,8 @@ public class Browser implements ForcefulTerminate {
         if (isRunChromeEmbedded() ||
             isRunElectron() ||
             isMobile() ||
-            (isRunBrowserStack() && browserstackHelper.getBrowser() == safari) ||
-            (isRunCrossBrowserTesting() && cbtHelper.getBrowser() == safari)) {
+            (isRunBrowserStack() && browserstackHelper.browser == safari) ||
+            (isRunCrossBrowserTesting() && cbtHelper.browser == safari)) {
             return;
         }
 
