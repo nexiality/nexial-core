@@ -49,7 +49,7 @@ import java.util.zip.GZIPInputStream
 
 abstract class WebDriverHelper protected constructor(protected var context: ExecutionContext) {
     protected lateinit var browserType: BrowserType
-    protected lateinit var config: WebDriverConfig
+    lateinit var config: WebDriverConfig
     protected lateinit var driverLocation: String
     protected lateinit var driverManifest: File
     lateinit var browserBinLocation: String
