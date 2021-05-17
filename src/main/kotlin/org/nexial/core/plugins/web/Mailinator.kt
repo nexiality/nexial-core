@@ -2,15 +2,13 @@ package org.nexial.core.plugins.web
 
 import org.apache.commons.lang3.StringUtils
 import org.apache.commons.lang3.math.NumberUtils
-import org.jsoup.Jsoup
+import org.nexial.core.NexialConst.WebMail.BROWSER_CONFIG
 import org.nexial.core.NexialConst.WebMail.MAILINATOR_BROWSER
-import org.nexial.core.NexialConst.WebMail.NEXIAL_WEBMAIL_BROWSER_CONFIG
 import org.nexial.core.plugins.ws.WebServiceClient
 import org.nexial.core.utils.ConsoleUtils
 import org.nexial.core.utils.JSONPath
 import org.nexial.core.utils.JsonUtils
 import java.time.Instant
-import java.time.LocalDateTime
 import java.time.ZoneId
 
 
@@ -26,14 +24,11 @@ class Mailinator : WebMailer() {
     private var isV4 = url.contains("/v4/")
     private val labelSubject = "Subject"
 
-    // private val labelTo = "To"
-    // private val labelFrom = "From"
-    // private val labelReceived = "Received"
     private val timeFormat = "EEE MMM dd yyyy HH:mm:ss zZ"
     private val locators = Locators(url)
 
     override fun search(web: WebCommand, profile: WebMailProfile, searchCriteria: String, duration: Long): Set<String> {
-        web.switchBrowser(MAILINATOR_BROWSER, NEXIAL_WEBMAIL_BROWSER_CONFIG)
+        web.switchBrowser(MAILINATOR_BROWSER, BROWSER_CONFIG)
 
         openEmailListingPage(web, profile)
 
@@ -79,11 +74,8 @@ class Mailinator : WebMailer() {
                         for (i in 0 until parts.length()) {
                             val part = parts.getJSONObject(i)
                             val headers = part.getJSONObject("headers") ?: continue
-                            if (headers.getString("content-type").contains("html")) {
+                            if (headers.getString("content-type").contains("html"))
                                 email.html = part.getString("body")
-                                email.links = Jsoup.parse(email.html).getElementsByAttribute("href")
-                                        .map { it.attr("href") }.toSet()
-                            }
                             if (headers.getString("content-type").contains("plain"))
                                 email.content = part.getString("body")
                         }
@@ -93,43 +85,6 @@ class Mailinator : WebMailer() {
                 }
             }
         }.filter { StringUtils.isNotEmpty(it) }.toSet()
-
-        // return matchingEmails.map { emailId ->
-        //     web.click(String.format(locators.emailLink, emailId, indexSubject))
-        //     web.waitUntilVisible(locators.emailHeader, maxLoadTime)
-        //     web.waitForCondition(1500L) { web.isElementPresent(locators.nonEmptyReceivedOn) }
-        //
-        //     val texts = web.collectTextList(locators.emailHeader).map { it.trim() }.toSet()
-        //     if (CollectionUtils.isEmpty(texts)) ""
-        //     else {
-        //         val email = EmailDetails(emailId)
-        //
-        //         for (text in texts) {
-        //             when {
-        //                 text.startsWith(labelSubject)  -> email.subject = text.substringAfter(labelSubject).trim()
-        //                 text.startsWith(labelTo)       -> email.to = text.substringAfter(labelTo).trim()
-        //                 text.startsWith(labelFrom)     -> email.from = text.substringAfter(labelFrom).trim()
-        //                 text.startsWith(labelReceived) -> email.time =
-        //                         getEmailReceivedTime(text.substringAfter(labelReceived).trim())
-        //             }
-        //         }
-        //
-        //         val minutes = MINUTES.between(LocalDateTime.now(), email.time) * -1
-        //         if (minutes > duration) {
-        //             openEmailListingPage(web, profile)
-        //             ""
-        //         } else {
-        //             web.selectFrame(locators.contentFrame)
-        //
-        //             email.content = StringUtils.trim(web.getElementText(locators.content))
-        //             email.links = web.getAttributeValues(locators.links, "href").map { it.trim() }.toSet()
-        //             email.html = driver.pageSource
-        //             web.context.setData(deriveEmailContentVar(profile, emailId), email)
-        //             openEmailListingPage(web, profile)
-        //             emailId
-        //         }
-        //     }
-        // }.filter { StringUtils.isNotEmpty(it) }.toSet()
     }
 
     private fun openEmailListingPage(web: WebCommand, profile: WebMailProfile) {
@@ -138,17 +93,6 @@ class Mailinator : WebMailer() {
         web.waitUntilVisible(String.format(locators.emailListing, profile.inbox), maxLoadTime)
         web.waitForCondition(NumberUtils.toLong(maxLoadTime)) { web.isBrowserLoadComplete }
     }
-
-    /**
-     * Convert the time in the string format as mentioned in the format [timeFormat]
-     * to [LocalDateTime].
-     *
-     * @param time timestamp mentioned as string.
-     * @return the [LocalDateTime] value of the string passed in.
-     */
-    // private fun getEmailReceivedTime(time: String): LocalDateTime {
-    //     return LocalDateTime.from(DateTimeFormatter.ofPattern(timeFormat).parse(time.substringBefore(" (").trim()))
-    // }
 
     override fun delete(web: WebCommand, profile: WebMailProfile, id: String): Boolean {
         val email = web.context.getObjectData(deriveEmailContentVar(profile, id), EmailDetails::class.java)
@@ -160,24 +104,6 @@ class Mailinator : WebMailer() {
         val wsClient = WebServiceClient(null).configureAsQuiet().disableContextConfiguration()
         wsClient.get(String.format(urlDeleteMail, id), "")
         return true
-
-        /*
-        web.switchBrowser(MAILINATOR_BROWSER, NEXIAL_WEBMAIL_BROWSER_CONFIG)
-        openEmailListingPage(web, profile)
-
-        val checkBoxId = id.replace("row_", "check_")
-        val checkBoxXPathLocator = String.format(locators.deleteCheckbox, checkBoxId)
-        if (web.waitForElementPresent(checkBoxXPathLocator, getMaxLoadTime(web.context)).failed()) {
-            ConsoleUtils.error("Email with id $id is not present.")
-            return false
-        }
-
-        web.click(checkBoxXPathLocator)
-        web.click(locators.deleteButton)
-        if (!isV4) web.alert.harvestDialogText()
-        web.context.removeData(deriveEmailContentVar(profile, id))
-        return true
-        */
     }
 
 }

@@ -3,7 +3,7 @@ package org.nexial.core.plugins.web
 import org.apache.commons.collections4.MapUtils
 import org.apache.commons.lang3.StringUtils
 import org.nexial.core.ExecutionThread
-import org.nexial.core.NexialConst.WebMail.WEBMAIL_MAILINAOR
+import org.nexial.core.NexialConst.WebMail.WEBMAIL_MAILINATOR
 import org.nexial.core.NexialConst.WebMail.WEBMAIL_TEMPORARYMAIL
 import org.nexial.core.utils.CheckUtils
 import org.nexial.core.utils.CheckUtils.requiresNotBlank
@@ -41,7 +41,7 @@ class WebMailProfile(val profileName: String,
             requiresNotBlank(inbox, "The 'inbox' from which the emails to be read is not specified.")
 
             // check provider
-            val provider = config["provider"] ?: WEBMAIL_MAILINAOR
+            val provider = config["provider"] ?: WEBMAIL_MAILINATOR
             val mailer = context.webMails[provider] ?: throw IllegalArgumentException("Invalid mail provider $provider")
 
             // check domain

@@ -1436,6 +1436,7 @@ public class ExecutionContext {
             config = StringUtils.replace(config, "\\,", "!@#>>*<<#@!");
             config = StringUtils.replace(config, ",", "\n");
             config = StringUtils.replace(config, "!@#>>*<<#@!", ",");
+            config = StringUtils.trim(config);
             configMap.putAll(TextUtils.toMap(config, "\n", "="));
         }
 

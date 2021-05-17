@@ -1,5 +1,7 @@
 package org.nexial.core.plugins.web
 
+import org.apache.commons.lang3.StringUtils
+import org.jsoup.Jsoup
 import java.time.LocalDateTime
 
 /**
@@ -22,6 +24,11 @@ data class EmailDetails(
         val to: String,
         val time: LocalDateTime,
         var content: String? = null,
-        var html: String? = null,
-        var links: Set<String>? = null,
-)
+        var html: String? = null) {
+    var links: Set<String>? = null
+
+    init {
+        if (StringUtils.isNotEmpty(html))
+            links = Jsoup.parse(html).getElementsByAttribute("href").map { it.attr("href") }.toSet()
+    }
+}
