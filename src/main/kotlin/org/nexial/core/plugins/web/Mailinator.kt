@@ -45,9 +45,12 @@ class Mailinator : WebMailer() {
         if (matchingEmails.isEmpty()) return emptySet()
 
         return matchingEmails.map { emailId ->
-            val url = String.format(urlGetMail, emailId.substringAfter("row_"))
+            val id = emailId.substringAfter("row_")
+            val url = String.format(urlGetMail, id)
             val response = wsClient.get(url, "")
-            if (response.returnCode < 200 || response.returnCode > 299) {
+            if (response.returnCode < 200 || response.returnCode > 299 || StringUtils.isBlank(response.body)) {
+                ConsoleUtils.log("Unexpected error when fetching mail $id: " +
+                                 "return code=${response.returnCode}, body=${response.body}")
                 ""
             } else {
                 val jsonObject = JsonUtils.toJSONObject(response.body)
