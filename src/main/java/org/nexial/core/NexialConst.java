@@ -1618,9 +1618,7 @@ public final class NexialConst {
         public static final String OAUTH_CLIENT_SECRET = "client_secret";
         public static final String OAUTH_SCOPE = "scope";
         public static final String OAUTH_GRANT_TYPE = "grant_type";
-        public static final List<String> OAUTH_REQUIRED_INPUTS = Arrays.asList(OAUTH_CLIENT_ID,
-                                                                               OAUTH_CLIENT_SECRET,
-                                                                               OAUTH_GRANT_TYPE);
+        public static final List<String> OAUTH_REQUIRED_INPUTS = Arrays.asList(OAUTH_CLIENT_ID, OAUTH_GRANT_TYPE);
         public static final String OAUTH_ACCESS_TOKEN = "access_token";
         public static final String OAUTH_TOKEN_TYPE = "token_type";
         public static final String OAUTH_TOKEN_TYPE_BEARER = "Bearer";

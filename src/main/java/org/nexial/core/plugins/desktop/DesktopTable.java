@@ -468,7 +468,7 @@ public class DesktopTable extends DesktopElement {
                         for (WebElement column : columns) {
                             String editableColumnName = findAndSetEditableColumnName(column);
                             if (editableColumnName != null) {
-                                column.click();
+                                new Actions(getDriver()).moveToElement(column, 0, 2).click().perform();
                                 matches = element.findElements(By.xpath(LOCATOR_NEW_ROW));
                                 if (CollectionUtils.isNotEmpty(matches)) { break; }
                             }
@@ -488,7 +488,7 @@ public class DesktopTable extends DesktopElement {
                 matches = element.findElements(By.xpath(xpathRow));
                 if (CollectionUtils.isNotEmpty(matches)) {
                     try {
-                        matches.get(0).click();
+                        new Actions(driver).moveToElement(matches.get(0), 0, 2).click().perform();
                     } catch (WebDriverException e) {
                         // no biggie here
                         ConsoleUtils.log("Unable to click on Row " + row + "; this command might not work...");
@@ -621,19 +621,20 @@ public class DesktopTable extends DesktopElement {
                     return StepResult.fail(messageBuffer.toString());
                 }
 
+                focused = false;
                 boolean isChecked = isTogglePatternAvailable(checkboxElement) ?
                                     checkboxElement.isSelected() :
                                     BooleanUtils.toBoolean(getElementText(checkboxElement));
                 ConsoleUtils.log("checkbox element is currently " + (isChecked ? "CHECKED" : "UNCHECKED"));
-
-                if (!checkboxElement.isEnabled()) {
-                    messageBuffer.append(msgPrefix2).append("is NOT ENABLED" + NL);
-                    return StepResult.fail(messageBuffer.toString());
-                }
-
                 boolean proceed = isChecked && StringUtils.equals(value, TABLE_CELL_UNCHECK) ||
                                   !isChecked && StringUtils.equals(value, TABLE_CELL_CHECK);
+
                 if (proceed) {
+                    if (!checkboxElement.isEnabled()) {
+                        messageBuffer.append(msgPrefix2).append("is NOT ENABLED" + NL);
+                        return StepResult.fail(messageBuffer.toString());
+                    }
+
                     ConsoleUtils.log(msgPrefix2 + (isChecked ? "unchecking" : "checking") + " it...");
 
                     driver.executeScript(toShortcuts("ENTER"), checkboxElement);
@@ -643,8 +644,6 @@ public class DesktopTable extends DesktopElement {
                     }
 
                     messageBuffer.append(msgPrefix2).append(isChecked ? "unchecked" : "checked").append(NL);
-                } else {
-                    if (tabAfterEdit) { driver.executeScript(toShortcuts("TAB"), checkboxElement); }
                 }
             } else if (StringUtils.isEmpty(value) || StringUtils.equals(value, TABLE_CELL_CLEAR)) {
                 clearCellContent(cellElement);
@@ -664,7 +663,8 @@ public class DesktopTable extends DesktopElement {
             // todo: need to handle first column = null problem
             if (setFocusOut) {
                 looseCurrentFocus();
-            } else if (context.getBooleanData(CURRENT_DESKTOP_TABLE_EDITABLE_COLUMN_FOUND)) {
+            } else if (context.getBooleanData(CURRENT_DESKTOP_TABLE_EDITABLE_COLUMN_FOUND) && !isTreeView) {
+                // only applicable to pre- infragistics 4 components
                 WebElement editColumn = tableRow.getColumns()
                                                 .get(context.getStringData(CURRENT_DESKTOP_TABLE_EDITABLE_COLUMN_NAME));
                 // using click action on editable column helps the driver find child elements
@@ -763,6 +763,9 @@ public class DesktopTable extends DesktopElement {
             return cellElement;
         }
 
+        // search for the CHECKBOX child element
+        String xpath = "*[@ControlType='" + CHECK_BOX + "']";
+
         // 2. sometimes the checkbox hides under another element by the same name (WEIRD .NET CRAP)
         if (DesktopUtils.countChildren(cellElement) > 0) {
             String columnXpath = resolveColumnXpath(column);
@@ -771,20 +774,18 @@ public class DesktopTable extends DesktopElement {
                 ConsoleUtils.log("Found surrogate (inner) element; binding to first nested element");
                 return matches.get(0);
             }
+
+            // 3. could be under cell (esp. if the target cell is a TEXTBOX)
+            matches = cellElement.findElements(By.xpath(xpath));
+            if (CollectionUtils.isNotEmpty(matches)) {
+                ConsoleUtils.log("Found CHECKBOX element via CELL");
+                return matches.get(0);
+            }
         }
 
-        // search for the CHECKBOX child element
-        String xpath = "*[@ControlType='" + CHECK_BOX + "']";
-
-        // 3. could be under cell (esp. if the target cell is a TEXTBOX)
-        List<WebElement> matches = cellElement.findElements(By.xpath(xpath));
-        if (!CollectionUtils.isEmpty(matches)) {
-            ConsoleUtils.log("Found CHECKBOX element via CELL");
-            return matches.get(0);
-        }
 
         // 4. could be under TABLE (esp. if the target cell is a COMBO)
-        matches = element.findElements(By.xpath(xpath));
+        List<WebElement> matches = element.findElements(By.xpath(xpath));
         if (!CollectionUtils.isEmpty(matches)) {
             ConsoleUtils.log("Found CHECKBOX element via TABLE");
             return matches.get(0);

@@ -17,13 +17,6 @@
 
 package org.nexial.core.plugins.ws;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-import javax.validation.constraints.NotNull;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -43,6 +36,14 @@ import org.nexial.core.plugins.base.BaseCommand;
 import org.nexial.core.utils.CheckUtils;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.OutputResolver;
+
+import javax.validation.constraints.NotNull;
+import java.io.File;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 
 import static io.jsonwebtoken.SignatureAlgorithm.HS256;
 import static io.jsonwebtoken.impl.TextCodec.BASE64URL;
@@ -285,11 +286,13 @@ public class WsCommand extends BaseCommand {
         if (errorMessages.length() > 0) { return StepResult.fail(errorMessages.toString()); }
 
         // establish headers
-        String clientId = inputs.get(OAUTH_CLIENT_ID);
-        String clientSecret = inputs.get(OAUTH_CLIENT_SECRET);
-        String basicHeader = "Basic " + new String(Base64.encodeBase64((clientId + ":" + clientSecret).getBytes()));
-        ConsoleUtils.log("setting HTTP Header " + AUTHORIZATION + " as " + basicHeader);
-        header(AUTHORIZATION, basicHeader);
+        if (StringUtils.isNotBlank(inputs.get(OAUTH_CLIENT_SECRET))) {
+            String clientId = inputs.get(OAUTH_CLIENT_ID);
+            String clientSecret = inputs.get(OAUTH_CLIENT_SECRET);
+            String basicHeader = "Basic " + new String(Base64.encodeBase64((clientId + ":" + clientSecret).getBytes()));
+            ConsoleUtils.log("setting HTTP Header " + AUTHORIZATION + " as " + basicHeader);
+            header(AUTHORIZATION, basicHeader);
+        }
         header(CONTENT_TYPE, WS_FORM_CONTENT_TYPE);
 
         // post oauth request
