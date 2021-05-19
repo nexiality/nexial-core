@@ -172,13 +172,13 @@ public class DesktopHierTable extends DesktopElement {
 
     public StepResult collapseAll() {
         boolean infragistics4 = supportInfragistics4();
-        if (!infragistics4) {
-            driver.executeScript(SCRIPT_TREE_COLLAPSE_ALL, element);
-        } else {
+        if (infragistics4) {
             // do it by hand!
             String shortcuts = DesktopUtils.toShortcuts("CTRL-SPACE", "LEFT");
             element.findElements(By.xpath(LOCATOR_HIER_TABLE_ROWS))
                    .forEach(row -> driver.executeScript(shortcuts, row));
+        } else {
+            driver.executeScript(SCRIPT_TREE_COLLAPSE_ALL, element);
         }
 
         // alreadyCollapsed has no effect if hierarchyColumn and hierarchyList values are provided

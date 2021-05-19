@@ -512,7 +512,12 @@ public class DesktopElement {
         if (elementType == SingleSelectList) {
             if (!controlType.equals(LIST_ITEM)) {
                 // take the long way... find selected element (if any)
-                WebElement selected = findFirstElement("*[@ControlType='" + LIST_ITEM + "' and @IsSelected='True']");
+                // WebElement selected = findFirstElement("*[@ControlType='" + LIST_ITEM + "' and @IsSelected='True']");
+                String listItems = "*[@ControlType='" + LIST_ITEM + "' and @Name!='']";
+                WebElement selected = element.findElements(By.xpath(listItems)).stream()
+                                             .filter(elem -> StringUtils.equals(elem.getAttribute("IsSelected"), "True"))
+                                             .findFirst()
+                                             .orElse(null);
                 if (selected != null) { return selected.getAttribute("Name"); }
             }
 

@@ -17,8 +17,6 @@
 
 package org.nexial.core.plugins.desktop;
 
-import java.util.Arrays;
-import java.util.List;
 import com.google.gson.ExclusionStrategy;
 import com.google.gson.FieldAttributes;
 import com.google.gson.Gson;
@@ -27,6 +25,9 @@ import com.google.gson.typeadapters.RuntimeTypeAdapterFactory;
 import org.apache.commons.lang3.StringUtils;
 import org.nexial.core.utils.ConsoleUtils;
 import org.openqa.selenium.WebElement;
+
+import java.util.Arrays;
+import java.util.List;
 
 import static org.nexial.core.NexialConst.NAMESPACE;
 import static org.nexial.core.NexialConst.NL;
@@ -113,7 +114,7 @@ public class DesktopConst {
         "*[substring(@Name,string-length(@Name)-4)='row 1']/*[@Name!='Column Headers']";
     public final static String LOCATOR_HIER_HEADER_COLUMNS =
         "*[@ControlType='ControlType.Header']/*[@ControlType='ControlType.HeaderItem']";
-    public static final String LOCATOR_HIER_TABLE_ROWS = "*[@ControlType='" + TREE_VIEW_ROW + "']";
+    public static final String LOCATOR_HIER_TABLE_ROWS = "*[@ControlType='" + TREE_VIEW_ROW + "' and @AutomationId!='-1']";
     public static final String LOCATOR_HIER_CELLS = LOCATOR_HIER_TABLE_ROWS + "[{row}]/*";
     public static final String LOCATOR_HIER_CELL = LOCATOR_HIER_CELLS + "[@Name='{column}']";
     public static final String LOCATOR_HIER_FIRST_CELL = LOCATOR_HIER_CELLS + "[1]";

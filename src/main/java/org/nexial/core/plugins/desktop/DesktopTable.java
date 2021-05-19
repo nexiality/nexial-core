@@ -53,6 +53,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import static org.nexial.core.NexialConst.Desktop.AUTOSCAN_INFRAGISTICS4_AWARE;
 import static org.nexial.core.NexialConst.Desktop.CLEAR_TABLE_CELL_BEFORE_EDIT;
 import static org.nexial.core.NexialConst.NL;
 import static org.nexial.core.SystemVariables.getDefaultBool;
@@ -111,11 +112,11 @@ public class DesktopTable extends DesktopElement {
 
         @Override
         public String toString() {
-            return "headers='" + headers + "', \n" +
-                   "cellTypes='" + cellTypes + "', \n" +
-                   "columnCount='" + columnCount + "', \n" +
-                   "rowCount='" + rowCount + "', \n" +
-                   "normalizeSpace='" + normalizeSpace + "'";
+            return "headers=" + TextUtils.toString(headers, ",") + ",\n" +
+                   "cellTypes=" + cellTypes + ",\n" +
+                   "columnCount=" + columnCount + ",\n" +
+                   "rowCount=" + rowCount + ",\n" +
+                   "normalizeSpace=" + normalizeSpace;
         }
     }
 
@@ -135,20 +136,19 @@ public class DesktopTable extends DesktopElement {
 
             // header list specified manually to avoid time needed to discover this dynamically
             if (instance.extra.containsKey("headers")) {
-                instance.headers = TextUtils.toList(instance.extra.get("headers"), ",", true);
-                if (instance.normalizeSpace && CollectionUtils.isNotEmpty(instance.headers)) {
-                    List<String> normalized = new ArrayList<>();
-                    instance.headers.forEach(header -> normalized.add(TextUtils.xpathNormalize(header)));
-                    instance.headers = normalized;
-                }
+                instance.headers =
+                    TextUtils.toList(instance.extra.get("headers"), ",", true).stream()
+                             .map(header -> instance.normalizeSpace ? TextUtils.xpathNormalize(header) : header)
+                             .collect(Collectors.toList());
                 instance.columnCount = CollectionUtils.size(instance.headers);
+            }
 
-                if (instance.extra.containsKey("headerHeight")) {
-                    instance.headerHeight = NumberUtils.toInt(instance.extra.get("headerHeight"));
-                }
-                if (instance.extra.containsKey("clickOffsetX")) {
-                    instance.clickOffsetX = NumberUtils.toInt(instance.extra.get("clickOffsetX"));
-                }
+            if (instance.extra.containsKey("headerHeight")) {
+                instance.headerHeight = NumberUtils.toInt(instance.extra.get("headerHeight"));
+            }
+
+            if (instance.extra.containsKey("clickOffsetX")) {
+                instance.clickOffsetX = NumberUtils.toInt(instance.extra.get("clickOffsetX"));
             }
 
             // specify the cells that require different treatment (ie FormattedTextbox)
@@ -195,7 +195,6 @@ public class DesktopTable extends DesktopElement {
 
                 headers = columns.stream().map(elem -> elem.getAttribute(ATTR_NAME)).collect(Collectors.toList());
                 columnCount = headers.size();
-
             } else {
                 String row = getFirstAvailableRowName();
                 if (StringUtils.isNotEmpty(row)) {
@@ -253,20 +252,13 @@ public class DesktopTable extends DesktopElement {
 
         if (row < 0) { throw new IllegalArgumentException("row (zero-based) must be 0 or greater"); }
 
-        String msgPrefix = "Table '" + name + "' ";
         int rowCount = getTableRowCount();
         if (rowCount < row + 1) {
-            throw new IllegalArgumentException(msgPrefix + "contains less than " + (rowCount + 1) + " row(s); " +
-                                               "cannot click row '" + row + "'");
+            throw new IllegalArgumentException(String.format("Table '%s' has only %s; cannot click row %s",
+                                                             name, (rowCount + 1), row));
         }
 
-        if (rowCount == 0) {
-            clickOffset(getElement(), clickOffsetX, (headerHeight + (TABLE_ROW_HEIGHT * row) + (TABLE_ROW_HEIGHT / 2)));
-        } else {
-            String xpath = isTreeView ? LOCATOR_HIER_FIRST_CELL : LOCATOR_FIRST_CELL;
-            xpath = StringUtils.replace(xpath, "{row}", (row + 1) + "");
-            clickElement(xpath);
-        }
+        clickOffset(getElement(), clickOffsetX, resolveClickOffsetY(row));
     }
 
     /** As of v3.7, we will support HierTable (aka ControlType.Tree) and converting to CSV structure (text) */
@@ -275,7 +267,7 @@ public class DesktopTable extends DesktopElement {
 
         if (row > getTableRowCount()) {
             // perhaps user wants to click on a new row.. let's click new row by offset and then check if the new row is created
-            clickOffset(element, clickOffsetX, (headerHeight + (TABLE_ROW_HEIGHT * row) + (TABLE_ROW_HEIGHT / 2)));
+            clickOffset(element, clickOffsetX, (resolveClickOffsetY(row)));
             // todo: need to figure out XPATH for HierTable
             String xpath = StringUtils.replace(LOCATOR_NEW_ROW_CELL, "{column}", column);
             try {
@@ -318,34 +310,9 @@ public class DesktopTable extends DesktopElement {
         List<TableRow> data = tableData.getData();
         for (TableRow row : data) {
             for (int i = 0; i < columnNames.size(); i++) {
-                String columnName = columnNames.get(i);
                 if (row.size() <= i) { continue; }
-
-                String formatKey = columnName + ".format";
-                if (!extra.containsKey(formatKey)) { continue; }
-
-                String formatRule = extra.get(formatKey);
-                if (!StringUtils.contains(formatRule, ",")) { continue; }
-
-                String[] formats = StringUtils.split(formatRule, ",");
-                String value = row.get(columnName);
-                if (StringUtils.containsAny(formatRule, "MdyHhms")) {
-                    // date format
-                    value = DateUtility.formatTo(value, formats[0], formats[1]);
-                }
-
-                if (StringUtils.containsAny(formatRule, "0#")) {
-                    // number format
-                    try {
-                        Number parsed = new DecimalFormat(formats[0]).parse(value);
-                        value = new DecimalFormat(formats[1]).format(parsed);
-                    } catch (ParseException e) {
-                        ConsoleUtils.error("Unable to parse/reformat Row " + (i + 1) + " Column " + columnName + ": " +
-                                           e.getMessage());
-                    }
-                }
-
-                row.put(i + "", columnName, value);
+                String columnName = columnNames.get(i);
+                row.put(i + "", columnName, reformatCellData(columnName, row.get(columnName)));
             }
         }
 
@@ -367,10 +334,7 @@ public class DesktopTable extends DesktopElement {
 
     /** As of v3.7, we will support HierTable (aka ControlType.Tree) as well */
     public int getTableRowCount() {
-        if (isTreeView) {
-            String xpath = StringUtils.appendIfMissing(getXpath(), "/") + LOCATOR_HIER_TABLE_ROWS;
-            return CollectionUtils.size(driver.findElements(By.xpath(xpath)));
-        }
+        if (isTreeView) { return CollectionUtils.size(element.findElements(By.xpath(LOCATOR_HIER_TABLE_ROWS))); }
 
         Object object = driver.executeScript(SCRIPT_DATAGRID_ROW_COUNT, element);
         if (object == null) { return collectRowCountByXpath(); }
@@ -430,7 +394,7 @@ public class DesktopTable extends DesktopElement {
                 // using offsets, only when to click on the first row and it is new row.
                 if (row == 0) {
                     if (clickBeforeEdit()) {
-                        clickOffset(element, clickOffsetX, (headerHeight + (TABLE_ROW_HEIGHT / 2)));
+                        clickOffset(element, clickOffsetX, resolveClickOffsetY(0));
                         try { Thread.sleep(2000); } catch (InterruptedException e) {}
                     }
                     matches = element.findElements(By.xpath(LOCATOR_NEW_ROW));
@@ -679,26 +643,25 @@ public class DesktopTable extends DesktopElement {
         if (MapUtils.isEmpty(nameValues)) { return false; }
 
         // check names
-        StringBuilder xpathMatchColumn = new StringBuilder();
-        for (String name : nameValues.keySet()) {
-            if (!headers.contains(name)) {
-                throw new IllegalArgumentException("Column '" + name + "' is not valid for this Table");
-            }
-
-            xpathMatchColumn.append("./*[")
-                            .append(resolveColumnXpathCondition(name))
-                            .append(" and @Value='").append(nameValues.get(name))
-                            .append("'] and ");
+        String xpath = "*[" +
+                       nameValues.keySet().stream()
+                                 .filter(name -> headers.contains(name))
+                                 .map(name -> resolveMatchingColumnXpath(name, nameValues.get(name)))
+                                 .collect(Collectors.joining(" and ")) +
+                       "]";
+        if (StringUtils.isBlank(xpath)) {
+            throw new IllegalArgumentException(String.format("Column '%s'' is not valid for this Table",
+                                                             nameValues.keySet().stream()
+                                                                       .filter(name -> !headers.contains(name))
+                                                                       .collect(Collectors.joining(", "))));
         }
 
-        String xpath = "*[" + StringUtils.removeEnd(xpathMatchColumn.toString(), " and ") + "]";
         ConsoleUtils.log("finding/clicking on first matched row via " + xpath);
         List<WebElement> elements = element.findElements(By.xpath(xpath));
         if (CollectionUtils.isEmpty(elements)) { return false; }
 
         WebElement row = elements.get(0);
-        row.click();
-        driver.executeScript(SCRIPT_PREFIX_SHORTCUT + "<[ESC]><[CTRL-SPACE]>", row);
+        clickOffset(row, clickOffsetX, TABLE_ROW_HEIGHT / 2);
         return true;
     }
 
@@ -851,7 +814,12 @@ public class DesktopTable extends DesktopElement {
         List<String> actual = fetchAll().getRows()
                                         .stream()
                                         .filter(Objects::nonNull)
-                                        .map(row -> row.get(pos))
+                                        .map(row -> {
+                                            String data = row.get(pos);
+                                            return !PolyMatcher.isPolyMatcher(data) ?
+                                                   matchCellFormat(column, data) :
+                                                   data;
+                                        })
                                         .collect(Collectors.toList());
         return contains(actual, Arrays.asList(text));
     }
@@ -1008,6 +976,60 @@ public class DesktopTable extends DesktopElement {
         }
     }
 
+    /**
+     * reformat cell value to the specified format, which is configured as part of the "extra" section in the component
+     * JSON.
+     * <p>
+     * Currently only date and number formats are supported.
+     */
+    protected String reformatCellData(String column, String value) { return reformatCellData(column, value, true); }
+
+    /**
+     * recalibrate {@literal value} to match the configured format of the specified column. This is needed to ensure
+     * data format consistancy between user input and expected value format of the corresponding data grid.
+     */
+    protected String matchCellFormat(String column, String value) { return reformatCellData(column, value, false); }
+
+    protected String reformatCellData(String column, String value, boolean fromTo) {
+        String formatKey = column + ".format";
+        if (!extra.containsKey(formatKey)) { return value; }
+
+        String formatRule = extra.get(formatKey);
+
+        // expected format: FROM_FORMAT,TO_FORMAT
+        if (!StringUtils.contains(formatRule, ",")) { return value; }
+
+        String format1;
+        String format2;
+        if (TextUtils.isBetween(formatRule, "[", "]")) {
+            // PREFERRED FORMAT SINCE IT IS MORE PREDICTABLE
+            // format rule in [...],[...]?
+            format1 = StringUtils.trim(TextUtils.substringBetweenFirstPair(formatRule, "[", "]"));
+            format2 = StringUtils.substringAfter(StringUtils.substringAfter(formatRule, format1), ",");
+            format2 = StringUtils.trim(TextUtils.substringBetweenFirstPair(format2, "[", "]"));
+        } else {
+            format1 = StringUtils.substringBeforeLast(formatRule, ",");
+            format2 = StringUtils.substringAfterLast(formatRule, ",");
+        }
+        String fromFormat = fromTo ? format1 : format2;
+        String toFormat = fromTo ? format2 : format1;
+
+        // date format
+        if (StringUtils.containsAny(formatRule, "MdyHhms")) { return DateUtility.formatTo(value, fromFormat, toFormat);}
+
+        // number format
+        if (StringUtils.containsAny(formatRule, "0#")) {
+            try {
+                return new DecimalFormat(toFormat).format(new DecimalFormat(fromFormat).parse(value));
+            } catch (ParseException e) {
+                ConsoleUtils.error(String.format("Unable to parse/reformat data (%s) from Column %s: %s",
+                                                 value, column, e.getMessage()));
+            }
+        }
+
+        return value;
+    }
+
     // todo: not used?
     private List<WebElement> getRowElements() {
         List<WebElement> rows = new ArrayList<>();
@@ -1058,7 +1080,30 @@ public class DesktopTable extends DesktopElement {
         return CollectionUtils.size(dataElements);
     }
 
+    private int resolveClickOffsetY(int row) { return headerHeight + (TABLE_ROW_HEIGHT * row) + (TABLE_ROW_HEIGHT / 2);}
+
     private String treatColumnHeader(String header) {return normalizeSpace ? TextUtils.xpathNormalize(header) : header;}
+
+    protected String resolveMatchingColumnXpath(String column, String value) {
+        String xpath = "./*[" + resolveColumnXpathCondition(column) + " and ";
+
+        if (StringUtils.equals(value, TABLE_CELL_CHECK)) { value = "True"; }
+        if (StringUtils.equals(value, TABLE_CELL_UNCHECK)) { value = "False"; }
+        if (StringUtils.equals(value, TABLE_CELL_CLEAR)) { value = ""; }
+
+        ExecutionContext context = ExecutionThread.get();
+        boolean infra4 = context != null &&
+                         context.getBooleanData(AUTOSCAN_INFRAGISTICS4_AWARE,
+                                                getDefaultBool(AUTOSCAN_INFRAGISTICS4_AWARE)) &&
+                         isTreeView;
+        if (infra4) {
+            xpath += "contains(@ItemStatus, '" + value + INFRAG4_ITEM_STATUS_POSTFIX + "')";
+        } else {
+            xpath += "@Value='" + matchCellFormat(column, value) + "'";
+        }
+
+        return xpath + "]";
+    }
 
     private String resolveColumnXpath(String column) { return "*[" + resolveColumnXpathCondition(column) + "]"; }
 
@@ -1169,4 +1214,3 @@ public class DesktopTable extends DesktopElement {
         return null;
     }
 }
-
