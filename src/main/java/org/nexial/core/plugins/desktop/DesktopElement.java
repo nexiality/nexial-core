@@ -2261,7 +2261,7 @@ public class DesktopElement {
                                 // clear off any existing selection
                                 if (StringUtils.isNotEmpty(currentSelectedText)) { execEscape(this.element); }
                                 StepResult result = singleSelectViaFirstChar(text);
-                                element.click();
+                                if (StringUtils.isBlank(currentSelectedText)) { element.click(); }
                                 return result;
                             }
                         }
