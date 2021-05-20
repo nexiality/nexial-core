@@ -36,7 +36,6 @@ import org.nexial.core.plugins.ForcefulTerminate;
 import org.nexial.core.plugins.base.BaseCommand;
 import org.nexial.core.plugins.base.NumberCommand;
 import org.nexial.core.plugins.base.ScreenshotUtils;
-import org.nexial.core.plugins.desktop.DesktopTable.TableMetaData;
 import org.nexial.core.plugins.desktop.ig.IgExplorerBar;
 import org.nexial.core.plugins.desktop.ig.IgRibbon;
 import org.nexial.core.utils.CheckUtils;
@@ -742,6 +741,14 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
     public StepResult clickButton(String name) { return click(name, Button); }
 
     public StepResult clickCheckBox(String name) { return click(name, Checkbox); }
+
+    public StepResult check(String name) { return enforceCheckOrUncheck(name, true); }
+
+    public StepResult uncheck(String name) { return enforceCheckOrUncheck(name, false); }
+
+    public StepResult checkByLocator(String locator) { return enforceCheckOrUncheckByLocator(locator, true); }
+
+    public StepResult uncheckByLocator(String locator) { return enforceCheckOrUncheckByLocator(locator, false); }
 
     public StepResult clickRadio(String name) { return click(name, Radio); }
 
@@ -2340,31 +2347,30 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
     }
 
     protected StepResult click(String name, ElementType expectedType) {
-        DesktopElement component = getRequiredElement(name, expectedType);
+        return click(getRequiredElement(name, expectedType));
+    }
+
+    @Nonnull
+    protected StepResult click(DesktopElement component) {
+        WebElement element = component.getElement();
 
         boolean simulateClick = getDefaultBool(PREFER_BRC_OVER_CLICK);
-        if (context.hasData(PREFER_BRC_OVER_CLICK)) {
-            simulateClick = context.getBooleanData(PREFER_BRC_OVER_CLICK);
-        } else if (component.extra.containsKey(PREFER_BRC_OVER_CLICK)) {
+
+        // component-based config has priority
+        if (component.extra.containsKey(PREFER_BRC_OVER_CLICK)) {
             simulateClick = BooleanUtils.toBoolean(component.extra.get(PREFER_BRC_OVER_CLICK));
+        } else if (context.hasData(PREFER_BRC_OVER_CLICK)) {
+            simulateClick = context.getBooleanData(PREFER_BRC_OVER_CLICK);
         }
 
         if (simulateClick) {
-            winiumDriver.executeScript(SCRIPT_CLICK, component.getElement());
+            winiumDriver.executeScript(SCRIPT_CLICK, element);
         } else {
-            component.getElement().click();
+            element.click();
         }
 
         autoClearModalDialog(component);
-        return StepResult.success("Element '" + name + "' clicked");
-    }
-
-    protected StepResult doubleClick(String name, ElementType expectedType) {
-        DesktopElement component = getRequiredElement(name, expectedType);
-        WebElement target = component.getElement();
-        new Actions(winiumDriver).doubleClick(target).perform();
-        autoClearModalDialog(component);
-        return StepResult.success("Element '" + name + "' double-clicked");
+        return StepResult.success("Element '" + component.getName() + "' clicked");
     }
 
     protected void clickOffset(WebElement elem, String xOffset, String yOffset) {
@@ -2410,25 +2416,49 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
         }
     }
 
-    // todo: not used?
-    // protected StepResult type(String name, ElementType expectedType, String... text) {
-    //     requires(ArrayUtils.isNotEmpty(text), "at least one text parameter is required");
-    //
-    //     DesktopElement component = getRequiredElement(name, expectedType);
-    //     // combine shortcut sequences into 1 string for performance.
-    //     String shortcut = TextUtils.toString(
-    //         DesktopElement.parseTextInputWithShortcuts(TextUtils.toString(text, "", "", ""), true), "");
-    //
-    //     try {
-    //         component.getElement().click();
-    //     } catch (WebDriverException e) {
-    //         ConsoleUtils.error("Unable to click on component %s; might be ok...: %s", name, resolveErrorMessage(e));
-    //     }
-    //
-    //     if (StringUtils.isNotEmpty(shortcut)) { component.type(shortcut, false); }
-    //     autoClearModalDialog(component.getXpath());
-    //     return StepResult.success("text entered to element '" + name + "'");
-    // }
+    protected StepResult doubleClick(String name, ElementType expectedType) {
+        DesktopElement component = getRequiredElement(name, expectedType);
+        WebElement target = component.getElement();
+        new Actions(winiumDriver).doubleClick(target).perform();
+        autoClearModalDialog(component);
+        return StepResult.success("Element '" + name + "' double-clicked");
+    }
+
+    @Nonnull
+    protected StepResult enforceCheckOrUncheck(String name, boolean toCheck) {
+        DesktopElement component = getRequiredElement(name, Any);
+
+        if (!DesktopUtils.isCheckboxOrRadio(component)) {
+            return StepResult.fail("Element '%s' is not a CheckBox or Radio component", name);
+        }
+
+        boolean done = toCheck && DesktopUtils.isChecked(component) || !toCheck && DesktopUtils.isUnchecked(component);
+        if (done) {
+            return StepResult.success("Element '%s' is already %s", name, toCheck ? "checked" : "unchecked");
+        } else {
+            return click(component);
+        }
+    }
+
+    @Nonnull
+    protected StepResult enforceCheckOrUncheckByLocator(String locator, boolean toCheck) {
+        WebElement elem = findElement(locator);
+
+        if (elem == null) { return StepResult.fail("element NOT found via " + locator);}
+
+        if (!DesktopUtils.isCheckboxOrRadio(elem)) {
+            return StepResult.fail("Locator '%s' does not resolve to a CheckBox or Radio element", locator);
+        }
+
+        boolean done = toCheck && DesktopUtils.isChecked(elem) || !toCheck && DesktopUtils.isUnchecked(elem);
+        if (done) {
+            return StepResult.success("Locator '%s' is already %s", locator, toCheck ? "checked" : "unchecked");
+        } else {
+            elem.click();
+            autoClearModalDialog(locator);
+            return StepResult.success("Locator '%s' clicked", locator);
+        }
+    }
 
     public void
     type(WebElement elem, String text) {
@@ -2457,16 +2487,16 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
         return element != null ? element.getAttribute(attribute) : null;
     }
 
-    protected StepResult assertChildElementPresent(WebElement container, String locator) {
-        requires(container != null, "Invalid container", container);
-        requires(StringUtils.isNotBlank(locator), "Invalid locator", locator);
-
-        WebElement elemUsername = container.findElement(findBy(locator));
-        if (elemUsername == null) {
-            return StepResult.fail("EXPECTED child element not found under " + container + " via " + locator);
-        }
-        return StepResult.success();
-    }
+    // protected StepResult assertChildElementPresent(WebElement container, String locator) {
+    //     requires(container != null, "Invalid container", container);
+    //     requires(StringUtils.isNotBlank(locator), "Invalid locator", locator);
+    //
+    //     WebElement elemUsername = container.findElement(findBy(locator));
+    //     if (elemUsername == null) {
+    //         return StepResult.fail("EXPECTED child element not found under " + container + " via " + locator);
+    //     }
+    //     return StepResult.success();
+    // }
 
     protected String findProcessId(String locator) {
         requires(StringUtils.isNotBlank(locator), "Invalid locator", locator);

@@ -52,7 +52,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 import static java.lang.String.format;
-import static org.nexial.core.NexialConst.Desktop.AUTOSCAN_INFRAGISTICS4_AWARE;
 import static org.nexial.core.NexialConst.NL;
 import static org.nexial.core.SystemVariables.getDefaultBool;
 import static org.nexial.core.plugins.desktop.DesktopConst.*;
@@ -504,7 +503,7 @@ public class DesktopElement {
         return new StepResult(success, messages.toString().trim(), null);
     }
 
-    public boolean isSelected() { return element != null && element.isSelected(); }
+    public boolean isSelected() { return DesktopUtils.checkboxStatus(element); }
 
     public String getText() {
         if (elementType == null || elementType == Any) { return getValue(element); }
@@ -1036,10 +1035,7 @@ public class DesktopElement {
         // re-click to un-display any dropdowns
         if (isEnabled) { element.click(); }
 
-        ExecutionContext context = ExecutionThread.get();
-        if (context.getBooleanData(AUTOSCAN_INFRAGISTICS4_AWARE, getDefaultBool(AUTOSCAN_INFRAGISTICS4_AWARE))) {
-            return infragistics4AwareScan(children);
-        }
+        if (isInfragistic4Aware()) { return infragistics4AwareScan(children); }
 
         // good 'ole scan-and-determine like it was 2017
         // check for Edit

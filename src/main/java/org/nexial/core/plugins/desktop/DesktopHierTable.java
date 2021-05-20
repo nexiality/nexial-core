@@ -30,8 +30,6 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.nexial.commons.utils.RegexUtils;
 import org.nexial.commons.utils.TextUtils;
-import org.nexial.core.ExecutionThread;
-import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.model.StepResult;
 import org.nexial.core.utils.CheckUtils;
 import org.nexial.core.utils.ConsoleUtils;
@@ -50,9 +48,8 @@ import java.util.stream.Collectors;
 
 import static org.apache.commons.lang3.builder.ToStringStyle.NO_CLASS_NAME_STYLE;
 import static org.nexial.commons.utils.TextUtils.CleanNumberStrategy.REAL;
-import static org.nexial.core.NexialConst.Desktop.AUTOSCAN_INFRAGISTICS4_AWARE;
-import static org.nexial.core.SystemVariables.getDefaultBool;
 import static org.nexial.core.plugins.desktop.DesktopConst.*;
+import static org.nexial.core.plugins.desktop.DesktopUtils.isInfragistic4Aware;
 import static org.nexial.core.plugins.web.WebDriverExceptionHelper.resolveErrorMessage;
 
 public class DesktopHierTable extends DesktopElement {
@@ -140,11 +137,9 @@ public class DesktopHierTable extends DesktopElement {
 
     public void scanStructure() {
 
-        boolean infragistics4 = supportInfragistics4();
-
         // if header not defined or not yet scanned... scan for existing headers
         if (CollectionUtils.isEmpty(headers)) {
-            String headersXpath = resolveHierHeaderRowXpath(infragistics4);
+            String headersXpath = resolveHierHeaderRowXpath(isInfragistic4Aware());
             ConsoleUtils.log("scanning for hierarchical table structure via " + headersXpath);
             List<WebElement> elements = element.findElements(By.xpath(headersXpath));
             if (CollectionUtils.isEmpty(elements)) {
@@ -171,8 +166,7 @@ public class DesktopHierTable extends DesktopElement {
     }
 
     public StepResult collapseAll() {
-        boolean infragistics4 = supportInfragistics4();
-        if (infragistics4) {
+        if (isInfragistic4Aware()) {
             // do it by hand!
             String shortcuts = DesktopUtils.toShortcuts("CTRL-SPACE", "LEFT");
             element.findElements(By.xpath(LOCATOR_HIER_TABLE_ROWS))
@@ -193,9 +187,7 @@ public class DesktopHierTable extends DesktopElement {
         if (CollectionUtils.isEmpty(headers)) { scanStructure(); }
         if (!containsHeader(categoryColumn)) { return null; }
 
-        boolean infragistics4 = supportInfragistics4();
-
-        if (!infragistics4) {
+        if (!isInfragistic4Aware()) {
             JsonObject jsonInput = newJsonInput(matchBy);
             jsonInput.addProperty(ALREADY_COLLAPSED, alreadyCollapsed);
 
@@ -239,8 +231,7 @@ public class DesktopHierTable extends DesktopElement {
                                           .collect(Collectors.joining(", "));
         if (StringUtils.isNotBlank(invalidColumns)) { CheckUtils.fail("Invalid columns: " + invalidColumns); }
 
-        boolean infragistics4 = supportInfragistics4();
-        if (!infragistics4) {
+        if (!isInfragistic4Aware()) {
             JsonObject jsonInput = newJsonInput(matchBy);
             jsonInput.addProperty(ALREADY_COLLAPSED, alreadyCollapsed);
             JsonArray edits = new JsonArray();
@@ -295,10 +286,8 @@ public class DesktopHierTable extends DesktopElement {
 
         data = StringUtils.trim(data);
 
-        boolean infragistics4 = supportInfragistics4();
-
         // number treatment
-        return infragistics4 && RegexUtils.match(data, "^\\-?[\\d\\,]+\\.[\\d]{1,}$") ?
+        return isInfragistic4Aware() && RegexUtils.match(data, "^\\-?[\\d\\,]+\\.[\\d]{1,}$") ?
                CELL_NUMBER_FORMAT.format(NumberUtils.createDouble(TextUtils.cleanNumber(data, REAL))) :
                data;
     }
@@ -338,9 +327,7 @@ public class DesktopHierTable extends DesktopElement {
         if (CollectionUtils.isEmpty(headers)) { scanStructure(); }
         if (!containsHeader(categoryColumn)) { return null; }
 
-        boolean infragistics4 = supportInfragistics4();
-
-        if (!infragistics4) {
+        if (!isInfragistic4Aware()) {
             JsonObject jsonInput = newJsonInput(matchBy);
             jsonInput.addProperty(FETCH_COLUMN, fetchColumn);
             jsonInput.addProperty(ALREADY_COLLAPSED, alreadyCollapsed);
@@ -395,8 +382,7 @@ public class DesktopHierTable extends DesktopElement {
     // }
 
     protected WebElement getFirstHierRow() {
-        boolean infragistics4 = supportInfragistics4();
-        List<WebElement> matches = element.findElements(By.xpath(resolveFirstHierRowXpath(infragistics4)));
+        List<WebElement> matches = element.findElements(By.xpath(resolveFirstHierRowXpath(isInfragistic4Aware())));
         return CollectionUtils.isNotEmpty(matches) ? matches.get(0) : null;
     }
 
@@ -426,10 +412,4 @@ public class DesktopHierTable extends DesktopElement {
     }
 
     private String formatHierarchy(List<String> matchBy) { return String.join("/", matchBy); }
-
-    private boolean supportInfragistics4() {
-        ExecutionContext context = ExecutionThread.get();
-        return context != null &&
-               context.getBooleanData(AUTOSCAN_INFRAGISTICS4_AWARE, getDefaultBool(AUTOSCAN_INFRAGISTICS4_AWARE));
-    }
 }

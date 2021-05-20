@@ -53,7 +53,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import static org.nexial.core.NexialConst.Desktop.AUTOSCAN_INFRAGISTICS4_AWARE;
 import static org.nexial.core.NexialConst.Desktop.CLEAR_TABLE_CELL_BEFORE_EDIT;
 import static org.nexial.core.NexialConst.NL;
 import static org.nexial.core.SystemVariables.getDefaultBool;
@@ -82,43 +81,6 @@ public class DesktopTable extends DesktopElement {
     // would normalize the repeating spaces in column header during XPATH generation
     protected boolean normalizeSpace;
     protected boolean isTreeView;
-
-    public static class TableMetaData {
-        protected List<String> headers;
-        protected Map<String, String> cellTypes;
-        protected int columnCount;
-        protected boolean normalizeSpace;
-        protected transient int rowCount;
-
-        public List<String> getHeaders() { return headers; }
-
-        public void setHeaders(List<String> headers) { this.headers = headers; }
-
-        public int getColumnCount() { return columnCount; }
-
-        public void setColumnCount(int columnCount) { this.columnCount = columnCount; }
-
-        public int getRowCount() { return rowCount; }
-
-        public void setRowCount(int rowCount) { this.rowCount = rowCount; }
-
-        public Map<String, String> getCellTypes() { return cellTypes; }
-
-        public void setCellTypes(Map<String, String> cellTypes) { this.cellTypes = cellTypes; }
-
-        public boolean isNormalizeSpace() { return normalizeSpace; }
-
-        public void setNormalizeSpace(boolean normalizeSpace) { this.normalizeSpace = normalizeSpace; }
-
-        @Override
-        public String toString() {
-            return "headers=" + TextUtils.toString(headers, ",") + ",\n" +
-                   "cellTypes=" + cellTypes + ",\n" +
-                   "columnCount=" + columnCount + ",\n" +
-                   "rowCount=" + rowCount + ",\n" +
-                   "normalizeSpace=" + normalizeSpace;
-        }
-    }
 
     protected DesktopTable() { }
 
@@ -181,7 +143,7 @@ public class DesktopTable extends DesktopElement {
         // short-circuit: if header information is provided via extra, then we don't need to do the scanning again
         if (CollectionUtils.isEmpty(headers) || CollectionUtils.size(headers) != columnCount) {
             // collect headers
-            String xpath = null;
+            String xpath;
             if (isTreeView) {
                 // first try with a data row since we'd get more accurate headers (correct order)
                 xpath = "*[@ControlType='ControlType.DataItem'][1]/*";
@@ -208,13 +170,7 @@ public class DesktopTable extends DesktopElement {
             }
         }
 
-        TableMetaData metaData = new TableMetaData();
-        metaData.setHeaders(headers);
-        metaData.setRowCount(getTableRowCount());
-        metaData.setCellTypes(cellTypes);
-        metaData.setNormalizeSpace(normalizeSpace);
-        metaData.setColumnCount(columnCount);
-        return metaData;
+        return new TableMetaData(headers, getTableRowCount(), cellTypes, normalizeSpace, columnCount);
     }
 
     @Nonnull
@@ -359,22 +315,26 @@ public class DesktopTable extends DesktopElement {
         sanityCheck(row, null);
         ExecutionContext context = ExecutionThread.get();
 
-        List<WebElement> dataElements =
-            element.findElements(By.xpath(isTreeView ? LOCATOR_HIER_TABLE_ROWS : LOCATOR_TABLE_DATA));
-        if (CollectionUtils.isEmpty(dataElements)) { ConsoleUtils.log("No rows found for data grid " + element); }
-
-        if (isTreeView && dataElements.size() == 1) {
-            // test for initial empty row
-            String rowIndex = dataElements.get(0).getAttribute("AutomationId");
-            if (StringUtils.contains(rowIndex, "-1")) {
-                // only 1 row and its id is -1 -- this is the initial empty row; meaning no rows yet created for this table
-                dataElements.clear();
-            }
+        String xpathRows = isTreeView ? LOCATOR_HIER_TABLE_ROWS : LOCATOR_TABLE_DATA;
+        List<WebElement> dataElements = element.findElements(By.xpath(xpathRows));
+        if (CollectionUtils.isEmpty(dataElements) && row > 0) {
+            ConsoleUtils.log("No rows found for data grid " + element);
         }
+
+        // if (isTreeView && dataElements.size() == 1) {
+        //     // test for initial empty row
+        //     String rowIndex = dataElements.get(0).getAttribute("AutomationId");
+        //     if (StringUtils.contains(rowIndex, "-1")) {
+        //         // only 1 row and its id is -1 -- this is the initial empty row; meaning no rows yet created for this table
+        //         dataElements.clear();
+        //     }
+        // }
 
         List<WebElement> rows = new ArrayList<>();
         //todo: short circuit this: fetch only requested row
-        dataElements.forEach(elem -> { if (elem != null) { rows.add(elem); }});
+        if (CollectionUtils.isNotEmpty(dataElements)) {
+            dataElements.forEach(elem -> { if (elem != null) { rows.add(elem); }});
+        }
 
         int rowCount = CollectionUtils.size(rows);
         boolean newRow = false;
@@ -447,17 +407,17 @@ public class DesktopTable extends DesktopElement {
                 ConsoleUtils.log("fetching columns for " + msgPrefix + "via " + cellsXpath);
                 columns = addRow.findElements(By.xpath(cellsXpath));
             } else {
-
-                String xpathRow = StringUtils.replace(LOCATOR_HIER_FIRST_CELL, "{row}", (row + 1) + "");
-                matches = element.findElements(By.xpath(xpathRow));
-                if (CollectionUtils.isNotEmpty(matches)) {
-                    try {
-                        new Actions(driver).moveToElement(matches.get(0), 0, 2).click().perform();
-                    } catch (WebDriverException e) {
-                        // no biggie here
-                        ConsoleUtils.log("Unable to click on Row " + row + "; this command might not work...");
-                    }
-                }
+                clickOffset(getElement(), clickOffsetX, resolveClickOffsetY(row));
+                // String xpathRow = StringUtils.replace(LOCATOR_HIER_FIRST_CELL, "{row}", (row + 1) + "");
+                // matches = element.findElements(By.xpath(xpathRow));
+                // if (CollectionUtils.isNotEmpty(matches)) {
+                //     try {
+                //         new Actions(driver).moveToElement(matches.get(0), 0, 2).click().perform();
+                //     } catch (WebDriverException e) {
+                //         // no biggie here
+                //         ConsoleUtils.log("Unable to click on Row " + row + "; this command might not work...");
+                //     }
+                // }
 
                 String cellsXpath = StringUtils.replace(LOCATOR_HIER_CELLS, "{row}", (row + 1) + "");
                 ConsoleUtils.log("fetching columns for " + msgPrefix + "via " + cellsXpath);
@@ -482,18 +442,13 @@ public class DesktopTable extends DesktopElement {
                                       context.getBooleanData(CURRENT_DESKTOP_TABLE_EDITABLE_COLUMN_FOUND);
 
         Map<String, WebElement> columnMapping = new ListOrderedMap<>();
-        DesktopTableRow tableRow = new DesktopTableRow();
         for (WebElement column : columns) {
             String columnName = treatColumnHeader(column.getAttribute("Name"));
             if (!editableColumnFound) { findAndSetEditableColumnName(column); }
             columnMapping.put(columnName, column);
         }
 
-        tableRow.setRow(row);
-        tableRow.setNewRow(newRow);
-        tableRow.setColumns(columnMapping);
-        tableRow.setTable(this);
-        return tableRow;
+        return new DesktopTableRow(row, newRow, columnMapping, this, null);
     }
 
     private boolean clickBeforeEdit() {
@@ -586,9 +541,7 @@ public class DesktopTable extends DesktopElement {
                 }
 
                 focused = false;
-                boolean isChecked = isTogglePatternAvailable(checkboxElement) ?
-                                    checkboxElement.isSelected() :
-                                    BooleanUtils.toBoolean(getElementText(checkboxElement));
+                boolean isChecked = DesktopUtils.isChecked(checkboxElement);
                 ConsoleUtils.log("checkbox element is currently " + (isChecked ? "CHECKED" : "UNCHECKED"));
                 boolean proceed = isChecked && StringUtils.equals(value, TABLE_CELL_UNCHECK) ||
                                   !isChecked && StringUtils.equals(value, TABLE_CELL_CHECK);
@@ -1091,12 +1044,7 @@ public class DesktopTable extends DesktopElement {
         if (StringUtils.equals(value, TABLE_CELL_UNCHECK)) { value = "False"; }
         if (StringUtils.equals(value, TABLE_CELL_CLEAR)) { value = ""; }
 
-        ExecutionContext context = ExecutionThread.get();
-        boolean infra4 = context != null &&
-                         context.getBooleanData(AUTOSCAN_INFRAGISTICS4_AWARE,
-                                                getDefaultBool(AUTOSCAN_INFRAGISTICS4_AWARE)) &&
-                         isTreeView;
-        if (infra4) {
+        if (isInfragistic4Aware() && isTreeView) {
             xpath += "contains(@ItemStatus, '" + value + INFRAG4_ITEM_STATUS_POSTFIX + "')";
         } else {
             xpath += "@Value='" + matchCellFormat(column, value) + "'";

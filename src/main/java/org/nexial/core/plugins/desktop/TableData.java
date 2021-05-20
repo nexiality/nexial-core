@@ -23,8 +23,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.nexial.core.ExecutionThread;
-import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.utils.CheckUtils;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.JsonUtils;
@@ -41,12 +39,9 @@ import java.util.regex.Pattern;
 
 import static org.apache.commons.lang3.StringUtils.rightPad;
 import static org.json.JSONObject.NULL;
-import static org.nexial.core.NexialConst.Desktop.AUTOSCAN_INFRAGISTICS4_AWARE;
 import static org.nexial.core.NexialConst.NL;
-import static org.nexial.core.SystemVariables.getDefaultBool;
-import static org.nexial.core.plugins.desktop.DesktopConst.INFRAG4_ITEM_STATUS_POSTFIX;
-import static org.nexial.core.plugins.desktop.DesktopConst.INFRAG4_ITEM_STATUS_PREFIX;
 import static org.nexial.core.plugins.desktop.DesktopUtils.getElementText;
+import static org.nexial.core.plugins.desktop.DesktopUtils.infragistic4Text;
 import static org.nexial.core.plugins.desktop.ElementType.*;
 
 public class TableData {
@@ -238,7 +233,7 @@ public class TableData {
             // anything selected?
             if (StringUtils.isEmpty(cellText)) { return cellText; }
 
-            cellText = deriveInfragistic4CellText(cell);
+            cellText = infragistic4Text(cell);
             if (StringUtils.isNotEmpty(cellText)) { return cellText; }
 
             List<WebElement> children = cell.findElements(By.xpath("*[@ControlType='ControlType.ListItem']"));
@@ -255,19 +250,6 @@ public class TableData {
         if (StringUtils.equals(controlType, BUTTON)) { return cell.getAttribute("Name"); }
 
         return cellText;
-    }
-
-    private String deriveInfragistic4CellText(WebElement cell) {
-        ExecutionContext context = ExecutionThread.get();
-        if (context == null) { return null; }
-        boolean supportInfragistics4 =
-                context.getBooleanData(AUTOSCAN_INFRAGISTICS4_AWARE, getDefaultBool(AUTOSCAN_INFRAGISTICS4_AWARE));
-        if (!supportInfragistics4) { return null; }
-
-        String itemStatus = cell.getAttribute("ItemStatus");
-        if (StringUtils.isBlank(itemStatus)) { return null; }
-
-        return StringUtils.substringBetween(itemStatus, INFRAG4_ITEM_STATUS_PREFIX, INFRAG4_ITEM_STATUS_POSTFIX);
     }
 
     private String applyPattern(String column) {
