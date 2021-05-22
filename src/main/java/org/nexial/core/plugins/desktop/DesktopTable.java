@@ -276,21 +276,23 @@ public class DesktopTable extends DesktopElement {
     public TableData fetchAll() {
         sanityCheck();
         Instant startTime = Instant.now();
+
         if (isTreeView) {
-            List<WebElement> rowData = element.findElements(By.xpath(LOCATOR_HIER_TABLE_ROWS + "/*"));
+            int count = DesktopUtils.countChildren(element, DesktopUtils::isValidDataRow);
+            List<WebElement> rowData = count < 1 ?
+                                       new ArrayList<>() :
+                                       element.findElements(By.xpath(LOCATOR_HIER_TABLE_ROWS + "/*"));
             return TableData.fromTreeViewRows(headers, rowData, Duration.between(startTime, Instant.now()));
-        } else {
-            String object = (String) driver.executeScript(SCRIPT_DATAGRID_FETCH_ALL, element);
-            return new TableData(object, Duration.between(startTime, Instant.now()));
         }
+
+        return new TableData(driver.executeScript(SCRIPT_DATAGRID_FETCH_ALL, element),
+                             Duration.between(startTime, Instant.now()));
     }
 
     /** As of v3.7, we will support HierTable (aka ControlType.Tree) as well */
     public int getTableRowCount() {
         if (isTreeView) {
-            int count = DesktopUtils.countChildren(element, elem ->
-                StringUtils.equals(elem.getAttribute("ControlType"), TREE_VIEW_ROW) &&
-                !StringUtils.equals(elem.getAttribute("AutomationId"), "-1"));
+            int count = DesktopUtils.countChildren(element, DesktopUtils::isValidDataRow);
             return count < 1 ? count : CollectionUtils.size(element.findElements(By.xpath(LOCATOR_HIER_TABLE_ROWS)));
         }
 
@@ -321,9 +323,7 @@ public class DesktopTable extends DesktopElement {
         if (isTreeView) {
             // we don't know if there are any row in this data
             // so we use "*" to all children -- this is faster
-            int count = DesktopUtils.countChildren(element, elem ->
-                StringUtils.equals(elem.getAttribute("ControlType"), TREE_VIEW_ROW) &&
-                !StringUtils.equals(elem.getAttribute("AutomationId"), "-1"));
+            int count = DesktopUtils.countChildren(element, DesktopUtils::isValidDataRow);
             if (count == 0) {
                 ConsoleUtils.log("No rows found for data grid " + element);
                 dataElements = new ArrayList<>();

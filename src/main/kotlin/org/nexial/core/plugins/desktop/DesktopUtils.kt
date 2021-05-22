@@ -289,6 +289,12 @@ internal object DesktopUtils {
     }
 
     @JvmStatic
+    fun isValidDataRow(elem: WebElement): Boolean {
+        return StringUtils.equals(elem.getAttribute("ControlType"), ElementType.TREE_VIEW_ROW) &&
+               !StringUtils.equals(elem.getAttribute("AutomationId"), "-1")
+    }
+
+    @JvmStatic
     fun getElementText(element: WebElement?, defaultText: String): String =
         if (element == null) defaultText
         else try {

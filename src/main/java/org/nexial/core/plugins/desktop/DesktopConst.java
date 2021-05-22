@@ -117,10 +117,10 @@ public class DesktopConst {
     public static final String LOCATOR_HIER_TABLE_ROWS = "*[@ControlType='" + TREE_VIEW_ROW + "' and @AutomationId!='-1']";
     public static final String LOCATOR_HIER_CELLS = LOCATOR_HIER_TABLE_ROWS + "[{row}]/*";
     public static final String LOCATOR_HIER_CELL = LOCATOR_HIER_CELLS + "[@Name='{column}']";
-    public static final String LOCATOR_HIER_FIRST_CELL = LOCATOR_HIER_CELLS + "[1]";
+    // public static final String LOCATOR_HIER_FIRST_CELL = LOCATOR_HIER_CELLS + "[1]";
     public static final String XPATH_FIRST_HIER_ROW = "*[@ControlType='" + TREE_ITEM + "'][1]";
-    public static final String XPATH_MATCHING_HIER_CELL = "*[@ControlType='" + TREE_ITEM + "' and " +
-                                                          "./*[normalize-space(@Name)='${column}' and @Value='${value}']]";
+    // public static final String XPATH_MATCHING_HIER_CELL = "*[@ControlType='" + TREE_ITEM + "' and " +
+    //                                                       "./*[normalize-space(@Name)='${column}' and @Value='${value}']]";
 
     // support Infragistics4 components
     public static final String XPATH_HIER_HEADER_ROW_INFRAG4 = "*[@ControlType='" + TREE_VIEW_HEADER + "'][1]";
@@ -135,7 +135,7 @@ public class DesktopConst {
     public final static String LOCATOR_TABLE_DATA = "*[contains(@Name, 'row ')]";
     public final static String LOCATOR_ROW = "*[contains(@Name, 'row {row}')][1]";
     public final static String LOCATOR_CELLS = LOCATOR_ROW + "/*[@Name!='Column Headers']";
-    public final static String LOCATOR_FIRST_CELL = LOCATOR_ROW + "/*[@Name!='Column Headers'][1]";
+    // public final static String LOCATOR_FIRST_CELL = LOCATOR_ROW + "/*[@Name!='Column Headers'][1]";
     public final static String LOCATOR_CELL = LOCATOR_ROW + "/*[@Name='{column}']";
     public static final String LOCATOR_NEW_ROW = "*[contains(@Name, 'Add Row')]";
     public final static String LOCATOR_NEW_ROW_CELL = LOCATOR_NEW_ROW + "/*[@Name='{column}']";
@@ -149,7 +149,7 @@ public class DesktopConst {
     public static final String LOCATOR_SELECTED_LIST_ITEM = "*[@ControlType='" + LIST_ITEM + "' and @IsSelected='True']";
     public static final String LOCATOR_LIST_ITEM_ONLY = "*[@ControlType='" + LIST_ITEM + "' and contains(@Name,'{value}')]";
     public static final String LOCATOR_LIST_TO_ITEM = LOCATOR_LIST + "/" + LOCATOR_LIST_ITEM_ONLY;
-    public static final String LOCATOR_LIST_ITEM = LOCATOR_LIST_ITEM_ONLY + "|" + LOCATOR_LIST_TO_ITEM;
+    // public static final String LOCATOR_LIST_ITEM = LOCATOR_LIST_ITEM_ONLY + "|" + LOCATOR_LIST_TO_ITEM;
     public static final String LOCATOR_LIST_ITEMS = "*[@ControlType='" + LIST_ITEM + "']|" +
                                                     "*[@ControlType='" + LIST + "']/*[@ControlType='" + LIST_ITEM + "']";
     public static final String XPATH_SCROLLBARS = "*[@ControlType='" + SCROLLBAR + "']";
@@ -186,9 +186,9 @@ public class DesktopConst {
     public static final String TEXT_INPUT_PREFIX = "<[{";
     public static final String TEXT_INPUT_POSTFIX = "}]>";
     public static final String SCRIPT_PREFIX_SHORTCUT = "shortcut: ";
-    public static final String SHORTCUT_EXPAND_HIER_ROW = "<[CTRL-SPACE]><[CTRL-RIGHT]><[DOWN]><[HOME]>";
-    public static final String SHORTCUT_COLLAPSE_HIER_ROW = "<[CTRL-SPACE]><[CTRL-LEFT]><[DOWN]>";
-    public static final String SHORTCUT_EDIT_HIER_CELL = SCRIPT_PREFIX_SHORTCUT + "<[BACKSPACE]><[{${data}}]><[ENTER]>";
+    // public static final String SHORTCUT_EXPAND_HIER_ROW = "<[CTRL-SPACE]><[CTRL-RIGHT]><[DOWN]><[HOME]>";
+    // public static final String SHORTCUT_COLLAPSE_HIER_ROW = "<[CTRL-SPACE]><[CTRL-LEFT]><[DOWN]>";
+    // public static final String SHORTCUT_EDIT_HIER_CELL = SCRIPT_PREFIX_SHORTCUT + "<[BACKSPACE]><[{${data}}]><[ENTER]>";
 
     // layout
     public static final FormLayout FORM_LAYOUT_LEFT_TO_RIGHT = FormLayout.newLeftToRightLayout(15);
