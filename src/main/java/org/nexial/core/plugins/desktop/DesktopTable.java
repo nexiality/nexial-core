@@ -38,12 +38,10 @@ import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.JsonUtils;
 import org.openqa.selenium.By;
 import org.openqa.selenium.NoSuchElementException;
-import org.openqa.selenium.WebDriverException;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.interactions.Actions;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import java.text.DecimalFormat;
 import java.text.ParseException;
 import java.time.Duration;
@@ -53,7 +51,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import static org.nexial.core.NexialConst.Desktop.CLEAR_TABLE_CELL_BEFORE_EDIT;
 import static org.nexial.core.NexialConst.NL;
 import static org.nexial.core.SystemVariables.getDefaultBool;
 import static org.nexial.core.plugins.desktop.DesktopConst.*;
@@ -290,7 +287,12 @@ public class DesktopTable extends DesktopElement {
 
     /** As of v3.7, we will support HierTable (aka ControlType.Tree) as well */
     public int getTableRowCount() {
-        if (isTreeView) { return CollectionUtils.size(element.findElements(By.xpath(LOCATOR_HIER_TABLE_ROWS))); }
+        if (isTreeView) {
+            int count = DesktopUtils.countChildren(element, elem ->
+                StringUtils.equals(elem.getAttribute("ControlType"), TREE_VIEW_ROW) &&
+                !StringUtils.equals(elem.getAttribute("AutomationId"), "-1"));
+            return count < 1 ? count : CollectionUtils.size(element.findElements(By.xpath(LOCATOR_HIER_TABLE_ROWS)));
+        }
 
         Object object = driver.executeScript(SCRIPT_DATAGRID_ROW_COUNT, element);
         if (object == null) { return collectRowCountByXpath(); }
@@ -315,20 +317,24 @@ public class DesktopTable extends DesktopElement {
         sanityCheck(row, null);
         ExecutionContext context = ExecutionThread.get();
 
-        String xpathRows = isTreeView ? LOCATOR_HIER_TABLE_ROWS : LOCATOR_TABLE_DATA;
-        List<WebElement> dataElements = element.findElements(By.xpath(xpathRows));
-        if (CollectionUtils.isEmpty(dataElements) && row > 0) {
-            ConsoleUtils.log("No rows found for data grid " + element);
+        List<WebElement> dataElements = null;
+        if (isTreeView) {
+            // we don't know if there are any row in this data
+            // so we use "*" to all children -- this is faster
+            int count = DesktopUtils.countChildren(element, elem ->
+                StringUtils.equals(elem.getAttribute("ControlType"), TREE_VIEW_ROW) &&
+                !StringUtils.equals(elem.getAttribute("AutomationId"), "-1"));
+            if (count == 0) {
+                ConsoleUtils.log("No rows found for data grid " + element);
+                dataElements = new ArrayList<>();
+            } else {
+                // now that we know there are data rows, we can fetch them confidently (and fast)
+                dataElements = element.findElements(By.xpath(LOCATOR_HIER_TABLE_ROWS));
+            }
+        } else {
+            dataElements = element.findElements(By.xpath(LOCATOR_TABLE_DATA));
+            if (CollectionUtils.isEmpty(dataElements)) { ConsoleUtils.log("No rows found for data grid " + element); }
         }
-
-        // if (isTreeView && dataElements.size() == 1) {
-        //     // test for initial empty row
-        //     String rowIndex = dataElements.get(0).getAttribute("AutomationId");
-        //     if (StringUtils.contains(rowIndex, "-1")) {
-        //         // only 1 row and its id is -1 -- this is the initial empty row; meaning no rows yet created for this table
-        //         dataElements.clear();
-        //     }
-        // }
 
         List<WebElement> rows = new ArrayList<>();
         //todo: short circuit this: fetch only requested row
@@ -401,24 +407,11 @@ public class DesktopTable extends DesktopElement {
                 }
 
                 WebElement addRow = matches.get(0);
-                // addRow.click();
-
                 String cellsXpath = "*[@Name!='Column Headers']";
                 ConsoleUtils.log("fetching columns for " + msgPrefix + "via " + cellsXpath);
                 columns = addRow.findElements(By.xpath(cellsXpath));
             } else {
                 clickOffset(getElement(), clickOffsetX, resolveClickOffsetY(row));
-                // String xpathRow = StringUtils.replace(LOCATOR_HIER_FIRST_CELL, "{row}", (row + 1) + "");
-                // matches = element.findElements(By.xpath(xpathRow));
-                // if (CollectionUtils.isNotEmpty(matches)) {
-                //     try {
-                //         new Actions(driver).moveToElement(matches.get(0), 0, 2).click().perform();
-                //     } catch (WebDriverException e) {
-                //         // no biggie here
-                //         ConsoleUtils.log("Unable to click on Row " + row + "; this command might not work...");
-                //     }
-                // }
-
                 String cellsXpath = StringUtils.replace(LOCATOR_HIER_CELLS, "{row}", (row + 1) + "");
                 ConsoleUtils.log("fetching columns for " + msgPrefix + "via " + cellsXpath);
                 columns = element.findElements(By.xpath(cellsXpath));
@@ -477,7 +470,6 @@ public class DesktopTable extends DesktopElement {
     }
 
     public StepResult editCells(DesktopTableRow tableRow, Map<String, String> nameValues) {
-
         if (tableRow == null || MapUtils.isEmpty(tableRow.getColumns())) {
             return StepResult.fail("Unable to edit cells since table row is not valid");
         }
@@ -489,13 +481,10 @@ public class DesktopTable extends DesktopElement {
         boolean tabAfterEdit = context.getBooleanData(TABLE_TAB_AFTER_EDIT, getDefaultBool(TABLE_TAB_AFTER_EDIT));
 
         // loop through each nameValues pairs
-        // WebElement lastElement = null;
         WebElement cellElement;
-
         boolean focused = true;
         boolean setFocusOut = false;
         for (Map.Entry<String, String> nameValue : nameValues.entrySet()) {
-
             if (context.getBooleanData(DIALOG_LOOKUP, getDefaultBool(DIALOG_LOOKUP))) {
                 // fail if any modal dialog present
                 WebElement modal = DesktopCommand.getModalDialog(getCurrentSession().getApp().getElement());
@@ -507,13 +496,10 @@ public class DesktopTable extends DesktopElement {
 
             String column = treatColumnHeader(nameValue.getKey());
             String value = nameValue.getValue();
-
             String msgPrefix2 = "Table '" + label + "' Row '" + tableRow.getRow() + "' Column '" + column + "' ";
 
             cellElement = columnMapping.get(column);
             if (cellElement == null) { return StepResult.fail("Unable to edit " + msgPrefix2 + ": NOT FOUND"); }
-
-            // scrollToView(columnMapping, lastElement, cellElement);
 
             //todo: support function keys along with [CLICK]? and [CHECK]
 
@@ -570,10 +556,8 @@ public class DesktopTable extends DesktopElement {
                 // focused would be false if shortcut key is used
                 focused = typeCellContent(tableRow, cellElement, column, value);
                 messageBuffer.append(msgPrefix2).append("entered text '").append(value).append("'").append(NL);
-                if (tabAfterEdit) { driver.executeScript(toShortcuts("TAB"), cellElement); }
+                if (focused && tabAfterEdit) { driver.executeScript(toShortcuts("TAB"), cellElement); }
             }
-
-            // lastElement = cellElement;
         }
 
         if (focused) {
@@ -770,8 +754,7 @@ public class DesktopTable extends DesktopElement {
                                         .map(row -> {
                                             String data = row.get(pos);
                                             return !PolyMatcher.isPolyMatcher(data) ?
-                                                   matchCellFormat(column, data) :
-                                                   data;
+                                                   matchCellFormat(column, data) : data;
                                         })
                                         .collect(Collectors.toList());
         return contains(actual, Arrays.asList(text));
@@ -809,51 +792,6 @@ public class DesktopTable extends DesktopElement {
         }
 
         return pos;
-    }
-
-    protected void scrollToView(Map<String, WebElement> columns, WebElement lastElement, WebElement currentElement) {
-        if (currentElement == null) { return; }
-        if (currentElement.isDisplayed()) { return; }
-        if (MapUtils.isEmpty(columns)) { return; }
-
-        // List<String> names = new ArrayList<>(columns.keySet());
-        List<WebElement> columnElements = new ArrayList<>(columns.values());
-        if (lastElement == null) { lastElement = columnElements.get(0); }
-
-        // if last element is visible, then we'll start tab'ing from there. Otherwise we'll start from the beginning
-        int numberOfTabs = 0;
-        if (lastElement.isDisplayed()) {
-            driver.executeScript(SCRIPT_CLICK, lastElement);
-            numberOfTabs = columnElements.size() - columnElements.indexOf(lastElement);
-        }
-
-        boolean currentElementVisible = false;
-
-        // start tab'ing
-        for (int tabCount = 0; tabCount <= numberOfTabs; tabCount++) {
-            driver.executeScript(toShortcuts("TAB"), currentElement);
-            if (currentElement.isDisplayed()) {
-                driver.executeScript(toShortcuts("TAB"), currentElement);
-                currentElementVisible = true;
-                break;
-            }
-        }
-
-        if (currentElementVisible) { return; }
-
-        // since we can't get the current element to be visible, let's go the other way
-        for (int tabCount = 0; tabCount <= columnElements.size(); tabCount++) {
-            driver.executeScript(toShortcuts("SHIFT-TAB"), currentElement);
-            if (currentElement.isDisplayed()) {
-                driver.executeScript(toShortcuts("SHIFT-TAB"), currentElement);
-                currentElementVisible = true;
-                break;
-            }
-        }
-
-        if (currentElementVisible) { return; }
-
-        ConsoleUtils.error("Unable to forward the current row so that target column is visible for automation");
     }
 
     protected boolean isValidRow(List<String> data, int row) {
@@ -906,28 +844,28 @@ public class DesktopTable extends DesktopElement {
         return buffer.toString();
     }
 
-    protected void typeValue(WebElement cellElement, String value, boolean isFormattedText) {
-        if (isFormattedText) {
-            ConsoleUtils.log("clear content and send keys on formatted textbox '" +
-                             treatColumnHeader(cellElement.getAttribute("Name") + "'"));
-            setValue(cellElement, "");
-            // formatted text box needs special treatment (using both set value and send keys)
-            String[] chars = value.split("");
-            String value2 = chars[chars.length - 1];
-            String value1 = StringUtils.removeEnd(value, value2);
-            if (StringUtils.isNotBlank(value1)) { setValue(cellElement, value1); }
-            // used actions.sendKeys to support key event driven data cells
-            new Actions(getDriver()).moveToElement(cellElement).sendKeys(value2).perform();
-        } else {
-            ExecutionContext context = ExecutionThread.get();
-            // sometimes no-formatted textbox cells required to be cleared
-            // might need rework
-            if (context.getBooleanData(CLEAR_TABLE_CELL_BEFORE_EDIT, getDefaultBool(CLEAR_TABLE_CELL_BEFORE_EDIT))) {
-                setValue(cellElement, "");
-            }
-            setValue(cellElement, value);
-        }
-    }
+    // protected void typeValue(WebElement cellElement, String value, boolean isFormattedText) {
+    //     if (isFormattedText) {
+    //         ConsoleUtils.log("clear content and send keys on formatted textbox '" +
+    //                          treatColumnHeader(cellElement.getAttribute("Name") + "'"));
+    //         setValue(cellElement, "");
+    //         // formatted text box needs special treatment (using both set value and send keys)
+    //         String[] chars = value.split("");
+    //         String value2 = chars[chars.length - 1];
+    //         String value1 = StringUtils.removeEnd(value, value2);
+    //         if (StringUtils.isNotBlank(value1)) { setValue(cellElement, value1); }
+    //         // used actions.sendKeys to support key event driven data cells
+    //         new Actions(getDriver()).moveToElement(cellElement).sendKeys(value2).perform();
+    //     } else {
+    //         ExecutionContext context = ExecutionThread.get();
+    //         // sometimes no-formatted textbox cells required to be cleared
+    //         // might need rework
+    //         if (context.getBooleanData(CLEAR_TABLE_CELL_BEFORE_EDIT, getDefaultBool(CLEAR_TABLE_CELL_BEFORE_EDIT))) {
+    //             setValue(cellElement, "");
+    //         }
+    //         setValue(cellElement, value);
+    //     }
+    // }
 
     /**
      * reformat cell value to the specified format, which is configured as part of the "extra" section in the component
@@ -984,14 +922,14 @@ public class DesktopTable extends DesktopElement {
     }
 
     // todo: not used?
-    private List<WebElement> getRowElements() {
-        List<WebElement> rows = new ArrayList<>();
-        List<WebElement> dataElements = element.findElements(By.xpath(LOCATOR_TABLE_DATA));
-        if (CollectionUtils.isNotEmpty(dataElements)) {
-            dataElements.forEach(elem -> { if (elem != null) { rows.add(elem); } });
-        }
-        return rows;
-    }
+    // private List<WebElement> getRowElements() {
+    //     List<WebElement> rows = new ArrayList<>();
+    //     List<WebElement> dataElements = element.findElements(By.xpath(LOCATOR_TABLE_DATA));
+    //     if (CollectionUtils.isNotEmpty(dataElements)) {
+    //         dataElements.forEach(elem -> { if (elem != null) { rows.add(elem); } });
+    //     }
+    //     return rows;
+    // }
 
     private void looseCurrentFocus() {
         DesktopSession session = getCurrentSession();
@@ -1008,19 +946,19 @@ public class DesktopTable extends DesktopElement {
     }
 
     // not used?
-    private List<WebElement> rescanNullColumns(List<WebElement> columns, String cellsXpath) {
-        List<WebElement> cols = new ArrayList<>();
-        columns.forEach(column -> {
-            if (column.getAttribute("Name") == null) {
-                WebElement col = element.findElement(By.xpath(cellsXpath));
-                if (col.getAttribute("Name") != null) {
-                    cols.add(col);
-                }
-            }
-        });
-
-        return cols;
-    }
+    // private List<WebElement> rescanNullColumns(List<WebElement> columns, String cellsXpath) {
+    //     List<WebElement> cols = new ArrayList<>();
+    //     columns.forEach(column -> {
+    //         if (column.getAttribute("Name") == null) {
+    //             WebElement col = element.findElement(By.xpath(cellsXpath));
+    //             if (col.getAttribute("Name") != null) {
+    //                 cols.add(col);
+    //             }
+    //         }
+    //     });
+    //
+    //     return cols;
+    // }
 
     private void clearCellContent(WebElement cellElement) { driver.executeScript(SCRIPT_SET_VALUE, cellElement, ""); }
 
@@ -1060,7 +998,11 @@ public class DesktopTable extends DesktopElement {
     }
 
     private boolean typeCellContent(DesktopTableRow tableRow, WebElement cellElement, String column, String value) {
-        // special treatment for shortcut
+        if (StringUtils.equals(DesktopUtils.infragistic4Text(cellElement), value)) {
+            ConsoleUtils.log("Text '" + value + "' already entered into cell '" + column + "'");
+            return true;
+        }
+
         // special treatment for formatted textbox
         if (MapUtils.isNotEmpty(cellTypes) && cellTypes.containsKey(column)) {
             String cellType = cellTypes.get(column);
@@ -1083,12 +1025,6 @@ public class DesktopTable extends DesktopElement {
             // therefore for combo, we would directly enter text (and trust that) and then evaluate the combo's value
             // afterwards
             return typeValueWithFunctionKey(tableRow, cellElement, value);
-        }
-
-        String currentValue = getCellValue(cellElement);
-        if (StringUtils.equals(currentValue, value)) {
-            ConsoleUtils.log("Text '" + value + "' already entered into cell '" + column + "'");
-            return true;
         }
 
         if (isValuePatternAvailable(cellElement)) {
@@ -1114,7 +1050,7 @@ public class DesktopTable extends DesktopElement {
             return typeValueWithFunctionKey(tableRow, cellElement, value);
         } else if (isTextPatternAvailable(cellElement)) {
             ConsoleUtils.log("using shortcut on '" + column + "'");
-            driver.executeScript(SCRIPT_PREFIX_SHORTCUT + forceShortcutSyntax(value), cellElement);
+            driver.executeScript(SCRIPT_PREFIX_SHORTCUT + joinShortcuts(value), cellElement);
             return true;
         } else {
             ConsoleUtils.log("using sendKeys on '" + column + "'");
@@ -1127,11 +1063,12 @@ public class DesktopTable extends DesktopElement {
         if (TextUtils.isBetween(value, "[", "]")) {
             ConsoleUtils.log("enter shortcut keys " + value + " on '" + label + "'");
             context.setData(CURRENT_DESKTOP_TABLE_ROW, tableRow);
-            driver.executeScript(toShortcuts(StringUtils.substringBetween(value, "[", "]")), cellElement);
+            // driver.executeScript(toShortcuts(StringUtils.substringBetween(value, "[", "]")), cellElement);
+            driver.executeScript(SCRIPT_PREFIX_SHORTCUT + joinShortcuts(value), cellElement);
             return false;
         }
 
-        String currentValue = getCellValue(cellElement);
+        String currentValue = DesktopUtils.infragistic4Text(cellElement);
         String shortcutPrefix = SCRIPT_PREFIX_SHORTCUT +
                                 (StringUtils.isNotEmpty(currentValue) ? "<[HOME]><[SHIFT-END]><[DEL]>" : "");
 
@@ -1145,20 +1082,18 @@ public class DesktopTable extends DesktopElement {
 
             if (context != null) { context.setData(CURRENT_DESKTOP_TABLE_ROW, tableRow); }
 
-            driver.executeScript(shortcutPrefix + forceShortcutSyntax(value) +
-                                 (StringUtils.isNotBlank(postShortcut) ? toShortcuts(postShortcut) : ""),
-                                 cellElement);
+            // driver.executeScript(shortcutPrefix + forceShortcutSyntax(value) +
+            //                      (StringUtils.isNotBlank(postShortcut) ? toShortcuts(postShortcut) : ""),
+            //                      cellElement);
+            String script = shortcutPrefix + joinShortcuts(value) +
+                            (StringUtils.isNotBlank(postShortcut) ? toShortcuts(postShortcut) : "");
+            driver.executeScript(script, cellElement);
             return false;
         } else {
-            driver.executeScript(shortcutPrefix + forceShortcutSyntax(value), cellElement);
+            // driver.executeScript(shortcutPrefix + forceShortcutSyntax(value), cellElement);
+            driver.executeScript(shortcutPrefix + joinShortcuts(value), cellElement);
             return true;
         }
 
-    }
-
-    @Nullable
-    private String getCellValue(WebElement cellElement) {
-        try { return cellElement.getText(); } catch (WebDriverException e) { /* ignore... */ }
-        return null;
     }
 }

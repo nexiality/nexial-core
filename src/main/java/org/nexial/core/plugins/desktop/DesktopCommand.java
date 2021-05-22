@@ -1408,12 +1408,6 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
         return result;
     }
 
-    // DONE: deprecated; removal candidate for v1.1
-    //    public StepResult scanTable(String var, String name) {
-    //        logDeprecated(getTarget() + " » scanTable(var,name)", getTarget() + " » useTable(var,name)");
-    //        return useTable(var, name);
-    //    }
-
     /** support PolyMatcher, as of v3.7 */
     public StepResult assertTableRowContains(String row, String contains) {
         requiresPositiveNumber(row, "Invalid row index (zero-based)", row);
@@ -2486,17 +2480,6 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
     protected static String getAttribute(WebElement element, String attribute) {
         return element != null ? element.getAttribute(attribute) : null;
     }
-
-    // protected StepResult assertChildElementPresent(WebElement container, String locator) {
-    //     requires(container != null, "Invalid container", container);
-    //     requires(StringUtils.isNotBlank(locator), "Invalid locator", locator);
-    //
-    //     WebElement elemUsername = container.findElement(findBy(locator));
-    //     if (elemUsername == null) {
-    //         return StepResult.fail("EXPECTED child element not found under " + container + " via " + locator);
-    //     }
-    //     return StepResult.success();
-    // }
 
     protected String findProcessId(String locator) {
         requires(StringUtils.isNotBlank(locator), "Invalid locator", locator);

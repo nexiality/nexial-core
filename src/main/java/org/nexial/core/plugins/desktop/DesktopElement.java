@@ -1783,16 +1783,19 @@ public class DesktopElement {
         }
 
         ExecutionContext context = ExecutionThread.get();
-        if (context != null && context.getBooleanData(USE_TYPE_KEYS, getDefaultBool(USE_TYPE_KEYS))) {
+        boolean useTypeKeys = extra.containsKey(USE_TYPE_KEYS) ?
+                              BooleanUtils.toBoolean(extra.containsKey(USE_TYPE_KEYS)) :
+                              (context != null && context.getBooleanData(USE_TYPE_KEYS, getDefaultBool(USE_TYPE_KEYS)));
+        if (useTypeKeys) {
             String keystrokes = (append ? "[CTRL-END]\n" : "") + TextUtils.toString(text, "\n", "", "");
             keystrokes = NativeInputParser.handleKeys(keystrokes);
+            new Actions(driver).doubleClick(element).perform();
             NativeInputHelper.typeKeys(TextUtils.toList(StringUtils.remove(keystrokes, "\r"), "\n", false));
         } else {
             if (append) {
                 try {
-                    driver.executeScript(SCRIPT_PREFIX_SHORTCUT +
-                                         forceShortcutSyntax("[CTRL-END]") + joinShortcuts(text),
-                                         element);
+                    String script = SCRIPT_PREFIX_SHORTCUT + forceShortcutSyntax("[CTRL-END]") + joinShortcuts(text);
+                    driver.executeScript(script, element);
                 } catch (WebDriverException e) {
                     ConsoleUtils.error("Error when typing '%s' on '%s': %s",
                                        ArrayUtils.toString(text), label, resolveErrorMessage(e));
@@ -2455,12 +2458,7 @@ public class DesktopElement {
         // all else
     }
 
-    protected WebElement findFirstElement(String xpath) { return findFirstElement(element, xpath); }
-
-    protected WebElement findFirstElement(WebElement element, String xpath) {
-        if (element == null || StringUtils.isBlank(xpath)) { return null; }
-        return CollectionUtil.getOrDefault(element.findElements(By.xpath(xpath)), 0, null);
-    }
+    protected WebElement findFirstElement(String xpath) { return DesktopUtils.findFirstElement(element, xpath); }
 
     private void verifyAndTry(String text) {
         if (verifyText(text, getElementText(element))) { return; }

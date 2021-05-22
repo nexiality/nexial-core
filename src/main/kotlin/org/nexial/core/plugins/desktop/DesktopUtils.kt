@@ -20,6 +20,7 @@ import org.apache.commons.collections4.CollectionUtils
 import org.apache.commons.lang3.ArrayUtils
 import org.apache.commons.lang3.BooleanUtils
 import org.apache.commons.lang3.StringUtils
+import org.nexial.commons.utils.CollectionUtil
 import org.nexial.commons.utils.TextUtils
 import org.nexial.core.ExecutionThread
 import org.nexial.core.NexialConst.Desktop.AUTOSCAN_INFRAGISTICS4_AWARE
@@ -78,17 +79,36 @@ internal object DesktopUtils {
      * `shortcuts` could be a mix of function keys and 'normal' keys
      */
     @JvmStatic
-    fun joinShortcuts(vararg shortcuts: String): String {
-        var shortcut = ""
-        for (thisText in shortcuts) {
-            if (StringUtils.isNotEmpty(thisText)) {
-                shortcut =
-                    if (StringUtils.isEmpty(shortcut)) forceShortcutSyntax(thisText)
-                    else addShortcut(shortcut, thisText)
+    fun joinShortcuts(vararg shortcuts: String) =
+        if (ArrayUtils.isEmpty(shortcuts)) ""
+        else {
+            val shortcutList = mutableListOf<String>()
+            var keys = shortcuts.joinToString("")
+            while (StringUtils.isNotEmpty(keys)) {
+                val shortcut = StringUtils.substringBetween(keys, "[", "]")
+                if (StringUtils.isNotBlank(shortcut) && StringUtils.containsNone(shortcut, " ")) {
+                    val beforeShortcut = StringUtils.substringBefore(keys, "[$shortcut]")
+                    if (StringUtils.isNotEmpty(beforeShortcut))
+                        shortcutList.add(TEXT_INPUT_PREFIX + beforeShortcut + TEXT_INPUT_POSTFIX)
+                    shortcutList.add("$SHORTCUT_PREFIX$shortcut$SHORTCUT_POSTFIX")
+                    keys = StringUtils.substringAfter(keys, "[$shortcut]")
+                } else {
+                    shortcutList.add(TEXT_INPUT_PREFIX + keys + TEXT_INPUT_POSTFIX)
+                    break
+                }
             }
+            shortcutList.joinToString("")
         }
-        return shortcut
-    }
+
+    // var shortcut = ""
+    // for (thisText in shortcuts) {
+    //     if (StringUtils.isNotEmpty(thisText)) {
+    //         shortcut =
+    //             if (StringUtils.isEmpty(shortcut)) forceShortcutSyntax(thisText)
+    //             else addShortcut(shortcut, thisText)
+    //     }
+    // }
+    // return shortcut
 
     @JvmStatic
     fun forceShortcutSyntax(text: String): String {
@@ -260,6 +280,15 @@ internal object DesktopUtils {
         if (elem == null) 0 else CollectionUtils.size(elem.findElements(By.xpath("*")))
 
     @JvmStatic
+    fun countChildren(element: WebElement, filter: (child: WebElement) -> Boolean): Int {
+        // we don't know if there are any row in this data
+        // so we use "*" to all children -- this is faster
+        val children = element.findElements(By.xpath("*"))
+        if (CollectionUtils.isEmpty(children)) return 0
+        return children.sumBy { if (filter(it)) 1 else 0 }
+    }
+
+    @JvmStatic
     fun getElementText(element: WebElement?, defaultText: String): String =
         if (element == null) defaultText
         else try {
@@ -285,11 +314,16 @@ internal object DesktopUtils {
 
     @JvmStatic
     fun infragistic4Text(element: WebElement): String? {
-        if (!isInfragistic4Aware()) return null
+        if (!isInfragistic4Aware()) return getElementText(element)
 
         val itemStatus = element.getAttribute("ItemStatus")
         return if (StringUtils.isBlank(itemStatus)) null
         else StringUtils.substringBetween(itemStatus, INFRAG4_ITEM_STATUS_PREFIX, INFRAG4_ITEM_STATUS_POSTFIX)
     }
+
+    @JvmStatic
+    fun findFirstElement(element: WebElement?, xpath: String?) =
+        if (element == null || StringUtils.isBlank(xpath)) null
+        else CollectionUtil.getOrDefault(element.findElements(By.xpath(xpath)), 0, null)
 
 }

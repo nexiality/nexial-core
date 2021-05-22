@@ -253,7 +253,8 @@ public class DesktopHierTable extends DesktopElement {
             // if last match is found, use `nameValues` to construct a series of setValue()'s.
             Map<String, String> outcome = new ListOrderedMap<>();
             nameValues.forEach((name, value) -> {
-                WebElement cell = findFirstElement(parentRow, StringUtils.replace(XPATH_CELL_INFRAG4, "{name}", name));
+                WebElement cell = DesktopUtils.findFirstElement(parentRow,
+                                                                StringUtils.replace(XPATH_CELL_INFRAG4, "{name}", name));
                 if (cell != null) {
                     try {
                         cell.clear();
@@ -301,7 +302,8 @@ public class DesktopHierTable extends DesktopElement {
 
         for (String matchValue : matchBy) {
             // 1. use `categoryColumn` and `matchBy` to construct XPATH for each level. assume we start from Level 1
-            WebElement matched = findFirstElement(parentRow, StringUtils.replace(xpathMatching, "{value}", matchValue));
+            WebElement matched = DesktopUtils.findFirstElement(parentRow,
+                                                               StringUtils.replace(xpathMatching, "{value}", matchValue));
             if (matched == null) {
                 // if no element matched to xpath, then we have not reached the target level/row
                 parentRow = null;
