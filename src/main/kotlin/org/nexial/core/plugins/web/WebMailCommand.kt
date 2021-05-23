@@ -66,7 +66,7 @@ class WebMailCommand : BaseCommand() {
             StepResult.success("There are no emails matching the criteria.")
         } else {
             context.setData(`var`, emails)
-            StepResult.success("The mails matching the criteria are $emails")
+            StepResult.success("The mails matching the criteria are ${emails!!.joinToString(",")}")
         }
     }
 

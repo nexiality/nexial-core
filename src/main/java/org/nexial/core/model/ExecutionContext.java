@@ -414,7 +414,7 @@ public class ExecutionContext {
     /**
      * return {@link Data#CMD_PROFILE_DEFAULT default} profile browser
      */
-    public Browser getBrowser() { return plugins.getBrowser(); }
+    public Browser getBrowser() { return plugins.initBrowser(currentCommandProfiles.get("web")); }
 
     @NotNull
     public String getBrowserType() {

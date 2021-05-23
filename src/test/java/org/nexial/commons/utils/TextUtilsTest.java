@@ -641,6 +641,17 @@ public class TextUtilsTest {
     }
 
     @Test
+    public void insertBefore() {
+        assertNull(TextUtils.insertBefore(null, "a", "b"));
+        assertEquals("", TextUtils.insertBefore("", "a", "b"));
+        assertEquals("a", TextUtils.insertBefore("a", "", "b"));
+        assertEquals("a", TextUtils.insertBefore("a", "c", ""));
+        assertEquals("xenanadu", TextUtils.insertBefore("xenadu", "na", "na"));
+        assertEquals("nabanana", TextUtils.insertBefore("banana", "ba", "na"));
+        assertEquals("chrome.headless", TextUtils.insertBefore("chromeheadless", "headless", "."));
+    }
+
+    @Test
     public void polyMatcher_has_length() {
         assertTrue(TextUtils.polyMatch("12345", "LENGTH:5"));
         assertTrue(TextUtils.polyMatch("12345", "LENGTH:>=5"));

@@ -16,10 +16,6 @@
 
 package org.nexial.core.model;
 
-import java.util.HashMap;
-import java.util.Map;
-import javax.validation.constraints.NotNull;
-
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.nexial.core.plugins.NexialCommand;
@@ -29,6 +25,10 @@ import org.nexial.core.utils.ConsoleUtils;
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
+
+import javax.validation.constraints.NotNull;
+import java.util.HashMap;
+import java.util.Map;
 
 import static org.nexial.core.NexialConst.Data.CMD_PROFILE_DEFAULT;
 import static org.nexial.core.NexialConst.Data.CMD_PROFILE_SEP;
@@ -134,6 +134,7 @@ public class PluginManager implements ApplicationContextAware {
     }
 
     protected Browser initBrowser(String profile) {
+        if (StringUtils.isBlank(profile)) { profile = CMD_PROFILE_DEFAULT; }
         if (profileBrowsers.containsKey(profile)) { return profileBrowsers.get(profile); }
 
         // create new Browser instance for "prototype-scoped" bean

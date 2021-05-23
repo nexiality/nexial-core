@@ -244,7 +244,7 @@ public class Browser implements ForcefulTerminate {
         }
     }
 
-    public String manifest() { return browserType.name() + " " + browserVersion; }
+    public String manifest() { return browserType + " " + browserVersion; }
 
     @Override
     public boolean mustForcefullyTerminate() { return driver != null; }
@@ -266,7 +266,7 @@ public class Browser implements ForcefulTerminate {
             if (browserType != BrowserType.valueOf(browser)) {
                 // browser changed... reinitialize..
                 LOGGER.warn("current browser type (" + browser + ") " +
-                            "not compatible with target browser type (" + browserType.name() + "). Re-init webdriver");
+                            "not compatible with target browser type (" + browserType + "). Re-init webdriver");
                 shutdown();
                 shouldInitialize = true;
             } else {
@@ -420,7 +420,9 @@ public class Browser implements ForcefulTerminate {
 
         if (driver == null) { return; }
 
-        ConsoleUtils.log("Shutting down '" + browserType.name() + "' webdriver...");
+        String prefix = (StringUtils.startsWith(profile, NAMESPACE) ? "" : "[" + profile + "]") +
+                        "[" + browserType + "]: ";
+        ConsoleUtils.log(prefix + "Shutting down webdriver...");
 
         NexialListenerFactory.fireEvent(NexialExecutionEvent.newBrowserEndEvent(browserType.name()));
 
@@ -430,31 +432,42 @@ public class Browser implements ForcefulTerminate {
         }
 
         if (browserstackHelper != null) {
+            ConsoleUtils.log(prefix + "Terminating local agent...");
             browserstackHelper.terminateLocal();
             browserstackHelper = null;
+            try { Thread.sleep(1000); } catch (InterruptedException e) { }
         }
 
         if (cbtHelper != null) {
+            ConsoleUtils.log(prefix + "Terminating local agent...");
             cbtHelper.terminateLocal();
             cbtHelper = null;
+            try { Thread.sleep(1000); } catch (InterruptedException e) { }
         }
 
-        try { Thread.sleep(1000); } catch (InterruptedException e) { }
-
-        shutdownElectronApp();
+        if (isRunElectron() &&
+            context.getBooleanData(ELECTRON_FORCE_TERMINATE, getDefaultBool(ELECTRON_FORCE_TERMINATE))) {
+            String clientLocation = context.getStringData(ELECTRON_CLIENT_LOCATION);
+            if (StringUtils.isNotBlank(clientLocation)) {
+                String exeName = StringUtils.substringAfterLast(StringUtils.replace(clientLocation, "\\", "/"), "/");
+                ConsoleUtils.log(prefix + "Forcefully terminating '" + exeName + "'...");
+                RuntimeUtils.terminateInstance(exeName);
+            }
+        }
 
         if (!isRunFireFox() && !isRunFirefoxHeadless() && !(driver instanceof FirefoxDriver)) {
             // close before quite doesn't seem to work for firefox driver or electron app
-            ConsoleUtils.log("Close the current window, quitting the browser if it's the last window currently open.");
+            ConsoleUtils.log(prefix + "Close the current window...");
             try { driver.close(); } catch (Throwable e) { }
         }
 
         try {
-            ConsoleUtils.log("Quit this driver, closing every associated window.");
+            ConsoleUtils.log(prefix + "Quit this driver, closing every associated window.");
             driver.quit();
             Thread.sleep(1000);
         } catch (Throwable e) {
-            ConsoleUtils.error("Error occurred while shutting down webdriver:" + ExceptionUtils.getRootCauseMessage(e));
+            ConsoleUtils.error(prefix + "Error occurred while shutting down webdriver - " +
+                               ExceptionUtils.getRootCauseMessage(e));
         } finally {
             driver = null;
         }
@@ -1223,19 +1236,6 @@ public class Browser implements ForcefulTerminate {
         }
 
         if (context.getBooleanConfig("web", profile, BROWSER_INCOGNITO)) { options.addArguments(KEY_INCOGNITO); }
-    }
-
-    /** special handling for electron apps */
-    private void shutdownElectronApp() {
-        if (isRunElectron() &&
-            context.getBooleanData(ELECTRON_FORCE_TERMINATE, getDefaultBool(ELECTRON_FORCE_TERMINATE))) {
-            String clientLocation = context.getStringData(ELECTRON_CLIENT_LOCATION);
-            if (StringUtils.isNotBlank(clientLocation)) {
-                String exeName = StringUtils.substringAfterLast(StringUtils.replace(clientLocation, "\\", "/"), "/");
-                ConsoleUtils.log("forcefully terminating '" + exeName + "'...");
-                RuntimeUtils.terminateInstance(exeName);
-            }
-        }
     }
 
     private boolean resolveActiveWindowHandle() {

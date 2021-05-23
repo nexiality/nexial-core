@@ -2,6 +2,7 @@ package org.nexial.core.plugins.web
 
 import org.apache.commons.lang3.StringUtils
 import org.jsoup.Jsoup
+import org.nexial.commons.utils.RegexUtils
 import java.time.LocalDateTime
 
 /**
@@ -18,17 +19,40 @@ import java.time.LocalDateTime
  *
  */
 data class EmailDetails(
-        val id: String,
-        val subject: String,
-        val from: String,
-        val to: String,
-        val time: LocalDateTime,
-        var content: String? = null,
-        var html: String? = null) {
+    val id: String,
+    val subject: String,
+    val from: String,
+    val to: String,
+    val time: LocalDateTime,
+) {
+
+    var content: String? = null
+    var html: String? = null
+        set(value) {
+            field = value
+            extractLinks()
+        }
+
     var links: Set<String>? = null
 
     init {
+        extractLinks()
+    }
+
+    private fun extractLinks() {
         if (StringUtils.isNotEmpty(html))
-            links = Jsoup.parse(html).getElementsByAttribute("href").map { it.attr("href") }.toSet()
+            links = Jsoup.parse(removeConditionalComments(html!!))
+                .getElementsByAttribute("href")
+                .map { it.attr("href") }
+                .toSet()
+    }
+
+    private fun removeConditionalComments(html: String): String {
+        var replaced = html
+        while (StringUtils.contains(replaced, "<!--[if ") || StringUtils.contains(replaced, "<![endif]-->")) {
+            replaced = RegexUtils.removeMatches(replaced, "\\<\\!\\-\\-\\[if\\ .+\\].*\\>")
+            replaced = StringUtils.remove(replaced, "<![endif]-->")
+        }
+        return replaced
     }
 }

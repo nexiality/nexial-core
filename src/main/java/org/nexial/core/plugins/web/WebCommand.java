@@ -159,9 +159,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     @Override
     public void destroy() {
         super.destroy();
-        if (browser != null && browser.getDriver() != null) {
-            try { browser.getDriver().quit(); } catch (Exception e) { }
-        }
+        if (browser != null) { try { browser.shutdown(); } catch (Exception e) { } }
     }
 
     @Override
@@ -1514,6 +1512,30 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
     public StepResult open(String url) { return openAndWait(url, "100"); }
 
+    public StepResult openInTab(String name, String url) {
+        requiresNotBlank(url, "invalid URL", url);
+
+        // default names
+        if (StringUtils.isBlank(name)) {
+            name = context.getProject().getBoundProjectId() + "." +
+                   context.getRunId() + "." +
+                   browser.getLastWinHandles().size();
+        }
+
+        ensureReady();
+        url = validateUrl(url);
+        jsExecutor.executeScript("window.open(arguments[0], arguments[1]);", url, name);
+
+        waitForBrowserStability(context.getIntConfig(getTarget(), browser.profile, WEB_PAGE_LOAD_WAIT_MS));
+
+        if (!getAllWindowNames().contains(name)) {
+            ConsoleUtils.log("Unable to reference the newly open window; this might not work...");
+        }
+
+        driver = driver.switchTo().window(name);
+        return StepResult.success("opened URL %s in another tab '%s'", hideAuthDetails(url), name);
+    }
+
     public StepResult openAndWait(String url, String waitMs) {
         requiresNotBlank(url, "invalid URL", url);
 
@@ -2369,6 +2391,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         if (StringUtils.isBlank(profile)) { profile = CMD_PROFILE_DEFAULT; }
 
         context.updateProfileConfig(getTarget(), profile, config);
+        browser = context.getBrowser();
 
         return StepResult.success("switched to another browser profiled under '" + profile + "'");
     }
@@ -2389,7 +2412,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
     protected void postOpen(String url) {
         context.setData(BROWSER_OPENED, true);
-        context.setData(CURRENT_BROWSER, browser.getBrowserType().name());
+        context.setData(CURRENT_BROWSER, browser.getBrowserType().toString());
         try {
             updateWinHandle();
         } catch (UnhandledAlertException e) {
@@ -2922,9 +2945,9 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
             cookie = null;
         }
 
-        jsExecutor = (JavascriptExecutor) this.driver;
-        screenshot = (TakesScreenshot) this.driver;
-        frameHelper = new FrameHelper(this, this.driver);
+        jsExecutor = (JavascriptExecutor) driver;
+        screenshot = (TakesScreenshot) driver;
+        frameHelper = new FrameHelper(this, driver);
 
         if (alert == null) {
             alert = (AlertCommand) context.findPlugin("webalert");
@@ -2943,10 +2966,10 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
             cookie.init(context);
         } else {
             cookie.setBrowser(browser);
-            cookie.driver = this.driver;
+            cookie.driver = driver;
         }
 
-        context.setData(CURRENT_BROWSER, browser.getBrowserType().name());
+        context.setData(CURRENT_BROWSER, browser.getBrowserType().toString());
     }
 
     protected void ensureReady() { initWebDriver(); }

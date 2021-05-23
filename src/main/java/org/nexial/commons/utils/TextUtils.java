@@ -17,16 +17,6 @@
 
 package org.nexial.commons.utils;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.lang.reflect.Array;
-import java.math.BigDecimal;
-import java.util.*;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.Collectors;
-import javax.annotation.Nullable;
-import javax.validation.constraints.NotNull;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.IterableUtils;
 import org.apache.commons.collections4.MapUtils;
@@ -37,6 +27,17 @@ import org.apache.commons.lang3.RegExUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.nexial.core.utils.ConsoleUtils;
+
+import javax.annotation.Nullable;
+import javax.validation.constraints.NotNull;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.lang.reflect.Array;
+import java.math.BigDecimal;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 
 import static java.awt.event.KeyEvent.CHAR_UNDEFINED;
 import static java.lang.Character.UnicodeBlock.SPECIALS;
@@ -53,11 +54,11 @@ import static org.nexial.core.NexialConst.PolyMatcher.*;
 public final class TextUtils {
     // FORM_UNFRIENDLY_TEXT and NEWLINES must match in size
     public static final String[] FORM_UNFRIENDLY_TEXT =
-            new String[]{"&lt;BR/&gt;", "&lt;br/&gt;", "<BR/>", "<BR>", "<br>", "<br/>", "\r"};
+        new String[]{"&lt;BR/&gt;", "&lt;br/&gt;", "<BR/>", "<BR>", "<br>", "<br/>", "\r"};
     public static final String[] NEWLINES = new String[]{"\n", "\n", "\n", "\n", "\n", "\n", "\n"};
     // INLINE_UNFRIENDLY_TEXT and INLINE_BR must match in size
     public static final String[] INLINE_UNFRIENDLY_TEXT =
-            new String[]{"\n", "\r\n", "\n\r", "&lt;BR/&gt;", "&lt;br/&gt;"};
+        new String[]{"\n", "\r\n", "\n\r", "&lt;BR/&gt;", "&lt;br/&gt;"};
     public static final String[] INLINE_BR = new String[]{"<br/>", "<br/>", "<br/>", "<br/>", "<br/>"};
 
     private static final Map<String, String> ESCAPE_HTML_MAP = initDefaultEscapeHtmlMapping();
@@ -88,7 +89,7 @@ public final class TextUtils {
         private final boolean join;
 
         LineBreakConversion(boolean br, boolean join) {
-            this.br   = br;
+            this.br = br;
             this.join = join;
         }
 
@@ -123,7 +124,7 @@ public final class TextUtils {
         private final String removes;
 
         CleanNumberStrategy(String keeps, String removes) {
-            this.keeps   = keeps;
+            this.keeps = keeps;
             this.removes = removes;
         }
 
@@ -194,13 +195,29 @@ public final class TextUtils {
         return newList;
     }
 
-    public static String insert(String text, int position, String extra) {
-        if (StringUtils.isBlank(text)) { return text; }
-        if (StringUtils.isEmpty(extra)) { return text; }
-        if (position < 0) { return text; }
-        if (position > StringUtils.length(text)) { return text; }
+    public static String insert(String text, int position, String insertWith) {
+        if (StringUtils.isAnyEmpty(text, insertWith) || position < 0 || position > StringUtils.length(text)) {
+            return text;
+        }
+        return StringUtils.substring(text, 0, position) + insertWith + StringUtils.substring(text, position);
+    }
 
-        return StringUtils.substring(text, 0, position) + extra + StringUtils.substring(text, position);
+    /**
+     * return new String that has {@code insert} after the {@code after} in {@code text}. Note that
+     * {@code after} must be the found from the beginning of {@code text}.
+     */
+    public static String insertAfter(String text, String after, String insert) {
+        if (StringUtils.isAnyEmpty(text, after, insert) || !StringUtils.contains(text, after)) { return text; }
+        return StringUtils.substringBefore(text, after) + after + insert + StringUtils.substringAfter(text, after);
+    }
+
+    /**
+     * return new String that has {@code insertWith} before the {@code before} character sequence in {@code text}. If
+     * the {@code before} character sequence is not found, then {@code text} is returned.
+     */
+    public static String insertBefore(String text, String before, String insertWith) {
+        if (StringUtils.isAnyEmpty(text, before, insertWith) || !StringUtils.contains(text, before)) { return text; }
+        return StringUtils.substringBefore(text, before) + insertWith + before + StringUtils.substringAfter(text, before);
     }
 
     @NotNull
@@ -294,9 +311,9 @@ public final class TextUtils {
             List<String> items = toListPreserveEmpty(row, delimiter, false);
             if (CollectionUtils.isNotEmpty(items)) {
                 items.forEach(item -> list.add(
-                        StringUtils.replace(StringUtils.replace(item, tempDelim, "\\" + delimiter),
-                                            tempRowSep,
-                                            "\\" + rowDelim)));
+                    StringUtils.replace(StringUtils.replace(item, tempDelim, "\\" + delimiter),
+                                        tempRowSep,
+                                        "\\" + rowDelim)));
                 twoD.add(list);
             }
         });
@@ -630,18 +647,6 @@ public final class TextUtils {
     }
 
     /**
-     * return new String that has {@code insert} after the {@code startWith} in {@code text}. Note that
-     * {@code startWith} must be the found from the beginning of {@code text}.
-     */
-    public static String insertAfter(String text, String startWith, String insert) {
-        if (StringUtils.isEmpty(text)) { return text; }
-        if (StringUtils.isEmpty(startWith)) { return text; }
-        if (StringUtils.isEmpty(insert)) { return text; }
-        return StringUtils.startsWith(text, startWith) ?
-               startWith + insert + StringUtils.substringAfter(text, startWith) : text;
-    }
-
-    /**
      * determine if {@code text} is between {@code start} and {@code end}
      */
     public static boolean isBetween(String text, String start, String end) {
@@ -856,12 +861,12 @@ public final class TextUtils {
 
         if (CollectionUtils.isNotEmpty(records)) {
             records.forEach(
-                    row -> widths.forEach(
-                            (index, currentWidth) -> {
-                                int width =
-                                        Math.max(currentWidth, StringUtils.length(extractor.getCell(row, index)) + 1);
-                                widths.put(index, width);
-                            }));
+                row -> widths.forEach(
+                    (index, currentWidth) -> {
+                        int width =
+                            Math.max(currentWidth, StringUtils.length(extractor.getCell(row, index)) + 1);
+                        widths.put(index, width);
+                    }));
         }
 
         int[] totalWidth = new int[]{1};
@@ -886,10 +891,10 @@ public final class TextUtils {
             records.forEach(row -> {
                 tableContent.append("|");
                 widths.forEach(
-                        (position, width) -> {
-                            String cell = StringUtils.rightPad(extractor.getCell(row, position), widths.get(position));
-                            tableContent.append(cell).append("|");
-                        });
+                    (position, width) -> {
+                        String cell = StringUtils.rightPad(extractor.getCell(row, position), widths.get(position));
+                        tableContent.append(cell).append("|");
+                    });
                 tableContent.append(linSep).append(lineAcross);
             });
         }
@@ -1017,19 +1022,19 @@ public final class TextUtils {
                 if (posEqual == -1) {
                     if (posColon == -1) {
                         // not name/value pair
-                        key   = line;
+                        key = line;
                         value = "";
                     } else {
-                        key   = StringUtils.substringBefore(line, ":");
+                        key = StringUtils.substringBefore(line, ":");
                         value = StringUtils.substringAfter(line, ":");
                     }
                 } else {
                     if (posColon == -1) {
-                        key   = StringUtils.substringBefore(line, "=");
+                        key = StringUtils.substringBefore(line, "=");
                         value = StringUtils.substringAfter(line, "=");
                     } else {
                         String delim = posEqual < posColon ? "=" : ":";
-                        key   = StringUtils.substringBefore(line, delim);
+                        key = StringUtils.substringBefore(line, delim);
                         value = StringUtils.substringAfter(line, delim);
                     }
                 }
@@ -1286,11 +1291,11 @@ public final class TextUtils {
             int endPos = text.indexOf(endsWith, startPos + startsFrom.length());
             if (endPos == -1) { break; }
 
-            text     = text.substring(0, startPos + startsFrom.length()) +
-                       decorateStart +
-                       text.substring(startPos + startsFrom.length(), endPos) +
-                       decorateEnd +
-                       text.substring(endPos);
+            text = text.substring(0, startPos + startsFrom.length()) +
+                   decorateStart +
+                   text.substring(startPos + startsFrom.length(), endPos) +
+                   decorateEnd +
+                   text.substring(endPos);
             startPos = text.indexOf(startsFrom, endPos + decorateEnd.length() + decorateEnd.length());
         }
 
@@ -1336,7 +1341,7 @@ public final class TextUtils {
 
     public static boolean polyMatch(String actual, String expected, boolean trim) {
         if (trim) {
-            actual   = StringUtils.trim(actual);
+            actual = StringUtils.trim(actual);
             expected = StringUtils.trim(expected);
         }
 
@@ -1389,7 +1394,7 @@ public final class TextUtils {
 
         if (StringUtils.startsWith(expected, LENGTH)) {
             String lengthCheck =
-                    StringUtils.removeStart(StringUtils.trim(StringUtils.substringAfter(expected, LENGTH)), "+");
+                StringUtils.removeStart(StringUtils.trim(StringUtils.substringAfter(expected, LENGTH)), "+");
             // if all we got is just the number, then assume equality comparison
             List<String> groups = NumberUtils.isDigits(lengthCheck) ?
                                   Arrays.asList("=", lengthCheck) :
@@ -1405,7 +1410,7 @@ public final class TextUtils {
 
         if (StringUtils.startsWith(expected, NUMERIC)) {
             String numberCheck =
-                    StringUtils.removeStart(StringUtils.trim(StringUtils.substringAfter(expected, NUMERIC)), "+");
+                StringUtils.removeStart(StringUtils.trim(StringUtils.substringAfter(expected, NUMERIC)), "+");
             // if all we got is a just the number, then assume equality comparison
             List<String> groups = NumberUtils.isParsable(numberCheck) ?
                                   Arrays.asList("=", numberCheck) :

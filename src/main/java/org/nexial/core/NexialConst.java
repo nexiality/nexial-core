@@ -429,6 +429,9 @@ public final class NexialConst {
         public boolean isSwitchWindowSupported() { return switchWindowSupported; }
 
         public boolean isHeadless() { return this == firefoxheadless || this == chromeheadless; }
+
+        @Override
+        public String toString() { return (isHeadless() ? TextUtils.insertBefore(name(), "headless", ".") : name()); }
     }
 
     // @formatter:on
@@ -1650,11 +1653,11 @@ public final class NexialConst {
 
         // Mailinator Constants.
         public static final String WEBMAIL_MAILINATOR = "mailinator";
-        public static final String MAILINATOR_BROWSER = "nexial-mailinator-browser";
+        public static final String MAILINATOR_BROWSER = NAMESPACE + "mailinator-browser";
 
         //Temporary Mail Constants.
         public static final String WEBMAIL_TEMPORARYMAIL = "temporary-mail";
-        public static final String TEMPORARYMAIL_BROWSER = "nexial-temporarymailnet-browser";
+        public static final String TEMPORARYMAIL_BROWSER = NAMESPACE + "temporarymail-browser";
 
         private WebMail() { }
 

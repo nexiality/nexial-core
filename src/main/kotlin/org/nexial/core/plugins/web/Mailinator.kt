@@ -41,6 +41,7 @@ class Mailinator : WebMailer() {
 
         val matchingEmails = web.getAttributeValues(emailRowLocator, "id").map { it.trim() }.toSet()
         web.closeAll()
+        web.switchBrowser("", "")
 
         if (matchingEmails.isEmpty()) return emptySet()
 

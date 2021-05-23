@@ -17,16 +17,6 @@
 
 package org.nexial.core.utils;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.StringWriter;
-import java.net.URL;
-import java.util.Comparator;
-import java.util.Date;
-import java.util.List;
-import javax.validation.constraints.NotNull;
-
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.ArrayUtils;
@@ -37,12 +27,21 @@ import org.apache.commons.lang3.math.NumberUtils;
 import org.nexial.commons.utils.DateUtility;
 import org.nexial.commons.utils.FileUtil;
 import org.nexial.commons.utils.RegexUtils;
-import org.nexial.core.NexialConst.*;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.model.ExecutionDefinition;
 import org.nexial.core.model.TestStep;
 import org.nexial.core.plugins.web.Browser;
 import org.nexial.core.variable.Syspath;
+
+import javax.validation.constraints.NotNull;
+import java.io.File;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.net.URL;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.List;
 
 import static java.io.File.separator;
 import static org.nexial.core.NexialConst.*;
@@ -123,7 +122,7 @@ public final class OutputFileUtils {
     /** rename {@code excelFile} to add browser+version information */
     public static String addBrowser(String filename, Browser browser) {
         String browserLabel = browser == null ?
-                              "NONE" : browser.getBrowserType().name() + "_" + browser.getBrowserVersion();
+                              "NONE" : browser.getBrowserType().toString() + "_" + browser.getBrowserVersion();
         return add(filename, browserLabel, POS_BROWSER);
     }
 
