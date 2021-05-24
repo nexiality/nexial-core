@@ -2551,7 +2551,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         if (!browser.getBrowserType().isSwitchWindowSupported()) { return; }
         if (browser.isRunCrossBrowserTesting() && browser.getCbtHelper().isMobile()) { return; }
 
-        ConsoleUtils.log("current browser window handle:" + initialHandle);
+        // log("current browser window handle: " + initialHandle);
         driver = driver.switchTo().window(initialHandle).switchTo().defaultContent();
     }
 

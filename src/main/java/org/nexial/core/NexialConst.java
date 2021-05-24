@@ -1653,11 +1653,10 @@ public final class NexialConst {
 
         // Mailinator Constants.
         public static final String WEBMAIL_MAILINATOR = "mailinator";
-        public static final String MAILINATOR_BROWSER = NAMESPACE + "mailinator-browser";
+        public static final String MAILINATOR_BROWSER_PROFILE = NAMESPACE + "mailinator-browser";
 
-        //Temporary Mail Constants.
+        // Temporary Mail Constants.
         public static final String WEBMAIL_TEMPORARYMAIL = "temporary-mail";
-        public static final String TEMPORARYMAIL_BROWSER = NAMESPACE + "temporarymail-browser";
 
         private WebMail() { }
 
@@ -1895,7 +1894,7 @@ public final class NexialConst {
         public static final String FORCE_JS_CLICK = registerSysVar(NS_BROWSER + ".forceJSClick", false);
         public static final String BROWSER_ACCEPT_INVALID_CERTS =
             registerSysVar(NS_BROWSER + ".acceptInsecureCerts", false);
-        public static final String BROWSER_POST_CLOSE_WAIT = registerSysVar(NS_BROWSER + ".postCloseWaitMs", 3000);
+        public static final String BROWSER_POST_CLOSE_WAIT = registerSysVar(NS_BROWSER + ".postCloseWaitMs", 2000);
         // default to false to improve performance
         public static final String ENFORCE_PAGE_SOURCE_STABILITY =
             registerSysVar(NAMESPACE + "enforcePageSourceStability", false);

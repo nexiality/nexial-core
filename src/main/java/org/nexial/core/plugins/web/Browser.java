@@ -54,9 +54,8 @@ import org.openqa.selenium.ie.InternetExplorerOptions;
 import org.openqa.selenium.remote.DesiredCapabilities;
 import org.openqa.selenium.safari.SafariDriver;
 import org.openqa.selenium.safari.SafariOptions;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nonnull;
 import javax.validation.constraints.NotNull;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -70,8 +69,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.apache.commons.lang3.SystemUtils.*;
 import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.NexialConst.BrowserType.*;
-import static org.nexial.core.NexialConst.Data.TEST_LOG_PATH;
-import static org.nexial.core.NexialConst.Data.withProfile;
+import static org.nexial.core.NexialConst.Data.*;
 import static org.nexial.core.NexialConst.Web.*;
 import static org.nexial.core.SystemVariables.getDefaultBool;
 import static org.nexial.core.plugins.web.WebDriverCapabilityUtils.initCapabilities;
@@ -89,7 +87,7 @@ import static org.openqa.selenium.ie.InternetExplorerDriver.*;
 import static org.openqa.selenium.remote.CapabilityType.*;
 
 public class Browser implements ForcefulTerminate {
-    private static final Logger LOGGER = LoggerFactory.getLogger(Browser.class);
+    private static final boolean DEBUG = false;
     private static final int MAX_DISP_LENGTH = 25;
     private static final String REGEX_WINDOW_SIZE = "^[0-9]{2,4}x[0-9]{2,4}$";
     private static final int MIN_WIDTH_OR_HEIGHT = 100;
@@ -262,47 +260,40 @@ public class Browser implements ForcefulTerminate {
         String browser = context.getBrowserType();
 
         if (driver != null) {
-            if (LOGGER.isDebugEnabled()) { LOGGER.debug("current browser - " + browser); }
             if (browserType != BrowserType.valueOf(browser)) {
                 // browser changed... reinitialize..
-                LOGGER.warn("current browser type (" + browser + ") " +
-                            "not compatible with target browser type (" + browserType + "). Re-init webdriver");
+                log("current browser type (%s) is not compatible with target browser type (%s). " +
+                    "Re-initializing webdriver..", browser, browserType);
                 shutdown();
                 shouldInitialize = true;
             } else {
                 // double check that browser hasn't close down
                 try {
                     String winHandle = driver.getWindowHandle();
-                    if (LOGGER.isDebugEnabled()) {
-                        LOGGER.debug("webdriver readiness check: current window handle=" + winHandle);
-                    }
+                    debug("webdriver readiness check: current window handle=" + winHandle);
                     // everything's fine, moving on
                 } catch (Throwable e) {
                     if (e instanceof NoSuchWindowException) {
                         // recalibrate window handles
-                        shouldInitialize = resolveActiveWindowHandle();
-                        if (shouldInitialize) {
-                            LOGGER.error("last window no longer available; BROWSER MIGHT BE TERMINATED; RESTARTING...");
-                        }
+                        shouldInitialize = !resolveActiveWindowHandle();
                     } else {
                         String error = e.getMessage();
                         if (StringUtils.contains(error, "unexpected end of stream on Connection") ||
                             StringUtils.contains(error, "caused connection abort: recv failed")) {
-                            LOGGER.error("webdriver readiness check: " + error);
+                            error("webdriver readiness check: " + error);
                         } else if (StringUtils.contains(error, "window already closed")) {
-                            shouldInitialize = resolveActiveWindowHandle();
+                            shouldInitialize = !resolveActiveWindowHandle();
                         } else {
                             // something's wrong with current browser window or session, need to re-init
                             shouldInitialize = true;
-                            LOGGER.error("webdriver readiness check: " + error + NL +
-                                         "BROWSER MIGHT BE TERMINATED; RESTARTING...");
+                            error("webdriver readiness check: %s \nBROWSER MIGHT BE TERMINATED; RESTARTING...", error);
                         }
                     }
                 }
             }
         } else {
             shouldInitialize = true;
-            if (LOGGER.isInfoEnabled()) { LOGGER.info("No valid instance of webdriver, initializing..."); }
+            debug("No valid instance of webdriver, initializing...");
         }
 
         if (shouldInitialize) {
@@ -323,21 +314,20 @@ public class Browser implements ForcefulTerminate {
             if (timeoutChangesEnabled) {
                 int loadWaitMs = context.getIntConfig("web", profile, WEB_PAGE_LOAD_WAIT_MS);
                 timeouts.pageLoadTimeout(loadWaitMs, MILLISECONDS);
-                ConsoleUtils.log("setting browser page load timeout to " + loadWaitMs + " ms");
+                log("setting browser page load timeout to %s ms", loadWaitMs);
             }
 
             long pollWaitMs = context.getPollWaitMs();
             boolean alwaysWait = context.getBooleanConfig("web", profile, WEB_ALWAYS_WAIT);
             if (alwaysWait) {
-                ConsoleUtils.log("detected " + WEB_ALWAYS_WAIT + "; " +
-                                 "use fluent-wait (up to " + pollWaitMs + " ms) during web automation");
+                log("detected %s; use fluent-wait (up to %s ms) during web automation", WEB_ALWAYS_WAIT, pollWaitMs);
             } else {
                 boolean shouldWaitImplicitly = timeoutChangesEnabled && pollWaitMs > 0;
                 if (shouldWaitImplicitly) {
                     timeouts.implicitlyWait(pollWaitMs, MILLISECONDS);
-                    ConsoleUtils.log("setting browser polling wait time to " + pollWaitMs + " ms");
+                    log("setting browser polling wait time to %s ms", pollWaitMs);
                 } else {
-                    ConsoleUtils.log("implicit-wait might not be supported by the current browser " + browser);
+                    log("implicit-wait might not be supported by the current browser");
                 }
             }
         }
@@ -348,7 +338,6 @@ public class Browser implements ForcefulTerminate {
             if (StringUtils.isNotBlank(initialWinHandle)) { lastWinHandles.push(initialWinHandle); }
         }
 
-        if (LOGGER.isDebugEnabled()) { LOGGER.debug("webdriver ready for " + browser); }
         return driver;
     }
 
@@ -373,7 +362,7 @@ public class Browser implements ForcefulTerminate {
         String browser = context.getBrowserType();
         browserType = BrowserType.valueOf(browser);
         if (browserType.isProfileSupported()) { resolveBrowserProfile(); }
-        if (LOGGER.isInfoEnabled()) { LOGGER.info("init " + browserType); }
+        log("initializing " + browserType);
 
         // now we need to "remember" the browser type (even if it's default) so that the #data tab of output file will
         // display the browser type used during execution
@@ -394,15 +383,15 @@ public class Browser implements ForcefulTerminate {
             if (isRunCrossBrowserTesting()) { driver = initCrossBrowserTesting(); }
 
             if (driver != null) {
-                if (LOGGER.isInfoEnabled()) { LOGGER.info("browser initialization completed for '" + browser + "'"); }
+                log("browser initialization completed for '%s'", browser);
             } else {
-                LOGGER.error("browser '" + browser + "' is not supported.");
+                error("browser '%s' is not supported.", browser);
             }
 
             syncContextPropToSystem(BROWSER);
         } catch (Throwable e) {
             String msg = "Error initializing browser '" + browser + "': " + ExceptionUtils.getRootCauseMessage(e);
-            ConsoleUtils.error(msg);
+            error(msg);
             throw new RuntimeException(msg, e);
         }
     }
@@ -420,9 +409,7 @@ public class Browser implements ForcefulTerminate {
 
         if (driver == null) { return; }
 
-        String prefix = (StringUtils.startsWith(profile, NAMESPACE) ? "" : "[" + profile + "]") +
-                        "[" + browserType + "]: ";
-        ConsoleUtils.log(prefix + "Shutting down webdriver...");
+        log("Shutting down webdriver...");
 
         NexialListenerFactory.fireEvent(NexialExecutionEvent.newBrowserEndEvent(browserType.name()));
 
@@ -432,17 +419,15 @@ public class Browser implements ForcefulTerminate {
         }
 
         if (browserstackHelper != null) {
-            ConsoleUtils.log(prefix + "Terminating local agent...");
+            log("Terminating local agent...");
             browserstackHelper.terminateLocal();
             browserstackHelper = null;
-            try { Thread.sleep(1000); } catch (InterruptedException e) { }
         }
 
         if (cbtHelper != null) {
-            ConsoleUtils.log(prefix + "Terminating local agent...");
+            log("Terminating local agent...");
             cbtHelper.terminateLocal();
             cbtHelper = null;
-            try { Thread.sleep(1000); } catch (InterruptedException e) { }
         }
 
         if (isRunElectron() &&
@@ -450,24 +435,23 @@ public class Browser implements ForcefulTerminate {
             String clientLocation = context.getStringData(ELECTRON_CLIENT_LOCATION);
             if (StringUtils.isNotBlank(clientLocation)) {
                 String exeName = StringUtils.substringAfterLast(StringUtils.replace(clientLocation, "\\", "/"), "/");
-                ConsoleUtils.log(prefix + "Forcefully terminating '" + exeName + "'...");
+                log("Forcefully terminating '%s'...", exeName);
                 RuntimeUtils.terminateInstance(exeName);
             }
         }
 
         if (!isRunFireFox() && !isRunFirefoxHeadless() && !(driver instanceof FirefoxDriver)) {
             // close before quite doesn't seem to work for firefox driver or electron app
-            ConsoleUtils.log(prefix + "Close the current window...");
+            log("Close the current window...");
             try { driver.close(); } catch (Throwable e) { }
         }
 
         try {
-            ConsoleUtils.log(prefix + "Quit this driver, closing every associated window.");
+            log("Quit this driver, closing every associated window.");
             driver.quit();
             Thread.sleep(1000);
         } catch (Throwable e) {
-            ConsoleUtils.error(prefix + "Error occurred while shutting down webdriver - " +
-                               ExceptionUtils.getRootCauseMessage(e));
+            error("Error occurred while shutting down webdriver - " + ExceptionUtils.getRootCauseMessage(e));
         } finally {
             driver = null;
         }
@@ -522,7 +506,7 @@ public class Browser implements ForcefulTerminate {
             }
         } catch (NoSuchSessionException e) {
             // this means that the last or only window is closed.
-            ConsoleUtils.error("Unable to resync window handles: " + e.getMessage());
+            error("Unable to re-synchronize window handles: %s", e.getMessage());
             lastWinHandles.clear();
             initialWinHandle = null;
         }
@@ -550,31 +534,18 @@ public class Browser implements ForcefulTerminate {
         try {
             chrome = new ChromeDriver(options);
         } catch (Exception e) {
-            chrome = initChromeWithUpdatedDriver(helper, options, true, e);
+            if (updateChromeDriver(helper)) {
+                chrome = new ChromeDriver(options);
+            } else {
+                throw new RuntimeException("Fail to start webdriver: " + e.getMessage());
+            }
         }
+
         Capabilities capabilities = chrome.getCapabilities();
         initCapabilities(context, (MutableCapabilities) capabilities);
 
         postInit(chrome);
         return chrome;
-    }
-
-    @NotNull
-    private ChromeDriver initChromeWithUpdatedDriver(WebDriverHelper helper,
-                                                     ChromeOptions options,
-                                                     boolean isEmbeddedChrome,
-                                                     Exception e) throws IOException {
-        ConsoleUtils.log("Possibly browser has been updated. Stop the the web driver in use " +
-                         "and start the process to update the web driver.");
-        RuntimeUtils.terminateInstance(new File(helper.getDriverLocation()).getName());
-        if (helper.updateCompatibleDriverVersion()) {
-            helper.resolveDriver();
-            return isEmbeddedChrome ?
-                   new ChromeDriver(options) :
-                   new ChromeDriver(ChromeDriverService.createDefaultService(), options);
-        } else {
-            throw new RuntimeException(e);
-        }
     }
 
     protected WebDriver initElectron() throws IOException {
@@ -598,7 +569,7 @@ public class Browser implements ForcefulTerminate {
         if (NumberUtils.isDigits(context.getStringData(CHROME_REMOTE_PORT))) {
             port = NumberUtils.toInt(context.getStringData(CHROME_REMOTE_PORT));
         }
-        ConsoleUtils.log("enabling chrome remote port: " + port);
+        log("enabling chrome remote port: %s", port);
         options.addArguments("--remote-debugging-port=" + port);
 
         // options.addArguments("--auto-open-devtools-for-tabs"); // open devtools
@@ -612,7 +583,7 @@ public class Browser implements ForcefulTerminate {
             if (StringUtils.contains(appName, "\\")) { appName = StringUtils.substringAfterLast(appName, "\\"); }
             if (StringUtils.contains(appName, ".")) { appName = StringUtils.substringBeforeLast(appName, "."); }
             File logFile = resolveBrowserLogFile("electron-" + appName + ".log");
-            ConsoleUtils.log("enabling logging for Electron: " + logFile.getAbsolutePath());
+            log("enabling logging for Electron app: %s", logFile.getAbsolutePath());
 
             boolean verbose = context.getBooleanData(ELECTRON_LOG_VERBOSE, getDefaultBool(ELECTRON_LOG_VERBOSE));
             cdsBuilder = cdsBuilder.withVerbose(verbose).withLogFile(logFile);
@@ -630,7 +601,7 @@ public class Browser implements ForcefulTerminate {
         boolean activateLogging = context.getBooleanConfig("web", profile, CHROME_LOG_ENABLED);
         if (activateLogging) {
             String chromeLog = resolveBrowserLogFile("chrome-browser." + profile + ".log").getAbsolutePath();
-            ConsoleUtils.log("enabling logging for Chrome: " + chromeLog);
+            log("enabling logging for Chrome: %s", chromeLog);
             System.setProperty(CHROME_DRIVER_LOG_PROPERTY, chromeLog);
             System.setProperty(CHROME_DRIVER_VERBOSE_LOG_PROPERTY, "true");
         } else {
@@ -684,7 +655,7 @@ public class Browser implements ForcefulTerminate {
         String chromeRemotePort = context.getStringConfig("web", profile, CHROME_REMOTE_PORT);
         if (NumberUtils.isDigits(chromeRemotePort)) {
             int port = NumberUtils.toInt(chromeRemotePort);
-            ConsoleUtils.log("enabling chrome remote port: " + port);
+            log("enabling chrome remote port: %s", port);
             options.addArguments("--remote-debugging-port=" + port);
         }
 
@@ -712,7 +683,7 @@ public class Browser implements ForcefulTerminate {
             Map<String, String> mobileEmulation = new HashMap<>();
             mobileEmulation.put("deviceName", emuDevice);
             options.setExperimentalOption("mobileEmulation", mobileEmulation);
-            ConsoleUtils.log("setting mobile emulation on Chrome as " + emuDevice);
+            log("setting mobile emulation on Chrome as %s", emuDevice);
         }
 
         String emuUserAgent = context.getStringConfig("web", profile, EMU_USER_AGENT);
@@ -727,7 +698,7 @@ public class Browser implements ForcefulTerminate {
             mobileEmulation.put("deviceMetrics", deviceMetrics);
             mobileEmulation.put("userAgent", emuUserAgent);
             options.setExperimentalOption("mobileEmulation", mobileEmulation);
-            ConsoleUtils.log("setting mobile emulation on Chrome as " + emuUserAgent);
+            log("setting mobile emulation on Chrome as %s", emuUserAgent);
         }
 
         // starting from chrome 80, samesite is enforced by default... we need to workaround it
@@ -755,19 +726,24 @@ public class Browser implements ForcefulTerminate {
         try {
             options.setPageLoadStrategy(EAGER);
         } catch (WebDriverException e) {
-            // oh well... i tried
-            // never mind...
-            ConsoleUtils.log("unable to page load strategy to EAGER; resetting back to default");
+            // oh well... i tried; never mind...
+            log("unable to page load strategy to EAGER; resetting back to default");
         }
 
+        ChromeDriverService driverService = null;
         ChromeDriver chrome;
-        ChromeDriverService driverService;
         try {
             driverService = ChromeDriverService.createDefaultService();
             chrome = new ChromeDriver(driverService, options);
         } catch (Exception e) {
-            chrome = initChromeWithUpdatedDriver(helper, options, false, e);
+            if (updateChromeDriver(helper)) {
+                if (driverService == null) { driverService = ChromeDriverService.createDefaultService(); }
+                chrome = new ChromeDriver(driverService, options);
+            } else {
+                throw new RuntimeException("Fail to start webdriver: " + e.getMessage());
+            }
         }
+
         Capabilities capabilities = chrome.getCapabilities();
         initCapabilities(context, (MutableCapabilities) capabilities);
 
@@ -909,8 +885,7 @@ public class Browser implements ForcefulTerminate {
             try {
                 firefox = new FirefoxDriver(options);
             } catch (Exception e) {
-                ConsoleUtils.log("Possibly browser has been updated. Stop the the web driver in use " +
-                                 "and start the process to update the web driver.");
+                log("Corresponding browser might have been updated recently. Nexial will stop the webdriver in use to update it...");
                 RuntimeUtils.terminateInstance(driver.getName());
                 if (helper.updateCompatibleDriverVersion()) {
                     helper.resolveDriver();
@@ -1059,16 +1034,14 @@ public class Browser implements ForcefulTerminate {
         // RemoteWebDriver ie = new RemoteWebDriver(new DriverCommandExecutor(service), capabilities);
         // InternetExplorerDriver ie = new InternetExplorerDriver(service, capabilities);
         InternetExplorerDriver ie = new InternetExplorerDriver(capabilities);
-        browserVersion = ie.getCapabilities().getVersion();
-        browserPlatform = ie.getCapabilities().getPlatform();
+        Capabilities caps = ie.getCapabilities();
+        browserVersion = caps.getVersion();
+        browserPlatform = caps.getPlatform();
         postInit(ie);
 
         StringBuilder log = new StringBuilder("IEDriverServer capabilities:" + NL);
-        ie.getCapabilities().asMap().forEach((key, val) -> log.append("\t")
-                                                              .append(key).append("\t= ").append(val)
-                                                              .append(NL));
-        log.append(NL);
-        ConsoleUtils.log(log.toString());
+        caps.asMap().forEach((key, val) -> log.append("\t").append(key).append("\t= ").append(val).append(NL));
+        ConsoleUtils.log(log + NL);
 
         return ie;
     }
@@ -1079,11 +1052,10 @@ public class Browser implements ForcefulTerminate {
 
         String out = context.getProject().getOutPath();
         try {
-            ConsoleUtils.log(
-                "modifying safari's download path:" + NL +
-                ExternalCommand.Companion.exec("defaults write com.apple.Safari DownloadsPath \"" + out + "\""));
+            log("modifying safari's download path:" + NL +
+                ExternalCommand.exec("defaults write com.apple.Safari DownloadsPath \"" + out + "\""));
         } catch (IOException e) {
-            ConsoleUtils.error("Unable to modify safari's download path to " + out + ": " + e);
+            error("Unable to modify safari's download path to %s: %s", out, e);
         }
 
         SafariOptions options = new SafariOptions();
@@ -1158,7 +1130,7 @@ public class Browser implements ForcefulTerminate {
         if ((isHeadless()) && StringUtils.isBlank(windowSize)) {
             // window size required for headless browser
             windowSize = context.getStringConfig("web", profile, BROWSER_DEFAULT_WINDOW_SIZE);
-            ConsoleUtils.log("No '" + BROWSER_WINDOW_SIZE + "' defined for headless browser; default to " + windowSize);
+            log("No '%s' defined for headless browser; default to %s", BROWSER_WINDOW_SIZE, windowSize);
         }
 
         if (StringUtils.isNotBlank(windowSize)) {
@@ -1199,7 +1171,7 @@ public class Browser implements ForcefulTerminate {
             if (ArrayUtils.getLength(coordinates) != 2 ||
                 !NumberUtils.isCreatable(coordinates[0]) ||
                 !NumberUtils.isCreatable(coordinates[1])) {
-                ConsoleUtils.error("Invalid driver position: " + windowPosition + "; default to 0,0");
+                error("Invalid windows position: %s; default to 0,0", windowPosition);
             } else {
                 position = new Point(NumberUtils.toInt(coordinates[0]), NumberUtils.toInt(coordinates[1]));
             }
@@ -1216,7 +1188,7 @@ public class Browser implements ForcefulTerminate {
                 return;
             }
 
-            ConsoleUtils.error("Unable to add user-data on " + userDataDir + " because it is NOT accessible");
+            error("Unable to add user-data on %s because it is NOT accessible", userDataDir);
         }
 
         if (context.getBooleanConfig("web", profile, BROWSER_INCOGNITO)) {
@@ -1232,10 +1204,22 @@ public class Browser implements ForcefulTerminate {
                 return;
             }
 
-            ConsoleUtils.error("Unable to add user-data on " + userDataDir + " because it is NOT accessible");
+            error("Unable to add user-data on %s because it is NOT accessible", userDataDir);
         }
 
         if (context.getBooleanConfig("web", profile, BROWSER_INCOGNITO)) { options.addArguments(KEY_INCOGNITO); }
+    }
+
+    @NotNull
+    private boolean updateChromeDriver(WebDriverHelper helper) throws IOException {
+        log("Corresponding browser might have been updated recently. Nexial will stop the webdriver in use to update it...");
+        RuntimeUtils.terminateInstance(new File(helper.getDriverLocation()).getName());
+        if (helper.updateCompatibleDriverVersion()) {
+            helper.resolveDriver();
+            return true;
+        }
+
+        return false;
     }
 
     private boolean resolveActiveWindowHandle() {
@@ -1259,19 +1243,14 @@ public class Browser implements ForcefulTerminate {
             if (CollectionUtils.isNotEmpty(badHandles)) { lastWinHandles.removeAll(badHandles); }
 
             if (winHandle != null) {
-                if (LOGGER.isDebugEnabled()) {
-                    LOGGER.debug("webdriver readiness check: last window handle appeared to be " +
-                                 "invalid; window handle resolved to previous one: " + winHandle);
-                }
-                return false;
+                debug("webdriver readiness check: last window handle appeared invalid; reverting to previous one: %s",
+                      winHandle);
+                return true;
             } // else, recheck via webdriver for the last set of window handles.
         } else if (initialWinHandle != null) {
-            if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug("webdriver readiness check: last window handle appeared to be " +
-                             "invalid; window handle resolved to initial one: " + initialWinHandle);
-            }
-
-            return false;
+            debug("webdriver readiness check: last window handle appeared invalid; reverting to initial one: %s",
+                  initialWinHandle);
+            return true;
         }
 
         // recheck via webdriver
@@ -1281,33 +1260,23 @@ public class Browser implements ForcefulTerminate {
             // but good enough
             initialWinHandle = IterableUtils.get(currentWinHandles, currentWinHandles.size() - 1);
             currentWinHandles.forEach(handle -> lastWinHandles.push(handle));
-
-            if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug("webdriver readiness check: last window handle appeared to be " +
-                             "invalid; window handle resolved to " + initialWinHandle);
-            }
-
-            return false;
+            debug("webdriver readiness check: last window handle appeared to be invalid; reverting to %s", initialWinHandle);
+            return true;
         }
 
         // exhausted all possibilities..
-        if (LOGGER.isDebugEnabled()) {
-            LOGGER.error("webdriver readiness check: no windows available" + NL +
-                         "BROWSER MIGHT BE TERMINATED; RESTARTING...");
-        }
-
-        return true;
+        error("webdriver readiness check: no windows available\nBROWSER MIGHT BE TERMINATED; RESTARTING...");
+        return false;
     }
 
     private void postInit(WebDriver driver) {
         String browserVersion = getBrowserVersion();
 
-        if (LOGGER.isDebugEnabled()) { LOGGER.debug("post-init for " + browserType + " " + browserVersion); }
+        log("initializing for %s %s", browserType, browserVersion);
 
         if (StringUtils.isNotBlank(browserVersion)) {
             String temp = StringUtils.substringBefore(StringUtils.substringBefore(browserVersion, "."), " ");
             majorVersion = NumberUtils.toInt(StringUtils.trim(temp));
-            if (LOGGER.isDebugEnabled()) { LOGGER.debug("determined browser major version as " + majorVersion); }
         }
 
         setWindowSize(driver);
@@ -1381,8 +1350,7 @@ public class Browser implements ForcefulTerminate {
 
         if (StringUtils.isNotBlank(configuredPath)) {
             if (FileUtil.isFileExecutable(configuredPath)) { return configuredPath; }
-            ConsoleUtils.error("Configured " + browserType + " binary '" + configuredPath + "' is not executable; " +
-                               "search for alternative...");
+            error("%s binary '%s' is not executable; search for alternative...", browserType, configuredPath);
         }
 
         List<String> possibleLocations = IS_OS_WINDOWS ? binaryLocations.get("windows") :
@@ -1415,5 +1383,45 @@ public class Browser implements ForcefulTerminate {
         if (System.getProperty(key) == null) {
             if (context.hasData(key)) { System.setProperty(key, context.getStringConfig("web", profile, key)); }
         }
+    }
+
+    /** log prefix will be printed in the beginning of a log statement to aid in readability */
+    @Nonnull
+    private String resolveLogPrefix() {
+        String prefix = browserType == null ? "" : browserType.toString();
+        if (!StringUtils.startsWith(profile, NAMESPACE) &&
+            StringUtils.isNotBlank(profile) &&
+            !StringUtils.equals(profile, CMD_PROFILE_DEFAULT)) {
+            prefix += (StringUtils.isEmpty(prefix) ? "" : "@") + profile;
+        }
+        return prefix;
+    }
+
+    private boolean shouldLog() { return !StringUtils.startsWith(profile, NAMESPACE); }
+
+    private void debug(String message, Object... args) {
+        if (shouldLog() && DEBUG) {
+            String prefix = resolveLogPrefix();
+            if (StringUtils.isBlank(prefix)) {
+                ConsoleUtils.log(String.format(message, args));
+            } else {
+                ConsoleUtils.log(prefix, message, args);
+            }
+        }
+    }
+
+    private void log(String message, Object... args) {
+        if (shouldLog()) {
+            String prefix = resolveLogPrefix();
+            if (StringUtils.isBlank(prefix)) {
+                ConsoleUtils.log(String.format(message, args));
+            } else {
+                ConsoleUtils.log(prefix, message, args);
+            }
+        }
+    }
+
+    private void error(String message, Object... args) {
+        if (shouldLog()) { ConsoleUtils.error(resolveLogPrefix(), message, args); }
     }
 }

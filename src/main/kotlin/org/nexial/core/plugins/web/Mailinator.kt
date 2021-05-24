@@ -3,7 +3,7 @@ package org.nexial.core.plugins.web
 import org.apache.commons.lang3.StringUtils
 import org.apache.commons.lang3.math.NumberUtils
 import org.nexial.core.NexialConst.WebMail.BROWSER_CONFIG
-import org.nexial.core.NexialConst.WebMail.MAILINATOR_BROWSER
+import org.nexial.core.NexialConst.WebMail.MAILINATOR_BROWSER_PROFILE
 import org.nexial.core.plugins.ws.WebServiceClient
 import org.nexial.core.utils.ConsoleUtils
 import org.nexial.core.utils.JSONPath
@@ -28,7 +28,7 @@ class Mailinator : WebMailer() {
     private val locators = Locators(url)
 
     override fun search(web: WebCommand, profile: WebMailProfile, searchCriteria: String, duration: Long): Set<String> {
-        web.switchBrowser(MAILINATOR_BROWSER, BROWSER_CONFIG)
+        web.switchBrowser(MAILINATOR_BROWSER_PROFILE, BROWSER_CONFIG)
 
         openEmailListingPage(web, profile)
 

@@ -213,6 +213,7 @@ class ExternalCommand : BaseCommand() {
 
     companion object {
 
+        @JvmStatic
         @Throws(IOException::class)
         fun exec(programPathAndParams: String): String {
             // could be xyz.cmd "long parameter with spaces" "and another one"
