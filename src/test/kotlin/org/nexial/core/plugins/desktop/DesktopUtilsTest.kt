@@ -29,5 +29,18 @@ class DesktopUtilsTest {
         assertEquals("<[ENTER]>", DesktopUtils.joinShortcuts("[ENTER]"))
         assertEquals("<[ENTER]><[{a}]><[TAB]><[{ }]><[TAB]><[ENTER]><[{ppa}]>",
                      DesktopUtils.joinShortcuts("[ENTER]a[TAB] [TAB][ENTER]ppa"))
+
+        // test newline characters
+        assertEquals("<[{This is}]><[ENTER]>" +
+                     "<[{a Test}]><[ENTER]>" +
+                     "<[{A test, I said!!}]><[ENTER]>" +
+                     "<[ENTER]>" +
+                     "<[{Bye}]>",
+                     DesktopUtils.joinShortcuts("This is\na Test\nA test, I said!!\n\nBye"))
+        assertEquals("<[{When I say}]><[ENTER]>" +
+                     "<[{ENTER}]><[ENTER]>" +
+                     "<[{You press it, like this:}]><[ENTER]>" +
+                     "<[ENTER]>",
+                     DesktopUtils.joinShortcuts("When I say\nENTER\nYou press it, like this:\n\n"))
     }
 }

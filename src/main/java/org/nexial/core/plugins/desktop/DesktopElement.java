@@ -1792,10 +1792,10 @@ public class DesktopElement {
             new Actions(driver).doubleClick(element).perform();
             NativeInputHelper.typeKeys(TextUtils.toList(StringUtils.remove(keystrokes, "\r"), "\n", false));
         } else {
+            String script = TextUtils.toString(parseTextInputWithShortcuts(combinedText, true), "");
             if (append) {
                 try {
-                    String script = SCRIPT_PREFIX_SHORTCUT + forceShortcutSyntax("[CTRL-END]") + joinShortcuts(text);
-                    driver.executeScript(script, element);
+                    driver.executeScript(SCRIPT_PREFIX_SHORTCUT + forceShortcutSyntax("[CTRL-END]") + script, element);
                 } catch (WebDriverException e) {
                     ConsoleUtils.error("Error when typing '%s' on '%s': %s",
                                        ArrayUtils.toString(text), label, resolveErrorMessage(e));
@@ -1806,7 +1806,7 @@ public class DesktopElement {
 
                 // append=false means overwrite. Hence the HOME->SHIFT-END->DEL sequence
                 if (StringUtils.isNotEmpty(currentText)) { clearFormattedTextbox(driver, element); }
-                type(TextUtils.toString(parseTextInputWithShortcuts(combinedText, true), ""), useSendKeys);
+                type(script, useSendKeys);
             }
         }
 

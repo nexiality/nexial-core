@@ -83,7 +83,7 @@ internal object DesktopUtils {
         if (ArrayUtils.isEmpty(shortcuts)) ""
         else {
             val shortcutList = mutableListOf<String>()
-            var keys = shortcuts.joinToString("")
+            var keys = StringUtils.replace(StringUtils.remove(shortcuts.joinToString(""), "\r"), "\n", "[ENTER]")
             while (StringUtils.isNotEmpty(keys)) {
                 val shortcut = StringUtils.substringBetween(keys, "[", "]")
                 if (StringUtils.isNotBlank(shortcut) && StringUtils.containsNone(shortcut, " ")) {
@@ -99,16 +99,6 @@ internal object DesktopUtils {
             }
             shortcutList.joinToString("")
         }
-
-    // var shortcut = ""
-    // for (thisText in shortcuts) {
-    //     if (StringUtils.isNotEmpty(thisText)) {
-    //         shortcut =
-    //             if (StringUtils.isEmpty(shortcut)) forceShortcutSyntax(thisText)
-    //             else addShortcut(shortcut, thisText)
-    //     }
-    // }
-    // return shortcut
 
     @JvmStatic
     fun forceShortcutSyntax(text: String): String {
