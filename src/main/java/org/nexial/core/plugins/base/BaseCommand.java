@@ -503,11 +503,20 @@ public class BaseCommand implements NexialCommand {
 
     public StepResult assertContains(String text, String substring) {
         @NotNull String textForDisplay = context.truncateForDisplay(text);
+
+        if (StringUtils.isEmpty(substring) && StringUtils.isNotEmpty(text)) {
+            return StepResult.fail("'%s' is NOT empty", textForDisplay);
+        }
+
+        if (StringUtils.isEmpty(text) && StringUtils.isNotEmpty(substring)) {
+            return StepResult.fail("'%s' IS empty", textForDisplay);
+        }
+
         if (lenientContains(text, substring, false)) {
             return StepResult.success("validated text '%s' contains '%s'", textForDisplay, substring);
-        } else {
-            return StepResult.fail("'%s' NOT contained in '%s'", substring, textForDisplay);
         }
+
+        return StepResult.fail("'%s' NOT contained in '%s'", substring, textForDisplay);
     }
 
     public StepResult assertNotContain(String text, String substring) {
@@ -600,9 +609,9 @@ public class BaseCommand implements NexialCommand {
         if (CollectionUtils.isEmpty(list)) { CheckUtils.fail("'array' cannot be parsed: " + array); }
 
         List<String> expectedList = toList(expected, delim, false)
-                                        .stream()
-                                        .distinct()
-                                        .collect(Collectors.toList());
+            .stream()
+            .distinct()
+            .collect(Collectors.toList());
 
         if (CollectionUtils.isEmpty(expectedList)) { CheckUtils.fail("'expected' cannot be parsed: " + expected); }
 
@@ -632,9 +641,9 @@ public class BaseCommand implements NexialCommand {
         if (CollectionUtils.isEmpty(list)) { return StepResult.success("empty array found"); }
 
         List<String> unexpectedList = toList(unexpected, delim, false)
-                                          .stream()
-                                          .distinct()
-                                          .collect(Collectors.toList());
+            .stream()
+            .distinct()
+            .collect(Collectors.toList());
         if (CollectionUtils.isEmpty(unexpectedList)) { CheckUtils.fail("'unexpected' cannot be parsed: " + unexpected);}
 
         // all all items in `expectedList` is removed due to match against `list`, then all items in `expected` matched
@@ -671,7 +680,8 @@ public class BaseCommand implements NexialCommand {
         });
 
         if (errors.length() < 1) {
-            return StepResult.success("CONFIRMED all specified variables " + (assertPresent ? "exist" : "DO NOT exist"));
+            return StepResult.success(
+                "CONFIRMED all specified variables " + (assertPresent ? "exist" : "DO NOT exist"));
         } else {
             return StepResult.fail(errors.toString());
         }
@@ -777,7 +787,7 @@ public class BaseCommand implements NexialCommand {
      * @param file the full path of the macro library.
      * @param name the name of the macro to invoke
      * @return pass/fail based on the validity of the referenced macro/file.  If macro {@code name} or library
-     *     ({@code file}) is not found, a failure is returned with fail-immediate in effect.
+     * ({@code file}) is not found, a failure is returned with fail-immediate in effect.
      */
     public StepResult macro(String file, String sheet, String name) {
         Macro macro = new Macro(file, sheet, name);
@@ -789,7 +799,7 @@ public class BaseCommand implements NexialCommand {
      * fully qualified, whilst Nexial function may be used (e.g. {@code $(syspath)}).
      *
      * @return pass/fail based on the validity of the referenced macro/file.  If macro {@code name} or library
-     *     ({@code file}) is not found, a failure is returned with fail-immediate in effect.
+     * ({@code file}) is not found, a failure is returned with fail-immediate in effect.
      */
     public StepResult macroFlex(String macro, String input, String output) {
         requiresNotBlank(macro, "macro parameter is empty", "");
@@ -1147,10 +1157,10 @@ public class BaseCommand implements NexialCommand {
 
     protected boolean lenientContains(String text, String prefix, boolean startsWith) {
         boolean valid = startsWith ? StringUtils.startsWith(text, prefix) : StringUtils.contains(text, prefix);
-        // not so fast.. could be one of those quarky IE issues..
+        // not so fast.. could be one of those quirky IE issues..
         if (!valid && context.isTextMatchLeniently()) {
-            String[] searchFor = {"\r", "\n"};
-            String[] replaceWith = {" ", " "};
+            String[] searchFor = {"\r", "\n", "\t"};
+            String[] replaceWith = {" ", " ", " "};
             String lenientPrefix = StringUtils.replaceEach(StringUtils.trim(prefix), searchFor, replaceWith);
             String lenientText = StringUtils.replaceEach(StringUtils.trim(text), searchFor, replaceWith);
             valid = startsWith ?

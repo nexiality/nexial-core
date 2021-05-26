@@ -1377,7 +1377,7 @@ public final class TextUtils {
         }
 
         if (StringUtils.startsWith(expected, EMPTY)) {
-            if (BooleanUtils.toBoolean(StringUtils.substringAfter(expected, EMPTY))) {
+            if (BooleanUtils.toBoolean(StringUtils.trim(StringUtils.substringAfter(expected, EMPTY)))) {
                 return StringUtils.isEmpty(actual);
             } else {
                 return StringUtils.isNotEmpty(actual);
@@ -1385,7 +1385,7 @@ public final class TextUtils {
         }
 
         if (StringUtils.startsWith(expected, BLANK)) {
-            if (BooleanUtils.toBoolean(StringUtils.substringAfter(expected, BLANK))) {
+            if (BooleanUtils.toBoolean(StringUtils.trim(StringUtils.substringAfter(expected, BLANK)))) {
                 return StringUtils.isBlank(actual);
             } else {
                 return StringUtils.isNotBlank(actual);
