@@ -18,10 +18,12 @@
 package org.nexial.core.plugins.io;
 
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.nexial.core.ExcelBasedTests;
 import org.nexial.core.model.ExecutionSummary;
 
+@Ignore
 public class HeadlessIOTests extends ExcelBasedTests {
     @Test
     public void alltests() throws Exception {

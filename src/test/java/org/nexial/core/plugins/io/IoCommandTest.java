@@ -17,9 +17,6 @@
 
 package org.nexial.core.plugins.io;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.map.HashedMap;
 import org.apache.commons.io.FileUtils;
@@ -31,10 +28,7 @@ import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.SystemUtils;
 import org.apache.commons.lang3.math.NumberUtils;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.*;
 import org.nexial.commons.utils.FileUtil;
 import org.nexial.commons.utils.ResourceUtils;
 import org.nexial.core.model.ExecutionContext;
@@ -45,12 +39,17 @@ import org.nexial.core.variable.Random;
 import org.nexial.core.variable.Sysdate;
 import org.nexial.core.variable.Syspath;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.*;
+
 import static java.io.File.separator;
 import static java.lang.System.lineSeparator;
 import static org.junit.Assert.assertEquals;
 import static org.nexial.core.NexialConst.Compare.*;
 import static org.nexial.core.NexialConst.*;
 
+@Ignore
 public class IoCommandTest {
 
     private final String baseLocation = StringUtils.appendIfMissing(SystemUtils.getJavaIoTmpDir().getAbsolutePath(),
@@ -105,6 +104,7 @@ public class IoCommandTest {
         io.init(context);
 
         StepResult result = io.copyFiles(testFile3, testDestination1);
+        System.out.println("result = " + result);
 
         File destinationFile = new File(testDestination1 + separator + "dummy3");
 
@@ -123,6 +123,7 @@ public class IoCommandTest {
         io.init(context);
 
         StepResult result = io.copyFiles("jar:/org/openqa/selenium/firefox/webdriver.xpi", testDestination1);
+        System.out.println("result = " + result);
 
         File destinationFile = new File(testDestination1 + separator + "webdriver.xpi");
         long expectedFileSize = 685 * 1024;
@@ -146,6 +147,7 @@ public class IoCommandTest {
 
         String sourcePattern = sourceDir + "_E4_test1_step4*.*";
         StepResult result = io.copyFiles(sourcePattern, testDestination1);
+        System.out.println("result = " + result);
         Assert.assertNotNull(result);
         Assert.assertTrue(result.isSuccess());
 
@@ -183,6 +185,7 @@ public class IoCommandTest {
         String destinationDir = testDestination3 + separator + RandomStringUtils.randomAlphanumeric(5);
         new File(destinationDir).mkdirs();
         StepResult result = io.moveFiles(sourcePattern, destinationDir);
+        System.out.println("result = " + result);
         Assert.assertNotNull(result);
         Assert.assertTrue(result.isSuccess());
 
@@ -223,6 +226,7 @@ public class IoCommandTest {
         String sourcePathPattern = sourceDir + "_E5_test1_step4*.*";
         String destinationDir = testDestination1 + separator + RandomStringUtils.randomAlphanumeric(5);
         StepResult result = io.moveFiles(sourcePathPattern, destinationDir + separator + "myFile.text");
+        System.out.println("result = " + result);
         Assert.assertNotNull(result);
         Assert.assertTrue(result.isSuccess());
 
@@ -255,6 +259,7 @@ public class IoCommandTest {
         io.init(context);
 
         StepResult result = io.unzip("jar:/org/openqa/selenium/firefox/webdriver.xpi", testDestination1);
+        System.out.println("result = " + result);
 
         Assert.assertNotNull(result);
         Assert.assertTrue(result.isSuccess());
@@ -272,6 +277,7 @@ public class IoCommandTest {
         io.init(context);
 
         StepResult result = io.makeDirectory(newLoc);
+        System.out.println("result = " + result);
 
         Assert.assertNotNull(result);
         Assert.assertTrue(result.isSuccess());
@@ -419,7 +425,9 @@ public class IoCommandTest {
         IoCommand io = new IoCommand();
         io.init(context);
         io.writeFile(myTestFile, enteredText, "true");
+
         StepResult result = io.saveFileMeta("myData", myTestFile);
+        System.out.println("result = " + result);
         Assert.assertNotNull(result);
         Assert.assertTrue(result.isSuccess());
 
@@ -469,6 +477,7 @@ public class IoCommandTest {
         io.init(context);
 
         StepResult result = io.readProperty("prop1", testFile1, "prop1");
+        System.out.println("result = " + result);
         Assert.assertNotNull(result);
         Assert.assertTrue(result.isSuccess());
         assertEquals("a", context.getStringData("prop1"));
@@ -494,6 +503,7 @@ public class IoCommandTest {
         io.init(context);
 
         StepResult result = io.writeFile(testFile1, propContent, "false");
+        System.out.println("result = " + result);
         Assert.assertNotNull(result);
         Assert.assertTrue(result.isSuccess());
 
@@ -514,6 +524,7 @@ public class IoCommandTest {
         io.init(context);
 
         StepResult result = io.writeFile(testFile1, propContent, "false");
+        System.out.println("result = " + result);
         Assert.assertTrue(result.isSuccess());
 
         File file1 = new File(testFile1);
@@ -575,6 +586,7 @@ public class IoCommandTest {
         io.init(context);
 
         StepResult result = io.writeFile(testFile1, propContent, "false");
+        System.out.println("result = " + result);
         Assert.assertTrue(result.isSuccess());
 
         File file1 = new File(testFile1);
@@ -642,6 +654,7 @@ public class IoCommandTest {
         io.init(context);
 
         StepResult result = io.writeFileAsIs(testFile1, propContent, "false");
+        System.out.println("result = " + result);
         Assert.assertNotNull(result);
         Assert.assertTrue(result.isSuccess());
 
@@ -663,6 +676,7 @@ public class IoCommandTest {
         io.init(context);
 
         StepResult result = io.writeProperty(testFile1, "prop4", "c");
+        System.out.println("result = " + result);
         Assert.assertNotNull(result);
         Assert.assertTrue(result.isSuccess());
 
@@ -700,6 +714,7 @@ public class IoCommandTest {
         io.writeFile(myTestFile2, propContent, "false");
 
         StepResult result = io.assertEqual(myTestFile1, myTestFile2);
+        System.out.println("result = " + result);
         Assert.assertTrue(result.isSuccess());
 
         io.writeFile(myTestFile1, propContent, "true");
@@ -732,6 +747,7 @@ public class IoCommandTest {
         io.writeFile(myTestFile1, propContent1, "false");
         io.writeFile(myTestFile2, propContent2, "false");
         StepResult result = io.assertNotEqual(myTestFile1, myTestFile2);
+        System.out.println("result = " + result);
         Assert.assertTrue(result.isSuccess());
 
         io.writeFile(myTestFile1, propContent1, "true");
@@ -777,6 +793,7 @@ public class IoCommandTest {
         io.writeFile(myTestFile2, String.valueOf(file2Data), "true");
 
         StepResult result = io.compare(myTestFile1, myTestFile2, "false");
+        System.out.println("result = " + result);
         Assert.assertFalse(result.isSuccess());
 
         io.deleteFiles(myTestFile2, "false");
@@ -798,6 +815,7 @@ public class IoCommandTest {
 
         io.writeFile(myTestFile, propContent, "false");
         StepResult result = io.assertReadableFile(myTestFile, "-1");
+        System.out.println("result = " + result);
         Assert.assertTrue(result.isSuccess());
         result = io.assertReadableFile(myTestFile, "10");
         Assert.assertTrue(result.isSuccess());
@@ -818,6 +836,7 @@ public class IoCommandTest {
         io.init(context);
 
         StepResult result = io.zip(basePath + "*.txt", zipFilePath);
+        System.out.println("result = " + result);
         zip_check_result(result);
         zip_check_zip_file(zipFilePath);
 
@@ -839,6 +858,7 @@ public class IoCommandTest {
         io.init(context);
 
         StepResult result = io.zip(basePath, zipFilePath);
+        System.out.println("result = " + result);
         zip_check_result(result);
         zip_check_zip_file(zipFilePath);
 
@@ -861,6 +881,7 @@ public class IoCommandTest {
         io.init(context);
 
         StepResult result = io.zip(StringUtils.removeEnd(basePath, separator), zipFilePath);
+        System.out.println("result = " + result);
         zip_check_result(result);
         zip_check_zip_file(zipFilePath);
 
@@ -883,6 +904,7 @@ public class IoCommandTest {
         io.init(context);
 
         StepResult result = io.zip(basePath + "1*.*", zipFilePath);
+        System.out.println("result = " + result);
         zip_check_result(result);
         zip_check_zip_file(zipFilePath);
 
@@ -909,6 +931,7 @@ public class IoCommandTest {
         io.init(context);
 
         StepResult result = io.count("fileCount", testDirectory, filePattern1);
+        System.out.println("result = " + result);
 
         Assert.assertNotNull(result);
         Assert.assertTrue(result.isSuccess());
@@ -1023,6 +1046,7 @@ public class IoCommandTest {
             System.out.println("TEST CASE: " + testCaseId + " #" + (i + 1) + "\n");
 
             StepResult result = command.saveDiff(diffVar, expectedData.get(i), actualData.get(i));
+            System.out.println("result = " + result);
             Assert.assertNotNull(result);
 
             String diffs = context.getStringData(diffVar);
