@@ -55,4 +55,15 @@ data class EmailDetails(
         }
         return replaced
     }
+
+    override fun toString(): String {
+        return "id      = $id\n" +
+               "subject = $subject\n" +
+               "from    = $from\n" +
+               "to      = $to\n" +
+               "time    = $time\n" +
+               "content = $content\n" +
+               "html    = $html\n" +
+               "links   = $links"
+    }
 }
