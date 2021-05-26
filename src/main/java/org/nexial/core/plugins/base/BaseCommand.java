@@ -1075,8 +1075,8 @@ public class BaseCommand implements NexialCommand {
     protected static boolean seleniumEquals(String expectedPattern, String actual) {
         if (expectedPattern == null || actual == null) { return expectedPattern == null && actual == null; }
 
-        if (actual.startsWith("regexp:") || actual.startsWith("regex:")
-            || actual.startsWith("regexpi:") || actual.startsWith("regexi:")) {
+        if (actual.startsWith("regexp:") || actual.startsWith("regex:") ||
+            actual.startsWith("regexpi:") || actual.startsWith("regexi:")) {
             // swap 'em
             String tmp = actual;
             actual = expectedPattern;
@@ -1104,12 +1104,15 @@ public class BaseCommand implements NexialCommand {
             return true;
         }
 
-        String expectedGlob = expectedPattern.replaceFirst("glob:", "");
-        expectedGlob = expectedGlob.replaceAll("([\\]\\[\\\\{\\}$\\(\\)\\|\\^\\+.])", "\\\\$1");
+        if (StringUtils.startsWith(expectedPattern, "glob:")) {
+            String expectedGlob = expectedPattern.replaceFirst("glob:", "");
+            expectedGlob = expectedGlob.replaceAll("([\\]\\[\\\\{\\}$\\(\\)\\|\\^\\+.])", "\\\\$1");
+            expectedGlob = expectedGlob.replaceAll("\\*", ".*");
+            expectedGlob = expectedGlob.replaceAll("\\?", ".");
+            return Pattern.compile(expectedGlob, Pattern.DOTALL).matcher(actual).matches();
+        }
 
-        expectedGlob = expectedGlob.replaceAll("\\*", ".*");
-        expectedGlob = expectedGlob.replaceAll("\\?", ".");
-        return Pattern.compile(expectedGlob, Pattern.DOTALL).matcher(actual).matches();
+        return StringUtils.equals(expectedPattern, actual);
     }
 
     /**
@@ -1448,8 +1451,7 @@ public class BaseCommand implements NexialCommand {
     }
 
     protected static String verifyEqualsAndReturnComparisonDumpIfNot(String[] expected, String[] actual) {
-        boolean misMatch = false;
-        if (expected.length != actual.length) { misMatch = true; }
+        boolean misMatch = expected.length != actual.length;
         for (int j = 0; j < expected.length; j++) {
             if (!seleniumEquals(expected[j], actual[j])) {
                 misMatch = true;

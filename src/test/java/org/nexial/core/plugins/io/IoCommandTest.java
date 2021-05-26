@@ -49,7 +49,6 @@ import static org.junit.Assert.assertEquals;
 import static org.nexial.core.NexialConst.Compare.*;
 import static org.nexial.core.NexialConst.*;
 
-@Ignore
 public class IoCommandTest {
 
     private final String baseLocation = StringUtils.appendIfMissing(SystemUtils.getJavaIoTmpDir().getAbsolutePath(),

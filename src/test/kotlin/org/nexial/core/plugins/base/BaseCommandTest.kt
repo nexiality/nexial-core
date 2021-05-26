@@ -270,6 +270,24 @@ class BaseCommandTest {
 
     @Test
     @Throws(Exception::class)
+    fun assertEquals_asteriks() {
+        val subject = BaseCommand()
+        subject.init(context)
+
+        // expects no globbin' or regex stuff
+        context.setData("actual", "**** **** **** 1111 Exp: 03/2030 Billing Zip: 78758")
+        context.setData("expected", "**** **** **** 1111 Exp: 03/2030 Billing Zip: 78758")
+
+        try {
+            val result = subject.assertEqual(context.replaceTokens("\${expected}"), context.replaceTokens("\${actual}"))
+            assertTrue { result.isSuccess }
+        } catch (e: AssertionError) {
+            fail(e.message)
+        }
+    }
+
+    @Test
+    @Throws(Exception::class)
     fun assertEquals_number() {
         assertEquals(1.0, NumberUtils.createBigDecimal("1").toDouble(), 0.0)
         assertEquals(1.0, NumberUtils.createBigDecimal("1.").toDouble(), 0.0)
