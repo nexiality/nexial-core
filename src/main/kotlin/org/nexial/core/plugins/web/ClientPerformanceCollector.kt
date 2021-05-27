@@ -51,6 +51,7 @@ class ClientPerformanceCollector(val command: WebCommand, private val output: St
         val context = command.context
         val metrics = context.getDataByPrefix(NS_WEB_METRICS)
         if (metrics.isEmpty()) return
+        if (metrics.size == 1 && metrics.containsKey("enabled")) return
 
         val js = initScript +
                  metrics.filter { config -> config.key != "enabled" && BooleanUtils.toBoolean(config.value) }

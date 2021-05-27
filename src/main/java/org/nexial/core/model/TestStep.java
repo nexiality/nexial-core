@@ -39,7 +39,6 @@ import org.nexial.core.logs.ExecutionLogger;
 import org.nexial.core.logs.TrackTimeLogs;
 import org.nexial.core.plugins.CanTakeScreenshot;
 import org.nexial.core.plugins.NexialCommand;
-import org.nexial.core.plugins.web.WebCommand;
 import org.nexial.core.plugins.web.WebDriverExceptionHelper;
 import org.nexial.core.utils.*;
 import org.nexial.core.variable.Syspath;
@@ -67,7 +66,6 @@ import static org.nexial.core.NexialConst.Data.*;
 import static org.nexial.core.NexialConst.FlowControls.CONDITION_DISABLE;
 import static org.nexial.core.NexialConst.MSG_FAIL;
 import static org.nexial.core.NexialConst.LogMessage.ERROR_LOG;
-import static org.nexial.core.NexialConst.Web.WEB_PERF_METRICS_ENABLED;
 import static org.nexial.core.SystemVariables.getDefaultBool;
 import static org.nexial.core.excel.ExcelConfig.MSG_PASS;
 import static org.nexial.core.excel.ExcelConfig.*;
@@ -384,20 +382,10 @@ public class TestStep extends TestStepManifest {
         if (shouldExecute) {
             NexialCommand plugin = context.findPlugin(target);
             if (plugin == null) { return StepResult.fail("Unknown/unsupported command target " + target); }
-
             if (plugin instanceof CanTakeScreenshot) { context.registerScreenshotAgent((CanTakeScreenshot) plugin); }
             try {
                 result = plugin.execute(command, args);
             } finally {
-                // web client perf. metrics collection
-                // only if the command is not "assert...", "wait...", "save...", etc.
-                if (context.getBooleanData(WEB_PERF_METRICS_ENABLED, getDefaultBool(WEB_PERF_METRICS_ENABLED)) &&
-                    !context.isInteractiveMode() &&
-                    StringUtils.equals("web", plugin.getTarget()) &&
-                    !StringUtils.startsWithAny(command, "assert", "wait", "save", "verify")) {
-                    ((WebCommand) plugin).collectClientPerfMetrics();
-                }
-
                 // support post-execution flow control
                 if (result != null) {
                     context.setData(OPT_LAST_OUTCOME, result.isSuccess());

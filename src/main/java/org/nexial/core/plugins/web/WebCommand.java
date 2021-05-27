@@ -75,6 +75,7 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.time.Duration;
 import java.util.List;
 import java.util.*;
@@ -101,7 +102,6 @@ import static org.openqa.selenium.Keys.BACK_SPACE;
 import static org.openqa.selenium.Keys.TAB;
 
 public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLogExternally, RequireBrowser {
-    private static final String SUFFIX_LOCATOR = ".locator";
     protected Browser browser;
     protected WebDriver driver;
     protected JavascriptExecutor jsExecutor;
@@ -164,6 +164,22 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
     @Override
     public String getTarget() { return "web"; }
+
+    @Override
+    public StepResult execute(String command, String... params)
+        throws InvocationTargetException, IllegalAccessException {
+        try {
+            return super.execute(command, params);
+        } finally {
+            if (context.getBooleanConfig(getTarget(), getProfile(), WEB_PERF_METRICS_ENABLED) &&
+                !context.isInteractiveMode() &&
+                !StringUtils.startsWithAny(command, NON_PERF_METRICS_COMMAND_PREFIXES)) {
+                // web client perf. metrics collection
+                // only if the command is not "assert...", "wait...", "save...", etc.
+                collectClientPerfMetrics();
+            }
+        }
+    }
 
     public StepResult assertTextOrder(String locator, String descending) {
         return locatorHelper.assertTextOrder(locator, descending);
@@ -454,9 +470,9 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
         Set<String> keys = locators.keySet();
         for (String key : keys) {
-            if (!key.endsWith(SUFFIX_LOCATOR)) { continue; }
+            if (!key.endsWith(GROUP_LOCATOR_SUFFIX)) { continue; }
 
-            String name = StringUtils.substringBefore(key, SUFFIX_LOCATOR);
+            String name = StringUtils.substringBefore(key, GROUP_LOCATOR_SUFFIX);
             String locator = locators.get(key);
             locatorsFound++;
 
@@ -494,7 +510,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
         if (locatorsFound < 1) {
             return StepResult.fail("No data variables found via prefix '" + prefix + "' contains the required " +
-                                   "'" + SUFFIX_LOCATOR + "' suffix");
+                                   "'" + GROUP_LOCATOR_SUFFIX + "' suffix");
         }
 
         String message = logs.toString();
@@ -2397,6 +2413,9 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     }
 
     public void collectClientPerfMetrics() {
+        Map<String, String> webMetrics = context.getDataByPrefix(NS_WEB_METRICS);
+        if (MapUtils.isEmpty(webMetrics) || (webMetrics.size() == 1 && webMetrics.containsKey("enabled"))) { return; }
+
         try {
             if (clientPerfCollector == null) {
                 synchronized (this) {

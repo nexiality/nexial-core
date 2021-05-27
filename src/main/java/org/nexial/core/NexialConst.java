@@ -1890,6 +1890,9 @@ public final class NexialConst {
                                                          "       arguments[0].scrollIntoView(false);" +
                                                          "   }" +
                                                          "}";
+
+        public static final String GROUP_LOCATOR_SUFFIX = ".locator";
+
         // various browser behavior/settings
         public static final String FORCE_JS_CLICK = registerSysVar(NS_BROWSER + ".forceJSClick", false);
         public static final String BROWSER_ACCEPT_INVALID_CERTS =
@@ -1932,6 +1935,11 @@ public final class NexialConst {
         public static final String WEB_METRICS_HTML = "browser-metrics.html";
         public static final String WEB_METRICS_TOKEN = "{METRICS}";
         public static final String WEB_METRICS_HTML_LOC = "/org/nexial/core/reports/";
+        public static final String[] NON_PERF_METRICS_COMMAND_PREFIXES = {
+            "assert", "saveAll", "saveBrowserVersion", "saveCount", "saveLoc", "saveSelected", "saveText", "saveVal",
+            "screenshot", "scroll", "selectFrame", "selectText", "selectWindow", "switchBrowser", "unselectAll",
+            "update", "verify"
+        };
 
         // web element highlight
         public static final String NS_HIGHLIGHT = NS_WEB + "highlight";
