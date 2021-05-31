@@ -1281,7 +1281,7 @@ public class BaseCommand implements NexialCommand {
 
         Method m = commandMethods.get(methodName);
         // fill in null for missing params later
-        if (PARAM_AUTO_FILL_COMMANDS.contains(getTarget() + "." + methodName)) { return m; }
+        if (autoFillParamCommands.contains(getTarget() + "." + methodName)) { return m; }
 
         int actualParamCount = ArrayUtils.getLength(params);
         int expectedParamCount = m.getParameterCount();

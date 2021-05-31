@@ -17,11 +17,6 @@
 
 package org.nexial.core.tools;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.*;
-import java.util.stream.Collectors;
-
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.HelpFormatter;
@@ -38,7 +33,6 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.nexial.commons.utils.RegexUtils;
 import org.nexial.commons.utils.ResourceUtils;
 import org.nexial.commons.utils.TextUtils;
-import org.nexial.core.CommandConst;
 import org.nexial.core.excel.Excel;
 import org.nexial.core.excel.Excel.Worksheet;
 import org.nexial.core.excel.ExcelAddress;
@@ -49,8 +43,13 @@ import org.nexial.core.tools.ScriptMetadata.NamedRange;
 import org.nexial.core.utils.InputFileUtils;
 import org.slf4j.MDC;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.*;
+import java.util.stream.Collectors;
+
 import static java.io.File.separator;
-import static org.nexial.core.CommandConst.PARAM_AUTO_FILL_COMMANDS;
+import static org.nexial.core.CommandConst.*;
 import static org.nexial.core.NexialConst.Data.SHEET_SYSTEM;
 import static org.nexial.core.NexialConst.ExitStatus.RC_BAD_CLI_ARGS;
 import static org.nexial.core.NexialConst.*;
@@ -338,7 +337,7 @@ public class TestScriptUpdater {
                 List<String> macroCommandList = new ArrayList<>(commandList);
                 for (int j = 0; j < macroCommandList.size(); j++) {
                     String command = macroCommandList.get(j);
-                    if (CommandConst.getNonMacroCommands().contains(command)) {
+                    if (getNonMacroCommands().contains(command)) {
                         macroCommandList.remove(command);
                         j--;
                     }
@@ -417,19 +416,32 @@ public class TestScriptUpdater {
                 String targetCommand = target + "." + command;
 
                 // check for auto-substitution
-                if (CommandConst.getReplacedCommands().containsKey(targetCommand)) {
+                if (getReplacedCommands().containsKey(targetCommand)) {
                     // found old command, let's replace it with new one
-                    String newCommand = CommandConst.getReplacedCommands().get(targetCommand);
+                    String newCommand = getReplacedCommands().get(targetCommand);
                     cellTarget.setCellValue(StringUtils.substringBeforeLast(newCommand, "."));
                     cellCommand.setCellValue(StringUtils.substringAfterLast(newCommand, "."));
                     targetCommand = newCommand;
                     excelUpdated = true;
                 }
 
-                // check for warning/suggest
                 String commandDisplay = target + " » " + command;
-                if (CommandConst.getCommandSuggestions().containsKey(targetCommand)) {
-                    String suggestion = CommandConst.getCommandSuggestions().get(targetCommand);
+
+                // check for removed commands
+                Map<String, String> removedWarnings = getRemovedCommandWarnings();
+                if (removedWarnings.containsKey(targetCommand)) {
+                    String warning = removedWarnings.get(targetCommand);
+                    System.err.printf("\t!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" + NL +
+                                      "\tRow %s:\t%s" + NL +
+                                      "\t%s" + NL +
+                                      "\t!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" + NL,
+                                      rowIndex, commandDisplay, warning);
+                }
+
+                // check for warning/suggest
+                Map<String, String> deprecatedWarnings = getDeprecatedCommandWarnings();
+                if (deprecatedWarnings.containsKey(targetCommand)) {
+                    String suggestion = deprecatedWarnings.get(targetCommand);
                     System.err.printf("\t!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" + NL +
                                       "\tRow %s:\t%s" + NL +
                                       "\t%s" + NL +
@@ -450,7 +462,7 @@ public class TestScriptUpdater {
                 // check param count
 
                 // special case: some commands will automatically fill missing/undefined cells during the call
-                if (PARAM_AUTO_FILL_COMMANDS.contains(StringUtils.substringBeforeLast(targetCommand, "("))) { continue;}
+                if (autoFillParamCommands.contains(StringUtils.substringBeforeLast(targetCommand, "("))) { continue; }
 
                 List<String> paramList =
                     TextUtils.toList(StringUtils.substringBetween(matchedCommand.get(), "(", ")"), ",", true);

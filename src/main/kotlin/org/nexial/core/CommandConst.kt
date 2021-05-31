@@ -29,18 +29,18 @@ object CommandConst {
     val DEPRECATED_VARS = listOf("nexial.scope.executionMode", "nexial.safari.cleanSession")
 
     val UPDATED_VARS = mapOf(
-            OPT_DEBUG_HIGHLIGHT_OLD to OPT_DEBUG_HIGHLIGHT,
-            HIGHLIGHT_WAIT_MS_OLD to HIGHLIGHT_WAIT_MS,
-            ASSISTANT_MODE to OPT_OPEN_RESULT,
-            POST_EXEC_MAIL_TO_OLD to POST_EXEC_MAIL_TO)
+        OPT_DEBUG_HIGHLIGHT_OLD to OPT_DEBUG_HIGHLIGHT,
+        HIGHLIGHT_WAIT_MS_OLD to HIGHLIGHT_WAIT_MS,
+        ASSISTANT_MODE to OPT_OPEN_RESULT,
+        POST_EXEC_MAIL_TO_OLD to POST_EXEC_MAIL_TO)
 
     private val NON_ITERABLE_VARS = listOf(
-            ENABLE_EMAIL, POST_EXEC_MAIL_TO, POST_EXEC_EMAIL_SUBJECT, POST_EXEC_EMAIL_HEADER, POST_EXEC_EMAIL_FOOTER,
-            OPT_MANAGE_MEM,
-            WPS_EXE_LOCATION,
-            OUTPUT_TO_CLOUD,
-            GENERATE_EXEC_REPORT, OPT_OPEN_RESULT, OPT_OPEN_EXEC_REPORT,
-            EXEC_SYNOPSIS, POST_EXEC_WITH_SYNOPSIS
+        ENABLE_EMAIL, POST_EXEC_MAIL_TO, POST_EXEC_EMAIL_SUBJECT, POST_EXEC_EMAIL_HEADER, POST_EXEC_EMAIL_FOOTER,
+        OPT_MANAGE_MEM,
+        WPS_EXE_LOCATION,
+        OUTPUT_TO_CLOUD,
+        GENERATE_EXEC_REPORT, OPT_OPEN_RESULT, OPT_OPEN_EXEC_REPORT,
+        EXEC_SYNOPSIS, POST_EXEC_WITH_SYNOPSIS
     )
 
     @JvmStatic
@@ -50,13 +50,13 @@ object CommandConst {
     fun getPreferredSystemVariableName(name: String) = UPDATED_VARS.getOrDefault(name, name)!!
 
     val READ_ONLY_VARS = listOf(
-            "nexial.runID", "nexial.iterationEnded", "nexial.scope.currentIteration",
-            "nexial.scope.lastIteration", "nexial.scope.isLastIteration",
-            "nexial.scope.isFirstIteration", "nexial.scope.currentIterationId",
-            "nexial.lastScreenshot", "nexial.lastOutcome", "file.separator",
-            "java.home", "java.io.tmpdir", "java.version", "line.separator",
-            "os.arch", "os.name", "os.version", "user.country", "user.dir",
-            "user.home", "user.language", "user.name", "user.timezone")
+        "nexial.runID", "nexial.iterationEnded", "nexial.scope.currentIteration",
+        "nexial.scope.lastIteration", "nexial.scope.isLastIteration",
+        "nexial.scope.isFirstIteration", "nexial.scope.currentIterationId",
+        "nexial.lastScreenshot", "nexial.lastOutcome", "file.separator",
+        "java.home", "java.io.tmpdir", "java.version", "line.separator",
+        "os.arch", "os.name", "os.version", "user.country", "user.dir",
+        "user.home", "user.language", "user.name", "user.timezone")
 
     // common commands
     const val CMD_VERBOSE = "base.verbose(text)"
@@ -89,86 +89,102 @@ object CommandConst {
 
     @JvmStatic
     val replacedCommands = mapOf(
-            "base.assertNotContains(text,substring)" to "base.assertNotContain(text,substring)",
-            "base.assertVarPresent(var)" to "base.assertVarsPresent(vars)",
-            "base.assertVarNotPresent(var)" to "base.assertVarsNotPresent(vars)",
+        "base.assertNotContains(text,substring)" to "base.assertNotContain(text,substring)",
+        "base.assertVarPresent(var)" to "base.assertVarsPresent(vars)",
+        "base.assertVarNotPresent(var)" to "base.assertVarsNotPresent(vars)",
 
-            "desktop.getRowCount(var)" to "desktop.saveRowCount(var)",
-            "desktop.saveAllTableRows(var)" to "desktop.saveAllTableRows(var,csv)",
-            "desktop.scanTable(var,name)" to "desktop.useTable(var,name)",
-            "desktop.saveTableRows(var,contains)" to "desktop.saveTableRows(var,contains,csv)",
-            "desktop.saveTableRowsRange(var,beginRow,endRow)" to "desktop.saveTableRowsRange(var,beginRow,endRow,csv)",
-            "desktop.contextMenu(name,menu)" to "desktop.contextMenu(name,menu,xOffset,yOffset)",
-            "desktop.contextMenuByLocator(locator,menu)" to "desktop.contextMenuByLocator(locator,menu,xOffset,yOffset)",
+        "desktop.getRowCount(var)" to "desktop.saveRowCount(var)",
+        "desktop.saveAllTableRows(var)" to "desktop.saveAllTableRows(var,csv)",
+        "desktop.scanTable(var,name)" to "desktop.useTable(var,name)",
+        "desktop.saveTableRows(var,contains)" to "desktop.saveTableRows(var,contains,csv)",
+        "desktop.saveTableRowsRange(var,beginRow,endRow)" to "desktop.saveTableRowsRange(var,beginRow,endRow,csv)",
+        "desktop.contextMenu(name,menu)" to "desktop.contextMenu(name,menu,xOffset,yOffset)",
+        "desktop.contextMenuByLocator(locator,menu)" to "desktop.contextMenuByLocator(locator,menu,xOffset,yOffset)",
 
-            "image.colorbit(source,bit,saveTo)" to "image.colorbit(image,bit,saveTo)",
+        "image.colorbit(source,bit,saveTo)" to "image.colorbit(image,bit,saveTo)",
 
-            "io.saveMatches(var,path,filePattern)" to "io.saveMatches(var,path,fileFilter,textFilter)",
+        "io.saveMatches(var,path,filePattern)" to "io.saveMatches(var,path,fileFilter,textFilter)",
 
-            "number.assertBetween(num,lower,upper)" to "number.assertBetween(num,min,max)",
-            "number.assertBetween(num,min,max)" to "number.assertBetween(num,minNum,maxNum)",
-            "number.round(var,closestDigit)" to "number.roundTo(var,closestDigit)",
+        "number.assertBetween(num,lower,upper)" to "number.assertBetween(num,min,max)",
+        "number.assertBetween(num,min,max)" to "number.assertBetween(num,minNum,maxNum)",
+        "number.round(var,closestDigit)" to "number.roundTo(var,closestDigit)",
 
-            "tn.5250.saveTableAsCSV(csv)" to "tn.5250.saveTableAsCSV(csv,maxPage)",
+        "tn.5250.saveTableAsCSV(csv)" to "tn.5250.saveTableAsCSV(csv,maxPage)",
 
-            "web.assertAttributeContains(locator,attrName,contains)" to "web.assertAttributeContain(locator,attrName,contains)",
-            "web.assertAttributeNotContains(locator,attrName,contains)" to "web.assertAttributeNotContain(locator,attrName,contains)",
-            "web.screenshot(file,locator)" to "web.screenshot(file,locator,removeFixed)",
-            "web.screenshot(file,locator,ignoreLocators)" to "web.screenshot(file,locator)",
-            "web.screenshotInFull(file,timeout)" to "web.screenshotInFull(file,timeout,removeFixed)",
-            "web.selectMultiOptions(locator)" to "web.selectAllOptions(locator)",
-            "web.uncheckAll(locator)" to "web.uncheckAll(locator,waitMs)",
-            "web.waitForElementPresent(locator)" to "web.waitForElementPresent(locator,maxWaitMs)",
+        "web.assertAttributeContains(locator,attrName,contains)" to "web.assertAttributeContain(locator,attrName,contains)",
+        "web.assertAttributeNotContains(locator,attrName,contains)" to "web.assertAttributeNotContain(locator,attrName,contains)",
+        "web.screenshot(file,locator)" to "web.screenshot(file,locator,removeFixed)",
+        "web.screenshot(file,locator,ignoreLocators)" to "web.screenshot(file,locator)",
+        "web.screenshotInFull(file,timeout)" to "web.screenshotInFull(file,timeout,removeFixed)",
+        "web.selectMultiOptions(locator)" to "web.selectAllOptions(locator)",
+        "web.uncheckAll(locator)" to "web.uncheckAll(locator,waitMs)",
+        "web.waitForElementPresent(locator)" to "web.waitForElementPresent(locator,maxWaitMs)",
     )
 
-    private const val SUGGESTION_PREFIX = "This command is deprecated and will soon be removed. Consider using"
+    private const val deprecatedMsg = "This command is deprecated and will soon be removed. Consider using"
 
     @JvmStatic
-    val commandSuggestions = mapOf(
-            // don't know why we have this... don't remember `useTable()` is deprecated
-            //        "desktop.useTable(var,name)" to "$SUGGESTION_PREFIX desktop » editTableCells(row,nameValues) instead",
-            "desktop.editCurrentRow(nameValues)" to "$SUGGESTION_PREFIX desktop » editTableCells(row,nameValues) instead",
-            "web.scrollLeft(locator,pixel)" to "$SUGGESTION_PREFIX web » scrollElement(locator,xOffset,yOffset) instead",
-            "web.scrollRight(locator,pixel)" to "$SUGGESTION_PREFIX web » scrollElement(locator,xOffset,yOffset) instead",
-            "base.assertVarPresent(var)" to "$SUGGESTION_PREFIX base » assertVarsPresent(vars) instead",
-            "base.assertVarNotPresent(var)" to "$SUGGESTION_PREFIX base » assertVarsNotPresent(vars) instead"
+    val deprecatedCommandWarnings = mapOf(
+        "base.assertVarNotPresent(var)" to "$deprecatedMsg base » assertVarsNotPresent(vars) instead",
+        "base.assertVarPresent(var)" to "$deprecatedMsg base » assertVarsPresent(vars) instead",
+        "csv.convertExcel(excel,worksheet,csvFile)" to "$deprecatedMsg csv » fromExcel(excel,worksheet,csvFile) instead",
+        // don't know why we have this... don't remember `useTable()` is deprecated
+        // "desktop.useTable(var,name)" to "$SUGGESTION_PREFIX desktop » editTableCells(row,nameValues) instead",
+        "desktop.editCurrentRow(nameValues)" to "$deprecatedMsg desktop » editTableCells(row,nameValues) instead",
+        "image.compare(baseline,actual)" to "$deprecatedMsg image » saveDiff(var,baseline,actual) instead",
+    )
+
+    private const val removedMsg = "This command has been removed. Please consider using"
+
+    private const val newScrollCommandSuggestion =
+        "$removedMsg web » scrollTo(locator) or web » scrollPage(xOffset,yOffset) instead"
+
+    @JvmStatic
+    val removedCommandWarnings = mapOf(
+        "web.checkAll(locator)" to "$removedMsg web » checkAll(locator,waitMs) instead",
+        "web.scrollElement(locator,xOffset,yOffset)" to newScrollCommandSuggestion,
+        "web.scrollLeft(locator,pixel)" to newScrollCommandSuggestion,
+        "web.scrollRight(locator,pixel)" to newScrollCommandSuggestion,
+        "web.selectMultiOptions(locator)" to "$removedMsg web » selectAllOptions(locator) instead",
+        "web.uncheckAll(locator)" to "$removedMsg web » uncheckAll(locator,waitMs) instead",
+        "web.waitForElementPresent(locator)" to "$removedMsg web » waitForElementPresent(locator,waitMs) instead",
     )
 
     @JvmField
-    val PARAM_AUTO_FILL_COMMANDS = listOf(
-            "base.macroFlex",
+    val autoFillParamCommands = listOf(
+        "base.macroFlex",
 
-            "desktop.saveAllTableRows",
-            "desktop.saveTableRows",
-            "desktop.saveTableRowsRange",
-            "desktop.sendKeysToTextBox",
-            "desktop.typeAppendTextArea",
-            "desktop.typeAppendTextBox",
-            "desktop.typeTextArea",
-            "desktop.typeTextBox",
-            "desktop.contextMenu",
-            "desktop.contextMenuByLocator",
-            "desktop.clickElementOffset",
-            "desktop.clickOffset",
-            "desktop.rightClickElementOffset",
-            "desktop.rightClickOffset",
+        "desktop.saveAllTableRows",
+        "desktop.saveTableRows",
+        "desktop.saveTableRowsRange",
+        "desktop.sendKeysToTextBox",
+        "desktop.typeAppendTextArea",
+        "desktop.typeAppendTextBox",
+        "desktop.typeTextArea",
+        "desktop.typeTextBox",
+        "desktop.contextMenu",
+        "desktop.contextMenuByLocator",
+        "desktop.clickElementOffset",
+        "desktop.clickOffset",
+        "desktop.rightClickElementOffset",
+        "desktop.rightClickOffset",
 
-            "io.saveMatches",
+        "io.saveMatches",
 
-            "localdb.exportEXCEL",
-            "localdb.exportXML",
+        "localdb.exportEXCEL",
+        "localdb.exportXML",
 
-            "macro.expects",
+        "macro.expects",
 
-            "tn.5250.saveTableAsCSV",
+        "tn.5250.saveTableAsCSV",
 
-            "web.waitForElementPresent",
-            "web.waitUntilDisabled",
-            "web.waitUntilEnabled",
-            "web.waitUntilHidden",
-            "web.waitUntilVisible",
+        "web.waitForElementPresent",
+        "web.waitUntilDisabled",
+        "web.waitUntilEnabled",
+        "web.waitUntilHidden",
+        "web.waitUntilVisible",
 
-            "webcookie.saveAllAsText",
+        "webcookie.saveAllAsText",
     )
 
     @JvmField

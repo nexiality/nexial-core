@@ -16,14 +16,6 @@
 
 package org.nexial.core.plugins.web;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.stream.Collectors;
-import javax.validation.constraints.NotNull;
-
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.ListUtils;
 import org.apache.commons.lang3.ArrayUtils;
@@ -36,6 +28,11 @@ import org.nexial.core.model.StepResult;
 import org.nexial.core.utils.CheckUtils;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
+
+import javax.annotation.Nonnull;
+import javax.validation.constraints.NotNull;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import static org.nexial.core.utils.CheckUtils.requiresNotBlank;
 import static org.nexial.core.utils.OutputFileUtils.CASE_INSENSIVE_SORT;
@@ -50,7 +47,7 @@ class LocatorHelper {
     // (//a/b/c)[2]
     // (.//a/b/c)[2]
     private static final List<String> PATH_STARTS_WITH = Arrays.asList("/", "./", "(/", "( /", "(./", "( ./");
-    private WebCommand delegator;
+    private final WebCommand delegator;
 
     private enum InnerValueType {TEXT, VALUE}
 
@@ -115,11 +112,11 @@ class LocatorHelper {
     }
 
     protected String resolveLabelXpath(String label) {
-        return "//*[normalize-space(text())=normalize-space(" + normalizeXpathText(label) + ")]";
+        return "//*[" + applyLowercaseNormalize("text()") + "=" + lowerCaseNormalize(label) + "]";
     }
 
     protected String resolveContainLabelXpath(String label) {
-        return "//*[contains(normalize-space(string(.)), normalize-space(" + normalizeXpathText(label) + "))]";
+        return "//*[contains(" + applyLowercaseNormalize("string(.)") + "," + lowerCaseNormalize(label) + ")]";
     }
 
     protected String normalizeXpathText(String label) {
@@ -354,6 +351,16 @@ class LocatorHelper {
         return new StepResult(matches2.size() == countInt,
                               "EXPECTS " + countInt + " matches; found " + matches2.size() + " matches",
                               null);
+    }
+
+    @Nonnull
+    private String lowerCaseNormalize(String label) {
+        return "normalize-space(" + normalizeXpathText(StringUtils.trim(StringUtils.lowerCase(label))) + ")";
+    }
+
+    @Nonnull
+    private String applyLowercaseNormalize(String data) {
+        return "translate(normalize-space(" + data + "),'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz')";
     }
 
 }

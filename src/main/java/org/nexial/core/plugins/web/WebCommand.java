@@ -96,6 +96,7 @@ import static org.nexial.core.NexialConst.Project.BROWSER_META_CACHE_PATH;
 import static org.nexial.core.NexialConst.Web.*;
 import static org.nexial.core.SystemVariables.*;
 import static org.nexial.core.plugins.base.ComparisonFormatter.displayForCompare;
+import static org.nexial.core.plugins.web.JsLib.isTrue;
 import static org.nexial.core.plugins.ws.WebServiceClient.hideAuthDetails;
 import static org.nexial.core.utils.CheckUtils.*;
 import static org.openqa.selenium.Keys.BACK_SPACE;
@@ -255,7 +256,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
                         "   arguments[0].click(); " +
                         "}";
         int waitTime = NumberUtils.toInt(waitMs);
-        return execJsOverFreshElements(locator, script, waitTime) ?
+        return execJsOnEachElements(locator, script, waitTime) ?
                StepResult.success("CheckBox elements (" + locator + ") are checked") :
                StepResult.fail("Check FAILED on element(s) '" + locator + "'");
     }
@@ -266,7 +267,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
                         "   arguments[0].click();" +
                         "}";
         int waitTime = NumberUtils.toInt(waitMs);
-        return execJsOverFreshElements(locator, script, waitTime) ?
+        return execJsOnEachElements(locator, script, waitTime) ?
                StepResult.success("CheckBox elements (" + locator + ") are unchecked") :
                StepResult.fail("Uncheck FAILED on element(s) '" + locator + "'");
     }
@@ -606,26 +607,15 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         }
     }
 
-    protected long deriveMaxWaitMs(String waitMs) {
-        long maxWait = StringUtils.isBlank(waitMs) ? context.getPollWaitMs() : (long) NumberUtils.toDouble(waitMs);
-        if (maxWait < 1) { maxWait = context.getPollWaitMs(); }
-        return maxWait;
-    }
-
     public StepResult waitUntilVisible(String locator, String waitMs) {
         requiresNotBlank(locator, "invalid locator", locator);
 
         long maxWait = deriveMaxWaitMs(waitMs);
-        String jsScript = "var style = window.getComputedStyle(arguments[0]);" +
-                          "return style.visibility === 'visible' && style.display !== 'none';";
         By by = locatorHelper.findBy(locator);
-        boolean outcome = waitForCondition(maxWait, object ->
-        {
+        boolean outcome = waitForCondition(maxWait, object -> {
             WebElement elem = driver.findElement(by);
             if (elem == null || !elem.isDisplayed()) { return false; }
-
-            Object isVisible = jsExecutor.executeScript(jsScript, elem);
-            return (isVisible != null && StringUtils.equals(isVisible.toString(), "true"));
+            return isTrue(jsExecutor.executeScript(JsLib.isVisible(), elem));
         });
 
         if (outcome) {
@@ -639,17 +629,12 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         requiresNotBlank(locator, "invalid locator", locator);
 
         long maxWait = deriveMaxWaitMs(waitMs);
-        String jsScript = "var style = window.getComputedStyle(arguments[0]);" +
-                          "return style.visibility !== 'visible' || style.display === 'none';";
         By by = locatorHelper.findBy(locator);
-        boolean outcome = waitForCondition(maxWait, object ->
-        {
+        boolean outcome = waitForCondition(maxWait, object -> {
             WebElement elem = driver.findElement(by);
             if (elem == null) { return false; }
             if (!elem.isDisplayed()) { return true; }
-
-            Object isNotVisible = jsExecutor.executeScript(jsScript, elem);
-            return (isNotVisible != null && StringUtils.equals(isNotVisible.toString(), "true"));
+            return isTrue(jsExecutor.executeScript(JsLib.isHidden(), elem));
         });
 
         String prefix = "Element by locator '" + locator + "' ";
@@ -672,8 +657,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
         long maxWait = deriveMaxWaitMs(waitMs);
         By by = locatorHelper.findBy(locator);
-        boolean outcome = waitForCondition(maxWait, object ->
-        {
+        boolean outcome = waitForCondition(maxWait, object -> {
             WebElement elem = driver.findElement(by);
             return elem != null && elem.isEnabled();
         });
@@ -823,6 +807,12 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
             return StepResult.success("attribute '%s' for elements that matched '%s' saved to '%s'",
                                       attrName, locator, var);
         }
+    }
+
+    protected long deriveMaxWaitMs(String waitMs) {
+        long maxWait = StringUtils.isBlank(waitMs) ? context.getPollWaitMs() : (long) NumberUtils.toDouble(waitMs);
+        if (maxWait < 1) { maxWait = context.getPollWaitMs(); }
+        return maxWait;
     }
 
     @NotNull
@@ -1436,13 +1426,13 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         // String id = elem.getAttribute("id");
         // if (StringUtils.isBlank(id)) { return StepResult.fail("Element found without 'id'; REQUIRED"); }
 
-        jsExecutor.executeScript("window.getSelection().selectAllChildren(arguments[0]);", elem);
+        jsExecutor.executeScript(JsLib.selectText(), elem);
         return StepResult.success("selected text at '" + locator + "'");
     }
 
     public StepResult unselectAllText() {
         ensureReady();
-        jsExecutor.executeScript("window.getSelection().removeAllRanges();");
+        jsExecutor.executeScript(JsLib.unselectText());
         return StepResult.success("unselected all text");
     }
 
@@ -1540,7 +1530,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
         ensureReady();
         url = validateUrl(url);
-        jsExecutor.executeScript("window.open(arguments[0], arguments[1]);", url, name);
+        jsExecutor.executeScript(JsLib.openWindow(), url, name);
 
         waitForBrowserStability(context.getIntConfig(getTarget(), browser.profile, WEB_PAGE_LOAD_WAIT_MS));
 
@@ -1595,22 +1585,18 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
         driver.get("about:blank");
 
-        StopWatch stopWatch = StopWatch.createStarted();
         long maxLoadTime = context.getIntData(WEB_PAGE_LOAD_WAIT_MS, getDefaultInt(WEB_PAGE_LOAD_WAIT_MS));
 
         url = validateUrl(url);
-        String linkToUrl = "var a = document.createElement(\"a\");" +
-                           "var linkText = document.createTextNode(\"" + url + "\");" +
-                           "a.appendChild(linkText);" +
-                           "a.title = \"" + url + "\";" +
-                           "a.href = \"" + url + "\";" +
-                           "document.body.appendChild(a);";
+        String linkToUrl = JsLib.createLink(url);
         jsExecutor.executeScript(linkToUrl);
 
         WebElement elemA = findElement("css=a");
         elemA.click();
 
         String checkReadyState = "return document.readyState";
+
+        StopWatch stopWatch = StopWatch.createStarted();
         Object readyState = jsExecutor.executeScript(checkReadyState);
         while (readyState == null || !StringUtils.equals(readyState.toString(), "complete")) {
             waitFor(100);
@@ -1766,48 +1752,47 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
     public StepResult scrollTo(String locator) { return scrollTo(locator, (Locatable) toElement(locator)); }
 
-    public StepResult scrollLeft(String locator, String pixel) {
-        requiresInteger(pixel, "invalid number", pixel);
-
-        logDeprecated(getTarget() + " » scrollLeft(locator,pixel)",
-                      getTarget() + " » scrollElement(locator,xOffset,yOffset)");
-
-        WebElement element = toElement(locator);
-        jsExecutor.executeScript("arguments[0].scrollBy(" + pixel + ",0)", element);
-
-        return scrollTo(locator, (Locatable) element);
-    }
-
-    public StepResult scrollRight(String locator, String pixel) {
-        requiresInteger(pixel, "invalid number", pixel);
-
-        logDeprecated(getTarget() + " » scrollRight(locator,pixel)",
-                      getTarget() + " » scrollElement(locator,xOffset,yOffset)");
-
-        WebElement element = toElement(locator);
-        jsExecutor.executeScript("arguments[0].scrollBy(" + (NumberUtils.toInt(pixel) * -1) + ",0)", element);
-
-        return scrollTo(locator, (Locatable) element);
-    }
+    // public StepResult scrollLeft(String locator, String pixel) {
+    //     requiresInteger(pixel, "invalid number", pixel);
+    //
+    //     logDeprecated(getTarget() + " » scrollLeft(locator,pixel)",
+    //                   getTarget() + " » scrollElement(locator,xOffset,yOffset)");
+    //
+    //     WebElement element = toElement(locator);
+    //     jsExecutor.executeScript(JsLib.scrollLeft(pixel), element);
+    //
+    //     return scrollTo(locator, (Locatable) element);
+    // }
+    //
+    // public StepResult scrollRight(String locator, String pixel) {
+    //     requiresInteger(pixel, "invalid number", pixel);
+    //
+    //     logDeprecated(getTarget() + " » scrollRight(locator,pixel)",
+    //                   getTarget() + " » scrollElement(locator,xOffset,yOffset)");
+    //
+    //     WebElement element = toElement(locator);
+    //     jsExecutor.executeScript("arguments[0].scrollBy(" + (NumberUtils.toInt(pixel) * -1) + ",0)", element);
+    //
+    //     return scrollTo(locator, (Locatable) element);
+    // }
 
     public StepResult scrollPage(String xOffset, String yOffset) {
         requiresInteger(xOffset, "invalid xOffset", xOffset);
         requiresInteger(yOffset, "invalid yOffset", yOffset);
 
-        jsExecutor.executeScript("window.scrollBy(" + xOffset + "," + yOffset + ")");
-
+        jsExecutor.executeScript(JsLib.windowScrollBy(xOffset, yOffset));
         return StepResult.success("current window/page scrolled by (" + xOffset + "," + yOffset + ")");
     }
 
-    public StepResult scrollElement(String locator, String xOffset, String yOffset) {
-        requiresInteger(xOffset, "invalid xOffset", xOffset);
-        requiresInteger(yOffset, "invalid yOffset", yOffset);
-
-        WebElement element = toElement(locator);
-        jsExecutor.executeScript("arguments[0].scrollBy(" + xOffset + "," + yOffset + ")", element);
-
-        return scrollTo(locator, (Locatable) element);
-    }
+    // public StepResult scrollElement(String locator, String xOffset, String yOffset) {
+    //     requiresInteger(xOffset, "invalid xOffset", xOffset);
+    //     requiresInteger(yOffset, "invalid yOffset", yOffset);
+    //
+    //     WebElement element = toElement(locator);
+    //     might not work since `scrollBy()` JS function largely depends on the style of the corresponding element
+        // jsExecutor.executeScript(JsLib.scrollBy(xOffset, yOffset), element);
+        // return scrollTo(locator, (Locatable) element);
+    // }
 
     public StepResult type(String locator, String value) {
         WebElement element = findElement(locator);
@@ -2374,11 +2359,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         if (StringUtils.isEmpty(value)) {
             jsExecutor.executeScript("arguments[0].removeAttribute(arguments[1])", element, attrName);
         } else {
-            jsExecutor.executeScript(
-                "arguments[0].setAttribute(arguments[1], arguments[2])",
-                element,
-                attrName,
-                value);
+            jsExecutor.executeScript("arguments[0].setAttribute(arguments[1], arguments[2])", element, attrName, value);
         }
         return StepResult.success(attrName + " with value " + value + " updated successfully for '" + locator + "'");
     }
@@ -2501,10 +2482,9 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
                 } while (!StringUtils.equals(afterBackspace, beforeBackspace));
             }
         } else {
-            // try thrice to cover all bases
+            // try multiple ways to cover all bases
             element.clear();
-            jsExecutor.executeScript("arguments[0].setAttribute(arguments[1],arguments[2]);", element, "value", "");
-            jsExecutor.executeScript("arguments[0].value = '';", element);
+            jsExecutor.executeScript(JsLib.clearValue(), element);
         }
 
         // after clearing
@@ -2611,7 +2591,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         return null;
     }
 
-    protected boolean execJsOverFreshElements(String locator, String script, int inBetweenWaitMs) {
+    protected boolean execJsOnEachElements(String locator, String script, int inBetweenWaitMs) {
         if (StringUtils.isBlank(script)) { throw new IllegalArgumentException("script is blank/empty"); }
 
         requiresNotBlank(locator, "invalid locator", locator);
@@ -2697,8 +2677,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
             // special treatment for body tag
             if (StringUtils.equalsIgnoreCase(element.getTagName(), "body")) {
                 exists = BooleanUtils.toBoolean(Objects.toString(jsExecutor.executeScript(
-                    "document.documentElement.clientHeight < document.documentElement.scrollHeight"))
-                                               );
+                    "document.documentElement.clientHeight < document.documentElement.scrollHeight")));
             } else {
                 exists = NumberUtils.toInt(element.getAttribute("clientHeight")) <
                          NumberUtils.toInt(element.getAttribute("scrollHeight"));
@@ -3311,16 +3290,20 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     protected void scrollIntoView(WebElement element) {
         if (element == null || browser.isHeadless()) { return; }
         if (context.getBooleanConfig(getTarget(), getProfile(), SCROLL_INTO_VIEW)) {
-            jsExecutor.executeScript(SCROLL_INTO_VIEW_JS, element);
+            jsExecutor.executeScript(JsLib.scrollIntoView(), element);
         }
     }
 
     protected boolean scrollTo(Locatable element) throws ElementNotVisibleException {
+        if (element == null) { return false; }
+
+        if (element instanceof WebElement) { scrollIntoView((WebElement) element); }
+
         Coordinates coordinates = element.getCoordinates();
         if (coordinates == null) { return false; }
 
         if (browser.isRunSafari()) {
-            jsExecutor.executeScript("arguments[0].scrollIntoViewIfNeeded();", element);
+            // jsExecutor.executeScript("arguments[0].scrollIntoViewIfNeeded();", element);
             return true;
         }
 
@@ -3338,7 +3321,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     protected byte[] downloadLink(String sessionName, String url) {
         // sanity check
         if (ws == null) { fail("command type 'ws' is not available. " + MSG_CHECK_SUPPORT); }
-        if (cookie == null) { fail("command type 'wscookie' is not available. " + MSG_CHECK_SUPPORT); }
+        if (cookie == null) { fail("command type 'webcookie' is not available. " + MSG_CHECK_SUPPORT); }
         requiresNotBlank(url, "valid/full URL or property reference required", url);
 
         String cookieVar = NAMESPACE + "downloadCookies";
@@ -3476,13 +3459,8 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
             if (scrollTo((Locatable) element)) {
                 int waitMs = context.getIntConfig(getTarget(), getProfile(), HIGHLIGHT_WAIT_MS);
                 String highlight = context.getStringConfig(getTarget(), getProfile(), HIGHLIGHT_STYLE);
-                jsExecutor.executeScript("var ws = arguments[0];" +
-                                         "var oldStyle = arguments[0].getAttribute('style') || '';" +
-                                         "ws.setAttribute('style', arguments[1]);" +
-                                         "setTimeout(function () { ws.setAttribute('style', oldStyle); }, " +
-                                         waitMs +
-                                         ");",
-                                         element, highlight);
+                // JsLib.highlight(jsExecutor, () -> JsLib.highlight(waitMs), element, highlight);
+                jsExecutor.executeScript(JsLib.highlight(waitMs), element, highlight);
             }
         } catch (WebDriverException e) {
             // ideally we should be able to scroll and perform highlighting... but some (misbehaving) apps

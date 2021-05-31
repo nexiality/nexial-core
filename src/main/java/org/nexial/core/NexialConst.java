@@ -1883,13 +1883,6 @@ public final class NexialConst {
 
         // web: scroll into view
         public static final String SCROLL_INTO_VIEW = registerSysVar(NS_WEB + "scrollIntoView", true);
-        public static final String SCROLL_INTO_VIEW_JS = "if (arguments[0]) {" +
-                                                         "   if (arguments[0].scrollIntoViewIfNeeded) {" +
-                                                         "       arguments[0].scrollIntoViewIfNeeded();" +
-                                                         "   } else {" +
-                                                         "       arguments[0].scrollIntoView(false);" +
-                                                         "   }" +
-                                                         "}";
 
         public static final String GROUP_LOCATOR_SUFFIX = ".locator";
 
