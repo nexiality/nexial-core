@@ -503,7 +503,9 @@ public class DesktopElement {
         return new StepResult(success, messages.toString().trim(), null);
     }
 
-    public boolean isSelected() { return DesktopUtils.checkboxStatus(element); }
+    public boolean isChecked() { return DesktopUtils.checkboxStatus(element); }
+
+    public boolean isSelected() { return DesktopUtils.isSelected(element); }
 
     public String getText() {
         if (elementType == null || elementType == Any) { return getValue(element); }
@@ -514,7 +516,7 @@ public class DesktopElement {
                 // WebElement selected = findFirstElement("*[@ControlType='" + LIST_ITEM + "' and @IsSelected='True']");
                 String listItems = "*[@ControlType='" + LIST_ITEM + "' and @Name!='']";
                 WebElement selected = element.findElements(By.xpath(listItems)).stream()
-                                             .filter(elem -> StringUtils.equals(elem.getAttribute("IsSelected"), "True"))
+                                             .filter(DesktopUtils::isSelected)
                                              .findFirst()
                                              .orElse(null);
                 if (selected != null) { return selected.getAttribute("Name"); }
@@ -540,7 +542,7 @@ public class DesktopElement {
             }
         } else if (elementType == Checkbox || elementType == Radio) {
             // todo: need to support tri-state checkboxes
-            if (isTogglePatternAvailable(element)) { return isSelected() ? "True" : "False"; }
+            if (isTogglePatternAvailable(element)) { return isChecked() ? "True" : "False"; }
             targetElement = element;
         } else {
             targetElement = element;

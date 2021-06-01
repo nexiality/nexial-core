@@ -2334,7 +2334,7 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
     protected boolean isChecked(String name) {
         DesktopElement component = getRequiredElement(name, Any);
         if (component.getElementType() == Checkbox || component.getElementType() == Radio) {
-            return component.isSelected();
+            return component.isChecked();
         }
         fail("Specified element not a Checkbox or Radio: " + name);
         return false;

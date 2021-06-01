@@ -27,8 +27,7 @@ import org.nexial.core.NexialConst.Desktop.AUTOSCAN_INFRAGISTICS4_AWARE
 import org.nexial.core.NexialConst.NL
 import org.nexial.core.SystemVariables.getDefaultBool
 import org.nexial.core.plugins.desktop.DesktopConst.*
-import org.nexial.core.plugins.desktop.ElementType.CHECK_BOX
-import org.nexial.core.plugins.desktop.ElementType.RADIO
+import org.nexial.core.plugins.desktop.ElementType.*
 import org.nexial.core.utils.CheckUtils.requiresNotBlank
 import org.nexial.core.utils.ConsoleUtils
 import org.openqa.selenium.By
@@ -171,8 +170,7 @@ internal object DesktopUtils {
     fun isTextPatternAvailable(target: WebElement?) = isAttrTrue(target, "IsTextPatternAvailable")
 
     @JvmStatic
-    fun isExpandCollapsePatternAvailable(target: WebElement?) =
-        isAttrTrue(target, "IsExpandCollapsePatternAvailable")
+    fun isExpandCollapsePatternAvailable(target: WebElement?) = isAttrTrue(target, "IsExpandCollapsePatternAvailable")
 
     @JvmStatic
     fun isInvokePatternAvailable(target: WebElement?) = isAttrTrue(target, "IsInvokePatternAvailable")
@@ -279,8 +277,14 @@ internal object DesktopUtils {
     }
 
     @JvmStatic
+    fun isSelected(elem: WebElement): Boolean {
+        val isSelected = elem.getAttribute("IsSelected")
+        return if (StringUtils.isBlank(isSelected)) elem.isSelected else StringUtils.equals(isSelected, "True")
+    }
+
+    @JvmStatic
     fun isValidDataRow(elem: WebElement): Boolean {
-        return StringUtils.equals(elem.getAttribute("ControlType"), ElementType.TREE_VIEW_ROW) &&
+        return StringUtils.equals(elem.getAttribute("ControlType"), TREE_VIEW_ROW) &&
                !StringUtils.equals(elem.getAttribute("AutomationId"), "-1")
     }
 

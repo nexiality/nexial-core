@@ -409,6 +409,9 @@
 
                 <!-- Disables Domain Reliability Monitoring, which tracks whether the browser has difficulty contacting Google-owned sites and uploads reports to Google. -->
                 <value>disable-domain-reliability</value>
+
+                <value>disable-web-security</value>
+                <value>allow-running-insecure-content</value>
             </array>
         </property>
         <property name="firefoxBinArgs">

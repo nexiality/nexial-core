@@ -432,9 +432,9 @@ public class TestScriptUpdater {
                 if (removedWarnings.containsKey(targetCommand)) {
                     String warning = removedWarnings.get(targetCommand);
                     System.err.printf("\t!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" + NL +
-                                      "\tRow %s:\t%s" + NL +
-                                      "\t%s" + NL +
-                                      "\t!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" + NL,
+                                      "\t!!! [ERROR on ROW %s] :\t%s" + NL +
+                                      "\t!!! - %s" + NL +
+                                      "\t!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" + NL + NL,
                                       rowIndex, commandDisplay, warning);
                 }
 
@@ -442,10 +442,10 @@ public class TestScriptUpdater {
                 Map<String, String> deprecatedWarnings = getDeprecatedCommandWarnings();
                 if (deprecatedWarnings.containsKey(targetCommand)) {
                     String suggestion = deprecatedWarnings.get(targetCommand);
-                    System.err.printf("\t!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" + NL +
-                                      "\tRow %s:\t%s" + NL +
-                                      "\t%s" + NL +
-                                      "\t!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" + NL,
+                    System.err.printf("\t************************************************************" + NL +
+                                      "\t*** [WARNING on ROW %s]:\t%s" + NL +
+                                      "\t*** - %s" + NL +
+                                      "\t************************************************************" + NL + NL,
                                       rowIndex, commandDisplay, suggestion);
                 }
 
@@ -455,7 +455,7 @@ public class TestScriptUpdater {
                                                                 .findFirst();
                 if (!matchedCommand.isPresent()) {
                     // for every unknown command, spit out an error
-                    System.err.println("\tInvalid command:\t" + commandDisplay);
+                    // System.err.println("\tInvalid command:\t" + commandDisplay);
                     continue;
                 }
 
