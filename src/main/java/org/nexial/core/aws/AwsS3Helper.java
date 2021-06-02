@@ -360,7 +360,7 @@ public class AwsS3Helper {
         return regex;
     }
 
-    private AmazonS3 newS3Client() { return newS3Client(DEFAULT_REGION); }
+    private AmazonS3 newS3Client() { return newS3Client(region == null ? DEFAULT_REGION : region); }
 
     private AmazonS3 newS3Client(@NotNull final Regions region) {
         // added "PathStyleAccessEnabled() to avoid SSL certificate issue since the adding bucket as subdomain to
