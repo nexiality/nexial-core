@@ -17,19 +17,19 @@
 
 package org.nexial.commons.utils.web;
 
-import java.io.UnsupportedEncodingException;
-import java.net.URLDecoder;
-import java.net.URLEncoder;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.nexial.commons.utils.RegexUtils;
 import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.utils.ConsoleUtils;
 import org.springframework.web.util.UriUtils;
+
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 
 import static org.nexial.core.NexialConst.DEF_FILE_ENCODING;
 
@@ -146,4 +146,6 @@ public final class URLEncodingUtils {
     public static String encodeAuth(String plain) { return UriUtils.encodeUserInfo(plain, DEF_FILE_ENCODING); }
 
     public static String decodeAuth(String encoded) { return UriUtils.decode(encoded, DEF_FILE_ENCODING); }
+
+    public static String encodeParamValue(String value) { return UriUtils.encode(value, DEF_FILE_ENCODING); }
 }

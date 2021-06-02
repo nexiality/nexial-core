@@ -17,11 +17,13 @@
 
 package org.nexial.commons.utils.web;
 
-import java.util.Map;
-
-import org.junit.Assert;
 import org.junit.Test;
 import org.nexial.commons.utils.TextUtils;
+
+import java.util.Map;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
 public class URLEncodingUtilsTest {
 
@@ -35,45 +37,50 @@ public class URLEncodingUtilsTest {
 
     @Test
     public void encodeQueryString() {
-        Assert.assertNull(URLEncodingUtils.encodeQueryString(null));
-        Assert.assertEquals("", URLEncodingUtils.encodeQueryString(""));
-        Assert.assertEquals("Hello", URLEncodingUtils.encodeQueryString("Hello"));
-        Assert.assertEquals("a=b&c=d&e=f", URLEncodingUtils.encodeQueryString("a=b&c=d&e=f"));
-        Assert.assertEquals("Who=Me&Who+Else=%26+all+my+friends",
-                            URLEncodingUtils.encodeQueryString("Who=Me&Who Else=&amp; all my friends"));
-        Assert.assertEquals("Name=John+Doe&" +
-                            "Favorite=Everything+warm+and+caffinated%21&" +
-                            "Music=Jazz+%26+Blues",
-                            URLEncodingUtils.encodeQueryString("Name=John Doe&" +
-                                                               "Favorite=Everything warm and caffinated!&" +
-                                                               "Music=Jazz &amp; Blues"));
+        assertNull(URLEncodingUtils.encodeQueryString(null));
+        assertEquals("", URLEncodingUtils.encodeQueryString(""));
+        assertEquals("Hello", URLEncodingUtils.encodeQueryString("Hello"));
+        assertEquals("a=b&c=d&e=f", URLEncodingUtils.encodeQueryString("a=b&c=d&e=f"));
+        assertEquals("Who=Me&Who+Else=%26+all+my+friends",
+                     URLEncodingUtils.encodeQueryString("Who=Me&Who Else=&amp; all my friends"));
+        assertEquals("Name=John+Doe&" +
+                     "Favorite=Everything+warm+and+caffinated%21&" +
+                     "Music=Jazz+%26+Blues",
+                     URLEncodingUtils.encodeQueryString("Name=John Doe&" +
+                                                        "Favorite=Everything warm and caffinated!&" +
+                                                        "Music=Jazz &amp; Blues"));
     }
 
     @Test
     public void encodeAuth() {
-        PLAIN_ENCODED.forEach((plain, encoded) -> Assert.assertEquals(encoded, URLEncodingUtils.encodeAuth(plain)));
+        PLAIN_ENCODED.forEach((plain, encoded) -> assertEquals(encoded, URLEncodingUtils.encodeAuth(plain)));
+    }
+
+    @Test
+    public void encodeParamValue() {
+        // extra tests
+        assertEquals("030nPYDc6r3pyQbdCDFc%2FmFwcVg3R5kt8WDviTx4%2BB4%3D",
+                     URLEncodingUtils.encodeParamValue("030nPYDc6r3pyQbdCDFc/mFwcVg3R5kt8WDviTx4+B4="));
     }
 
     @Test
     public void decodeAuth() {
-        PLAIN_ENCODED.forEach((plain, encoded) -> Assert.assertEquals(plain, URLEncodingUtils.decodeAuth(encoded)));
+        PLAIN_ENCODED.forEach((plain, encoded) -> assertEquals(plain, URLEncodingUtils.decodeAuth(encoded)));
     }
 
     @Test
     public void encodePath() {
+        assertEquals("http://site.com/a/b", URLEncodingUtils.encodePath("http://site.com/a/b"));
+        assertEquals("http://site.com/a/b?c=d", URLEncodingUtils.encodePath("http://site.com/a/b?c=d"));
+        assertEquals("http://site.com/a/b?c+d=e*f", URLEncodingUtils.encodePath("http://site.com/a/b?c d=e*f"));
 
-        Assert.assertEquals("http://site.com/a/b", URLEncodingUtils.encodePath("http://site.com/a/b"));
-        Assert.assertEquals("http://site.com/a/b?c=d", URLEncodingUtils.encodePath("http://site.com/a/b?c=d"));
-        Assert.assertEquals("http://site.com/a/b?c+d=e*f", URLEncodingUtils.encodePath("http://site.com/a/b?c d=e*f"));
-
-        Assert.assertEquals("http://site.com/a/b%20x?c+d=e*f",
-                            URLEncodingUtils.encodePath("http://site.com/a/b x?c d=e*f"));
-        Assert.assertEquals("http://site.com/a/b%20x%20%20y$z?c+d=e*f",
-                            URLEncodingUtils.encodePath("http://site.com/a/b x  y$z?c d=e*f"));
-        Assert.assertEquals("http://mywebsite.com/search/JOE's%20PIZZA?data=true",
-                            URLEncodingUtils.encodePath("http://mywebsite.com/search/JOE's PIZZA?data=true"));
-        Assert.assertEquals("http://xyz.com/a/b%20c/A%20%26%20M?last+name=Se&first+name=Jo%27+Anne",
-                            URLEncodingUtils.encodePath("http://xyz.com/a/b c/A & M?last name=Se&first name=Jo' Anne"));
+        assertEquals("http://site.com/a/b%20x?c+d=e*f", URLEncodingUtils.encodePath("http://site.com/a/b x?c d=e*f"));
+        assertEquals("http://site.com/a/b%20x%20%20y$z?c+d=e*f",
+                     URLEncodingUtils.encodePath("http://site.com/a/b x  y$z?c d=e*f"));
+        assertEquals("http://mywebsite.com/search/JOE's%20PIZZA?data=true",
+                     URLEncodingUtils.encodePath("http://mywebsite.com/search/JOE's PIZZA?data=true"));
+        assertEquals("http://xyz.com/a/b%20c/A%20%26%20M?last+name=Se&first+name=Jo%27+Anne",
+                     URLEncodingUtils.encodePath("http://xyz.com/a/b c/A & M?last name=Se&first name=Jo' Anne"));
 
     }
 }

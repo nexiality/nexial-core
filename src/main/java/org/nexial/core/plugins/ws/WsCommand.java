@@ -44,6 +44,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static io.jsonwebtoken.SignatureAlgorithm.HS256;
 import static io.jsonwebtoken.impl.TextCodec.BASE64URL;
@@ -296,11 +297,12 @@ public class WsCommand extends BaseCommand {
         header(CONTENT_TYPE, WS_FORM_CONTENT_TYPE);
 
         // post oauth request
-        StringBuilder formData = new StringBuilder();
-        inputs.forEach((name, value) -> formData.append(name).append("=").append(value).append("&"));
+        String formData = inputs.keySet().stream()
+                                .map(name -> name + "=" + URLEncodingUtils.encodeParamValue(inputs.get(name)))
+                                .collect(Collectors.joining("&"));
 
         String varResponse = var + "_Response";
-        StepResult result = post(url, StringUtils.removeEnd(formData.toString(), "&"), varResponse);
+        StepResult result = post(url, formData, varResponse);
         if (result.failed()) { return result; }
 
         // check response
@@ -309,6 +311,9 @@ public class WsCommand extends BaseCommand {
 
         if (response == null) { return StepResult.fail(failPrefix + "no response found"); }
         if (response.getReturnCode() != 200) {
+            ConsoleUtils.log("ERROR:\n" +
+                             response.getReturnCode() + " " + response.getStatusText() + "\n" +
+                             response.getBody());
             return StepResult.fail(failPrefix + response.getReturnCode() + " " + response.getStatusText());
         }
         if (response.getContentLength() < 5) {
@@ -316,8 +321,7 @@ public class WsCommand extends BaseCommand {
         }
 
         String responseContentType = response.getHeaders().get(WS_CONTENT_TYPE);
-        if (!StringUtils.equals(responseContentType, WS_JSON_CONTENT_TYPE) &&
-            !StringUtils.equals(responseContentType, WS_JSON_CONTENT_TYPE2)) {
+        if (!StringUtils.startsWith(responseContentType, WS_JSON_CONTENT_TYPE)) {
             return StepResult.fail(failPrefix + "unexpected response content type: " + responseContentType);
         }
 
@@ -350,6 +354,8 @@ public class WsCommand extends BaseCommand {
         }
 
         // bearer support
+        // some proxy generator or oauth app generates "BearerToken" instead of "Bearer". However we must use
+        // "Bearer" in the header for subsequent WS request
         if (StringUtils.equalsIgnoreCase(tokenType, OAUTH_TOKEN_TYPE_BEARER) ||
             StringUtils.equalsIgnoreCase(tokenType, OAUTH_TOKEN_TYPE_BEARER2)) {
             return addAccessTokenToHeader(oauthResponse, OAUTH_TOKEN_TYPE_BEARER);
