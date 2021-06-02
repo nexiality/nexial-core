@@ -53,7 +53,7 @@ class TemporaryMail : WebMailer() {
                                     to = "${mail.getString("mailbox")}@temporary-mail.net",
                                     time = receivedDate,
                             )
-                            email.content = contentJson.getJSONObject("body").getString("text")
+                            email.content = cleanMailContent(contentJson.getJSONObject("body").getString("text"))
                             email.html = contentJson.getJSONObject("body").getString("html")
                             web.context.setData(deriveEmailContentVar(profile, email.id), email)
                             email.id

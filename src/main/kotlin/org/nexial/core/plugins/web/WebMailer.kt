@@ -1,5 +1,6 @@
 package org.nexial.core.plugins.web
 
+import org.apache.commons.lang3.StringUtils
 import org.nexial.core.NexialConst.NAMESPACE
 import org.nexial.core.NexialConst.Web.*
 import org.nexial.core.SystemVariables.getDefaultInt
@@ -70,4 +71,14 @@ abstract class WebMailer {
 
     protected fun deriveEmailContentVar(profile: WebMailProfile,
                                         emailId: String) = "${NAMESPACE}${profile.profileName}.$emailId"
+
+    protected fun cleanMailContent(text: String?) =
+        if (StringUtils.isEmpty(text))
+            text
+        else
+            StringUtils.remove(text, "\r")
+                .split("\n")
+                .map { line -> StringUtils.trim(line) }
+                .filter { line -> StringUtils.isNotEmpty(line) }
+                .joinToString("\n")
 }

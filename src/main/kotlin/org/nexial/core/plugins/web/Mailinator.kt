@@ -108,10 +108,10 @@ class Mailinator : WebMailer() {
             val isHtmlContent = StringUtils.contains(headers?.getString("content-type") ?: "", "html")
 
             if (isHtmlContent) {
-                email.content = StringUtils.trim(Jsoup.parse(contentBody).wholeText())
+                email.content = cleanMailContent(Jsoup.parse(contentBody).wholeText())
                 email.html = contentBody
             } else {
-                email.content = contentBody
+                email.content = cleanMailContent(contentBody)
                 email.html = email.content
             }
         } else {
@@ -121,7 +121,7 @@ class Mailinator : WebMailer() {
                 if (headers.getString("content-type").contains("html"))
                     email.html = part.getString("body")
                 if (headers.getString("content-type").contains("plain"))
-                    email.content = StringUtils.trim(part.getString("body"))
+                    email.content = cleanMailContent(part.getString("body"))
             }
         }
 

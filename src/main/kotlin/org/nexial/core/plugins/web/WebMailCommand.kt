@@ -92,7 +92,7 @@ class WebMailCommand : BaseCommand() {
         val emailDetails = mailProfile.mailer.read(web!!, mailProfile, id)
         return if (emailDetails != null) {
             context.setData(`var`, emailDetails)
-            StepResult.success("Retrieved Email Details are $emailDetails")
+            StepResult.success("Retrieved email details for mail id $id")
         } else {
             context.removeData(`var`)
             StepResult.fail("There is no email with id $id against the profile $profile")
