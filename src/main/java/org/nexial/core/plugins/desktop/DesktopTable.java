@@ -509,7 +509,6 @@ public class DesktopTable extends DesktopElement {
                 context.setData(CURRENT_DESKTOP_TABLE_ROW, tableRow);
 
                 actionClick(cellElement);
-                // lastElement = cellElement;
                 continue;
             }
 
@@ -540,7 +539,40 @@ public class DesktopTable extends DesktopElement {
 
                     ConsoleUtils.log(msgPrefix2 + (isChecked ? "unchecking" : "checking") + " it...");
 
-                    driver.executeScript(toShortcuts("ENTER"), checkboxElement);
+                    if (tabAfterEdit) {
+                        // actions:
+                        // 1. click (before keystroke), also toggle checkbox
+                        // 2. enter TAB --> move focus to next cell element
+                        driver.executeScript(toShortcuts("TAB"), checkboxElement);
+                    } else {
+                        // actions:
+                        // 1. click (before keystroke), will also toggle checkbox
+                        // 2. enter SPACE --> toggle checkbox back
+                        // 3. enter SPACE --> toggle checkbox again
+                        // note that focus remains on this element
+                        driver.executeScript(toShortcuts("SPACE", "SPACE"), checkboxElement);
+                    }
+
+                    boolean isCheckedAfterAction = DesktopUtils.isChecked(checkboxElement);
+                    if (isCheckedAfterAction == isChecked) {
+                        // actions did nothing, try another route?
+                        // this happens usually when the target element is the last one of the row
+                        if (tabAfterEdit) {
+                            // action:
+                            // 1. click to focus
+                            // 2. shift-tab to move focus back to current element
+                            // 3. SPACE to toggle checkbox
+                            // 4. TAB to move focus to next cell element
+                            driver.executeScript(toShortcuts("SHIFT-TAB", "SPACE", "TAB"), checkboxElement);
+                        } else {
+                            // action:
+                            // 1. click to focus
+                            // 2. SPACE to toggle checkbox
+                            // note that focus remains on this element
+                            driver.executeScript(toShortcuts("SPACE"), checkboxElement);
+                        }
+                    }
+
                     if (context.getBooleanData(CURRENT_DESKTOP_TABLE_EDITABLE_COLUMN_FOUND) &&
                         context.getStringData(CURRENT_DESKTOP_TABLE_EDITABLE_COLUMN_NAME).contentEquals(column)) {
                         setFocusOut = true;
@@ -548,6 +580,7 @@ public class DesktopTable extends DesktopElement {
 
                     messageBuffer.append(msgPrefix2).append(isChecked ? "unchecked" : "checked").append(NL);
                 }
+
             } else if (StringUtils.isEmpty(value) || StringUtils.equals(value, TABLE_CELL_CLEAR)) {
                 clearCellContent(cellElement);
                 messageBuffer.append(msgPrefix2).append("content cleared").append(NL);
@@ -844,29 +877,6 @@ public class DesktopTable extends DesktopElement {
         return buffer.toString();
     }
 
-    // protected void typeValue(WebElement cellElement, String value, boolean isFormattedText) {
-    //     if (isFormattedText) {
-    //         ConsoleUtils.log("clear content and send keys on formatted textbox '" +
-    //                          treatColumnHeader(cellElement.getAttribute("Name") + "'"));
-    //         setValue(cellElement, "");
-    //         // formatted text box needs special treatment (using both set value and send keys)
-    //         String[] chars = value.split("");
-    //         String value2 = chars[chars.length - 1];
-    //         String value1 = StringUtils.removeEnd(value, value2);
-    //         if (StringUtils.isNotBlank(value1)) { setValue(cellElement, value1); }
-    //         // used actions.sendKeys to support key event driven data cells
-    //         new Actions(getDriver()).moveToElement(cellElement).sendKeys(value2).perform();
-    //     } else {
-    //         ExecutionContext context = ExecutionThread.get();
-    //         // sometimes no-formatted textbox cells required to be cleared
-    //         // might need rework
-    //         if (context.getBooleanData(CLEAR_TABLE_CELL_BEFORE_EDIT, getDefaultBool(CLEAR_TABLE_CELL_BEFORE_EDIT))) {
-    //             setValue(cellElement, "");
-    //         }
-    //         setValue(cellElement, value);
-    //     }
-    // }
-
     /**
      * reformat cell value to the specified format, which is configured as part of the "extra" section in the component
      * JSON.
@@ -921,16 +931,6 @@ public class DesktopTable extends DesktopElement {
         return value;
     }
 
-    // todo: not used?
-    // private List<WebElement> getRowElements() {
-    //     List<WebElement> rows = new ArrayList<>();
-    //     List<WebElement> dataElements = element.findElements(By.xpath(LOCATOR_TABLE_DATA));
-    //     if (CollectionUtils.isNotEmpty(dataElements)) {
-    //         dataElements.forEach(elem -> { if (elem != null) { rows.add(elem); } });
-    //     }
-    //     return rows;
-    // }
-
     private void looseCurrentFocus() {
         DesktopSession session = getCurrentSession();
         requiresNotNull(session, "No active desktop session found");
@@ -944,21 +944,6 @@ public class DesktopTable extends DesktopElement {
             new Actions(driver).sendKeys(ESCAPE);
         }
     }
-
-    // not used?
-    // private List<WebElement> rescanNullColumns(List<WebElement> columns, String cellsXpath) {
-    //     List<WebElement> cols = new ArrayList<>();
-    //     columns.forEach(column -> {
-    //         if (column.getAttribute("Name") == null) {
-    //             WebElement col = element.findElement(By.xpath(cellsXpath));
-    //             if (col.getAttribute("Name") != null) {
-    //                 cols.add(col);
-    //             }
-    //         }
-    //     });
-    //
-    //     return cols;
-    // }
 
     private void clearCellContent(WebElement cellElement) { driver.executeScript(SCRIPT_SET_VALUE, cellElement, ""); }
 
@@ -1031,21 +1016,6 @@ public class DesktopTable extends DesktopElement {
             // the code below is not stable for combo.. since some combo do not receive 'text changed' event until focus is lost.
             // ConsoleUtils.log("using setValue on '" + column + "' on '" + cellElement.getAttribute("ControlType") + "'");
             // driver.executeScript("automation: ValuePattern.SetValue", cellElement, value);
-
-            // do I have Edit component under Table?
-            /*
-            List<WebElement> matches = cellElement.findElements(By.xpath("*[@ControlType='" + EDIT + "']"));
-            if (CollectionUtils.isEmpty(matches) && isInvokePatternAvailable(cellElement)) {
-                // the code below is alternative for combo which do not have 'Edit' component under Table even if it is editable.
-                // This is the case when sometime we can't type text in combo box of table row, need to select from dropdowns
-                ConsoleUtils.log("using shortcut on '" + column + "'");
-                driver.executeScript(SCRIPT_PREFIX_SHORTCUT +
-                                     (StringUtils.isNotEmpty(currentValue) ? "<[HOME]><[SHIFT-END]><[DEL]>" : "") +
-                                     forceShortcutSyntax(value), cellElement);
-                return true;
-            }
-            */
-
             ConsoleUtils.log("type '" + value + "' on '" + column + "'");
             return typeValueWithFunctionKey(tableRow, cellElement, value);
         } else if (isTextPatternAvailable(cellElement)) {
@@ -1063,7 +1033,6 @@ public class DesktopTable extends DesktopElement {
         if (TextUtils.isBetween(value, "[", "]")) {
             ConsoleUtils.log("enter shortcut keys " + value + " on '" + label + "'");
             context.setData(CURRENT_DESKTOP_TABLE_ROW, tableRow);
-            // driver.executeScript(toShortcuts(StringUtils.substringBetween(value, "[", "]")), cellElement);
             driver.executeScript(SCRIPT_PREFIX_SHORTCUT + joinShortcuts(value), cellElement);
             return false;
         }
@@ -1090,10 +1059,8 @@ public class DesktopTable extends DesktopElement {
             driver.executeScript(script, cellElement);
             return false;
         } else {
-            // driver.executeScript(shortcutPrefix + forceShortcutSyntax(value), cellElement);
             driver.executeScript(shortcutPrefix + joinShortcuts(value), cellElement);
             return true;
         }
-
     }
 }

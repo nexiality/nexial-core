@@ -72,7 +72,7 @@ internal object DesktopUtils {
     @JvmStatic
     fun toShortcuts(vararg shortcuts: String) =
         if (ArrayUtils.isEmpty(shortcuts)) ""
-        else SCRIPT_PREFIX_SHORTCUT + shortcuts.joinToString { SHORTCUT_PREFIX + it + SHORTCUT_POSTFIX }
+        else SCRIPT_PREFIX_SHORTCUT + shortcuts.joinToString("") { SHORTCUT_PREFIX + it + SHORTCUT_POSTFIX }
 
     /**
      * `shortcuts` could be a mix of function keys and 'normal' keys
