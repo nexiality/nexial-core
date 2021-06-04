@@ -96,7 +96,7 @@ public class StepResult {
 
     public boolean isError() { return !success && !isSkipped() && !isWarn() && !isEnded(); }
 
-    public String getMessage() { return message == null ? "null" : StringUtils.defaultString(message, "(empty)"); }
+    public String getMessage() { return StringUtils.defaultString(message, ""); }
 
     public Throwable getException() { return exception; }
 

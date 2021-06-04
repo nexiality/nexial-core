@@ -2346,25 +2346,8 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
 
     @Nonnull
     protected StepResult click(DesktopElement component) {
-        WebElement element = component.getElement();
-
-        boolean simulateClick = getDefaultBool(PREFER_BRC_OVER_CLICK);
-
-        // component-based config has priority
-        if (component.extra.containsKey(PREFER_BRC_OVER_CLICK)) {
-            simulateClick = BooleanUtils.toBoolean(component.extra.get(PREFER_BRC_OVER_CLICK));
-        } else if (context.hasData(PREFER_BRC_OVER_CLICK)) {
-            simulateClick = context.getBooleanData(PREFER_BRC_OVER_CLICK);
-        }
-
-        if (simulateClick) {
-            winiumDriver.executeScript(SCRIPT_CLICK, element);
-        } else {
-            element.click();
-        }
-
-        autoClearModalDialog(component);
-        return StepResult.success("Element '" + component.getName() + "' clicked");
+        if (component == null) { return StepResult.fail("component not found"); }
+        return component.click();
     }
 
     protected void clickOffset(WebElement elem, String xOffset, String yOffset) {

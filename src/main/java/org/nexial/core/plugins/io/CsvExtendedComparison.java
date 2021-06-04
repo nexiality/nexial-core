@@ -17,13 +17,8 @@
 
 package org.nexial.core.plugins.io;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.Serializable;
-import java.io.StringReader;
-import java.util.*;
-import java.util.stream.Collectors;
-
+import com.univocity.parsers.common.record.RecordMetaData;
+import com.univocity.parsers.csv.CsvParser;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.IterableUtils;
 import org.apache.commons.collections4.MapUtils;
@@ -32,15 +27,19 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.nexial.commons.utils.TextUtils;
-import org.nexial.commons.utils.TextUtils.CleanNumberStrategy;
 import org.nexial.core.IntegrationConfigException;
 import org.nexial.core.MemManager;
 import org.nexial.core.utils.ConsoleUtils;
 
-import com.univocity.parsers.common.record.RecordMetaData;
-import com.univocity.parsers.csv.CsvParser;
+import java.io.File;
+import java.io.IOException;
+import java.io.Serializable;
+import java.io.StringReader;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import static java.lang.Double.MIN_VALUE;
+import static org.nexial.commons.utils.TextUtils.CleanNumberStrategy.CSV;
 
 class CsvExtendedComparison implements Serializable {
     private static final Map<String, ReportFormat> TYPES = new HashMap<>();
@@ -87,7 +86,7 @@ class CsvExtendedComparison implements Serializable {
         HTML(".html"),
         PLAIN(".txt");
 
-        private String ext;
+        private final String ext;
 
         ReportFormat(String ext) {
             this.ext = ext;
@@ -373,8 +372,7 @@ class CsvExtendedComparison implements Serializable {
     protected double toNum(String expectedField, String expectedValue) {
         double expected = MIN_VALUE;
         try {
-            expected = NumberUtils.createDouble(TextUtils.cleanNumber(expectedValue,
-                                                                      CleanNumberStrategy.CSV));
+            expected = NumberUtils.createDouble(TextUtils.cleanNumber(expectedValue, CSV));
         } catch (IllegalArgumentException e) {
             ConsoleUtils.error("Field [" + expectedField + "]: " + PARSE_NUM_MSG + expectedValue);
         }

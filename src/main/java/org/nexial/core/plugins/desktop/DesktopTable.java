@@ -26,7 +26,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.nexial.commons.utils.DateUtility;
 import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.ExecutionThread;
 import org.nexial.core.NexialConst.PolyMatcher;
@@ -42,8 +41,6 @@ import org.openqa.selenium.WebElement;
 import org.openqa.selenium.interactions.Actions;
 
 import javax.annotation.Nonnull;
-import java.text.DecimalFormat;
-import java.text.ParseException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
@@ -206,9 +203,9 @@ public class DesktopTable extends DesktopElement {
         if (row < 0) { throw new IllegalArgumentException("row (zero-based) must be 0 or greater"); }
 
         int rowCount = getTableRowCount();
-        if (rowCount < row + 1) {
+        if (rowCount < row - 1) {
             throw new IllegalArgumentException(String.format("Table '%s' has only %s; cannot click row %s",
-                                                             name, (rowCount + 1), row));
+                                                             name, rowCount, row));
         }
 
         clickOffset(getElement(), clickOffsetX, resolveClickOffsetY(row));
@@ -278,7 +275,7 @@ public class DesktopTable extends DesktopElement {
         Instant startTime = Instant.now();
 
         if (isTreeView) {
-            int count = DesktopUtils.countChildren(element, DesktopUtils::isValidDataRow);
+            int count = countChildren(element, DesktopUtils::isValidDataRow);
             List<WebElement> rowData = count < 1 ?
                                        new ArrayList<>() :
                                        element.findElements(By.xpath(LOCATOR_HIER_TABLE_ROWS + "/*"));
@@ -292,7 +289,7 @@ public class DesktopTable extends DesktopElement {
     /** As of v3.7, we will support HierTable (aka ControlType.Tree) as well */
     public int getTableRowCount() {
         if (isTreeView) {
-            int count = DesktopUtils.countChildren(element, DesktopUtils::isValidDataRow);
+            int count = countChildren(element, DesktopUtils::isValidDataRow);
             return count < 1 ? count : CollectionUtils.size(element.findElements(By.xpath(LOCATOR_HIER_TABLE_ROWS)));
         }
 
@@ -323,7 +320,7 @@ public class DesktopTable extends DesktopElement {
         if (isTreeView) {
             // we don't know if there are any row in this data
             // so we use "*" to all children -- this is faster
-            int count = DesktopUtils.countChildren(element, DesktopUtils::isValidDataRow);
+            int count = countChildren(element, DesktopUtils::isValidDataRow);
             if (count == 0) {
                 ConsoleUtils.log("No rows found for data grid " + element);
                 dataElements = new ArrayList<>();
@@ -700,7 +697,7 @@ public class DesktopTable extends DesktopElement {
         String xpath = "*[@ControlType='" + CHECK_BOX + "']";
 
         // 2. sometimes the checkbox hides under another element by the same name (WEIRD .NET CRAP)
-        if (DesktopUtils.countChildren(cellElement) > 0) {
+        if (countChildren(cellElement) > 0) {
             String columnXpath = resolveColumnXpath(column);
             List<WebElement> matches = cellElement.findElements(By.xpath(columnXpath));
             if (CollectionUtils.isNotEmpty(matches)) {
@@ -892,43 +889,8 @@ public class DesktopTable extends DesktopElement {
     protected String matchCellFormat(String column, String value) { return reformatCellData(column, value, false); }
 
     protected String reformatCellData(String column, String value, boolean fromTo) {
-        String formatKey = column + ".format";
-        if (!extra.containsKey(formatKey)) { return value; }
-
-        String formatRule = extra.get(formatKey);
-
-        // expected format: FROM_FORMAT,TO_FORMAT
-        if (!StringUtils.contains(formatRule, ",")) { return value; }
-
-        String format1;
-        String format2;
-        if (TextUtils.isBetween(formatRule, "[", "]")) {
-            // PREFERRED FORMAT SINCE IT IS MORE PREDICTABLE
-            // format rule in [...],[...]?
-            format1 = StringUtils.trim(TextUtils.substringBetweenFirstPair(formatRule, "[", "]"));
-            format2 = StringUtils.substringAfter(StringUtils.substringAfter(formatRule, format1), ",");
-            format2 = StringUtils.trim(TextUtils.substringBetweenFirstPair(format2, "[", "]"));
-        } else {
-            format1 = StringUtils.substringBeforeLast(formatRule, ",");
-            format2 = StringUtils.substringAfterLast(formatRule, ",");
-        }
-        String fromFormat = fromTo ? format1 : format2;
-        String toFormat = fromTo ? format2 : format1;
-
-        // date format
-        if (StringUtils.containsAny(formatRule, "MdyHhms")) { return DateUtility.formatTo(value, fromFormat, toFormat);}
-
-        // number format
-        if (StringUtils.containsAny(formatRule, "0#")) {
-            try {
-                return new DecimalFormat(toFormat).format(new DecimalFormat(fromFormat).parse(value));
-            } catch (ParseException e) {
-                ConsoleUtils.error(String.format("Unable to parse/reformat data (%s) from Column %s: %s",
-                                                 value, column, e.getMessage()));
-            }
-        }
-
-        return value;
+        String key = column + ".format";
+        return !extra.containsKey(key) ? value : DesktopUtils.reformatValue(value, extra.get(key), fromTo);
     }
 
     private void looseCurrentFocus() {
@@ -983,7 +945,7 @@ public class DesktopTable extends DesktopElement {
     }
 
     private boolean typeCellContent(DesktopTableRow tableRow, WebElement cellElement, String column, String value) {
-        if (StringUtils.equals(DesktopUtils.infragistic4Text(cellElement), value)) {
+        if (StringUtils.equals(reformatCellData(column, infragistic4Text(cellElement), true), value)) {
             ConsoleUtils.log("Text '" + value + "' already entered into cell '" + column + "'");
             return true;
         }
@@ -1037,7 +999,7 @@ public class DesktopTable extends DesktopElement {
             return false;
         }
 
-        String currentValue = DesktopUtils.infragistic4Text(cellElement);
+        String currentValue = infragistic4Text(cellElement);
         String shortcutPrefix = SCRIPT_PREFIX_SHORTCUT +
                                 (StringUtils.isNotEmpty(currentValue) ? "<[HOME]><[SHIFT-END]><[DEL]>" : "");
 

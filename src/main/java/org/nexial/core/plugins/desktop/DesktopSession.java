@@ -17,13 +17,6 @@
 
 package org.nexial.core.plugins.desktop;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
-import java.net.URL;
-import java.util.*;
-
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.io.FileUtils;
@@ -43,6 +36,13 @@ import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import org.openqa.selenium.winium.WiniumDriver;
 import org.openqa.selenium.winium.WiniumDriverCommandExecutor;
+
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+import java.net.URL;
+import java.util.*;
 
 import static java.io.File.separator;
 import static java.lang.System.lineSeparator;
@@ -300,7 +300,6 @@ public class DesktopSession {
             } else {
                 component.inheritXPathGenerationStrategy(container);
                 component.inheritLayout(container);
-                // component.setElement(container.getDriver().findElement(By.xpath(component.getXpath())));
                 component.container = container;
                 component.driver = container.driver;
 

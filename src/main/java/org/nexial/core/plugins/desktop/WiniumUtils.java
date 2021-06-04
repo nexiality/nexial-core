@@ -235,7 +235,7 @@ public final class WiniumUtils {
                 return joinCurrentWiniumSession(NumberUtils.toInt(winiumPort), autCmd, args);
             }
 
-            ConsoleUtils.log("create new Winium session, destroying instance " + runningWiniums);
+            ConsoleUtils.log("create new Winium session...");
             DesktopOptions options = new DesktopOptions();
             options.setDebugConnectToRunningApp(true);
             return new WiniumDriver(getWiniumService(), options);

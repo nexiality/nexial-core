@@ -21,7 +21,9 @@ import org.apache.commons.lang3.ArrayUtils
 import org.apache.commons.lang3.BooleanUtils
 import org.apache.commons.lang3.StringUtils
 import org.nexial.commons.utils.CollectionUtil
-import org.nexial.commons.utils.TextUtils
+import org.nexial.commons.utils.DateUtility
+import org.nexial.commons.utils.TextUtils.*
+import org.nexial.commons.utils.TextUtils.CleanNumberStrategy.REAL
 import org.nexial.core.ExecutionThread
 import org.nexial.core.NexialConst.Desktop.AUTOSCAN_INFRAGISTICS4_AWARE
 import org.nexial.core.NexialConst.NL
@@ -34,6 +36,8 @@ import org.openqa.selenium.By
 import org.openqa.selenium.WebDriverException
 import org.openqa.selenium.WebElement
 import org.openqa.selenium.winium.WiniumDriver
+import java.text.DecimalFormat
+import java.text.ParseException
 import java.util.*
 
 internal object DesktopUtils {
@@ -104,13 +108,13 @@ internal object DesktopUtils {
         if (StringUtils.isEmpty(text)) return text
 
         // <[{ ... }]>
-        if (TextUtils.isBetween(text, TEXT_INPUT_PREFIX, TEXT_INPUT_POSTFIX)) return text
+        if (isBetween(text, TEXT_INPUT_PREFIX, TEXT_INPUT_POSTFIX)) return text
 
         // <[ ... ]>
-        if (TextUtils.isBetween(text, SHORTCUT_PREFIX, SHORTCUT_POSTFIX)) return text
+        if (isBetween(text, SHORTCUT_PREFIX, SHORTCUT_POSTFIX)) return text
 
         // [...]
-        return if (TextUtils.isBetween(text, "[", "]"))
+        return if (isBetween(text, "[", "]"))
             SHORTCUT_PREFIX + StringUtils.removeEnd(StringUtils.removeStart(text, "["), "]") + SHORTCUT_POSTFIX
         else
             TEXT_INPUT_PREFIX + text + TEXT_INPUT_POSTFIX
@@ -119,7 +123,7 @@ internal object DesktopUtils {
     @JvmStatic
     fun addShortcut(shortcuts: String, newShortcut: String): String {
         if (StringUtils.isEmpty(newShortcut)) return shortcuts
-        if (TextUtils.isBetween(newShortcut, "[", "]"))
+        if (isBetween(newShortcut, "[", "]"))
             return shortcuts + SHORTCUT_PREFIX + StringUtils.substringBetween(newShortcut, "[", "]") + SHORTCUT_POSTFIX
 
         // append text
@@ -307,6 +311,15 @@ internal object DesktopUtils {
         }
 
     @JvmStatic
+    fun getElementText(element: DesktopElement) =
+        if (element.element == null) null
+        else try {
+            reformatValue(StringUtils.trim(element.element.text), element.extra["format"], true)
+        } catch (e: WebDriverException) {
+            null
+        }
+
+    @JvmStatic
     fun isInfragistic4Aware(): Boolean {
         val context = ExecutionThread.get() ?: return false
         return context.getBooleanData(AUTOSCAN_INFRAGISTICS4_AWARE, getDefaultBool(AUTOSCAN_INFRAGISTICS4_AWARE))
@@ -326,4 +339,44 @@ internal object DesktopUtils {
         if (element == null || StringUtils.isBlank(xpath)) null
         else CollectionUtil.getOrDefault(element.findElements(By.xpath(xpath)), 0, null)
 
+    @JvmStatic
+    fun reformatValue(value: String, formatRule: String?, fromTo: Boolean): String {
+        // expected format: FROM_FORMAT,TO_FORMAT
+        if (formatRule == null || !StringUtils.contains(formatRule, ",")) return value
+
+        val format1: String
+        val format2: String
+        if (isBetween(formatRule, "[", "]")) {
+            // PREFERRED FORMAT SINCE IT IS MORE PREDICTABLE
+            // format rule in [...],[...]?
+            format1 = StringUtils.trim(substringBetweenFirstPair(formatRule, "[", "]"))
+            format2 = StringUtils.trim(
+                substringBetweenFirstPair(
+                    StringUtils.substringAfter(
+                        StringUtils.substringAfter(formatRule, format1),
+                        ","),
+                    "[", "]")
+            )
+        } else {
+            format1 = StringUtils.substringBeforeLast(formatRule, ",")
+            format2 = StringUtils.substringAfterLast(formatRule, ",")
+        }
+        val fromFormat = if (fromTo) format1 else format2
+        val toFormat = if (fromTo) format2 else format1
+
+        // date format
+        if (StringUtils.containsAny(formatRule, "MdyHhms")) return DateUtility.formatTo(value, fromFormat, toFormat)
+
+        // number format
+        if (StringUtils.containsAny(formatRule, "0#")) {
+            try {
+                return DecimalFormat(toFormat).format(DecimalFormat(fromFormat).parse(cleanNumber(value, REAL)))
+            } catch (e: ParseException) {
+                ConsoleUtils.error("Unable to parse/reformat data ($value) based on rule $formatRule: ${e.message}")
+            }
+        }
+
+        // unknown or unsupported
+        return value
+    }
 }

@@ -519,14 +519,15 @@ public class DesktopElement {
                                              .filter(DesktopUtils::isSelected)
                                              .findFirst()
                                              .orElse(null);
-                if (selected != null) { return selected.getAttribute("Name"); }
+                if (selected != null) { return reformatValue(selected.getAttribute("Name"), true); }
             }
 
             String name = element.getAttribute("Name");
             String text = getElementText(element);
-            return controlType.equals(LIST_ITEM) ?
-                   StringUtils.defaultIfBlank(name, text) :
-                   StringUtils.defaultIfBlank(text, name);
+            return reformatValue(controlType.equals(LIST_ITEM) ?
+                                 StringUtils.defaultIfBlank(name, text) :
+                                 StringUtils.defaultIfBlank(text, name),
+                                 true);
         }
 
         WebElement targetElement;
@@ -555,6 +556,17 @@ public class DesktopElement {
 
     public WebElement findModalDialog() {
         return DesktopUtils.findModalDialog(driver, "/" + StringUtils.substringBefore(getXpath().substring(1), "/"));
+    }
+
+    public StepResult click() {
+        if (getBooleanPreference(PREFER_BRC_OVER_CLICK)) {
+            driver.executeScript(SCRIPT_CLICK, element);
+        } else {
+            element.click();
+        }
+
+        autoClearModalDialog();
+        return StepResult.success("Element '" + getLabel() + "' clicked");
     }
 
     /**
@@ -613,6 +625,10 @@ public class DesktopElement {
         actions.perform();
 
         return StepResult.success("Clicked on matched Line " + matchedLine + " (" + xOffset + "," + yOffset + ")");
+    }
+
+    protected String reformatValue(String value, boolean fromTo) {
+        return !extra.containsKey("format") ? value : DesktopUtils.reformatValue(value, extra.get("format"), fromTo);
     }
 
     /**
@@ -1768,6 +1784,14 @@ public class DesktopElement {
     protected StepResult typeTextComponent(boolean useSendKeys, boolean append, String... text) {
         requires(ArrayUtils.isNotEmpty(text), "at least one text parameter is required");
 
+        boolean clickBeforeEdit = getBooleanPreference(CLICK_BEFORE_EDIT);
+        if (clickBeforeEdit) {
+            StepResult clickResult = click();
+            if (clickResult.failed()) {
+                return StepResult.fail("Unable to click on the component %s: %s", getLabel(), clickResult.getMessage());
+            }
+        }
+
         String currentText = getText();
         String combinedText = TextUtils.toString(text, "", "", "");
 
@@ -1784,11 +1808,7 @@ public class DesktopElement {
             }
         }
 
-        ExecutionContext context = ExecutionThread.get();
-        boolean useTypeKeys = extra.containsKey(USE_TYPE_KEYS) ?
-                              BooleanUtils.toBoolean(extra.containsKey(USE_TYPE_KEYS)) :
-                              (context != null && context.getBooleanData(USE_TYPE_KEYS, getDefaultBool(USE_TYPE_KEYS)));
-        if (useTypeKeys) {
+        if (getBooleanPreference(USE_TYPE_KEYS)) {
             String keystrokes = (append ? "[CTRL-END]\n" : "") + TextUtils.toString(text, "\n", "", "");
             keystrokes = NativeInputParser.handleKeys(keystrokes);
             new Actions(driver).doubleClick(element).perform();
@@ -1814,6 +1834,12 @@ public class DesktopElement {
 
         autoClearModalDialog();
         return StepResult.success("text %s into element '%s'", (append ? "appended" : "entered"), label);
+    }
+
+    protected boolean getBooleanPreference(String preference) {
+        if (extra.containsKey(preference)) { return BooleanUtils.toBoolean(extra.containsKey(preference)); }
+        ExecutionContext context = ExecutionThread.get();
+        return context != null && context.getBooleanData(preference, getDefaultBool(preference));
     }
 
     protected static List<String> parseTextInputWithShortcuts(String text, boolean forceShortcuts) {
@@ -1968,7 +1994,7 @@ public class DesktopElement {
         return StringUtils.equals(text, actual);
     }
 
-    protected boolean setValue(WebElement element, String text) { return setValue(false, element, text); }
+    // protected boolean setValue(WebElement element, String text) { return setValue(false, element, text); }
 
     /** This Method will set the value for TextBox Element **/
     protected boolean setValue(boolean useSendKeys, WebElement element, String text) {
@@ -1991,19 +2017,22 @@ public class DesktopElement {
 
             if (!matched) {
                 //todo: apply some strategy to set the value when it is not matched
-                ConsoleUtils.log(errPrefix +
-                                 "actual is '" + actual + "' but expected is '" + text + "'; Trying other approach...");
+                // ConsoleUtils.log(errPrefix + "actual is '" + actual + "' but expected is '" + text + "'; Trying other approach...");
+                ConsoleUtils.log(errPrefix + "actual is '" + actual + "' but expected is '" + text + "'");
             }
             return matched;
         } catch (Exception e) {
             String error = (e instanceof WebDriverException) ?
                            filterExceptionMessage((WebDriverException) e) : e.getMessage();
-            ConsoleUtils.log(errPrefix + error + "; Trying other approach...");
+            // ConsoleUtils.log(errPrefix + error + "; Trying other approach...");
+            ConsoleUtils.log(errPrefix + error);
 
             // probably worked anyways.. trust the value pattern available thingy
             return true;
         }
     }
+
+    // todo: not used?
 
     /** This method will set the value for ComboBox Element **/
     protected boolean setComboValue(WebElement element, String text) {
@@ -2230,13 +2259,13 @@ public class DesktopElement {
 
             if (embeddableTextBox != null) {
                 // need to clear existing data first... unless it already contains the specified text
-                String existingText = getElementText(embeddableTextBox);
+                String existingText = reformatValue(getElementText(embeddableTextBox), true);
                 if (!StringUtils.equals(existingText, text)) {
-                    driver.executeScript(SCRIPT_PREFIX_SHORTCUT +
-                                         (StringUtils.isNotEmpty(existingText) ? "<[ESC]><[HOME]><[SHIFT-END]><[DEL]>" :
-                                          "") +
-                                         forceShortcutSyntax(text),
-                                         embeddableTextBox);
+                    driver.executeScript(
+                        SCRIPT_PREFIX_SHORTCUT +
+                        (StringUtils.isNotEmpty(existingText) ? "<[ESC]><[HOME]><[SHIFT-END]><[DEL]>" : "") +
+                        forceShortcutSyntax(text),
+                        embeddableTextBox);
                 }
                 return StepResult.success("Text '" + text + "' selected" + msgPostfix);
             } else {
@@ -2463,7 +2492,7 @@ public class DesktopElement {
     protected WebElement findFirstElement(String xpath) { return DesktopUtils.findFirstElement(element, xpath); }
 
     private void verifyAndTry(String text) {
-        if (verifyText(text, getElementText(element))) { return; }
+        if (verifyText(text, reformatValue(getElementText(element), true))) { return; }
 
         clearFormattedTextbox(driver, element);
         driver.executeScript(SCRIPT_PREFIX_SHORTCUT + TEXT_INPUT_PREFIX + text + TEXT_INPUT_POSTFIX, element);
@@ -2501,7 +2530,7 @@ public class DesktopElement {
         return isActualAndTextMatched(element, currentValue, text);
     }
 
-    protected String getValue(WebElement element) { return getValue(element, getLabel()); }
+    protected String getValue(WebElement element) { return reformatValue(getValue(element, getLabel()), true); }
 
     protected static String getValue(WebElement element, String label) {
         String name = StringUtils.trim(element.getAttribute("Name"));

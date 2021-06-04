@@ -227,6 +227,8 @@ public class TableData {
             return cell.isSelected() ? "True" : getElementText(cell, "False");
         }
 
+        if (StringUtils.equals(controlType, BUTTON)) { return cell.getAttribute("Name"); }
+
         String cellText = getElementText(cell, "");
 
         if (StringUtils.equals(controlType, COMBO) || StringUtils.equals(controlType, LIST)) {
@@ -246,8 +248,6 @@ public class TableData {
             if (CollectionUtils.isEmpty(selectedElements)) { return cellText; }
             return StringUtils.trim(StringUtils.defaultString(selectedElements.get(0).getAttribute("Name")));
         }
-
-        if (StringUtils.equals(controlType, BUTTON)) { return cell.getAttribute("Name"); }
 
         return cellText;
     }

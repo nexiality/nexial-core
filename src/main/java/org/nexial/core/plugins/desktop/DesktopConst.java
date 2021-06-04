@@ -68,6 +68,7 @@ public class DesktopConst {
     public static final String CURRENT_DESKTOP_HIER_TABLE_NAME = NS_DESKTOP + "hiertable.name";
 
     public static final String TABLE_CLICK_BEFORE_EDIT = registerSysVar(NS_TABLE + ".clickBeforeEdit", true);
+    public static final String CLICK_BEFORE_EDIT = registerSysVar(NS_DESKTOP + ".clickBeforeEdit", true);
     public static final String TABLE_TAB_AFTER_EDIT = registerSysVar(NS_TABLE + ".tabAfterEdit", false);
     public static final String SCREENSHOT_FULLSCREEN = registerSysVar(NS_DESKTOP + "fullScreenCapture", false);
     public static final String AUTO_CLEAR_MODAL_DIALOG = registerSysVar(NS_DESKTOP + "autoClearModalDialog", false);
