@@ -23,6 +23,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.commons.lang3.tuple.MutablePair;
+import org.apache.http.client.fluent.Request;
 import org.nexial.commons.proc.ProcessInvoker;
 import org.nexial.commons.proc.RuntimeUtils;
 import org.nexial.commons.utils.FileUtil;
@@ -38,6 +39,7 @@ import org.openqa.selenium.interactions.Actions;
 import org.openqa.selenium.net.PortProber;
 import org.openqa.selenium.winium.DesktopOptions;
 import org.openqa.selenium.winium.WiniumDriver;
+import org.openqa.selenium.winium.WiniumDriverCommandExecutor;
 import org.openqa.selenium.winium.WiniumDriverService;
 
 import java.io.File;
@@ -675,5 +677,14 @@ public final class WiniumUtils {
             exeAndArgument.setRight(arguments);
         }
         return exeAndArgument;
+    }
+
+    protected static void updateImplicitWaitMs(WiniumDriver driver, int waitMs) throws IOException {
+        if (waitMs < 1) { return; }
+        WiniumDriverCommandExecutor commandExecutor = (WiniumDriverCommandExecutor) driver.getCommandExecutor();
+        URL driverUrl = commandExecutor.getAddressOfRemoteServer();
+        String timeoutUrl = driverUrl.toString() + "/session/AwesomeSession/timeouts/implicit_wait";
+        String postBody = "{ \"SESSIONID\":\"AwesomeSession\", \"ms\":" + waitMs + " }";
+        Request.Post(timeoutUrl).bodyByteArray(postBody.getBytes()).execute().returnContent();
     }
 }

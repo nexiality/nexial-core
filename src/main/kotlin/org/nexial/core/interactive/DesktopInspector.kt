@@ -7,6 +7,7 @@ import org.nexial.core.plugins.NexialCommand
 import org.nexial.core.plugins.desktop.DesktopCommand
 import org.nexial.core.plugins.desktop.ElementType
 import org.nexial.core.plugins.desktop.WiniumUtils
+import org.openqa.selenium.By
 import org.openqa.selenium.WebDriverException
 import org.openqa.selenium.WebElement
 import org.openqa.selenium.winium.WiniumDriver
@@ -18,12 +19,13 @@ class DesktopInspector(val context: ExecutionContext) {
         val command = context.findPlugin("desktop")
                       ?: throw Exception("Looks like desktop command has not yet run; driver not found")
         val desktop = command as DesktopCommand
-        resolveDesktopDriver(command)
+        val driver = resolveDesktopDriver(command)
 
         val useXpath = StringUtils.startsWith(locator, "/*") || StringUtils.startsWith(locator, "//*")
 
         val elements = if (useXpath) {
-            val matches = desktop.findElements(locator)
+            val matches = driver.findElements(By.xpath(locator))
+            // val matches = desktop.findElements(locator)
             if (CollectionUtils.isEmpty(matches)) {
                 println("No element found via locator $locator")
                 return

@@ -1921,6 +1921,8 @@ public final class NexialConst {
         public static final String WEB_CLEAR_WITH_BACKSPACE = registerSysVar(NS_WEB + "clearWithBackspace", false);
         public static final String WEB_PREEMPTIVE_ALERT_CHECK = registerSysVar(NS_WEB + "preemptiveAlertCheck", false);
         public static final String WEB_ALWAYS_WAIT = registerSysVar(NS_WEB + "alwaysWait", false);
+        // `nexial.web.explicitWait` replaces `nexial.web.alwaysWait` -- it's more meaningful
+        public static final String WEB_EXPLICIT_WAIT = registerSysVar(NS_WEB + "explicitWait", true);
         public static final String WEB_UNFOCUS_AFTER_TYPE = registerSysVar(NS_WEB + "unfocusAfterType", false);
         public static final String WEB_PAGE_LOAD_WAIT_MS = registerSysVar(NS_WEB + "pageLoadWaitMs", 15000);
         public static final String DROPDOWN_SELECT_ALL = "{ALL}";

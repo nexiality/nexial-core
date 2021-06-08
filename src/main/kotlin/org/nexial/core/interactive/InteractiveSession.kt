@@ -32,17 +32,14 @@ import org.nexial.core.excel.Excel
 import org.nexial.core.excel.ExcelAddress
 import org.nexial.core.excel.ExcelArea
 import org.nexial.core.excel.ExcelConfig.*
-import org.nexial.core.model.ExecutionContext
-import org.nexial.core.model.ExecutionDefinition
-import org.nexial.core.model.StepResult
-import org.nexial.core.model.TestProject
-import org.nexial.core.model.TestScenario
+import org.nexial.core.model.*
 import org.nexial.core.plugins.base.BaseCommand
 import org.nexial.core.utils.ConsoleUtils
 import org.nexial.core.utils.ExecUtils.IGNORED_CLI_OPT
 import org.nexial.core.utils.ExecUtils.deriveJavaOpts
 import org.nexial.core.utils.InputFileUtils
 import java.io.File
+import java.io.File.separator
 import java.util.*
 
 data class InteractiveSession(val context: ExecutionContext) {
@@ -108,11 +105,24 @@ data class InteractiveSession(val context: ExecutionContext) {
                 field = value
                 loadTestScript(reloadExcel)
             } else {
-                ConsoleUtils.error("Invalid script specified: $value")
-                excel = null
-                allScenarios.clear()
-                allActivities.clear()
-                allSteps.clear()
+                // maybe it's another script from the same project
+                val newScriptPath =
+                    if (executionDefinition != null && executionDefinition!!.project.scriptPath != null) {
+                        val script = StringUtils.appendIfMissing(executionDefinition!!.project.scriptPath, separator) +
+                                     value
+                        if (FileUtil.isFileReadable(script)) script else null
+                    } else null
+                if (newScriptPath != null) {
+                    val reloadExcel = !StringUtils.equals(field, newScriptPath)
+                    field = newScriptPath
+                    loadTestScript(reloadExcel)
+                } else {
+                    ConsoleUtils.error("Invalid script specified: $value")
+                    excel = null
+                    allScenarios.clear()
+                    allActivities.clear()
+                    allSteps.clear()
+                }
             }
         }
 
@@ -159,7 +169,17 @@ data class InteractiveSession(val context: ExecutionContext) {
                 field = value
                 loadDataFile()
             } else {
-                ConsoleUtils.error("Invalid data file specified: $value")
+                // maybe it's another data file from the same project
+                val newDataFile = if (executionDefinition != null && executionDefinition!!.project.dataPath != null) {
+                    val script = StringUtils.appendIfMissing(executionDefinition!!.project.dataPath, separator) + value
+                    if (FileUtil.isFileReadable(script)) script else null
+                } else null
+                if (newDataFile != null) {
+                    field = value
+                    loadDataFile()
+                } else {
+                    ConsoleUtils.error("Invalid data file specified: $value")
+                }
             }
         }
 

@@ -17,11 +17,6 @@
 
 package org.nexial.core.variable;
 
-import java.lang.reflect.Method;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
@@ -36,6 +31,11 @@ import org.nexial.core.plugins.web.WebDriverExceptionHelper;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.variable.WebDataType.Result;
 import org.openqa.selenium.WebDriverException;
+
+import java.lang.reflect.Method;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 
 import static org.nexial.core.NexialConst.MSG_FAIL;
 import static org.nexial.core.NexialConst.MSG_PASS;

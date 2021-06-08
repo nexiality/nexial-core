@@ -17,6 +17,7 @@
 
 package org.nexial.core.plugins.desktop;
 
+import com.google.gson.annotations.SerializedName;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
@@ -31,9 +32,12 @@ import java.util.Map;
 
 import static java.io.File.separator;
 import static org.apache.commons.lang3.builder.ToStringStyle.MULTI_LINE_STYLE;
+import static org.nexial.core.NexialConst.Data.POLL_WAIT_MS;
 import static org.nexial.core.NexialConst.GSON;
 import static org.nexial.core.NexialConst.OPT_PROJECT_BASE;
 import static org.nexial.core.NexialConst.Project.DEF_REL_LOC_TEST_DATA;
+import static org.nexial.core.SystemVariables.getDefaultBool;
+import static org.nexial.core.SystemVariables.getDefaultInt;
 import static org.nexial.core.plugins.desktop.DesktopConst.*;
 
 /**
@@ -49,6 +53,10 @@ public class DesktopConfig {
 
     /** default wait time (ms) between commands */
     protected int defaultWaitMs;
+
+    /** determine if Nexial should use explicit wait or not (default) */
+    @SerializedName("nexial.desktop.explicitWait")
+    protected Boolean explicitWait;
 
     /** wait time (ms) for application to start up and ready for us */
     protected int appStartupWaitMs;
@@ -86,9 +94,7 @@ public class DesktopConfig {
 
     public String getResourceBaseLocation() { return resourceBaseLocation; }
 
-    public void setResourceBaseLocation(String resourceBaseLocation) {
-        this.resourceBaseLocation = resourceBaseLocation;
-    }
+    public void setResourceBaseLocation(String resourceBaseLocation) {this.resourceBaseLocation = resourceBaseLocation;}
 
     public boolean isFileBasedResource() { return fileBasedResource; }
 
@@ -98,23 +104,23 @@ public class DesktopConfig {
 
     public void setAppId(String appId) { this.appId = appId; }
 
+    public boolean isExplicitWait() { return explicitWait; }
+
     public DesktopElement getApp() { return app; }
 
     @Override
     public String toString() {
         return new ToStringBuilder(this, MULTI_LINE_STYLE)
-                   .append("appId", appId)
-                   .append("appStartupWaitMs", appStartupWaitMs)
-                   .append("defaultWaitMs", defaultWaitMs)
-                   .append("aut", aut)
-                   .append("resourceBaseLocation", resourceBaseLocation)
-                   .append("app", app)
-                   .toString();
+            .append("appId", appId)
+            .append("appStartupWaitMs", appStartupWaitMs)
+            .append("defaultWaitMs", defaultWaitMs)
+            .append("aut", aut)
+            .append("resourceBaseLocation", resourceBaseLocation)
+            .append("app", app)
+            .toString();
     }
 
-    protected DesktopElement findComponentByXPath(String xpath) {
-        return findComponentByXPath(getApp(), xpath);
-    }
+    protected DesktopElement findComponentByXPath(String xpath) { return findComponentByXPath(getApp(), xpath); }
 
     protected DesktopElement findComponentByXPath(DesktopElement component, String xpath) {
         if (component == null) { return null; }
@@ -189,8 +195,20 @@ public class DesktopConfig {
     protected static DesktopConfig parseJson(Reader reader) {
         DesktopConfig config = GSON.fromJson(reader, DesktopConfig.class);
 
-        // v3.7: allow data variables in config json for the "Aut" section
         final ExecutionContext context = ExecutionThread.get();
+
+        // v4.0: additional mixed-in parameters from JSON
+        if (config.defaultWaitMs == -1) {
+            config.defaultWaitMs = (int) (context != null ? context.getPollWaitMs() : getDefaultInt(POLL_WAIT_MS));
+        }
+
+        if (config.explicitWait == null) {
+            config.explicitWait = context != null ?
+                                  context.getBooleanData(EXPLICIT_WAIT, getDefaultBool(EXPLICIT_WAIT)) :
+                                  getDefaultBool(EXPLICIT_WAIT);
+        }
+
+        // v3.7: allow data variables in config json for the "Aut" section
         if (context != null) {
             Aut aut = config.getAut();
             aut.setArgs(context.replaceTokens(aut.getArgs()));

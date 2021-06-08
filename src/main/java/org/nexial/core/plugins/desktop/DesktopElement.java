@@ -41,6 +41,7 @@ import org.openqa.selenium.WebDriverException;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.interactions.Actions;
 import org.openqa.selenium.remote.RemoteWebElement;
+import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.winium.WiniumDriver;
 
 import javax.annotation.Nonnull;
@@ -52,8 +53,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 import static java.lang.String.format;
+import static org.nexial.core.NexialConst.Data.POLL_WAIT_MS;
 import static org.nexial.core.NexialConst.NL;
 import static org.nexial.core.SystemVariables.getDefaultBool;
+import static org.nexial.core.SystemVariables.getDefaultInt;
 import static org.nexial.core.plugins.desktop.DesktopConst.*;
 import static org.nexial.core.plugins.desktop.DesktopUtils.*;
 import static org.nexial.core.plugins.desktop.ElementType.*;
@@ -226,7 +229,7 @@ public class DesktopElement {
 
             // check if this component is a 'custom'
             String xpathCustom = containerXpath + "/*[@ControlType='ControlType.Custom']";
-            List<WebElement> customChildren = driver.findElements(By.xpath(xpathCustom));
+            List<WebElement> customChildren = findElements(xpathCustom);
             if (CollectionUtils.isNotEmpty(customChildren)) {
                 for (WebElement customChild : customChildren) {
                     String customChildId = ((RemoteWebElement) customChild).getId();
@@ -427,7 +430,7 @@ public class DesktopElement {
 
         component.inheritXPathGenerationStrategy(this);
         component.inheritLayout(this);
-        component.setElement(driver.findElement(By.xpath(component.getXpath())));
+        component.setElement(findElement(component.getXpath()));
         component.setContainer(this);
         component.collectLabelOverrides();
         overrideLabel(component);
@@ -702,15 +705,11 @@ public class DesktopElement {
         targetElement.click();
 
         try {
-            if (elementType == TypeAheadCombo) {
-                return targetElement.findElement(By.xpath(LOCATOR_EDITOR));
-            }
+            if (elementType == TypeAheadCombo) { return findElement(targetElement, LOCATOR_EDITOR); }
 
             // could be single select combo or date/time combo
             WebElement element = targetElement.findElement(By.xpath(LOCATOR_COMBOBOX));
-            if (elementType == DateTimeCombo && element != null) {
-                return element.findElement(By.xpath(LOCATOR_EDITOR));
-            }
+            if (elementType == DateTimeCombo && element != null) { return findElement(element, LOCATOR_EDITOR); }
 
             return element;
         } catch (NoSuchElementException e) {
@@ -961,9 +960,9 @@ public class DesktopElement {
             // click element
             if (isEnabled(element)) { element.click(); }
 
-            List<WebElement> children = element.findElements(By.xpath(LOCATOR_TEXTBOX));
+            List<WebElement> children = findElements(element, LOCATOR_TEXTBOX);
             if (CollectionUtils.isEmpty(children)) {
-                children = element.findElements(By.xpath(LOCATOR_CUSTOM));
+                children = findElements(element, LOCATOR_CUSTOM);
                 if (CollectionUtils.isEmpty(children)) { return false; }
                 // else, we found a CUSTOM under PANE, good to go (fingers crossed!)
             }
@@ -974,7 +973,7 @@ public class DesktopElement {
             this.elementType = Textbox;
             if (isEnabled(element)) { element.click(); }
 
-            List<WebElement> formattedEdits = element.findElements(By.xpath(LOCATOR_TEXTBOX));
+            List<WebElement> formattedEdits = findElements(element, LOCATOR_TEXTBOX);
             // this looks like a masked/formatted text box since it contains multiple levels of edits
             if (CollectionUtils.isNotEmpty(formattedEdits)) { this.elementType = FormattedTextbox; }
         } else {
@@ -1057,14 +1056,14 @@ public class DesktopElement {
 
         // good 'ole scan-and-determine like it was 2017
         // check for Edit
-        children = element.findElements(By.xpath(LOCATOR_EDITOR));
+        children = findElements(element, LOCATOR_EDITOR);
         if (CollectionUtils.isNotEmpty(children)) {
             elementType = StringUtils.contains(automationId, "DateTime") ? DateTimeCombo : TypeAheadCombo;
             return true;
         }
 
         // check for child List
-        children = element.findElements(By.xpath(LOCATOR_LIST));
+        children = findElements(element, LOCATOR_LIST);
         if (CollectionUtils.isNotEmpty(children)) {
             WebElement firstChild = children.get(0);
             if (isSelectionPatternAvailable(firstChild)) {
@@ -1079,7 +1078,7 @@ public class DesktopElement {
         }
 
         // check for child ComboBox
-        children = element.findElements(By.xpath(LOCATOR_COMBOBOX));
+        children = findElements(element, LOCATOR_COMBOBOX);
         if (CollectionUtils.isNotEmpty(children)) {
             if (StringUtils.contains(automationId, "DateTime")) {
                 elementType = DateTimeCombo;
@@ -1088,7 +1087,7 @@ public class DesktopElement {
 
             // check for Edit under Combo
             WebElement childCombo = children.get(0);
-            List<WebElement> editors = childCombo.findElements(By.xpath(LOCATOR_EDITOR));
+            List<WebElement> editors = findElements(childCombo, LOCATOR_EDITOR);
             if (CollectionUtils.isNotEmpty(editors)) {
                 // then        -> this is a date/time combo
                 elementType = DateTimeCombo;
@@ -1099,7 +1098,7 @@ public class DesktopElement {
         }
 
         // rare: check for nested radio button
-        children = element.findElements(By.xpath(LOCATOR_RADIO));
+        children = findElements(element, LOCATOR_RADIO);
         if (CollectionUtils.isNotEmpty(children)) {
             children.forEach(radio -> new DesktopElement(radio, this));
             elementType = null;
@@ -1194,7 +1193,7 @@ public class DesktopElement {
                 return true;
             }
 
-            List<WebElement> editors = firstChild.findElements(By.xpath(LOCATOR_EDITOR));
+            List<WebElement> editors = findElements(firstChild, LOCATOR_EDITOR);
             if (CollectionUtils.isNotEmpty(editors)) {
                 this.elementType = DateTimeCombo;
             } else {
@@ -1769,15 +1768,41 @@ public class DesktopElement {
     }
 
     protected void refetchComponents() {
-        if (StringUtils.isNotBlank(xpath)) { element = driver.findElement(By.xpath(xpath)); }
+        if (StringUtils.isNotBlank(xpath)) { element = findElement(xpath); }
         if (MapUtils.isEmpty(components)) { return; }
         components.forEach((label, component) -> {
             if (component.getElementType() != MenuItem) { component.refetchComponents(); }
         });
     }
 
-    protected void refreshElement() {
-        if (StringUtils.isNotBlank(xpath)) { setElement(driver.findElement(By.xpath(xpath)));}
+    protected void refreshElement() { if (StringUtils.isNotBlank(xpath)) { setElement(findElement(this.xpath)); } }
+
+    protected WebElement findElement(String locator) {
+        By by = By.xpath(locator);
+        return useExplicitWait() ?
+               DesktopCommand.newFluentWait(driver, getExplicitWaitMaxMs()).until(driver -> driver.findElement(by)) :
+               driver.findElement(by);
+    }
+
+    protected WebElement findElement(WebElement parent, String locator) {
+        By by = By.xpath(locator);
+        return useExplicitWait() ?
+               DesktopCommand.newFluentWait(driver, getExplicitWaitMaxMs()).until(driver -> parent.findElement(by)) :
+               parent.findElement(by);
+    }
+
+    protected List<WebElement> findElements(String locator) {
+        By by = By.xpath(locator);
+        return useExplicitWait() ?
+               DesktopCommand.newFluentWait(driver, getExplicitWaitMaxMs()).until(driver -> driver.findElements(by)) :
+               driver.findElements(by);
+    }
+
+    protected List<WebElement> findElements(WebElement parent, String locator) {
+        By by = By.xpath(locator);
+        return useExplicitWait() ?
+               DesktopCommand.newFluentWait(driver, getExplicitWaitMaxMs()).until(driver -> parent.findElements(by)) :
+               parent.findElements(by);
     }
 
     /** meant for TextBox or TextArea */
@@ -1840,6 +1865,16 @@ public class DesktopElement {
         if (extra.containsKey(preference)) { return BooleanUtils.toBoolean(extra.containsKey(preference)); }
         ExecutionContext context = ExecutionThread.get();
         return context != null && context.getBooleanData(preference, getDefaultBool(preference));
+    }
+
+    protected boolean useExplicitWait() {
+        ExecutionContext context = ExecutionThread.get();
+        return context != null && context.getBooleanData(EXPLICIT_WAIT, getDefaultBool(EXPLICIT_WAIT));
+    }
+
+    protected int getExplicitWaitMaxMs() {
+        ExecutionContext context = ExecutionThread.get();
+        return context != null ? (int) context.getPollWaitMs() : getDefaultInt(POLL_WAIT_MS);
     }
 
     protected static List<String> parseTextInputWithShortcuts(String text, boolean forceShortcuts) {
@@ -1955,7 +1990,7 @@ public class DesktopElement {
         if (StringUtils.isEmpty(afterShortcutDelete)) { return; }
 
         int previousValueCount;
-        List<WebElement> editables = target.findElements(By.xpath(LOCATOR_TEXTBOX));
+        List<WebElement> editables = findElements(target, LOCATOR_TEXTBOX);
         if (CollectionUtils.isNotEmpty(editables)) {
             previousValueCount = StringUtils.length(postClearFormattedTextbox(target));
         } else {
@@ -2094,7 +2129,7 @@ public class DesktopElement {
 
         // check for Edit
         // todo: need to implement for multi select combo
-        List<WebElement> children = this.element.findElements(By.xpath(LOCATOR_EDITOR));
+        List<WebElement> children = findElements(element, LOCATOR_EDITOR);
         if (CollectionUtils.isEmpty(children)) {
             elementType = SingleSelectCombo;
         } else {
@@ -2390,7 +2425,7 @@ public class DesktopElement {
         String firstChar = "" + text.charAt(0);
         String selectionScript = toShortcutText(firstChar);
 
-        List<WebElement> selectionCandidates = element.findElements(By.xpath("*[contains(@Name,'" + firstChar + "')]"));
+        List<WebElement> selectionCandidates = findElements(element, "*[contains(@Name,'" + firstChar + "')]");
         boolean useFirstChar = CollectionUtils.isEmpty(selectionCandidates);
         if (useFirstChar) {
             ConsoleUtils.log("No selections found under Combo '" + label + "'; " +

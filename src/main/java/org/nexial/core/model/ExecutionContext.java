@@ -1471,44 +1471,73 @@ public class ExecutionContext {
         return (Map<String, String>) mapData;
     }
 
+    @NotNull
     public String getStringConfig(String command, String profile, String key) {
-        Map<String, String> config = getProfileConfig(command, profile);
+        if (StringUtils.isBlank(key)) { throw new IllegalArgumentException("key is missing"); }
+
         String contextValue = getStringData(key, getDefault(key));
+        if (StringUtils.isBlank(profile)) { return contextValue; }
+
+        Map<String, String> config = getProfileConfig(command, profile);
         if (MapUtils.isEmpty(config)) { return contextValue; }
+
         return config.getOrDefault(key, contextValue);
     }
 
+    @NotNull
     public int getIntConfig(String command, String profile, String key) {
-        Map<String, String> config = getProfileConfig(command, profile);
+        if (StringUtils.isBlank(key)) { throw new IllegalArgumentException("key is missing"); }
+
         int contextValue = getIntData(key, getDefaultInt(key));
-        if (MapUtils.isEmpty(config) || StringUtils.isBlank(profile)) { return contextValue; }
+        if (StringUtils.isBlank(profile)) { return contextValue; }
+
+        Map<String, String> config = getProfileConfig(command, profile);
+        if (MapUtils.isEmpty(config)) { return contextValue; }
+
         String configValue = config.get(key);
         if (StringUtils.isBlank(configValue)) { return contextValue; }
+
         return NumberUtils.toInt(configValue, contextValue);
     }
 
+    @NotNull
     public double getDoubleConfig(String command, String profile, String key) {
-        Map<String, String> config = getProfileConfig(command, profile);
+        if (StringUtils.isBlank(key)) { throw new IllegalArgumentException("key is missing"); }
+
         double contextValue = getDoubleData(key, getDefaultDouble(key));
+        if (StringUtils.isBlank(profile)) { return contextValue; }
+
+        Map<String, String> config = getProfileConfig(command, profile);
         if (MapUtils.isEmpty(config) || StringUtils.isBlank(profile)) { return contextValue; }
+
         String configValue = config.get(withProfile(profile, key));
         if (StringUtils.isBlank(configValue)) { return contextValue; }
+
         return NumberUtils.toDouble(configValue, contextValue);
     }
 
+    @NotNull
     public boolean getBooleanConfig(String command, String profile, String key) {
-        Map<String, String> config = getProfileConfig(command, profile);
+        if (StringUtils.isBlank(key)) { throw new IllegalArgumentException("key is missing"); }
+
         boolean contextValue = getBooleanData(key, getDefaultBool(key));
+        if (StringUtils.isBlank(profile)) { return contextValue; }
+
+        Map<String, String> config = getProfileConfig(command, profile);
         if (MapUtils.isEmpty(config) || StringUtils.isBlank(profile)) { return contextValue; }
+
         String configValue = config.get(withProfile(profile, key));
         if (StringUtils.isBlank(configValue)) { return contextValue; }
+
         return BooleanUtils.toBoolean(configValue);
     }
 
+    @NotNull
     public boolean hasConfig(String command, String profile, String key) {
+        if (StringUtils.isBlank(key)) { return false; }
+
         Map<String, String> config = getProfileConfig(command, profile);
-        if (config.containsKey(key)) { return true; }
-        return hasData(key);
+        return config.containsKey(key) || hasData(key);
     }
 
     @NotNull
@@ -1531,6 +1560,7 @@ public class ExecutionContext {
         return "nexial.command" + CMD_PROFILE_SEP + command + "." + profile;
     }
 
+    @NotNull
     protected String handleCryptValue(String text) {
         if (StringUtils.isBlank(text)) { return text; }
         if (!StringUtils.contains(text, CRYPT_IND)) { return text; }

@@ -21,7 +21,6 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.http.client.fluent.Request;
 import org.jdom2.Document;
 import org.jdom2.JDOMException;
 import org.nexial.commons.proc.RuntimeUtils;
@@ -35,26 +34,24 @@ import org.openqa.selenium.WebDriverException;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import org.openqa.selenium.winium.WiniumDriver;
-import org.openqa.selenium.winium.WiniumDriverCommandExecutor;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
-import java.net.URL;
 import java.util.*;
 
 import static java.io.File.separator;
 import static java.lang.System.lineSeparator;
 import static org.nexial.core.NexialConst.DEF_CHARSET;
-import static org.nexial.core.NexialConst.GSON;
+import static org.nexial.core.SystemVariables.getDefaultInt;
 import static org.nexial.core.plugins.desktop.DesktopConst.*;
 import static org.nexial.core.plugins.desktop.ElementType.WINDOW;
 
 /**
  * The ephemeral data structure to track current state of a desktop application, particularly when navigating between
  * different containers within one application.
- *
+ * <p>
  * In order to support multiple applications within one execution, the concept of the "active", "declared",
  * "background" applications are introduced:<ul>
  * <li>active - the application currently being in used and referenced.  </li>
@@ -87,7 +84,7 @@ public class DesktopSession {
      * load a {@link DesktopElement} based on {@code appId}.  This {@code appId} references a JSON file, which
      * in turns contains all the necessary details to traverse through an application.  Some of the navigation details
      * will be derived along the way, as the app is being in used - some UI elements are dynamically created.
-     *
+     * <p>
      * The JSON file can be loaded via classpath resource or via Nexial property,
      * {@link DesktopConst#OPT_CONFIG_LOCATION_PREFIX} (latter given precedence).
      */
@@ -215,9 +212,7 @@ public class DesktopSession {
 
     public void terminateSession() {
         List<Integer> runningProcIds = RUNNING_INSTANCES.remove(exeFullPath);
-        if (CollectionUtils.isNotEmpty(runningProcIds)) {
-            runningProcIds.forEach(RuntimeUtils::terminateInstance);
-        }
+        if (CollectionUtils.isNotEmpty(runningProcIds)) { runningProcIds.forEach(RuntimeUtils::terminateInstance); }
 
         SESSIONS.remove(exeFullPath);
 
@@ -348,14 +343,10 @@ public class DesktopSession {
 
         FileReader cacheReader = null;
         try {
-            cacheReader = new FileReader(new File(cachePath));
-            DesktopConfig cache = GSON.fromJson(cacheReader, DesktopConfig.class);
-            if (cache == null) { return false; }
-
+            cacheReader = new FileReader(cachePath);
+            DesktopConfig cache = DesktopConfig.parseJson(cacheReader);
             DesktopElement app = cache.getApp();
-            if (app == null) { return false; }
-
-            if (cache.getAut() == null) { return false; }
+            if (app == null || cache.getAut() == null) { return false; }
 
             cache.setResourceBaseLocation(config.getResourceBaseLocation());
             cache.setFileBasedResource(true);
@@ -365,9 +356,7 @@ public class DesktopSession {
 
             // we want to only inherit the "common" components. The rest should come directly from application.json
             // (which is loaded into this.config)
-            app.getComponents().forEach((label, component) -> {
-                config.getApp().getComponents().put(label, component);
-            });
+            app.getComponents().forEach((label, component) -> config.getApp().getComponents().put(label, component));
 
             config.getApp().collectLabelOverrides();
             this.app = config.getApp();
@@ -459,16 +448,12 @@ public class DesktopSession {
     }
 
     protected static void updateImplicitWaitMs(DesktopConfig config, WiniumDriver driver) throws IOException {
-        if (config == null || driver == null) { return; }
-
-        int waitMs = config.getDefaultWaitMs();
-        if (waitMs < 1) { return; }
-
-        WiniumDriverCommandExecutor commandExecutor = (WiniumDriverCommandExecutor) driver.getCommandExecutor();
-        URL driverUrl = commandExecutor.getAddressOfRemoteServer();
-        String timeoutUrl = driverUrl.toString() + "/session/AwesomeSession/timeouts/implicit_wait";
-        String postBody = "{ \"SESSIONID\":\"AwesomeSession\", \"ms\":" + waitMs + " }";
-        Request.Post(timeoutUrl).bodyByteArray(postBody.getBytes()).execute().returnContent();
+        if (driver == null) { return; }
+        if (config == null) { return; }
+        // with explicit wait, we should set the implicit wait value on driver to something low, and let the
+        // corresponding waiter do retry-and-wait until max wait ms is reached
+        WiniumUtils.updateImplicitWaitMs(
+            driver, config.isExplicitWait() ? getDefaultInt(EXPLICIT_WAIT_MS) : config.getDefaultWaitMs());
     }
 
     protected static WebElement waitForElement(WiniumDriver driver, String xpath, int waitMs) {
@@ -476,21 +461,22 @@ public class DesktopSession {
         if (StringUtils.isBlank(xpath)) { return null; }
 
         By by = By.xpath(xpath);
-        WebDriverWait wait = new WebDriverWait(driver, waitMs / 1000);
-        WebElement waitFor = wait.until(webDriver -> {
+        // sleep in .25 second
+        return new WebDriverWait(driver, waitMs / 1000, 250).until(webDriver -> {
             try {
-                return webDriver.findElements(by)
-                                .stream()
+                return webDriver.findElements(by).stream()
+                                .filter(element -> element != null && element.isDisplayed())
                                 .findFirst()
-                                .orElseThrow(() -> new NoSuchElementException("Cannot locate an element using " + by));
+                                .orElseThrow(() -> new NoSuchElementException(
+                                    String.format("Cannot locate an element via %s within %s", xpath, waitMs)));
             } catch (WebDriverException e) {
-                ConsoleUtils.log(String.format("WebDriverException thrown by findElement(%s)", by));
+                ConsoleUtils.log(String.format("WebDriverException thrown by findElement(%s)", xpath));
                 throw e;
             }
         });
-
-        return waitFor != null && waitFor.isDisplayed() ? waitFor : null;
     }
+
+    protected boolean useExplicitWait() { return config.isExplicitWait(); }
 
     protected DesktopElement findContainer(String containerName, DesktopElement container) {
         if (StringUtils.isBlank(containerName)) { return null; }
@@ -649,8 +635,8 @@ public class DesktopSession {
         if (StringUtils.isBlank(aut.getPath())) { return; }
         if (StringUtils.isBlank(aut.getDotnetConfig())) { return; }
 
-        String dotNetcConfig = aut.getPath() + separator + aut.getDotnetConfig();
-        File dotNetConfigFile = new File(dotNetcConfig);
+        String dotNetConfig = aut.getPath() + separator + aut.getDotnetConfig();
+        File dotNetConfigFile = new File(dotNetConfig);
 
         try {
             String configContent = FileUtils.readFileToString(dotNetConfigFile, DEF_CHARSET);

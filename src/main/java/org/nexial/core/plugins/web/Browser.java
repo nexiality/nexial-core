@@ -72,6 +72,7 @@ import static org.nexial.core.NexialConst.BrowserType.*;
 import static org.nexial.core.NexialConst.Data.*;
 import static org.nexial.core.NexialConst.Web.*;
 import static org.nexial.core.SystemVariables.getDefaultBool;
+import static org.nexial.core.plugins.web.WebCommand.useExplicitWait;
 import static org.nexial.core.plugins.web.WebDriverCapabilityUtils.initCapabilities;
 import static org.nexial.core.utils.CheckUtils.requiresExecutableFile;
 import static org.openqa.selenium.PageLoadStrategy.EAGER;
@@ -317,9 +318,9 @@ public class Browser implements ForcefulTerminate {
                 log("setting browser page load timeout to %s ms", loadWaitMs);
             }
 
-            long pollWaitMs = context.getPollWaitMs();
-            boolean alwaysWait = context.getBooleanConfig("web", profile, WEB_ALWAYS_WAIT);
-            if (alwaysWait) {
+            long pollWaitMs = context.getIntConfig("web", profile, POLL_WAIT_MS);
+            boolean explicitWait = useExplicitWait(context, profile);
+            if (explicitWait) {
                 log("detected %s; use fluent-wait (up to %s ms) during web automation", WEB_ALWAYS_WAIT, pollWaitMs);
             } else {
                 boolean shouldWaitImplicitly = timeoutChangesEnabled && pollWaitMs > 0;

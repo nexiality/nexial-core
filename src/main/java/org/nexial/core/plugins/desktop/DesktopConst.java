@@ -68,13 +68,15 @@ public class DesktopConst {
     public static final String CURRENT_DESKTOP_HIER_TABLE_NAME = NS_DESKTOP + "hiertable.name";
 
     public static final String TABLE_CLICK_BEFORE_EDIT = registerSysVar(NS_TABLE + ".clickBeforeEdit", true);
-    public static final String CLICK_BEFORE_EDIT = registerSysVar(NS_DESKTOP + ".clickBeforeEdit", true);
     public static final String TABLE_TAB_AFTER_EDIT = registerSysVar(NS_TABLE + ".tabAfterEdit", false);
     public static final String SCREENSHOT_FULLSCREEN = registerSysVar(NS_DESKTOP + "fullScreenCapture", false);
     public static final String AUTO_CLEAR_MODAL_DIALOG = registerSysVar(NS_DESKTOP + "autoClearModalDialog", false);
     public static final String PREFER_BRC_OVER_CLICK = registerSysVar(NS_DESKTOP + "simulateClick", false);
     public static final String DIALOG_LOOKUP = registerSysVar(NS_DESKTOP + "dialogLookup", false);
+    public static final String CLICK_BEFORE_EDIT = registerSysVar(NS_DESKTOP + ".clickBeforeEdit", true);
     public static final String USE_TYPE_KEYS = registerSysVar(NS_DESKTOP + "useTypeKeys", false);
+    public static final String EXPLICIT_WAIT = registerSysVar(NS_DESKTOP + "explicitWait", false);
+    public static final String EXPLICIT_WAIT_MS = registerSysVar(NS_DESKTOP + "explicitWaitMs", 400);
 
     public static final String DEF_CONFIG_HOME = "/desktop/";
     public static final String DEF_CONFIG_FILENAME = "application.json";
@@ -234,13 +236,14 @@ public class DesktopConst {
     public static final String DESKTOP_CURRENT_TEXTPANE = NS_DESKTOP + "textpane";
 
     // ignore list
-    public static final List IGNORE_CONTROL_TYPES = Arrays.asList(SEPARATOR, IMAGE, TITLE_BAR, MENU_BAR, MENU_ITEM,
-                                                                  MENU, PROGRESS_BAR, TREE_ITEM);
-    public static final List IGNORE_TREE_CLASSNAMES = Arrays.asList("SysTreeView32", "SaveDialogPreviewMetadataInner",
-                                                                    "AppControlsModuleInner");
-    public static final List IGNORE_PANE_CLASSNAMES = Arrays.asList("ProperTreeHost", "DUIListView", "ReBarWindow32",
-                                                                    "ScrollBar");
-    public static final List IGNORE_TOOLBAR_CLASSNAMES = Arrays.asList("FolderBandModuleInner");
+    public static final List<String> IGNORE_CONTROL_TYPES = Arrays.asList(SEPARATOR, IMAGE, TITLE_BAR, MENU_BAR,
+                                                                          MENU_ITEM, MENU, PROGRESS_BAR, TREE_ITEM);
+    public static final List<String> IGNORE_TREE_CLASSNAMES = Arrays.asList("SysTreeView32",
+                                                                            "SaveDialogPreviewMetadataInner",
+                                                                            "AppControlsModuleInner");
+    public static final List<String> IGNORE_PANE_CLASSNAMES = Arrays.asList("ProperTreeHost", "DUIListView",
+                                                                            "ReBarWindow32", "ScrollBar");
+    public static final List<String> IGNORE_TOOLBAR_CLASSNAMES = Arrays.asList("FolderBandModuleInner");
 
     // testing/debugging purpose
     public static final int DEF_OUTPUT_LABEL_WIDTH = 30;
@@ -271,8 +274,9 @@ public class DesktopConst {
                                                       .registerTypeAdapterFactory(GSON_RTAF)
                                                       .create();
 
-    public static final String UNMATCHED_LABEL_PREFIX = "[[UNMATCHED]]";
     public static boolean AUTOSCAN_DEBUG = false;
+
+    public static final String UNMATCHED_LABEL_PREFIX = "[UNMATCHED]";
     public static final int POST_MENU_CLICK_WAIT_MS = 2000;
 
     public static final String CONTEXT_MENU_VIA_INDEX = "INDEX:";
@@ -342,10 +346,10 @@ public class DesktopConst {
     }
 
     public static String resolveHierHeaderRowXpath(boolean infragistic4) {
-        return (infragistic4 ? XPATH_HIER_HEADER_ROW_INFRAG4 : XPATH_FIRST_HIER_ROW)+"/*";
+        return (infragistic4 ? XPATH_HIER_HEADER_ROW_INFRAG4 : XPATH_FIRST_HIER_ROW) + "/*";
     }
 
     public static String resolveFirstHierRowXpath(boolean infragistic4) {
-        return (infragistic4 ? XPATH_FIRST_HIER_ROW_INFRAG4 : XPATH_FIRST_HIER_ROW)+"/*";
+        return (infragistic4 ? XPATH_FIRST_HIER_ROW_INFRAG4 : XPATH_FIRST_HIER_ROW) + "/*";
     }
 }

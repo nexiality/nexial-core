@@ -510,7 +510,7 @@ public class DesktopTable extends DesktopElement {
             }
 
             ConsoleUtils.log("editing " + msgPrefix2);
-            if (isInvokePatternAvailable(cellElement)) {
+            if (isInvokePatternAvailable(cellElement) && !DesktopUtils.isCheckboxOrRadio(cellElement)) {
                 new Actions(getDriver()).moveToElement(cellElement, 0, 2).click().perform();
                 ConsoleUtils.log("clicked at (0,0) on " + msgPrefix2);
             }
