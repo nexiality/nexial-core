@@ -17,13 +17,6 @@
 
 package org.nexial.core.tools;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.xssf.usermodel.XSSFCell;
@@ -37,49 +30,56 @@ import org.nexial.core.excel.Excel;
 import org.nexial.core.excel.Excel.Worksheet;
 import org.nexial.core.excel.ExcelAddress;
 
+import java.io.File;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
 import static java.io.File.separator;
 import static org.nexial.core.NexialConst.DEF_FILE_ENCODING;
 import static org.nexial.core.NexialConst.Project.*;
 
 public class DataVariableUpdaterTest {
-    private String searchFrom = ResourceUtils.getResourceFilePath("/DataVariableUpdaterTest/");
-    private String searchReplace = "nexial.browser=CENTREE.browser;" +
-                                   "nexial.browserstack.browser=CENTREE.browserstack.browser;" +
-                                   "nexial.failFast=CENTREE.failFast;" +
-                                   "nexial.lenientStringCompare=CENTREE.compare.lenient;" +
-                                   "nexial.pollWaitMs=CENTREE.pollWaitMs;" +
-                                   "nexial.runID.prefix=CENTREE.runID.prefix;" +
-                                   "nexial.scope.fallbackToPrevious=CENTREE.iteration.fallbackToPrevious;" +
-                                   "nexial.scope.iteration=CENTREE.iteration;" +
-                                   "nexial.textDelim=CENTREE.textDelim;" +
-                                   "nexial.verbose=CENTREE.verbose;" +
-                                   "nexial.web.alwaysWait=CENTREE.web.alwaysWait;" +
-                                   "nexial.ws.digest.user=CENTREE.ws.digest.user;" +
+    private final String searchFrom = ResourceUtils.getResourceFilePath("/DataVariableUpdaterTest/");
+    private final String searchReplace = "nexial.browser=CENTREE.browser;" +
+                                         "nexial.browserstack.browser=CENTREE.browserstack.browser;" +
+                                         "nexial.failFast=CENTREE.failFast;" +
+                                         "nexial.lenientStringCompare=CENTREE.compare.lenient;" +
+                                         "nexial.pollWaitMs=CENTREE.pollWaitMs;" +
+                                         "nexial.runID.prefix=CENTREE.runID.prefix;" +
+                                         "nexial.scope.fallbackToPrevious=CENTREE.iteration.fallbackToPrevious;" +
+                                         "nexial.scope.iteration=CENTREE.iteration;" +
+                                         "nexial.textDelim=CENTREE.textDelim;" +
+                                         "nexial.verbose=CENTREE.verbose;" +
+                                         "nexial.web.explicitWait=CENTREE.web.explicitWait;" +
+                                         "nexial.ws.digest.user=CENTREE.ws.digest.user;" +
 
-                                   "mydata=mifdb;" +
-                                   "mydata.treatNullAs=mifdb.treatNullAs;" +
-                                   "mydata.type=mifdb.type;" +
-                                   "mydata.url=mifdb.url;" +
+                                         "mydata=mifdb;" +
+                                         "mydata.treatNullAs=mifdb.treatNullAs;" +
+                                         "mydata.type=mifdb.type;" +
+                                         "mydata.url=mifdb.url;" +
 
-                                   "all.the.kings.horse=riddle;" +
-                                   "broken=break;" +
-                                   "couldn't put=rhyme2;" +
-                                   "dunn=hunt;" +
-                                   "gotten=taken;" +
-                                   "kingsman=King's Men;" +
-                                   "myData=His Data;" +
-                                   "ourData=Her Data;" +
-                                   "rotten=gone;" +
-                                   "actress=actor;" +
-                                   "agent=secret agent;" +
-                                   "resultset=My Result;" +
-                                   "mySQL=statement-one;" +
-                                   "a bunch of stuff=nothing to see;" +
-                                   "more stuff=a bit of everything;" +
+                                         "all.the.kings.horse=riddle;" +
+                                         "broken=break;" +
+                                         "couldn't put=rhyme2;" +
+                                         "dunn=hunt;" +
+                                         "gotten=taken;" +
+                                         "kingsman=King's Men;" +
+                                         "myData=His Data;" +
+                                         "ourData=Her Data;" +
+                                         "rotten=gone;" +
+                                         "actress=actor;" +
+                                         "agent=secret agent;" +
+                                         "resultset=My Result;" +
+                                         "mySQL=statement-one;" +
+                                         "a bunch of stuff=nothing to see;" +
+                                         "more stuff=a bit of everything;" +
 
-                                   "jimmy.johnson.*=john.williams.*;" +
-                                   "sandy.*=mandy's *;" +
-                                   "variable1=result1";
+                                         "jimmy.johnson.*=john.williams.*;" +
+                                         "sandy.*=mandy's *;" +
+                                         "variable1=result1";
 
     private DataVariableUpdater updater;
 
@@ -148,7 +148,7 @@ public class DataVariableUpdaterTest {
             cellData.add(row.stream().map(Excel::getCellValue).collect(Collectors.toList()));
         });
 
-        Assert.assertEquals("${CENTREE.web.alwaysWait}", cellData.get(0).get(4));
+        Assert.assertEquals("${CENTREE.web.explicitWait}", cellData.get(0).get(4));
         Assert.assertEquals("${His Data}", cellData.get(1).get(4));
         Assert.assertEquals("All the king's horses ${riddle}", cellData.get(2).get(1));
         Assert.assertEquals(", couldn't put ${rhyme2}… unless, ... ", cellData.get(2).get(4));
@@ -184,9 +184,9 @@ public class DataVariableUpdaterTest {
         System.out.println("projectPropContent = \n" + projectPropContent);
         String sep = StringUtils.contains(projectPropContent, "\r\n") ? "\r\n" : "\n";
 
-        Assert.assertEquals("CENTREE.compare.lenient=${CENTREE.web.alwaysWait}" + sep +
+        Assert.assertEquals("CENTREE.compare.lenient=${CENTREE.web.explicitWait}" + sep +
                             "CENTREE.runID.prefix=MyOneAndOnlyTest-Part2" + sep +
-                            "CENTREE.web.alwaysWait=true" + sep +
+                            "CENTREE.web.explicitWait=true" + sep +
                             "CENTREE.ws.digest.user=User1" + sep +
                             sep +
                             "CENTREE.browserstack.browser=chrome" + sep +
@@ -219,9 +219,9 @@ public class DataVariableUpdaterTest {
         Map<String, String> props = TextUtils.loadProperties(projectProps);
 
         Assert.assertNotNull(props);
-        Assert.assertEquals("${CENTREE.web.alwaysWait}", props.get("CENTREE.compare.lenient"));
+        Assert.assertEquals("${CENTREE.web.explicitWait}", props.get("CENTREE.compare.lenient"));
         Assert.assertEquals("MyOneAndOnlyTest-Part2", props.get("CENTREE.runID.prefix"));
-        Assert.assertEquals("true", props.get("CENTREE.web.alwaysWait"));
+        Assert.assertEquals("true", props.get("CENTREE.web.explicitWait"));
         Assert.assertEquals("User1", props.get("CENTREE.ws.digest.user"));
         Assert.assertEquals("chrome", props.get("CENTREE.browserstack.browser"));
         Assert.assertEquals("${CENTREE.browserstack.browser}", props.get("CENTREE.browser"));

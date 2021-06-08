@@ -451,9 +451,9 @@ public class TextUtilsTest {
 
     @Test
     public void testLoadProperties() throws Exception {
-        String propContent = "nexial.lenientStringCompare   =${nexial.web.alwaysWait}\n" +
+        String propContent = "nexial.lenientStringCompare   =${nexial.web.explicitWait}\n" +
                              "nexial.runID.prefix           =MyOneAndOnlyTest-Part2\n" +
-                             "nexial.web.alwaysWait         =true\n" +
+                             "nexial.web.explicitWait         =true\n" +
                              "nexial.ws.digest.user         =User1\n" +
                              "\n" +
                              "nexial.browserstack.browser   =chrome\n" +
@@ -485,7 +485,7 @@ public class TextUtilsTest {
         assertEquals("=[NULL]", propMap.get("mydata.treatNullAs"));
         assertEquals("=", propMap.get("broken"));
         assertEquals("", propMap.get("gotten"));
-        assertEquals("${nexial.web.alwaysWait}", propMap.get("nexial.lenientStringCompare"));
+        assertEquals("${nexial.web.explicitWait}", propMap.get("nexial.lenientStringCompare"));
         assertEquals("jdbc://myserver:1099/dbname;prop1=value1;prop2=#hash2;prop3=!what",
                      propMap.get("my.datasource.url"));
 
