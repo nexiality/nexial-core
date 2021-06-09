@@ -52,7 +52,6 @@ import org.openqa.selenium.Rectangle;
 import org.openqa.selenium.By.ByXPath;
 import org.openqa.selenium.interactions.Actions;
 import org.openqa.selenium.support.ui.FluentWait;
-import org.openqa.selenium.support.ui.WebDriverWait;
 import org.openqa.selenium.winium.WiniumDriver;
 
 import javax.annotation.Nonnull;
@@ -2211,7 +2210,8 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
                                        .pollingEvery(Duration.ofMillis(10))
                                        .ignoreAll(Arrays.asList(NotFoundException.class,
                                                                 StaleElementReferenceException.class,
-                                                                TimeoutException.class));
+                                                                TimeoutException.class,
+                                                                WebDriverException.class));
     }
 
     public List<WebElement> findElements(String locator) {
@@ -2278,10 +2278,10 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
         By by = findBy(locator);
         requiresNotNull(by, "Unsupported/unknown locator", locator);
 
-        WebDriverWait wait = new WebDriverWait(getDriver(), maxWaitMs / 1000);
+        FluentWait<WiniumDriver> waiter = newFluentWait(getDriver(), maxWaitMs);
         WebElement waitFor = parent != null ?
-                             wait.until(driver -> parent.findElement(by)) :
-                             wait.until(driver -> driver.findElement(by));
+                             waiter.until(driver -> parent.findElement(by)) :
+                             waiter.until(driver -> driver.findElement(by));
         return waitFor != null && waitFor.isDisplayed() ? waitFor : null;
     }
 
