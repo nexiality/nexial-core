@@ -200,7 +200,10 @@ private class MailinatorClient(val inbox: String, val subjectSearch: String, val
         messageIds.addAll(
             messages.asSequence()
                 .filterIsInstance<JSONObject>()
-                .filter { it.has("subject") && StringUtils.contains(it.getString("subject"), subjectSearch) }
+                .filter {
+                    it.has("subject") &&
+                    (StringUtils.isEmpty(subjectSearch) || StringUtils.contains(it.getString("subject"), subjectSearch))
+                }
                 .filter { it.has("seconds_ago") && it.getInt("seconds_ago") < (noOlderThanMinutes * 60) }
                 .map { it.getString("id") }.toList())
         disconnectReason = reasonOK

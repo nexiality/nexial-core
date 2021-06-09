@@ -730,9 +730,6 @@ public class WebServiceClient {
     protected byte[] harvestResponsePayload(HttpEntity responseEntity) throws IOException {
         if (responseEntity == null) { return null; }
 
-        //long contentLength = responseEntity.getContentLength();
-        //Header contentEncoding = responseEntity.getContentEncoding();
-        //String encoding = contentEncoding != null ? contentEncoding.getValue() : null;
         InputStream responseBody = responseEntity.getContent();
         if (responseBody == null) { return null; }
         return IOUtils.toByteArray(responseBody);

@@ -26,6 +26,8 @@ import org.jdom2.JDOMException;
 import org.nexial.commons.proc.RuntimeUtils;
 import org.nexial.commons.utils.FileUtil;
 import org.nexial.commons.utils.XmlUtils;
+import org.nexial.core.ExecutionThread;
+import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.plugins.xml.XmlCommand;
 import org.nexial.core.utils.ConsoleUtils;
 import org.openqa.selenium.By;
@@ -476,8 +478,6 @@ public class DesktopSession {
         });
     }
 
-    protected boolean useExplicitWait() { return config.isExplicitWait(); }
-
     protected DesktopElement findContainer(String containerName, DesktopElement container) {
         if (StringUtils.isBlank(containerName)) { return null; }
         if (container == null) { return null; }
@@ -537,7 +537,7 @@ public class DesktopSession {
         for (String label : componentLabels) {
             ThirdPartyComponent component = thirdPartyComponents.get(label);
             if (component == null) { continue; }
-            if (targetType.isAssignableFrom(component.getClass())) { return (T) component; }
+            if (targetType.isAssignableFrom(component.getClass())) { return prepThirdPartyComponent((T) component); }
         }
 
         return null;
@@ -546,7 +546,15 @@ public class DesktopSession {
     protected ThirdPartyComponent findThirdPartyComponentByName(String name) {
         if (StringUtils.isBlank(name)) { return null; }
         if (MapUtils.isEmpty(thirdPartyComponents)) { return null; }
-        return thirdPartyComponents.get(name);
+        return prepThirdPartyComponent(thirdPartyComponents.get(name));
+    }
+
+    protected <T extends ThirdPartyComponent> T prepThirdPartyComponent(T component) {
+        if (component == null) { return null; }
+        ExecutionContext context = ExecutionThread.get();
+        if (context != null) { component.init(context); }
+        if (driver != null) { component.winiumDriver = driver; }
+        return component;
     }
 
     protected void inspectCommonComponents() {

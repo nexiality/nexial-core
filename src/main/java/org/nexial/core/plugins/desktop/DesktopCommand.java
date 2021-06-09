@@ -589,7 +589,8 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
             updateDataVariable(var, dialogText);
             resultMsg = "Modal dialog text harvested and saved to '" + var + "'.";
         } else {
-            ConsoleUtils.log(context.getRunId(), "Unable to save var '" + var + "' since no modal dialog text is found");
+            ConsoleUtils.log(context.getRunId(),
+                             "Unable to save var '" + var + "' since no modal dialog text is found");
             resultMsg = "No modal dialog text found; likely the modal dialog is not cleared";
         }
 
@@ -675,7 +676,7 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
         return StepResult.success("type keys completed for " + keystrokes);
     }
 
-   public StepResult typeTextBox(String name, String text1, String text2, String text3, String text4) {
+    public StepResult typeTextBox(String name, String text1, String text2, String text3, String text4) {
         DesktopElement component = getRequiredElement(name, Textbox);
         if (component == null) { return StepResult.fail("Unable to derive component via '" + name + "'"); }
         return component.typeTextComponent(false, false, text1, text2, text3, text4);
@@ -1935,7 +1936,10 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
         return component;
     }
 
-    protected boolean useExplicitWait() { return context.getBooleanData(EXPLICIT_WAIT, getDefaultBool(EXPLICIT_WAIT));}
+    protected boolean useExplicitWait() {
+        return context == null ?
+               getDefaultBool(EXPLICIT_WAIT) : context.getBooleanData(EXPLICIT_WAIT, getDefaultBool(EXPLICIT_WAIT));
+    }
 
     protected File toScreenshot(WebElement elem, String file) {
         return screenshot(file, TextUtils.toList(elem.getAttribute("BoundingRectangle"), ",", true));
@@ -2276,7 +2280,8 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
 
         WebDriverWait wait = new WebDriverWait(getDriver(), maxWaitMs / 1000);
         WebElement waitFor = parent != null ?
-                             wait.until(driver -> parent.findElement(by)) : wait.until(driver -> driver.findElement(by));
+                             wait.until(driver -> parent.findElement(by)) :
+                             wait.until(driver -> driver.findElement(by));
         return waitFor != null && waitFor.isDisplayed() ? waitFor : null;
     }
 
@@ -2679,7 +2684,8 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
             WebElement editColumn = tableRow.getColumns().get(currentEditColumn);
             if (editColumn == null) { return; }
 
-            ConsoleUtils.log(context.getRunId(), "shortcut key pressed; setting focus to table at " + currentEditColumn);
+            ConsoleUtils.log(context.getRunId(),
+                             "shortcut key pressed; setting focus to table at " + currentEditColumn);
             if (table.isTreeView) {
                 winiumDriver.executeScript(toShortcuts("ESC"), editColumn);
             } else {

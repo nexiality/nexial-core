@@ -1,5 +1,6 @@
 package org.nexial.core.plugins.web
 
+import org.apache.commons.lang3.StringUtils
 import org.nexial.core.NexialConst.Web.OPT_DELAY_BROWSER
 import org.nexial.core.NexialConst.WebMail.MAX_DURATION
 import org.nexial.core.model.ExecutionContext
@@ -51,7 +52,8 @@ class WebMailCommand : BaseCommand() {
     fun search(`var`: String, profile: String, searchCriteria: String, duration: String): StepResult {
         requiresValidAndNotReadOnlyVariableName(`var`)
         requiresNotBlank(profile, "profile cannot be empty.")
-        requiresNotBlank(searchCriteria, "searchCriteria cannot be empty.")
+        // allow for empty search criteria (meaning, FIND ALL)
+        // requiresNotBlank(searchCriteria, "searchCriteria cannot be empty.")
 
         requiresPositiveNumber(duration, "duration must be a positive number: $duration")
         if (duration.length > 4) return StepResult.fail("Invalid time duration $duration.")
@@ -60,7 +62,8 @@ class WebMailCommand : BaseCommand() {
         if (time > MAX_DURATION) return StepResult.fail("Mails older than $MAX_DURATION minutes cannot be retrieved.")
 
         val mailProfile = newInstance(profile)
-        val emails = mailProfile.mailer.search(web!!, mailProfile, searchCriteria.trim(), time)
+        val subject = StringUtils.defaultIfBlank(searchCriteria, "").trim()
+        val emails = mailProfile.mailer.search(web!!, mailProfile, subject, time)
         return if (CollectionUtils.isEmpty(emails)) {
             context.removeData(`var`)
             StepResult.success("There are no emails matching the criteria.")
