@@ -609,6 +609,7 @@ public class WebServiceClient {
                                                 .setSoLinger(request.socketTimeout).build();
 
         HttpClientBuilder httpClientBuilder = HttpClients.custom()
+                                                         .setRequestExecutor(new NexialHttpRequestExecutor())
                                                          .setSSLSocketFactory(SSL_SF)
                                                          .setDefaultRequestConfig(requestConfig)
                                                          .setDefaultSocketConfig(socketConfig);

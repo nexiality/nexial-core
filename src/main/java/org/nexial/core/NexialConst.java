@@ -1850,6 +1850,7 @@ public final class NexialConst {
         // chrome
         public static final String CHROME_REMOTE_PORT = registerSysVar(NS_BROWSER + ".chrome.remote.port");
         public static final String CHROME_LOG_ENABLED = registerSysVar(NS_BROWSER + ".logChrome", false);
+        public static final String CHROME_ENABLE_EXTENSION = registerSysVar(NS_BROWSER + ".chrome.enableExtension", false);
 
         // edge
         public static final String EDGE_LOG_ENABLED = registerSysVar(NS_BROWSER + ".logEdge", false);

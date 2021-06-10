@@ -616,7 +616,13 @@ public class Browser implements ForcefulTerminate {
             options.addArguments("--no-sandbox");
         }
 
-        options.addArguments(this.chromeOptions);
+        List<String> configurableOptions = new ArrayList<>(this.chromeOptions);
+        if (resolveConfig(CHROME_ENABLE_EXTENSION, getDefaultBool(CHROME_ENABLE_EXTENSION))) {
+            configurableOptions.remove("disable-extensions");
+            configurableOptions.remove("disable-extensions-file-access-check");
+        }
+
+        options.addArguments(configurableOptions);
         // force the chrome native prompt to go silent
         options.addArguments("enable-strict-powerful-feature-restrictions");
 
