@@ -918,7 +918,24 @@ public class DesktopTable extends DesktopElement {
         return CollectionUtils.size(dataElements);
     }
 
-    private int resolveClickOffsetY(int row) { return headerHeight + (TABLE_ROW_HEIGHT * row) + (TABLE_ROW_HEIGHT / 2);}
+    /**
+     * this method accounts for scenario where the calculated y-offset has gone beyond the bounds of the containing
+     * grid component. In such case, this method will resolve to the last middle of the last row instead.
+     */
+    private int resolveClickOffsetY(int row) {
+        int offsetY = headerHeight + (TABLE_ROW_HEIGHT * row) + (TABLE_ROW_HEIGHT / 2);
+
+        String boundingRectangle = this.element.getAttribute("BoundingRectangle");
+        if (StringUtils.isBlank(boundingRectangle)) { return offsetY; }
+
+        String[] dimensions = StringUtils.split(boundingRectangle, ",");
+        if (ArrayUtils.getLength(dimensions) != 4) { return offsetY; }
+
+        int height = NumberUtils.toInt(dimensions[3], -1);
+        if (height == -1) { return offsetY; }
+
+        return (offsetY > height) ? height - (TABLE_ROW_HEIGHT/2) : offsetY;
+    }
 
     private String treatColumnHeader(String header) {return normalizeSpace ? TextUtils.xpathNormalize(header) : header;}
 

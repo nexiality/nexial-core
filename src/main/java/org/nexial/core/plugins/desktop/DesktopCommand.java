@@ -1690,6 +1690,22 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
         return StepResult.success("Table row count is saved to var " + var);
     }
 
+    public StepResult focusFirstTableRow() {
+        DesktopTable table = getCurrentTable();
+        requiresNotNull(table, "No Table element referenced or scanned");
+        setTableFocus(table);
+        getDriver().executeScript(toShortcuts("ESC", "ESC", "CTRL-HOME", "CTRL-SPACE"), table.getElement());
+        return StepResult.success();
+    }
+
+    public StepResult focusLastTableRow() {
+        DesktopTable table = getCurrentTable();
+        requiresNotNull(table, "No Table element referenced or scanned");
+        setTableFocus(table);
+        getDriver().executeScript(toShortcuts("ESC", "ESC", "CTRL-END", "HOME", "UP", "CTRL-SPACE"), table.getElement());
+        return StepResult.success();
+    }
+
     public StepResult useHierTable(String var, String name) { return saveHierTableMetaData(var, name); }
 
     public StepResult collapseHierTable() {
