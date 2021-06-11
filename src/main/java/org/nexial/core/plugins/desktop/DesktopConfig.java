@@ -199,7 +199,8 @@ public class DesktopConfig {
 
         // v4.0: additional mixed-in parameters from JSON
         if (config.defaultWaitMs == -1) {
-            config.defaultWaitMs = (int) (context != null ? context.getPollWaitMs() : getDefaultInt(POLL_WAIT_MS));
+            int pollWaiMs = getDefaultInt(POLL_WAIT_MS);
+            config.defaultWaitMs = context != null ? context.getIntData(POLL_WAIT_MS, pollWaiMs) : pollWaiMs;
         }
 
         if (config.explicitWait == null) {

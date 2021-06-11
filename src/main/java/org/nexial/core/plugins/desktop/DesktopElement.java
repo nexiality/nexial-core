@@ -1872,8 +1872,9 @@ public class DesktopElement {
     }
 
     protected int getExplicitWaitMaxMs() {
+        int pollWaitMs = getDefaultInt(POLL_WAIT_MS);
         ExecutionContext context = ExecutionThread.get();
-        return context != null ? (int) context.getPollWaitMs() : getDefaultInt(POLL_WAIT_MS);
+        return context != null ? context.getIntData(POLL_WAIT_MS, pollWaitMs) : pollWaitMs;
     }
 
     protected static List<String> parseTextInputWithShortcuts(String text, boolean forceShortcuts) {

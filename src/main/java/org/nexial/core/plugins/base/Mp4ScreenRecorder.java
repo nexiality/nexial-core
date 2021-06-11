@@ -17,27 +17,29 @@
 
 package org.nexial.core.plugins.base;
 
-import java.awt.*;
-import java.awt.image.*;
-import java.io.File;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-
-import org.apache.commons.lang3.RandomStringUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.SystemUtils;
-import org.nexial.core.NexialConst.Project;
-import org.nexial.core.ShutdownAdvisor;
-import org.nexial.core.utils.ConsoleUtils;
-
 import com.xuggle.mediatool.IMediaWriter;
 import com.xuggle.mediatool.MediaToolAdapter;
 import com.xuggle.mediatool.ToolFactory;
 import com.xuggle.xuggler.IMetaData;
 import com.xuggle.xuggler.IRational;
+import com.xuggle.xuggler.IStreamCoder;
+import org.apache.commons.beanutils.BeanUtils;
+import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.SystemUtils;
+import org.apache.commons.lang3.math.NumberUtils;
+import org.nexial.core.NexialConst.Project;
+import org.nexial.core.ShutdownAdvisor;
+import org.nexial.core.utils.ConsoleUtils;
+
+import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 
 import static com.xuggle.xuggler.ICodec.ID.CODEC_ID_H264;
-import static java.awt.image.BufferedImage.*;
+import static java.awt.image.BufferedImage.TYPE_3BYTE_BGR;
 import static java.io.File.separator;
 import static java.util.concurrent.TimeUnit.*;
 import static org.nexial.core.NexialConst.Data.RECORDER_TYPE_MP4;
@@ -53,7 +55,7 @@ public class Mp4ScreenRecorder extends MediaToolAdapter implements Runnable, Scr
     private IMediaWriter writer;
     private final ScheduledExecutorService pool;
     private long startTime;
-    private int frameCount = 0;
+    // private int frameCount = 0;
     private String targetVideoFile;
     private String title;
 
@@ -70,7 +72,19 @@ public class Mp4ScreenRecorder extends MediaToolAdapter implements Runnable, Scr
     }
 
     public Mp4ScreenRecorder() throws AWTException {
-        screenBounds = AwtUtils.getScreenDimension(0);
+        GraphicsDevice graphicsDevice = AwtUtils.getGraphicsDevice();
+
+        // try the `screen` property of this graphics device. If user is using Oracle/OpenJDK, then we'll likely get
+        // a value, if not just use 0 (default).
+        int screenId;
+        try {
+            String screenIdString = BeanUtils.getProperty(graphicsDevice, "screen");
+            screenId = NumberUtils.toInt(screenIdString, 0);
+        } catch (Throwable e) {
+            screenId = 0;
+        }
+
+        screenBounds = AwtUtils.getScreenDimension(screenId);
         robot = new Robot();
         pool = Executors.newScheduledThreadPool(1);
         ShutdownAdvisor.addAdvisor(this);
@@ -81,21 +95,15 @@ public class Mp4ScreenRecorder extends MediaToolAdapter implements Runnable, Scr
 
     @Override
     public void start() {
-        targetVideoFile =
-            Project.appendCapture(
-                StringUtils.appendIfMissing(
-                    System.getProperty(OPT_OUT_DIR, SystemUtils.getJavaIoTmpDir().getAbsolutePath()),
-                    separator)) +
-            separator +
-            RandomStringUtils.randomAlphabetic(10) +
-            "." + RECORDER_TYPE_MP4;
-        new File(targetVideoFile).getParentFile().mkdirs();
-        startCapture();
+        String outputDir = System.getProperty(OPT_OUT_DIR, SystemUtils.getJavaIoTmpDir().getAbsolutePath());
+        start(Project.appendCapture(StringUtils.appendIfMissing(outputDir, separator)) + separator +
+              RandomStringUtils.randomAlphabetic(10) + "." + RECORDER_TYPE_MP4);
     }
 
     @Override
     public void start(String fullpath) {
         targetVideoFile = fullpath;
+        new File(targetVideoFile).getParentFile().mkdirs();
         startCapture();
     }
 
@@ -122,7 +130,7 @@ public class Mp4ScreenRecorder extends MediaToolAdapter implements Runnable, Scr
         BufferedImage screen = robot.createScreenCapture(new Rectangle(screenBounds));
         BufferedImage bgrScreen = convertToType(screen, TYPE_3BYTE_BGR);
         writer.encodeVideo(0, bgrScreen, System.nanoTime() - startTime, NANOSECONDS);
-        frameCount++;
+        // frameCount++;
     }
 
     @Override
@@ -132,12 +140,10 @@ public class Mp4ScreenRecorder extends MediaToolAdapter implements Runnable, Scr
     public void forcefulTerminate() { stop(); }
 
     public static BufferedImage convertToType(BufferedImage sourceImage, int targetType) {
-        BufferedImage image;
-        if (sourceImage.getType() == targetType) { image = sourceImage; } else {
-            image = new BufferedImage(sourceImage.getWidth(), sourceImage.getHeight(), targetType);
-            image.getGraphics().drawImage(sourceImage, 0, 0, null);
-        }
+        if (sourceImage.getType() == targetType) { return sourceImage; }
 
+        BufferedImage image = new BufferedImage(sourceImage.getWidth(), sourceImage.getHeight(), targetType);
+        image.getGraphics().drawImage(sourceImage, 0, 0, null);
         return image;
     }
 
@@ -148,7 +154,8 @@ public class Mp4ScreenRecorder extends MediaToolAdapter implements Runnable, Scr
                               CODEC_ID_H264,
                               screenBounds.width / HIGH.getDivisor(),
                               screenBounds.height / HIGH.getDivisor());
-        writer.getContainer().getStream(0).getStreamCoder().setFrameRate(IRational.make(DEF_FRAME_RATE));
+        IStreamCoder streamCoder = writer.getContainer().getStream(0).getStreamCoder();
+        streamCoder.setFrameRate(IRational.make(DEF_FRAME_RATE));
 
         if (StringUtils.isNotEmpty(title)) {
             IMetaData metaData = writer.getContainer().getMetaData();
@@ -159,4 +166,3 @@ public class Mp4ScreenRecorder extends MediaToolAdapter implements Runnable, Scr
         pool.scheduleAtFixedRate(this, 0L, (long) (1000.0 / DEF_FRAME_RATE), MILLISECONDS);
     }
 }
-

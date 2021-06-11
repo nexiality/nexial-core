@@ -71,8 +71,7 @@ import static java.io.File.separator;
 import static java.lang.Integer.MAX_VALUE;
 import static java.lang.System.lineSeparator;
 import static org.apache.commons.lang3.SystemUtils.*;
-import static org.nexial.core.NexialConst.Data.BUILD_NO;
-import static org.nexial.core.NexialConst.Data.SCRIPT_REF_PREFIX;
+import static org.nexial.core.NexialConst.Data.*;
 import static org.nexial.core.NexialConst.Desktop.*;
 import static org.nexial.core.NexialConst.NL;
 import static org.nexial.core.NexialConst.OS;
@@ -702,7 +701,7 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
     public StepResult typeByLocator(String locator, String text) {
         requires(StringUtils.isNotEmpty(text), "empty text", text);
 
-        WebElement elem = findElement(locator);
+        WebElement elem = findElement(locator, 3);
         if (elem == null) { return StepResult.fail("element NOT found via " + locator); }
 
         type(elem, text);
@@ -753,7 +752,7 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
     public StepResult clickRadio(String name) { return click(name, Radio); }
 
     public StepResult clickByLocator(String locator) {
-        WebElement elem = findElement(locator);
+        WebElement elem = findElement(locator, 3);
         if (elem == null) { return StepResult.fail("element NOT found via " + locator);}
         click(elem, locator);
         return StepResult.success();
@@ -992,11 +991,7 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
         requires(StringUtils.isNotBlank(locator), "invalid locator", locator);
         requires(StringUtils.isNotBlank(var), "invalid variable", var);
 
-        // By findBy = findBy(locator);
-        // if (findBy == null) { return StepResult.fail("Unsupported/unknown locator " + locator); }
-
-        // List<WebElement> matched = getDriver().findElements(findBy);
-        List<WebElement> matched = findElements(locator, 2500);
+        List<WebElement> matched = findElements(locator, 2500L);
         int count = CollectionUtils.size(matched);
         context.setData(var, count);
         return StepResult.success("Matched count of " + count + " saved to data " + var);
@@ -2202,31 +2197,46 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
     }
 
     @NotNull
-    protected FluentWait<WiniumDriver> newFluentWait() { return newFluentWait(getDriver(), context.getPollWaitMs()); }
+    protected FluentWait<WiniumDriver> newFluentWait() {
+        return newFluentWait(getDriver(), context.getIntData(POLL_WAIT_MS, getDefaultInt(POLL_WAIT_MS)));
+    }
 
     @NotNull
     protected static FluentWait<WiniumDriver> newFluentWait(WiniumDriver driver, long waitMs) {
         return new FluentWait<>(driver).withTimeout(Duration.ofMillis(waitMs))
                                        .pollingEvery(Duration.ofMillis(10))
-                                       .ignoreAll(Arrays.asList(NotFoundException.class,
-                                                                StaleElementReferenceException.class,
-                                                                TimeoutException.class,
-                                                                WebDriverException.class));
+                                       .ignoreAll(Collections.singletonList(WebDriverException.class));
     }
 
-    public List<WebElement> findElements(String locator) {
+    public List<WebElement> findElements(String locator) { return findElements(locator, 1); }
+
+    public List<WebElement> findElements(String locator, int retryCount) {
         requiresNotBlank(locator, "invalid locator", locator);
 
         By findBy = findBy(locator);
         requiresNotNull(findBy, "Unknown/unsupported locator", locator);
 
-        try {
-            return useExplicitWait() ?
-                   newFluentWait().until(driver -> driver.findElements(findBy)) :
-                   getDriver().findElements(findBy);
-        } catch (NoSuchElementException e) {
-            return null;
+        int maxTries = Math.max(retryCount, 1);
+
+        for (int i = 0; i < maxTries; i++) {
+            // progressive wait longer at each loop
+            try { Thread.sleep(500L * (i + 1)); } catch (InterruptedException e) { }
+
+            List<WebElement> found = null;
+            if (useExplicitWait()) {
+                found = newFluentWait().until(driver -> driver.findElements(findBy));
+            } else {
+                try {
+                    found = getDriver().findElements(findBy);
+                } catch (NoSuchElementException e) {
+                    // keep trying...
+                }
+            }
+
+            if (CollectionUtils.isNotEmpty(found)) { return found; }
         }
+
+        return null;
     }
 
     public List<WebElement> findElements(String locator, long maxWaitMs) {
@@ -2242,8 +2252,10 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
         }
     }
 
-    protected WebElement findElement(String locator) {
-        List<WebElement> matches = findElements(locator);
+    protected WebElement findElement(String locator) { return findElement(locator, 1); }
+
+    protected WebElement findElement(String locator, int retryCount) {
+        List<WebElement> matches = findElements(locator, retryCount);
         return CollectionUtils.isEmpty(matches) ? null : matches.get(0);
     }
 
