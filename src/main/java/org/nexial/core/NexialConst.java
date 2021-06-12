@@ -26,7 +26,6 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.SystemUtils;
-import org.apache.commons.text.StringEscapeUtils;
 import org.jdom2.output.Format;
 import org.jdom2.output.XMLOutputter;
 import org.nexial.commons.utils.FileUtil;
@@ -376,7 +375,12 @@ public final class NexialConst {
                         "\\u2019='",
                         "\\u2026=...",
                         "\\u201C=\"",
-                        "\\u201D=\"");
+                        "\\u201D=\"",
+                        "‘='", "’='",
+                        "–=-",
+                        "“=\"", "”=\"",
+                        "…=..."
+                       );
     // we MUST not use OS-specific separator because the same log file MUST be usable for all OS;
     // the same log file may be viewed on different systems. As such, the `\n` approach seems to be the best option
     // since it's usable on all OSes. On Windows, user should be using notepad++ (or similar) instead of the standard
@@ -1987,7 +1991,6 @@ public final class NexialConst {
     private NexialConst() { }
 
     public static String handleWindowsChar(String name) {
-        name = StringEscapeUtils.escapeJava(name);
         Set<String> keys = replaceWindowsChars.keySet();
         for (String key : keys) { name = StringUtils.replace(name, key, replaceWindowsChars.get(key)); }
         return name;

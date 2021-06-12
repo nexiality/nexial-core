@@ -82,7 +82,8 @@ public class TestCase {
 
         boolean allPassed = true;
 
-        executionSummary.setName(name);
+        // replace any data variables here... thus finalizing the name
+        executionSummary.setName(context.replaceTokens(name));
         executionSummary.setExecutionLevel(ACTIVITY);
         executionSummary.setStartTime(System.currentTimeMillis());
         executionSummary.setTotalSteps(CollectionUtils.size(testSteps));

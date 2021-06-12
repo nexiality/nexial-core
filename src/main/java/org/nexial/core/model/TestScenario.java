@@ -100,7 +100,7 @@ public class TestScenario {
         boolean skipDueToEndLoop = false;
         boolean allPass = true;
 
-        executionSummary.setName(name);
+        executionSummary.setName(context.replaceTokens(name));
         executionSummary.setExecutionLevel(SCENARIO);
         executionSummary.setTestScript(worksheet.excel().getOriginalFile());
         executionSummary.setStartTime(System.currentTimeMillis());

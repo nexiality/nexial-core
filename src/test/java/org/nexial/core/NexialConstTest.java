@@ -46,8 +46,7 @@ public class NexialConstTest {
     @Test
     public void replaceWindowsChars() {
         Assert.assertEquals(
-            handleWindowsChar(
-                "‘Nexial’ – as the name reflects our desire and intention to perfect the “art” and “science” of Software Testing…"),
-            "'Nexial' - as the name reflects our desire and intention to perfect the \"art\" and \"science\" of Software Testing...");
+            "'Nexial' - reflects our desire and intention to perfect the \"art\" and \"science\" of Testing...",
+            handleWindowsChar("‘Nexial’ – reflects our desire and intention to perfect the “art” and “science” of Testing…"));
     }
 }
