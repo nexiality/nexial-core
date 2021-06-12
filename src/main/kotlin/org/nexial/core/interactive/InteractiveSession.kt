@@ -405,7 +405,11 @@ data class InteractiveSession(val context: ExecutionContext) {
 
     fun formatActivities(activities: MutableList<String>, preferredLength: Int, maxLength: Int): List<String> {
         val activityDisplay = activities.map { activity -> "${allActivities.getKey(activity)}:$activity" }.toList()
-        val longestActivityLength = min(activityDisplay.maxOf { display -> display.length}, preferredLength) + 2
+        val longestActivityLength =
+            (
+                if (activityDisplay.isEmpty()) preferredLength
+                else min(activityDisplay.maxOf { display -> display.length}, preferredLength)
+            ) + 2
 
         val headers2 = mutableListOf<String>()
         var currentLine = ""
