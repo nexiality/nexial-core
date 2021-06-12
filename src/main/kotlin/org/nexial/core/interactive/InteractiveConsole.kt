@@ -132,11 +132,14 @@ open class InteractiveConsole {
                 return
             }
 
+            val maxActivityLength = PROMPT_LINE_WIDTH - (MARGIN_LEFT + HDR_ACTIVITY).length
+            val preferredActivityLength = maxActivityLength / 3
+
             printConsoleHeaderTop(out, "NEXIAL INTERACTIVE", FILLER)
             printHeaderLine(out, HDR_SESSION, formatExecutionMeta(session.startTime))
             printHeaderLine(out, HDR_SCRIPT, formatTestScript(session.script))
             printHeaderLine(out, HDR_SCENARIO, session.scenario)
-            printHeaderLine(out, HDR_ACTIVITY, session.formatActivities(session.activities))
+            printHeaderLine(out, HDR_ACTIVITY, session.formatActivities(session.activities, preferredActivityLength, maxActivityLength))
             printHeaderLine(out, HDR_STEPS, TextUtils.toString(session.steps, ","))
 
             printConsoleSectionSeparator(out, "~~options", FILLER)
@@ -244,7 +247,7 @@ open class InteractiveConsole {
             tokens["cmd.quit"] = EXIT
             tokens["script"] = session.script ?: ""
             tokens["scenario"] = session.scenario ?: ""
-            tokens["activities"] = TextUtils.toString(session.formatActivities(session.activities), ", ")
+            tokens["activities"] = TextUtils.toString(session.activities, ", ")
             tokens["steps"] = TextUtils.toString(session.steps, ", ")
 
             printConsoleHeaderTop(out, "NEXIAL INTERACTIVE HELP", FILLER)

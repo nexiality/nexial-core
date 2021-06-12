@@ -41,6 +41,7 @@ import org.nexial.core.utils.InputFileUtils
 import java.io.File
 import java.io.File.separator
 import java.util.*
+import kotlin.math.min
 
 data class InteractiveSession(val context: ExecutionContext) {
 
@@ -402,10 +403,34 @@ data class InteractiveSession(val context: ExecutionContext) {
         activities.addAll(allActivities.values)
     }
 
-    //    private fun formatActivity(activity: Entry<Int, String>) = "${activity.key}/${activity.value}"
-    //    fun formatActivities(activities: MutableMap<Int, String>) = activities.map { activity -> formatActivity(activity) }
-    fun formatActivities(activities: MutableList<String>) =
-            activities.map { activity -> "${allActivities.getKey(activity)}/$activity" }
+    fun formatActivities(activities: MutableList<String>, preferredLength: Int, maxLength: Int): List<String> {
+        val activityDisplay = activities.map { activity -> "${allActivities.getKey(activity)}:$activity" }.toList()
+        val longestActivityLength = min(activityDisplay.maxOf { display -> display.length}, preferredLength) + 2
+
+        val headers2 = mutableListOf<String>()
+        var currentLine = ""
+        activityDisplay.forEach { display ->
+            val display2 = StringUtils.rightPad(display, longestActivityLength, " ")
+            when {
+                display2.length > maxLength                        -> {
+                    if (currentLine.isNotEmpty()) headers2.add(currentLine)
+                    currentLine = ""
+                    headers2.add(display2)
+                }
+                (currentLine.length + display2.length) > maxLength -> {
+                    if (currentLine.isNotEmpty()) headers2.add(currentLine)
+                    headers2.add(currentLine)
+                    currentLine = display2
+                }
+                else                                               -> {
+                    currentLine += display2
+                }
+            }
+        }
+
+        if (currentLine.isNotEmpty()) headers2.add(currentLine)
+        return headers2
+    }
 
     private val activityStepMap: MutableMap<String, MutableList<String>> = mutableMapOf()
 

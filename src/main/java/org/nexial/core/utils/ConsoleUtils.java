@@ -17,12 +17,6 @@
 
 package org.nexial.core.utils;
 
-import java.io.PrintStream;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Scanner;
-
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.BooleanUtils;
@@ -38,6 +32,12 @@ import org.nexial.core.model.TestStep;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.event.Level;
+
+import java.io.PrintStream;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Scanner;
 
 import static org.nexial.core.NexialConst.Data.QUIET;
 import static org.nexial.core.NexialConst.FlowControls.OPT_INSPECT_ON_PAUSE;
@@ -62,7 +62,7 @@ public final class ConsoleUtils {
     public static final String META_END = "] ";
     public static final String MULTI_SEP = " / ";
 
-    public static final int PROMPT_LINE_WIDTH = 80;
+    public static final int PROMPT_LINE_WIDTH = 100;
     public static final int PRINTABLE_LENGTH = PROMPT_LINE_WIDTH - MARGIN_LEFT.length() - MARGIN_RIGHT.length();
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ConsoleUtils.class);
