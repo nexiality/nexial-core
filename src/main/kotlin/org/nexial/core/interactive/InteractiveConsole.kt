@@ -133,7 +133,7 @@ open class InteractiveConsole {
             }
 
             val maxActivityLength = PROMPT_LINE_WIDTH - (MARGIN_LEFT + HDR_ACTIVITY).length
-            val preferredActivityLength = maxActivityLength / 3
+            val preferredActivityLength = (maxActivityLength / 3) + 1
 
             printConsoleHeaderTop(out, "NEXIAL INTERACTIVE", FILLER)
             printHeaderLine(out, HDR_SESSION, formatExecutionMeta(session.startTime))

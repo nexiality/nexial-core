@@ -408,7 +408,7 @@ data class InteractiveSession(val context: ExecutionContext) {
         val longestActivityLength =
             (
                 if (activityDisplay.isEmpty()) preferredLength
-                else min(activityDisplay.maxOf { display -> display.length}, preferredLength)
+                else min(activityDisplay.maxOf { display -> display.length }, preferredLength)
             ) + 2
 
         val headers2 = mutableListOf<String>()
@@ -418,12 +418,16 @@ data class InteractiveSession(val context: ExecutionContext) {
             when {
                 display2.length > maxLength                        -> {
                     if (currentLine.isNotEmpty()) headers2.add(currentLine)
-                    currentLine = ""
                     headers2.add(display2)
+                    currentLine = ""
+                }
+                display2.length > longestActivityLength           -> {
+                    if (currentLine.isNotEmpty()) headers2.add(currentLine)
+                    headers2.add(display2)
+                    currentLine = ""
                 }
                 (currentLine.length + display2.length) > maxLength -> {
                     if (currentLine.isNotEmpty()) headers2.add(currentLine)
-                    headers2.add(currentLine)
                     currentLine = display2
                 }
                 else                                               -> {

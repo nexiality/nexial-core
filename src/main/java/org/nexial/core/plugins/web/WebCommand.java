@@ -1701,25 +1701,49 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
     public StepResult waitForPopUp(String winId, String waitMs) {
         requires(StringUtils.isNotBlank(winId), "invalid window ID ", winId);
-        long waitMsLong = toPositiveLong(waitMs, "wait millisecond");
+        long waitMsLong = NumberUtils.isDigits(waitMs) ? NumberUtils.toLong(waitMs) : context.getPollWaitMs();
 
         ensureReady();
 
         alert.preemptiveDismissAlert();
 
-        if (browser.isRunIE()) {
-            return StepResult.warnUnsupportedFeature("waitForPopUp", driver);
-            // todo IE fix? need more testing
-        }
+        // todo IE fix? need more testing
+        if (browser.isRunIE()) { return StepResult.warnUnsupportedFeature("waitForPopUp", driver); }
 
-        // todo need to test
-        WebDriverWait wait = new WebDriverWait(driver, waitMsLong);
-        wait.until((Function<WebDriver, Object>) webDriver -> {
-            driver = driver.switchTo().window(winId);
-            return true;
+        // electron app or electron chromedriver tends to be slower... so we need to give some time
+        if (browser.isRunElectron()) { try { Thread.sleep(2000); } catch (InterruptedException e) { } }
+
+        boolean useIndex = NumberUtils.isDigits(winId);
+        int winIndex = NumberUtils.toInt(winId);
+
+        Boolean found = newFluentWait(waitMsLong).until(driver -> {
+            Set<String> handles = driver.getWindowHandles();
+            if (CollectionUtils.isEmpty(handles)) { return false; }
+
+            if (useIndex) {
+                if (handles.size() > winIndex) {
+                    String handle = IterableUtils.get(handles, winIndex);
+                    driver = driver.switchTo().window(handle);
+                    return true;
+                } else {
+                    return false;
+                }
+            } else {
+                String handle = handles.stream().filter(id -> StringUtils.equals(winId, id)).findFirst().orElse(null);
+                if (StringUtils.isBlank(handle)) {
+                    driver = driver.switchTo().window(winId);
+                    return true;
+                } else {
+                    return false;
+                }
+            }
         });
 
-        return StepResult.success("waited for popup window '" + winId + "'");
+        if (found) {
+            return StepResult.success("waited for popup window '5s'", winId);
+        } else {
+            return StepResult.fail("Unable to detect window/tab '%s' within %s ms", winId, waitMsLong);
+        }
     }
 
     public StepResult saveAllWindowNames(String var) {
