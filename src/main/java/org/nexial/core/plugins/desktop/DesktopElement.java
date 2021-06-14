@@ -1779,28 +1779,36 @@ public class DesktopElement {
     protected WebElement findElement(String locator) {
         By by = By.xpath(locator);
         return useExplicitWait() ?
-               DesktopCommand.newFluentWait(driver, getExplicitWaitMaxMs()).until(driver -> driver.findElement(by)) :
+               DesktopCommand.newFluentWait(driver, getExplicitWaitMaxMs())
+                             .withMessage("find element via locator " + locator)
+                             .until(driver -> driver.findElement(by)) :
                driver.findElement(by);
     }
 
     protected WebElement findElement(WebElement parent, String locator) {
         By by = By.xpath(locator);
         return useExplicitWait() ?
-               DesktopCommand.newFluentWait(driver, getExplicitWaitMaxMs()).until(driver -> parent.findElement(by)) :
+               DesktopCommand.newFluentWait(driver, getExplicitWaitMaxMs())
+                             .withMessage("find element via locator " + locator)
+                             .until(driver -> parent.findElement(by)) :
                parent.findElement(by);
     }
 
     protected List<WebElement> findElements(String locator) {
         By by = By.xpath(locator);
         return useExplicitWait() ?
-               DesktopCommand.newFluentWait(driver, getExplicitWaitMaxMs()).until(driver -> driver.findElements(by)) :
+               DesktopCommand.newFluentWait(driver, getExplicitWaitMaxMs())
+                             .withMessage("find element(s) via locator " + locator)
+                             .until(driver -> driver.findElements(by)) :
                driver.findElements(by);
     }
 
     protected List<WebElement> findElements(WebElement parent, String locator) {
         By by = By.xpath(locator);
         return useExplicitWait() ?
-               DesktopCommand.newFluentWait(driver, getExplicitWaitMaxMs()).until(driver -> parent.findElements(by)) :
+               DesktopCommand.newFluentWait(driver, getExplicitWaitMaxMs())
+                             .withMessage("find element(s) via locator " + locator)
+                             .until(driver -> parent.findElements(by)) :
                parent.findElements(by);
     }
 

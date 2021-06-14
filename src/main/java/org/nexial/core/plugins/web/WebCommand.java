@@ -1716,28 +1716,31 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         boolean useIndex = NumberUtils.isDigits(winId);
         int winIndex = NumberUtils.toInt(winId);
 
-        Boolean found = newFluentWait(waitMsLong).until(driver -> {
-            Set<String> handles = driver.getWindowHandles();
-            if (CollectionUtils.isEmpty(handles)) { return false; }
+        Boolean found = newFluentWait(waitMsLong)
+            .withMessage("window/tab of " + (useIndex ? "index " + winIndex : "ID " + winIndex))
+            .until(driver -> {
+                Set<String> handles = driver.getWindowHandles();
+                if (CollectionUtils.isEmpty(handles)) { return false; }
 
-            if (useIndex) {
-                if (handles.size() > winIndex) {
-                    String handle = IterableUtils.get(handles, winIndex);
-                    driver = driver.switchTo().window(handle);
-                    return true;
+                if (useIndex) {
+                    if (handles.size() > winIndex) {
+                        String handle = IterableUtils.get(handles, winIndex);
+                        driver = driver.switchTo().window(handle);
+                        return true;
+                    } else {
+                        return false;
+                    }
                 } else {
-                    return false;
+                    String handle =
+                        handles.stream().filter(id -> StringUtils.equals(winId, id)).findFirst().orElse(null);
+                    if (StringUtils.isBlank(handle)) {
+                        driver = driver.switchTo().window(winId);
+                        return true;
+                    } else {
+                        return false;
+                    }
                 }
-            } else {
-                String handle = handles.stream().filter(id -> StringUtils.equals(winId, id)).findFirst().orElse(null);
-                if (StringUtils.isBlank(handle)) {
-                    driver = driver.switchTo().window(winId);
-                    return true;
-                } else {
-                    return false;
-                }
-            }
-        });
+            });
 
         if (found) {
             return StepResult.success("waited for popup window '5s'", winId);
@@ -2879,7 +2882,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
     protected StepResult clickInternal(String locator) {
         try {
-            WebElement element = findFirstMatchedElement(locator);
+            WebElement element = findElement(locator);
             ConsoleUtils.log("clicking '" + locator + "'...");
             return clickInternal(element);
         } catch (IllegalArgumentException e) {
@@ -3061,7 +3064,9 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         long pollWaitMs = getPollWaitMs();
         try {
             return useExplicitWait() ?
-                   newFluentWait(pollWaitMs).until(driver -> findElements(driver, by)) : findElements(driver, by);
+                   newFluentWait(pollWaitMs).withMessage("find element(s) via locator " + locator)
+                                            .until(driver -> findElements(driver, by)) :
+                   findElements(driver, by);
         } catch (TimeoutException e) {
             String err = "Timed out while looking for web element(s) that match '" + locator + "'; " +
                          "${nexial.pollWaitMs}=" + pollWaitMs;
@@ -3078,7 +3083,8 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         long pollWaitMs = getPollWaitMs();
         try {
             WebElement target = useExplicitWait() ?
-                                newFluentWait(pollWaitMs).until(driver -> findElement(driver, by)) :
+                                newFluentWait(pollWaitMs).withMessage("find element via locator " + locator)
+                                                         .until(driver -> findElement(driver, by)) :
                                 findElement(driver, by);
             if (isHighlightEnabled() && target != null && target.isDisplayed()) { highlight(target); }
             return target;
@@ -3260,7 +3266,8 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
                     ConsoleUtils.log("browser stability unknown; exceeded allotted page load timeout");
                     return isBrowserLoadComplete();
                 } else {
-                    return new WebDriverWait(driver, maxWait).until(driver -> isBrowserLoadComplete());
+                    return new WebDriverWait(driver, maxWait).withMessage("is browser load complete")
+                                                             .until(driver -> isBrowserLoadComplete());
                 }
             }
 

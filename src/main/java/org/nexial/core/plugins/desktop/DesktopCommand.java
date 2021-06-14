@@ -2240,7 +2240,8 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
 
             List<WebElement> found = null;
             if (useExplicitWait()) {
-                found = newFluentWait().until(driver -> driver.findElements(findBy));
+                found = newFluentWait().withMessage("find element(s) via locator " + locator)
+                                       .until(driver -> driver.findElements(findBy));
             } else {
                 try {
                     found = getDriver().findElements(findBy);
@@ -2262,7 +2263,8 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
         requiresNotNull(findBy, "Unknown/unsupported locator", locator);
 
         try {
-            return newFluentWait(getDriver(), maxWaitMs).until(driver -> driver.findElements(findBy));
+            return newFluentWait(getDriver(), maxWaitMs).withMessage("find element(s) via locator " + locator)
+                                                        .until(driver -> driver.findElements(findBy));
         } catch (NoSuchElementException e) {
             return null;
         }
@@ -2286,7 +2288,8 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
 
         try {
             return useExplicitWait() ?
-                   newFluentWait().until(driver -> container.findElements(findBy)) :
+                   newFluentWait().withMessage("find element(s) via locator " + locator)
+                                  .until(driver -> container.findElements(findBy)) :
                    container.findElements(findBy);
         } catch (NoSuchElementException e) {
             return null;
