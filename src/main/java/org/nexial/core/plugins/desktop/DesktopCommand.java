@@ -1113,7 +1113,7 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
     }
 
     public StepResult assertLocatorPresent(String locator) {
-        WebElement elem = findElement(locator);
+        WebElement elem = findElement(locator, 3);
         return elem == null ?
                StepResult.fail("element NOT found via " + locator) :
                StepResult.success("element found via " + locator);

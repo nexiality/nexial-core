@@ -173,9 +173,9 @@ public final class ConsoleUtils {
 
         if (inspect) {
             // inspect mode
-            System.out.println("/------------------------------------------------------------------------------\\");
+            System.out.println("/" + StringUtils.repeat("-", PROMPT_LINE_WIDTH - 2) + "\\");
             System.out.println(MARGIN_RIGHT + centerPrompt("INSPECT ON PAUSE", PROMPT_LINE_WIDTH - 2) + MARGIN_RIGHT);
-            System.out.println("\\------------------------------------------------------------------------------/");
+            System.out.println("\\" + StringUtils.repeat("-", PROMPT_LINE_WIDTH - 2) + "/");
             System.out.println("> Enter statement to inspect.  Press ENTER or " + RESUME_FROM_PAUSE + " to resume " +
                                "execution" + NL);
             System.out.print("inspect-> ");
