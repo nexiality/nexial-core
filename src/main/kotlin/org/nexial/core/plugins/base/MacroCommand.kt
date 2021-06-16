@@ -18,6 +18,7 @@ package org.nexial.core.plugins.base
 
 import org.apache.commons.lang3.StringUtils
 import org.nexial.core.model.StepResult
+import org.nexial.core.utils.CheckUtils
 
 class MacroCommand : BaseCommand() {
     override fun getTarget() = "macro"
@@ -33,12 +34,19 @@ class MacroCommand : BaseCommand() {
             assertVarPresent(`var`)
         else {
             if (context.hasData(`var`))
-                StepResult.success("")
+                StepResult.success()
             else {
                 updateDataVariable(`var`, default)
                 StepResult.success("Data variable '$`var`' set to default value '$default'")
             }
         }
 
-    fun produces(`var`: String, value: String?): StepResult = save(`var`, value)
+    fun produces(`var`: String, value: String?): StepResult {
+        return if (CheckUtils.isValidVariable(value) && context.hasData(value)) {
+            context.setData(`var`, context.getObjectData(value))
+            StepResult.success()
+        } else {
+            save(`var`, value)
+        }
+    }
 }
