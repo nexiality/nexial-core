@@ -487,13 +487,17 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
                     ConsoleUtils.log(runId, message);
                 } else {
                     found = false;
-                    message += "NOT FOUND via '" + locator + "'";
-                    ConsoleUtils.error(runId, message);
+                    // no need to log since `assertElementPresent()` already does
+                    // message += "NOT FOUND via '" + locator + "'";
+                    // ConsoleUtils.error(runId, message);
                 }
             } catch (WebDriverException e) {
                 found = false;
-                message += "NOT FOUND via '" + locator + "': " + WebDriverExceptionHelper.resolveErrorMessage(e);
-                ConsoleUtils.error(runId, message);
+                // NoSuchElementException already logged from `findElement()`, called from `assertElementPresent()`
+                if (!(e instanceof NoSuchElementException)) {
+                    message += "NOT FOUND via '" + locator + "': " + WebDriverExceptionHelper.resolveErrorMessage(e);
+                    ConsoleUtils.error(runId, message);
+                }
             } catch (Throwable e) {
                 found = false;
                 message += "NOT FOUND via '" + locator + "': " + e.getMessage();
@@ -1234,7 +1238,10 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
             return StepResult.fail("Unable to find element via '" + locator + "' within allotted time");
         }
 
-        for (WebElement elem : elements) { clickInternal(elem); }
+        for (WebElement elem : elements) {
+            highlight(elem);
+            clickInternal(elem);
+        }
 
         return StepResult.success("clicked " + elements.size() + " element(s) via '" + locator + "'");
     }
@@ -1249,22 +1256,25 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         // if keys not specified, it is Equivalent to : web.click()
         if (StringUtils.isBlank(keys)) { return clickInternal(element); }
 
-        Actions actions = WebDriverUtils.sendKeysActions(driver, element, keys);
+        Actions actions = WebDriverUtils.clickWithKeysActions(driver, element, keys);
         if (actions != null) { actions.build().perform(); }
 
         return StepResult.success("clicked element '" + locator + "'");
     }
 
     public StepResult clickAndWait(String locator, String waitMs) {
-        long waitMs1 = StringUtils.isBlank(waitMs) || !NumberUtils.isDigits(waitMs) ?
-                       getPollWaitMs() : NumberUtils.toInt(waitMs);
+        boolean useExplicitWait = StringUtils.isBlank(waitMs);
+        if (useExplicitWait) {
+            return clickInternal(locator);
+        } else {
+            requiresPositiveNumber(waitMs, "Invalid wait time specified", waitMs);
+            long waitMs1 = NumberUtils.toInt(waitMs);
 
-        Timeouts timeouts = driver.manage().timeouts();
-        boolean timeoutChangesEnabled = browser.browserType.isTimeoutChangesEnabled();
-
-        // if browser supports implicit wait and we are not using explicit wait (`WEB_ALWAYS_WAIT`), then
-        // we'll change timeout's implicit wait time
-        if (timeoutChangesEnabled) { timeouts.pageLoadTimeout(waitMs1, MILLISECONDS); }
+            Timeouts timeouts = driver.manage().timeouts();
+            boolean timeoutChangesEnabled = browser.browserType.isTimeoutChangesEnabled();
+            // if browser supports implicit wait and we are not using explicit wait (`WEB_ALWAYS_WAIT`), then
+            // we'll change timeout's implicit wait time
+            if (timeoutChangesEnabled) { timeouts.pageLoadTimeout(waitMs1, MILLISECONDS); }
 
         try {
             StepResult result = clickInternal(locator);
@@ -1834,9 +1844,12 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
             // sometimes the `clear` invokes page action such as reload, in which case the target element might no longer
             // available (aka NoSuchElementException or StaleElementException)
             // ignore this... move on.
-            ConsoleUtils.log("Unable to reference target element; the containing page possibly reloaded");
+            ConsoleUtils.log("Unable to reference element (" + locator + "), possibly due to page loading; wait...");
             if (waitForElementPresent(locator, getPollWaitMs() + "").failed()) {
                 error("Web element '" + value + "' no longer available after its value is cleared");
+            } else {
+                // do what we came here for...
+                clearValue(element);
             }
             // proceed anyways...
         }
@@ -1844,7 +1857,6 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         if (StringUtils.isNotEmpty(value)) {
             // onchange event will not fire until a different element is selected
             if (context.getBooleanConfig("web", getProfile(), WEB_UNFOCUS_AFTER_TYPE)) {
-                // element.sendKeys();
                 new Actions(driver).moveToElement(element)
                                    .sendKeys(element, value)
                                    .pause(500)
@@ -2631,12 +2643,14 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         // since we are activating click event, there's a chance that the page would be updated and the element(s) might
         // no longer be valid. As such we need to refresh the element list each time one element is clicked
         int count = elements.size();
-        ConsoleUtils.log("executing JavaScript over " + count + " elements (" + locator + ")...");
+        if (context.isVerbose()) {
+            ConsoleUtils.log("executing JavaScript over " + count + " elements (" + locator + ")...");
+        }
 
         for (int i = 0; i < count; i++) {
             elements = findElements(locator);
             if (CollectionUtils.size(elements) > i) {
-                ConsoleUtils.log("\t...executing JavaScript over element " + (i + 1));
+                if (context.isVerbose()) { ConsoleUtils.log("\t...executing JavaScript over element " + (i + 1)); }
                 jsExecutor.executeScript(script, elements.get(i));
                 // less than 100 ms is not waiting...
                 if (inBetweenWaitMs > 100) { waitFor(inBetweenWaitMs); }
@@ -2895,7 +2909,6 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         if (element == null) { return StepResult.fail("Unable to obtain element"); }
 
         scrollIntoView(element);
-        highlight(element);
 
         // Nexial configure "preference" for each browser to use JS click on not. However, we need to honor user's
         // wish NOT to use JS click if they had configured their test as such
@@ -3487,15 +3500,31 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     protected void highlight(WebElement element) {
         if (!isHighlightEnabled()) { return; }
         if (element == null) { return; }
-        // if (!element.isDisplayed()) { return; }
 
         // if we can't scroll to it, then we won't highlight it
         try {
             if (scrollTo((Locatable) element)) {
                 int waitMs = context.getIntConfig(getTarget(), getProfile(), HIGHLIGHT_WAIT_MS);
                 String highlight = context.getStringConfig(getTarget(), getProfile(), HIGHLIGHT_STYLE);
-                // JsLib.highlight(jsExecutor, () -> JsLib.highlight(waitMs), element, highlight);
-                jsExecutor.executeScript(JsLib.highlight(waitMs), element, highlight);
+                if (StringUtils.isNotBlank(highlight)) {
+                    StringBuilder turnOn = new StringBuilder("var elem = arguments[0];");
+                    StringBuilder turnOff = new StringBuilder("setTimeout(function() { ");
+                    Map<String, String> highlightSettings = TextUtils.toMap(highlight.trim(), ";", ":");
+                    highlightSettings.keySet().forEach(key -> {
+                        if (StringUtils.isNotBlank(key)) {
+                            String prop = key.trim();
+                            turnOn.append("let _").append(prop).append("=elem.style.").append(prop).append("||'';")
+                                  .append("elem.style.").append(prop).append("='")
+                                  .append(StringUtils.trim(highlightSettings.get(key))).append("';");
+                            turnOff.append("elem.style.").append(prop).append("=_").append(prop).append(";");
+                        }
+                    });
+
+                    turnOff.append(" }, ").append(waitMs).append(");");
+
+                    jsExecutor.executeScript(turnOn + "\n" + turnOff, element);
+                    // jsExecutor.executeScript(JsLib.highlight(waitMs), element, highlight);
+                }
             }
         } catch (WebDriverException e) {
             // ideally we should be able to scroll and perform highlighting... but some (misbehaving) apps

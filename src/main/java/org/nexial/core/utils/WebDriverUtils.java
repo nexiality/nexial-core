@@ -110,11 +110,9 @@ public final class WebDriverUtils {
         return actions;
     }
 
-    public static Actions sendKeysActions(WebDriver driver, WebElement element, String keystrokes) {
+    public static Actions clickWithKeysActions(WebDriver driver, WebElement element, String keystrokes) {
         if (driver == null) { return null; }
         if (StringUtils.isEmpty(keystrokes)) { return null; }
-
-        Map<String, CharSequence> controlKeyMapping = CONTROL_KEY_MAPPING;
 
         Actions actions = new Actions(driver);
         Stack<CharSequence> controlKeys = new Stack<>();
@@ -126,7 +124,7 @@ public final class WebDriverUtils {
             if (StringUtils.isBlank(nextKeyStroke)) { break; }
 
             String keystrokeId = CTRL_KEY_START + nextKeyStroke + CTRL_KEY_END;
-            CharSequence controlKey = controlKeyMapping.get(keystrokeId);
+            CharSequence controlKey = CONTROL_KEY_MAPPING.get(keystrokeId);
             if (controlKey == null) { throw new RuntimeException("Unsupported/unknown key " + keystrokeId); }
 
             controlKeys.push(controlKey);

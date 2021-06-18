@@ -17,13 +17,13 @@
 
 package org.nexial.core.variable;
 
-import java.io.File;
-
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.SystemUtils;
 import org.nexial.core.ExecutionThread;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.utils.ConsoleUtils;
+
+import java.io.File;
 
 import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.NexialConst.Project.appendCapture;
@@ -38,14 +38,8 @@ public class Syspath {
         ExecutionContext context = ExecutionThread.get();
 
         String executionData = null;
-        if (context != null && context.getExecDef() != null) {
-            executionData = context.getExecDef().getTestScript();
-        }
-
+        if (context != null && context.getExecDef() != null) { executionData = context.getExecDef().getTestScript(); }
         if (executionData == null) { executionData = getExecutionData(OPT_INPUT_EXCEL_FILE); }
-
-        ConsoleUtils.log(TOKEN_FUNCTION_START + "syspath|script" + TOKEN_FUNCTION_END + ": value=" + executionData);
-
         return evaluateScope(scope, executionData);
     }
 
@@ -53,14 +47,8 @@ public class Syspath {
         ExecutionContext context = ExecutionThread.get();
 
         String executionData = null;
-        if (context != null && context.getExecDef() != null) {
-            executionData = context.getExecDef().getPlanFile();
-        }
-
+        if (context != null && context.getExecDef() != null) { executionData = context.getExecDef().getPlanFile(); }
         if (executionData == null) { executionData = getExecutionData(OPT_INPUT_PLAN_FILE); }
-
-        ConsoleUtils.log(TOKEN_FUNCTION_START + "syspath|plan" + TOKEN_FUNCTION_END + ": value=" + executionData);
-
         return evaluateScope(scope, executionData);
     }
 

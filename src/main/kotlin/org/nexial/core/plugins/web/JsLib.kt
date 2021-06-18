@@ -58,10 +58,10 @@ object JsLib {
                            "}"
 
     @JvmStatic
-    fun highlight(waitMs: Int) = "var ws = arguments[0];" +
-                                 "var oldStyle = arguments[0].getAttribute('style') || '';" +
-                                 "ws.setAttribute('style', arguments[1]);" +
-                                 "setTimeout(function () { ws.setAttribute('style', oldStyle); }, " + waitMs + ");"
+    fun highlight(waitMs: Int) = "var elem = arguments[0];" +
+                                 "var oldBgColor = elem.style.backgroundColor || '';" +
+                                 "elem.style.backgroundColor = arguments[1];" +
+                                 "setTimeout(function () { elem.style.backgroundColor = oldBgColor; }, " + waitMs + ");"
 
     @JvmStatic
     fun highlight(exec:JavascriptExecutor, js: () -> String, vararg arguments: Any?): Any? =

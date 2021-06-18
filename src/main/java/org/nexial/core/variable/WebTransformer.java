@@ -242,6 +242,36 @@ public class WebTransformer<T extends WebDataType> extends Transformer<T> {
 
     public TextDataType text(T data) { return super.text(data); }
 
+    public WebDataType check(T data, String locator) {
+        if (data == null || data.getValue() == null) { return null; }
+
+        ExecutionContext context = ExecutionThread.get();
+        WebCommand webCommand = resolveWebCommand();
+
+        StepResult stepResult;
+        try {
+            stepResult = webCommand.checkAll(locator, context.getPollWaitMs() + "");
+        } catch (Exception e) {
+            stepResult = new StepResult(false, resolveErrorMessage(e), null);
+        }
+        return saveResult(data, "check(" + locator + ")", stepResult);
+    }
+
+    public WebDataType uncheck(T data, String locator) {
+        if (data == null || data.getValue() == null) { return null; }
+
+        ExecutionContext context = ExecutionThread.get();
+        WebCommand webCommand = resolveWebCommand();
+
+        StepResult stepResult;
+        try {
+            stepResult = webCommand.uncheckAll(locator, context.getPollWaitMs() + "");
+        } catch (Exception e) {
+            stepResult = new StepResult(false, resolveErrorMessage(e), null);
+        }
+        return saveResult(data, "uncheck(" + locator + ")", stepResult);
+    }
+
     public TextDataType allPass(T data) throws TypeConversionException {
         if (data == null || data.getValue() == null) { return new TextDataType("false"); }
         return new TextDataType(data.isAllPass() + "");

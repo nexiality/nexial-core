@@ -2270,7 +2270,7 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
         }
     }
 
-    protected WebElement findElement(String locator) { return findElement(locator, 1); }
+    protected WebElement findElement(String locator) { return findElement(locator, 3); }
 
     protected WebElement findElement(String locator, int retryCount) {
         List<WebElement> matches = findElements(locator, retryCount);
