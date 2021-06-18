@@ -1276,14 +1276,15 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
             // we'll change timeout's implicit wait time
             if (timeoutChangesEnabled) { timeouts.pageLoadTimeout(waitMs1, MILLISECONDS); }
 
-        try {
-            StepResult result = clickInternal(locator);
-            return result.failed() ? result : StepResult.success("clicked-and-waited '" + locator + "'");
-        } finally {
-            if (timeoutChangesEnabled) {
-                timeouts.pageLoadTimeout(context.getIntConfig("web", profile, WEB_PAGE_LOAD_WAIT_MS), MILLISECONDS);
-            } else {
-                waitForBrowserStability(waitMs1);
+            try {
+                StepResult result = clickInternal(locator);
+                return result.failed() ? result : StepResult.success("clicked-and-waited '" + locator + "'");
+            } finally {
+                if (timeoutChangesEnabled) {
+                    timeouts.pageLoadTimeout(context.getIntConfig("web", profile, WEB_PAGE_LOAD_WAIT_MS), MILLISECONDS);
+                } else {
+                    waitForBrowserStability(waitMs1);
+                }
             }
         }
     }
