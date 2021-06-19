@@ -3129,7 +3129,12 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
     protected String getElementText(String locator) {
         try {
-            return toElement(locator).getText();
+            WebElement element = toElement(locator);
+            if (StringUtils.equalsIgnoreCase(element.getTagName(), "SELECT")) {
+                return new RegexAwareSelect(element).getFirstSelectedOption().getText();
+            }
+
+            return element.getText();
         } catch (NoSuchElementException e) {
             String error = StringUtils.substringBefore(e.getMessage(), "\n");
             TestStep testStep = context.getCurrentTestStep();
