@@ -57,6 +57,7 @@ object JsLib {
                            "   }" +
                            "}"
 
+    // todo: no longer in use; candidate for deletion
     @JvmStatic
     fun highlight(waitMs: Int) = "var elem = arguments[0];" +
                                  "var oldBgColor = elem.style.backgroundColor || '';" +
