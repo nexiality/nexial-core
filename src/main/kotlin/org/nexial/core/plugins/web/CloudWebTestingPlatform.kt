@@ -104,22 +104,20 @@ abstract class CloudWebTestingPlatform protected constructor(protected var conte
             val browserType = context.browserType
             if (StringUtils.isBlank(browserType)) return
 
-            // null browser means no web command yet.
-            val browser = context.browser ?: return
-
             // special case for BrowserStack and CrossBrowserTesting
             // https://www.browserstack.com/automate/rest-api
 
             // this means we were running browser in this script.. now let's report status
-            if (browser.isRunBrowserStack &&
-                isReportStatusMatchingScope(targetScope, context.getStringData(BrowserStack.KEY_STATUS_SCOPE,
-                                                                               SCOPE_DEFAULT))) {
+            val browser = BrowserType.valueOf(browserType)
+            if (browser == BrowserType.browserstack &&
+                isReportStatusMatchingScope(targetScope,
+                                            context.getStringData(BrowserStack.KEY_STATUS_SCOPE, SCOPE_DEFAULT))) {
                 BrowserStackHelper.reportExecutionStatus(context, summary)
             }
 
-            if (browser.isRunCrossBrowserTesting &&
-                isReportStatusMatchingScope(targetScope, context.getStringData(CrossBrowserTesting.KEY_STATUS_SCOPE,
-                                                                               SCOPE_DEFAULT))) {
+            if (browser == BrowserType.crossbrowsertesting &&
+                isReportStatusMatchingScope(targetScope,
+                                            context.getStringData(CrossBrowserTesting.KEY_STATUS_SCOPE, SCOPE_DEFAULT))) {
                 CrossBrowserTestingHelper.reportExecutionStatus(context, summary)
             }
         }

@@ -49,19 +49,19 @@ public class DesktopLoginForm extends LoginForm {
 
         // prompted to login, let's do it!
         String xpath = xpaths.get(USERNAME);
-        WebElement elemUsername = findElement(loginDialog, xpath);
+        WebElement elemUsername = findElement(loginDialog, xpath, 1);
         if (elemUsername == null) { return StepResult.fail("EXPECTED element Username not found via " + xpath); }
 
         xpath = xpaths.get(PASWORD);
-        WebElement elemPassword = findElement(loginDialog, xpath);
+        WebElement elemPassword = findElement(loginDialog, xpath, 1);
         if (elemPassword == null) { return StepResult.fail("EXPECTED element Password not found via " + xpath); }
 
         xpath = xpaths.get(BTN_LOGIN);
-        WebElement elemLogin = findElement(loginDialog, xpath);
+        WebElement elemLogin = findElement(loginDialog, xpath, 1);
         if (elemLogin == null) { return StepResult.fail("EXPECTED element Login button not found via " + xpath); }
 
         xpath = xpaths.get(BTN_CANCEL);
-        WebElement elemCancel = findElement(loginDialog, xpath);
+        WebElement elemCancel = findElement(loginDialog, xpath, 1);
         if (elemCancel == null) { return StepResult.fail("EXPECTED element Cancel button not found via " + xpath); }
 
         WiniumDriver driver = component.getDriver();

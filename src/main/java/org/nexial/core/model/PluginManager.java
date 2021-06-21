@@ -134,11 +134,11 @@ public class PluginManager implements ApplicationContextAware {
     }
 
     protected Browser initBrowser(String profile) {
-        if (StringUtils.isBlank(profile)) { profile = CMD_PROFILE_DEFAULT; }
-        if (profileBrowsers.containsKey(profile)) { return profileBrowsers.get(profile); }
+        Browser browser = getBrowser(profile);
+        if (browser != null) { return browser; }
 
         // create new Browser instance for "prototype-scoped" bean
-        Browser browser = springContext.getBean("browserTemplate", Browser.class);
+        browser = springContext.getBean("browserTemplate", Browser.class);
         browser.setProfile(profile);
         browser.setContext(context);
         if (!context.isDelayBrowser()) { browser.ensureWebDriverReady(); }
@@ -146,5 +146,12 @@ public class PluginManager implements ApplicationContextAware {
         return browser;
     }
 
-    protected Browser getBrowser() { return initBrowser(CMD_PROFILE_DEFAULT); }
+    protected Browser getBrowser(String profile) {
+        if (StringUtils.isBlank(profile)) { profile = CMD_PROFILE_DEFAULT; }
+        return profileBrowsers.get(profile);
+    }
+
+    // protected Browser getBrowser() { return initBrowser(CMD_PROFILE_DEFAULT); }
+
+    public void clearBrowser(String profile) { profileBrowsers.remove(profile); }
 }

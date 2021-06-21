@@ -379,7 +379,7 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
                 xpath += "*[@ControlType='ControlType.MenuItem' and @Name='" + item + "']";
             }
 
-            WebElement menuItem = menuParent.findElement(By.xpath(xpath));
+            WebElement menuItem = findElement(menuParent, xpath);
             if (menuItem == null) {
                 throw new IllegalArgumentException("Unable to derive menu item " + item + " from target item");
             }
@@ -388,8 +388,6 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
             menuParent = menuItem;
         }
     }
-
-    // public StepResult contextMenu(String name, String menu) { return contextMenuOffset(name, menu, "", ""); }
 
     public StepResult contextMenu(String name, String menu, String xOffset, String yOffset) {
         requiresNotBlank(name, "Invalid name/label", name);
@@ -701,7 +699,7 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
     public StepResult typeByLocator(String locator, String text) {
         requires(StringUtils.isNotEmpty(text), "empty text", text);
 
-        WebElement elem = findElement(locator, 3);
+        WebElement elem = findElement(locator);
         if (elem == null) { return StepResult.fail("element NOT found via " + locator); }
 
         type(elem, text);
@@ -2233,21 +2231,18 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
         requiresNotNull(findBy, "Unknown/unsupported locator", locator);
 
         int maxTries = Math.max(retryCount, 1);
+        FluentWait<WiniumDriver> waiter = newFluentWait().withMessage("find element(s) via locator " + locator);
 
         for (int i = 0; i < maxTries; i++) {
             // progressive wait longer at each loop
             try { Thread.sleep(500L * (i + 1)); } catch (InterruptedException e) { }
 
             List<WebElement> found = null;
-            if (useExplicitWait()) {
-                found = newFluentWait().withMessage("find element(s) via locator " + locator)
-                                       .until(driver -> driver.findElements(findBy));
-            } else {
-                try {
-                    found = getDriver().findElements(findBy);
-                } catch (NoSuchElementException e) {
-                    // keep trying...
-                }
+            try {
+                found = useExplicitWait() ?
+                        waiter.until(driver -> driver.findElements(findBy)) : getDriver().findElements(findBy);
+            } catch (Exception e) {
+                // keep trying...
             }
 
             if (CollectionUtils.isNotEmpty(found)) { return found; }
@@ -2280,26 +2275,42 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
     public WebElement findFirstElement(String locator) { return findElement(locator); }
 
     public List<WebElement> findElements(WebElement container, String locator) {
+        return findElements(container, locator, 3);
+    }
+
+    protected WebElement findElement(WebElement container, String locator) { return findElement(container, locator, 3);}
+
+    protected WebElement findElement(WebElement container, String locator, int retryCount) {
+        List<WebElement> matches = findElements(container, locator, retryCount);
+        return CollectionUtils.isNotEmpty(matches) ? matches.get(0) : null;
+    }
+
+    public List<WebElement> findElements(WebElement container, String locator, int retryCount) {
         requiresNotNull(container, "Invalid container", container);
         requiresNotBlank(locator, "invalid locator", locator);
 
         By findBy = findBy(locator);
         requiresNotNull(findBy, "Unknown/unsupported locator", locator);
 
-        try {
-            return useExplicitWait() ?
-                   newFluentWait().withMessage("find element(s) via locator " + locator)
-                                  .until(driver -> container.findElements(findBy)) :
-                   container.findElements(findBy);
-        } catch (NoSuchElementException e) {
-            return null;
-        }
-    }
+        int maxTries = Math.max(retryCount, 1);
+        FluentWait<WiniumDriver> waiter = newFluentWait().withMessage("find element(s) via locator " + locator);
 
-    protected WebElement findElement(WebElement container, String locator) {
-        List<WebElement> matches = findElements(container, locator);
-        if (CollectionUtils.isEmpty(matches)) { return null; }
-        return matches.get(0);
+        for (int i = 0; i < maxTries; i++) {
+            // progressive wait longer at each loop
+            try { Thread.sleep(500L * (i + 1)); } catch (InterruptedException e) { }
+
+            List<WebElement> matches;
+            try {
+                matches = useExplicitWait() ?
+                          waiter.until(driver -> container.findElements(findBy)) : container.findElements(findBy);
+            } catch (Exception e) {
+                return null;
+            }
+
+            if (CollectionUtils.isNotEmpty(matches)) { return matches; }
+        }
+
+        return null;
     }
 
     protected WebElement waitForElement(WebElement parent, String locator, long maxWaitMs) {

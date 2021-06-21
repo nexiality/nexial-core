@@ -712,7 +712,6 @@
         <entry key="nexial.outputToCloud" value="false"/>
         <entry key="nexial.outputCloudBase" value="${nexial.outputCloudBase:}"/>
         <entry key="nexial.generateReport" value="false"/>
-        <!--<entry key="nexial.screenRecorder" value="avi"/>-->
         <entry key="nexial.screenRecorder" value="mp4"/>
         <entry key="nexial.browser.defaultWindowSize" value="1280x960"/>
     </util:map>

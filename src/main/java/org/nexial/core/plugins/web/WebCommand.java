@@ -2296,7 +2296,11 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     }
 
     public StepResult closeAll() {
-        if (browser != null) { browser.shutdown(); }
+        if (browser != null) {
+            context.closeBrowser(profile);
+            browser.shutdown();
+            browser = null;
+        }
         driver = null;
         return StepResult.success("closed last tab/window");
     }

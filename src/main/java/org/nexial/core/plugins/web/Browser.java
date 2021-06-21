@@ -367,7 +367,8 @@ public class Browser implements ForcefulTerminate {
 
         // now we need to "remember" the browser type (even if it's default) so that the #data tab of output file will
         // display the browser type used during execution
-        if (!context.hasData(withProfile(profile, BROWSER))) {context.setData(withProfile(profile, BROWSER), browser); }
+        String profileBrowser = withProfile(profile, BROWSER);
+        if (!context.hasData(profileBrowser)) {context.setData(profileBrowser, browser); }
 
         try {
             if (isRunSafari()) { driver = initSafari(); }

@@ -221,6 +221,9 @@ public final class ExecutionThread extends Thread {
                     iterSummary.setFailedFast(context.isFailFast());
                     iterSummary.aggregatedNestedExecutions(context);
 
+                    // report status at iteration level
+                    CloudWebTestingPlatform.reportCloudBrowserStatus(context, iterSummary, IterationComplete);
+
                     if (testScript != null) {
                         iterSummary.generateExcelReport(testScript);
                     } else {
@@ -231,13 +234,9 @@ public final class ExecutionThread extends Thread {
                                                                                               iterationIndex,
                                                                                               iterSummary));
                     executionSummary.addNestSummary(iterSummary);
-
-                    // report status at iteration level
-                    CloudWebTestingPlatform.reportCloudBrowserStatus(context, iterSummary, IterationComplete);
+                    completedTests.add(testScriptFile);
 
                     ExecutionReporter.openExecutionResult(context, testScriptFile);
-
-                    completedTests.add(testScriptFile);
                 }
 
                 collectIntraExecutionData(context, iterationRef);

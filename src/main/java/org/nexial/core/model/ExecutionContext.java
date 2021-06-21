@@ -416,6 +416,17 @@ public class ExecutionContext {
      */
     public Browser getBrowser() { return plugins.initBrowser(currentCommandProfiles.get("web")); }
 
+    public void closeBrowser(String profile) {
+        if (StringUtils.isBlank(profile)) { profile = CMD_PROFILE_DEFAULT; }
+
+        // clear references to browser for this profile, so that next use will (re)initialize browser reference
+        plugins.clearBrowser(profile);
+
+        // clear references to browser for this profile, so that next use will (re)initialize browser reference
+        Map<String, String> config = getProfileConfig("web", profile);
+        if (MapUtils.isNotEmpty(config)) { config.remove(BROWSER); }
+    }
+
     @NotNull
     public String getBrowserType() {
         // gotta push default to context
@@ -431,8 +442,7 @@ public class ExecutionContext {
         Map<String, String> config = getProfileConfig("web", currentCommandProfiles.get("web"));
         String systemBrowser = System.getProperty(BROWSER, getStringData(BROWSER, getDefault(BROWSER)));
         return StringUtils.remove(
-            MapUtils.isEmpty(config) ? systemBrowser : config.getOrDefault(BROWSER, systemBrowser),
-            ".");
+            MapUtils.isEmpty(config) ? systemBrowser : config.getOrDefault(BROWSER, systemBrowser), ".");
     }
 
     public boolean isDelayBrowser() {

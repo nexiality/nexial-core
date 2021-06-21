@@ -1938,7 +1938,7 @@ public final class NexialConst {
         public static final String[] NON_PERF_METRICS_COMMAND_PREFIXES = {
             "assert", "saveAll", "saveBrowserVersion", "saveCount", "saveLoc", "saveSelected", "saveText", "saveVal",
             "screenshot", "scroll", "selectFrame", "selectText", "selectWindow", "switchBrowser", "unselectAll",
-            "update", "verify"
+            "update", "verify", "close", "closeAll"
         };
 
         // web element highlight
