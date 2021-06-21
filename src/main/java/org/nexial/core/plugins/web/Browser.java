@@ -390,7 +390,7 @@ public class Browser implements ForcefulTerminate {
                 error("browser '%s' is not supported.", browser);
             }
 
-            syncContextPropToSystem(BROWSER);
+            // syncContextPropToSystem(BROWSER);
         } catch (Throwable e) {
             String msg = "Error initializing browser '" + browser + "': " + ExceptionUtils.getRootCauseMessage(e);
             error(msg);
