@@ -1264,27 +1264,25 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
     public StepResult clickAndWait(String locator, String waitMs) {
         boolean useExplicitWait = StringUtils.isBlank(waitMs);
-        if (useExplicitWait) {
-            return clickInternal(locator);
-        } else {
-            requiresPositiveNumber(waitMs, "Invalid wait time specified", waitMs);
-            long waitMs1 = NumberUtils.toInt(waitMs);
+        if (useExplicitWait) { return clickInternal(locator); }
 
-            Timeouts timeouts = driver.manage().timeouts();
-            boolean timeoutChangesEnabled = browser.browserType.isTimeoutChangesEnabled();
-            // if browser supports implicit wait and we are not using explicit wait (`WEB_ALWAYS_WAIT`), then
-            // we'll change timeout's implicit wait time
-            if (timeoutChangesEnabled) { timeouts.pageLoadTimeout(waitMs1, MILLISECONDS); }
+        requiresPositiveNumber(waitMs, "Invalid wait time specified", waitMs);
+        long waitMs1 = NumberUtils.toInt(waitMs);
 
-            try {
-                StepResult result = clickInternal(locator);
-                return result.failed() ? result : StepResult.success("clicked-and-waited '" + locator + "'");
-            } finally {
-                if (timeoutChangesEnabled) {
-                    timeouts.pageLoadTimeout(context.getIntConfig("web", profile, WEB_PAGE_LOAD_WAIT_MS), MILLISECONDS);
-                } else {
-                    waitForBrowserStability(waitMs1);
-                }
+        Timeouts timeouts = driver.manage().timeouts();
+        boolean timeoutChangesEnabled = browser.browserType.isTimeoutChangesEnabled();
+        // if browser supports implicit wait and we are not using explicit wait (`WEB_ALWAYS_WAIT`), then
+        // we'll change timeout's implicit wait time
+        if (timeoutChangesEnabled) { timeouts.pageLoadTimeout(waitMs1, MILLISECONDS); }
+
+        try {
+            StepResult result = clickInternal(locator);
+            return result.failed() ? result : StepResult.success("clicked-and-waited '" + locator + "'");
+        } finally {
+            if (timeoutChangesEnabled) {
+                timeouts.pageLoadTimeout(context.getIntConfig("web", profile, WEB_PAGE_LOAD_WAIT_MS), MILLISECONDS);
+            } else {
+                waitForBrowserStability(waitMs1);
             }
         }
     }
@@ -1712,7 +1710,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
     public StepResult waitForPopUp(String winId, String waitMs) {
         requires(StringUtils.isNotBlank(winId), "invalid window ID ", winId);
-        long waitMsLong = NumberUtils.isDigits(waitMs) ? NumberUtils.toLong(waitMs) : context.getPollWaitMs();
+        long waitMsLong = NumberUtils.isDigits(waitMs) ? NumberUtils.toLong(waitMs) : getPollWaitMs();
 
         ensureReady();
 
@@ -2304,11 +2302,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     }
 
     public StepResult closeAll() {
-        if (browser != null) {
-            // context.closeBrowser(profile);
-            browser.shutdown();
-            browser = null;
-        }
+        if (browser != null) { browser.shutdown(); }
         driver = null;
         return StepResult.success("closed last tab/window");
     }
@@ -3116,7 +3110,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
             return target;
         } catch (TimeoutException e) {
             String err = "Timed out while looking for web element(s) that match '" + locator + "'; " +
-                         "${nexial.pollWaitMs}=" + pollWaitMs;
+                         "nexial.pollWaitMs=" + pollWaitMs;
             log(err);
             throw new NoSuchElementException(err);
         }
@@ -3257,7 +3251,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         // some browser might not support 'view-source'...
         boolean hasSource = browser.isPageSourceSupported();
         if (!hasSource) {
-            try { sleep(getPollWaitMs()); } catch (InterruptedException e) {}
+            try { sleep(getPollWaitMs()); } catch (InterruptedException e) { }
             return isBrowserLoadComplete();
         }
 
@@ -3541,7 +3535,6 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
                     turnOff.append(" }, ").append(waitMs).append(");");
 
                     jsExecutor.executeScript(turnOn + "\n" + turnOff, element);
-                    // jsExecutor.executeScript(JsLib.highlight(waitMs), element, highlight);
                 }
             }
         } catch (WebDriverException e) {
