@@ -7,7 +7,6 @@ REM PROJECT_HOME        - home directory of your project.
 REM NEXIAL_OUTPUT       - the output directory (optional)
 REM --------------------------------------------------------------------------------
 
-REM setlocal enableextensions enabledelayedexpansion
 setlocal enableextensions
 
 set NEXIAL_RC=0

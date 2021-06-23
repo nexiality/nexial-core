@@ -1,5 +1,5 @@
 @echo off
-    setlocal enableextensions
+    setlocal enableextensions enabledelayedexpansion
 
     rem Not to be directly called
     exit /b 9009
@@ -31,7 +31,6 @@
 
 	REM # setting Java runtime options and classpath
 	set JAVA_OPT=%JAVA_OPT% -ea
-	set JAVA_OPT=%JAVA_OPT% --add-opens=java.base/java.util=ALL-UNNAMED
 	set JAVA_OPT=%JAVA_OPT% -Xss24m
 	set JAVA_OPT=%JAVA_OPT% -Dfile.encoding=UTF-8
 	set JAVA_OPT=%JAVA_OPT% -Dnexial.home="%NEXIAL_HOME%"
@@ -84,10 +83,54 @@ REM # Make sure prerequisite environment variables are set
 		)
 	)
 
-REM finding java version
-REM for /f tokens^=2-5^ delims^=.-_^" %%j in ('java -fullversion 2^>^&1') do set "jver=%%j%%k%%l%%m"
+    set JAVA_VERSION=
+    set JAVA_SUPPORTS_MODULE=true
 
-	REM echo setting JAVA as %JAVA%
+    %JAVA% -version > %TEMP%\java_version 2>&1
+    findstr /C:"\ \"16" %TEMP%\java_version
+    if %ERRORLEVEL% EQU 0 ( set JAVA_VERSION=16 )
+
+    findstr /C:"\ \"15" %TEMP%\java_version
+    if %ERRORLEVEL% EQU 0 ( set JAVA_VERSION=15 )
+
+    findstr /C:"\ \"14" %TEMP%\java_version
+    if %ERRORLEVEL% EQU 0 ( set JAVA_VERSION=14 )
+
+    findstr /C:"\ \"13" %TEMP%\java_version
+    if %ERRORLEVEL% EQU 0 ( set JAVA_VERSION=13 )
+
+    findstr /C:"\ \"12" %TEMP%\java_version
+    if %ERRORLEVEL% EQU 0 ( set JAVA_VERSION=12 )
+
+    findstr /C:"\ \"11" %TEMP%\java_version
+    if %ERRORLEVEL% EQU 0 ( set JAVA_VERSION=11 )
+
+    findstr /C:"\ \"10" %TEMP%\java_version
+    if %ERRORLEVEL% EQU 0 ( set JAVA_VERSION=10 )
+
+    findstr /C:"\ \"1.9" %TEMP%\java_version
+    if %ERRORLEVEL% EQU 0 (
+        set JAVA_SUPPORTS_MODULE=false
+        set JAVA_VERSION=1.9
+    )
+
+    findstr /C:"\ \"1.8" %TEMP%\java_version
+    if %ERRORLEVEL% EQU 0 (
+        set JAVA_SUPPORTS_MODULE=false
+        set JAVA_VERSION=1.8
+    )
+
+    if "%JAVA_VERSION%"=="" (
+        echo ERROR!!!
+        echo Unknown or unsupported Java found:
+        type %TEMP%\java_version
+        echo.
+        exit /b -2
+    )
+
+    del %TEMP%\java_version
+
+    if "%JAVA_SUPPORTS_MODULE%"=="true" ( set JAVA_OPT=%JAVA_OPT% --add-opens=java.base/java.util=ALL-UNNAMED )
 	goto :eof
 
 
@@ -111,6 +154,7 @@ REM for /f tokens^=2-5^ delims^=.-_^" %%j in ('java -fullversion 2^>^&1') do set
 	echo   CURRENT USER:   %USERNAME%
 	echo   CURRENT HOST:   %COMPUTERNAME%
 	echo   JAVA:           %JAVA%
+	echo   JAVA_VERSION:   %JAVA_VERSION%
 	echo   NEXIAL_HOME:    %NEXIAL_HOME%
 	echo   NEXIAL_LIB:     %NEXIAL_LIB%
 	echo   NEXIAL_CLASSES: %NEXIAL_CLASSES%

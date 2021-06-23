@@ -2254,6 +2254,14 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     }
 
     public StepResult close() {
+        if (driver == null) { return StepResult.success("No driver found; browser likely already closed"); }
+
+        if (browser == null) {
+            try { driver.close();} catch (Exception e) { }
+            driver = null;
+            return StepResult.success("Browser already closed");
+        }
+
         ensureReady();
 
         boolean lastWindow = browser.isOnlyOneWindowRemaining();
@@ -2297,7 +2305,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
     public StepResult closeAll() {
         if (browser != null) {
-            context.closeBrowser(profile);
+            // context.closeBrowser(profile);
             browser.shutdown();
             browser = null;
         }

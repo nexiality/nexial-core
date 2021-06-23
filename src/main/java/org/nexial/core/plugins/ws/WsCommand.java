@@ -312,8 +312,7 @@ public class WsCommand extends BaseCommand {
         if (response == null) { return StepResult.fail(failPrefix + "no response found"); }
         if (response.getReturnCode() != 200) {
             ConsoleUtils.log("ERROR:\n" +
-                             response.getReturnCode() + " " + response.getStatusText() + "\n" +
-                             response.getBody());
+                             response.getReturnCode() + " " + response.getStatusText() + "\n" + response.getBody());
             return StepResult.fail(failPrefix + response.getReturnCode() + " " + response.getStatusText());
         }
         if (response.getContentLength() < 5) {
