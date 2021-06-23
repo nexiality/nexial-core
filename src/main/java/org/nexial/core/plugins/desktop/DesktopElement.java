@@ -30,6 +30,7 @@ import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.ExecutionThread;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.model.StepResult;
+import org.nexial.core.plugins.web.WebDriverExceptionHelper;
 import org.nexial.core.utils.CheckUtils;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.NativeInputHelper;
@@ -166,11 +167,15 @@ public class DesktopElement {
         setElement(element);
         if (container != null) { setContainer(container); }
 
-        if (!resolveInputType()) {
-            ConsoleUtils.error("Unresolved element type for element" +
-                               ": @ControlType=" + controlType +
-                               ", @Name=" + name +
-                               ", @AutomationId=" + automationId);
+        try {
+            if (!resolveInputType()) {
+                ConsoleUtils.error("Unresolved element type for element" +
+                                   ": @ControlType=" + controlType +
+                                   ", @Name=" + name +
+                                   ", @AutomationId=" + automationId);
+            }
+        } catch (WebDriverException e) {
+            ConsoleUtils.error(WebDriverExceptionHelper.resolveErrorMessage(e));
         }
     }
 
@@ -1104,9 +1109,9 @@ public class DesktopElement {
             return true;
         }
 
-        throw new InvalidElementStateException("Found a " + controlType + " element with xpath " + xpath +
+        throw new InvalidElementStateException("Found a " + this.controlType + " element with xpath " + xpath +
                                                " but does not contain any child elements of known type; " +
-                                               "unknown/unsupported combo: " + printDetails(this.element));
+                                               "unknown/unsupported combo:\n" + printDetails(this.element));
     }
 
     private boolean infragistics4AwareScan(List<WebElement> children) {
@@ -1202,9 +1207,9 @@ public class DesktopElement {
             return true;
         }
 
-        throw new InvalidElementStateException("Found a " + controlType + " element with xpath " + xpath +
+        throw new InvalidElementStateException("Found a " + this.controlType + " element with xpath " + xpath +
                                                " but does not contain any child elements of known type; " +
-                                               "unknown/unsupported combo: " + printDetails(this.element));
+                                               "unknown/unsupported combo:\n" + printDetails(this.element));
     }
 
     protected boolean resolvedAsWindow() {

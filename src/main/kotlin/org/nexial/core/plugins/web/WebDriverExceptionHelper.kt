@@ -24,10 +24,8 @@ import org.nexial.core.excel.ext.CipherHelper.CRYPT_IND
 import org.nexial.core.model.ExecutionContext
 import org.nexial.core.model.TestStep
 import org.openqa.selenium.*
-import org.openqa.selenium.NoSuchElementException
 import org.openqa.selenium.interactions.MoveTargetOutOfBoundsException
 import org.openqa.selenium.remote.ScreenshotException
-import java.util.*
 import java.util.stream.Collectors
 
 /**
@@ -56,6 +54,7 @@ object WebDriverExceptionHelper {
             is ElementNotInteractableException -> "Specified element disable or not ready: "
             is ElementNotSelectableException   -> "Specified element cannot be selected: "
             is ElementNotVisibleException      -> "Specified element is not visible: "
+            is InvalidElementStateException    -> "Specified element definition or state: "
             is JavascriptException             -> "JavaScript error: "
             is MoveTargetOutOfBoundsException  -> "Target element to move is outside of browser window dimension: "
             is NoAlertPresentException         -> "Specified alert dialog not found: "
