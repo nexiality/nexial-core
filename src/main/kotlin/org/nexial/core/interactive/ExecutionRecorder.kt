@@ -55,7 +55,6 @@ class ExecutionRecorder(private val baseCommand: BaseCommand) {
         recordingInSession = false
 
         if (outcome.isSuccess) {
-            val context = baseCommand.context
             val videoLink = context.getStringData(OPT_LAST_OUTPUT_LINK)
             if (videoLink != null) {
                 val selection = ConsoleUtils.pauseForInput(null,
@@ -65,20 +64,14 @@ class ExecutionRecorder(private val baseCommand: BaseCommand) {
                 if (StringUtils.isBlank(selection)) return
 
                 when (selection.toUpperCase()) {
-                    "P" -> {
-                        // play it
-                        play(videoLink)
-                    }
+                    // play it
+                    "P" -> play(videoLink)
 
-                    "S" -> {
-                        // show it
-                        show(videoLink)
-                    }
+                    // show it
+                    "S" -> show(videoLink)
 
-                    "D" -> {
-                        // delete it (local only)
-                        delete(videoLink)
-                    }
+                    // delete it (local only)
+                    "D" -> delete(videoLink)
                 }
             }
         } else {

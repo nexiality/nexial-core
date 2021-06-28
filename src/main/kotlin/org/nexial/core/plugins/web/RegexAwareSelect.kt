@@ -45,7 +45,7 @@ class RegexAwareSelect(private val element: WebElement) : Select(element) {
         if (!select && !isMultiple)
             throw UnsupportedOperationException("You may only deselect options of a multi-select")
 
-        val options = element.findElements(By.tagName("option"))
+        val options = element.findElements<WebElement>(By.tagName("option"))
         if (CollectionUtils.isEmpty(options)) {
             ConsoleUtils.log("target SELECT element contains NO child OPTION elements")
             return

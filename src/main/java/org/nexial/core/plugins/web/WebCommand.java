@@ -117,12 +117,15 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     protected TableHelper tableHelper;
     protected boolean logToBrowser;
     protected ClientPerformanceCollector clientPerfCollector;
+    protected UserStackAPI userstack;
 
     @Override
     public Browser getBrowser() { return browser; }
 
     @Override
     public void setBrowser(Browser browser) { this.browser = browser; }
+
+    public void setUserstack(UserStackAPI userstack) { this.userstack = userstack; }
 
     @Override
     public void init(ExecutionContext context) {
@@ -2488,8 +2491,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
         if (browserMeta == null) {
             // go get it
-            UserStackAPI userStackAPI = new UserStackAPI();
-            browserMeta = userStackAPI.detectAsBrowserMeta(ua);
+            browserMeta = userstack.detectAsBrowserMeta(ua);
             updateBrowserMetaCache(ua, (BrowserMeta) browserMeta);
         }
 

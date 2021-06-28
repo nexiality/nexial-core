@@ -26,7 +26,8 @@ class UserStackAPITest {
 
     @Test
     fun parseBrowserMeta_electron() {
-        val ua = """Mozilla\/5.0 (Macintosh; Intel Mac OS X 10_14_6) AppleWebKit\/537.36 (KHTML, like Gecko) MovieMagicBudgeting\/0.1.7 Chrome\/76.0.3809.131 Electron\/6.0.4 Safari\/537.36"""
+        val ua =
+            """Mozilla\/5.0 (Macintosh; Intel Mac OS X 10_14_6) AppleWebKit\/537.36 (KHTML, like Gecko) MovieMagicBudgeting\/0.1.7 Chrome\/76.0.3809.131 Electron\/6.0.4 Safari\/537.36"""
         val fixture = """
             {
                 "ua":"$ua",
@@ -66,7 +67,7 @@ class UserStackAPITest {
             }
         """.trimIndent()
 
-        val browserMeta = UserStackAPI().parseBrowserMeta(GSON.fromJson(fixture, JsonObject::class.java), ua)
+        val browserMeta = newUserStack().parseBrowserMeta(GSON.fromJson(fixture, JsonObject::class.java), ua)
         Assert.assertNotNull(browserMeta)
         Assert.assertEquals("Electron App", browserMeta.browser())
         Assert.assertEquals("macOS 10.14 Mojave", browserMeta.os.name)
@@ -74,7 +75,8 @@ class UserStackAPITest {
 
     @Test
     fun parseBrowserMeta_chrome() {
-        val ua = """Mozilla\/5.0 (Macintosh; Intel Mac OS X 10_14_6) AppleWebKit\/537.36 (KHTML, like Gecko) Chrome\/78.0.3904.87 Safari\/537.36"""
+        val ua =
+            """Mozilla\/5.0 (Macintosh; Intel Mac OS X 10_14_6) AppleWebKit\/537.36 (KHTML, like Gecko) Chrome\/78.0.3904.87 Safari\/537.36"""
         val fixture = """
             {
                 "ua":"$ua",
@@ -114,9 +116,16 @@ class UserStackAPITest {
             }
         """.trimIndent()
 
-        val browserMeta = UserStackAPI().parseBrowserMeta(GSON.fromJson(fixture, JsonObject::class.java), ua)
+        val browserMeta = newUserStack().parseBrowserMeta(GSON.fromJson(fixture, JsonObject::class.java), ua)
         Assert.assertNotNull(browserMeta)
         Assert.assertEquals("Chrome 78.0.3904.87", browserMeta.browser())
         Assert.assertEquals("macOS 10.14 Mojave", browserMeta.os.name)
     }
+
+    private fun newUserStack() = UserStackAPI(
+        "https://api.userstack.com/detect?access_key={accessKey}&ua={ua}",
+        mutableListOf("5b71975a107de30d26f3878fa9adbb5e",
+                      "278720a8776318f6bee49fe59c517381",
+                      "30dcc7900c443a279315170afe815bd4",
+                      "46d1f7737e47ba2525b80f9a5042e212"))
 }

@@ -604,10 +604,6 @@ public final class NexialConst {
         public static final String MIME_HTML = "text/html";
         public static final String MIME_JSON = WS_JSON_CONTENT_TYPE;
 
-        public static final List<String> APIKEYS_USERSTACK = Arrays.asList("5b71975a107de30d26f3878fa9adbb5e",
-                                                                           "278720a8776318f6bee49fe59c517381",
-                                                                           "30dcc7900c443a279315170afe815bd4",
-                                                                           "46d1f7737e47ba2525b80f9a5042e212");
         public static final List<String> APIKEYS_OCRSPACE = Arrays.asList("5a64d478-9c89-43d8-88e3-c65de9999580",
                                                                           "f2c4a3c04788957",
                                                                           "cfe984f88088957",
@@ -975,6 +971,21 @@ public final class NexialConst {
         public static final String AWS_SQS_VISIBILITY_TIMEOUT_MS = "visibilityTimeoutMs";
 
         private AwsSettings() {}
+
+        // reference by enclosing class to force initialization (possibly prior to any reference at runtime)
+        static void init() {}
+    }
+
+    public static final class TMSSettings {
+        public static final String TMS = "tms.";
+        public static final String NEXIAL_TMS = NAMESPACE + TMS;
+        public static final String TMS_URL = NEXIAL_TMS + "url";
+        public static final String TMS_SOURCE = NEXIAL_TMS + "source";
+        public static final String TMS_USERNAME = NEXIAL_TMS + "username";
+        public static final String TMS_PASSWORD = NEXIAL_TMS + "password";
+        public static final String TMS_ORG = NEXIAL_TMS + "organization";
+
+        private TMSSettings() {}
 
         // reference by enclosing class to force initialization (possibly prior to any reference at runtime)
         static void init() {}
@@ -1854,7 +1865,8 @@ public final class NexialConst {
         // chrome
         public static final String CHROME_REMOTE_PORT = registerSysVar(NS_BROWSER + ".chrome.remote.port");
         public static final String CHROME_LOG_ENABLED = registerSysVar(NS_BROWSER + ".logChrome", false);
-        public static final String CHROME_ENABLE_EXTENSION = registerSysVar(NS_BROWSER + ".chrome.enableExtension", false);
+        public static final String CHROME_ENABLE_EXTENSION =
+            registerSysVar(NS_BROWSER + ".chrome.enableExtension", false);
 
         // edge
         public static final String EDGE_LOG_ENABLED = registerSysVar(NS_BROWSER + ".logEdge", false);
@@ -1988,6 +2000,32 @@ public final class NexialConst {
         static void init() {}
     }
 
+    public static final class Mobile {
+        public static final String NS_MOBILE = NAMESPACE + "mobile";
+
+        public static final String TYPE = "type";
+        public static final String URL = "url";
+
+        // default 5 second time out for explicit wait
+        public static final String EXPLICIT_WAIT_MS = registerSysVar(NS_MOBILE + "explicitWaitMs", 5000);
+
+        // default 2 second time out for implicit wait
+        public static final String IMPLICIT_WAIT_MS = registerSysVar(NS_MOBILE + "implicitWaitMs", 2000);
+
+        // default 10 minutes
+        public static final String SESSION_TIMEOUT_MS = registerSysVar(NS_MOBILE + "sessionTimeoutMs", 600000);
+
+        // delay between click, type, swipe, tab, etc. actions
+        public static final String POST_ACTION_WAIT_MS = registerSysVar(NS_MOBILE + "postActionWaitMs", 1200);
+
+        public static final String ERR_NO_SERVICE =
+            "No mobile driver available at this time. Please be sure to invoke use(profile) command prior to other " +
+            "mobile commands. See https://nexiality.github.io/documentation/commands/mobile/use(profile) for details";
+
+        // avoid pinching, zooming or dragging from screen edges
+        public static final int EDGE_WIDTH = 10;
+    }
+
     private NexialConst() { }
 
     public static String handleWindowsChar(String name) {
@@ -2107,6 +2145,7 @@ public final class NexialConst {
         Jenkins.init();
         ExitStatus.init();
         Notification.init();
+        TMSSettings.init();
         TimeTrack.init();
         Ssh.init();
         Rdbms.init();

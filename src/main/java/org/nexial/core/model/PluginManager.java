@@ -151,7 +151,5 @@ public class PluginManager implements ApplicationContextAware {
         return profileBrowsers.get(profile);
     }
 
-    // protected Browser getBrowser() { return initBrowser(CMD_PROFILE_DEFAULT); }
-
     public void clearBrowser(String profile) { profileBrowsers.remove(profile); }
 }

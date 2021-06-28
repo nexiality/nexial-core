@@ -101,6 +101,7 @@ public class ExcelConfig {
     public static final ExcelAddress ADDR_SCENARIO_DESCRIPTION = new ExcelAddress("A2:D2");
     public static final ExcelAddress ADDR_HEADER_SCENARIO_INFO1 = new ExcelAddress("A1:A1");
     public static final ExcelAddress ADDR_HEADER_SCENARIO_INFO2 = new ExcelAddress("E1:I1");
+    public static final ExcelAddress ADDR_TEST_ID = new ExcelAddress("H2");
     public static final String HEADER_SCENARIO_INFO_DESCRIPTION = "description";
     public static final String HEADER_SCENARIO_INFO_PROJECT = "project";
     public static final String HEADER_SCENARIO_INFO_RELEASE = "release";

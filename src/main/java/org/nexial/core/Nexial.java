@@ -477,7 +477,8 @@ public class Nexial {
         return executions;
     }
 
-    private List<Worksheet> retrieveValidPlans(List<String> subplans, Excel excel) {
+    // todo: move to InputFileUtils
+    public List<Worksheet> retrieveValidPlans(List<String> subplans, Excel excel) {
         List<Worksheet> plans = InputFileUtils.retrieveValidPlanSequence(excel);
         // system variable for subplans included
 
@@ -508,7 +509,8 @@ public class Nexial {
         return validPlans;
     }
 
-    protected File deriveScriptFromPlan(XSSFRow row, TestProject project, String testPlan) {
+    // todo: move to InputFileUtils
+    public File deriveScriptFromPlan(XSSFRow row, TestProject project, String testPlan) {
         String testScriptPath = readCellValue(row, COL_IDX_PLAN_TEST_SCRIPT);
         if (StringUtils.isBlank(testScriptPath)) {
             fail("Invalid test script specified in ROW " + (row.getRowNum() + 1) + " of " + testPlan + ".");
@@ -537,12 +539,14 @@ public class Nexial {
         return new File(testScriptPath);
     }
 
-    protected List<String> deriveScenarioFromPlan(XSSFRow row, List<String> validScenarios) {
+    // todo: move to InputFileUtils
+    public List<String> deriveScenarioFromPlan(XSSFRow row, List<String> validScenarios) {
         List<String> scenarios = TextUtils.toList(readCellValue(row, COL_IDX_PLAN_SCENARIOS), ",", true);
         return (CollectionUtils.isNotEmpty(scenarios)) ? scenarios : validScenarios;
     }
 
-    protected List<String> deriveScenarios(File testScript) {
+    // todo: move to InputFileUtils
+    public List<String> deriveScenarios(File testScript) {
         List<String> scenarios = new ArrayList<>();
 
         Excel excel = null;
@@ -570,6 +574,7 @@ public class Nexial {
         return scenarios;
     }
 
+    // todo: move to InputFileUtils
     protected File deriveDataFileFromPlan(XSSFRow row, TestProject project, File testPlan, File testScript) {
         String dataFilePath = readCellValue(row, COL_IDX_PLAN_TEST_DATA);
 
@@ -629,6 +634,7 @@ public class Nexial {
         return new File(dataFilePath);
     }
 
+    // todo: move to InputFileUtils
     protected List<String> deriveDataSheetsFromPlan(XSSFRow row, List<String> scenarios) {
         String planDataSheets = readCellValue(row, COL_IDX_PLAN_DATA_SHEETS);
         return StringUtils.isBlank(planDataSheets) ? scenarios : TextUtils.toList(planDataSheets, ",", true);

@@ -1,12 +1,13 @@
 package org.nexial.core.plugins.web
 
+import org.apache.commons.collections4.MapUtils
 import org.apache.commons.lang3.StringUtils
 import org.nexial.core.NexialConst.Web.OPT_DELAY_BROWSER
-import org.nexial.core.NexialConst.WebMail.MAX_DURATION
+import org.nexial.core.NexialConst.WebMail.*
 import org.nexial.core.model.ExecutionContext
 import org.nexial.core.model.StepResult
 import org.nexial.core.plugins.base.BaseCommand
-import org.nexial.core.plugins.web.WebMailProfile.Companion.newInstance
+import org.nexial.core.utils.CheckUtils
 import org.nexial.core.utils.CheckUtils.requiresNotBlank
 import org.nexial.core.utils.CheckUtils.requiresPositiveNumber
 import org.springframework.util.CollectionUtils
@@ -19,6 +20,8 @@ import org.springframework.util.CollectionUtils
  * @author Dhanapathi Marepalli
  */
 class WebMailCommand : BaseCommand() {
+    lateinit var webmailers: Map<String, WebMailer>
+
     @Transient
     protected var web: WebCommand? = null
 
@@ -61,7 +64,7 @@ class WebMailCommand : BaseCommand() {
         val time = duration.toLong()
         if (time > MAX_DURATION) return StepResult.fail("Mails older than $MAX_DURATION minutes cannot be retrieved.")
 
-        val mailProfile = newInstance(profile)
+        val mailProfile = resolveProfile(profile)
         val subject = StringUtils.defaultIfBlank(searchCriteria, "").trim()
         val emails = mailProfile.mailer.search(web!!, mailProfile, subject, time)
         return if (CollectionUtils.isEmpty(emails)) {
@@ -91,7 +94,7 @@ class WebMailCommand : BaseCommand() {
         requiresNotBlank(profile, "profile name cannot be empty.")
         requiresNotBlank(id, "mail id cannot be empty.")
 
-        val mailProfile = newInstance(profile)
+        val mailProfile = resolveProfile(profile)
         val emailDetails = mailProfile.mailer.read(web!!, mailProfile, id)
         return if (emailDetails != null) {
             context.setData(`var`, emailDetails)
@@ -115,10 +118,41 @@ class WebMailCommand : BaseCommand() {
         requiresNotBlank(profile, "profile cannot be empty.")
         requiresNotBlank(id, "id cannot be empty.")
 
-        val mailProfile = newInstance(profile)
+        val mailProfile = resolveProfile(profile)
         return if (mailProfile.mailer.delete(web!!, mailProfile, id))
             StepResult.success("Email with id $id is deleted.")
         else
             StepResult.fail("Email deletion failed.")
+    }
+
+
+    /**
+     * static method for creation of MailChecker object. Returns an instance of [WebMailProfile] if
+     * all the mandatory profile attributes are available. Else it will raise an exception as mentioned in the
+     * [CheckUtils.fail].
+     *
+     * @param profile read from the data file.
+     * @return the [WebMailProfile] created.
+     */
+    fun resolveProfile(profile: String): WebMailProfile {
+        requiresNotBlank(profile, "Invalid mail checker profile ", profile)
+
+        val config = context.getDataByPrefix("$profile.")
+        if (MapUtils.isEmpty(config)) throw IllegalArgumentException("There is no profile with the name $profile")
+
+        // check inbox
+        val inbox = config["inbox"] ?: ""
+        requiresNotBlank(inbox, "The 'inbox' from which the emails to be read is not specified.")
+
+        // check provider
+        val provider = config["provider"] ?: WEBMAIL_MAILINATOR
+        val mailer = webmailers[provider] ?: throw IllegalArgumentException("Invalid mail provider $provider")
+
+        // check domain
+        val domain = config["domain"] ?: ""
+        if (provider == WEBMAIL_TEMPORARYMAIL && StringUtils.isEmpty(domain))
+            throw IllegalArgumentException("There is no domain specified for the given profile $profile")
+
+        return WebMailProfile(profile, provider, inbox, domain, mailer)
     }
 }

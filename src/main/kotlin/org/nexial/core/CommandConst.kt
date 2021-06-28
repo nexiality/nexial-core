@@ -176,6 +176,8 @@ object CommandConst {
 
         "macro.expects",
 
+        "mobile.clickUntilNotFound",
+
         "tn.5250.saveTableAsCSV",
 
         "web.waitForElementPresent",

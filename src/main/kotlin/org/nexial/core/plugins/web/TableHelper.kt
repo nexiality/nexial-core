@@ -40,8 +40,6 @@ import org.openqa.selenium.WebElement
 import org.openqa.selenium.support.ui.Select
 import java.io.File
 import java.util.*
-import javax.validation.constraints.NotNull
-import kotlin.collections.ArrayList
 
 class TableHelper(private val webCommand: WebCommand) {
     private val tableHeaderLocators = listOf("./thead//*[ name()='th' or name()='td' ]",
@@ -431,7 +429,7 @@ class TableHelper(private val webCommand: WebCommand) {
         if (StringUtils.isNotEmpty(cellText) && !StringUtils.contains(cellText, "\n")) return csvSafe(cellText)
 
         // cover cases for checkbox, radio, submit, button, text box, password, email, upload, input-image, text area, select
-        val inputs = cell.findElements(By.xpath(formElementLocator))
+        val inputs = cell.findElements<WebElement>(By.xpath(formElementLocator))
         if (inputs.isEmpty()) return csvSafe(cellText)
 
         val jsExec = webCommand.jsExecutor
@@ -516,7 +514,7 @@ class TableHelper(private val webCommand: WebCommand) {
                 if (isHeader) context.getStringData(HEADER_INPUT, getDefault(HEADER_INPUT))
                 else context.getStringData(DATA_INPUT, getDefault(DATA_INPUT)))
 
-        val selects = cell.findElements(By.xpath(".//select"))
+        val selects = cell.findElements<WebElement>(By.xpath(".//select"))
         if (selects.isNotEmpty()) {
             // yep... definitely has <SELECT>
             val firstElement = selects[0]
@@ -531,7 +529,7 @@ class TableHelper(private val webCommand: WebCommand) {
 
         // cover cases for checkbox, radio, submit, button, text box, password, email, upload, input-image
         val locatorInputs = ".//*[ name()='input' or name()='submit' or name()='button' or name()='textarea' ]"
-        val inputs = cell.findElements(By.xpath(locatorInputs))
+        val inputs = cell.findElements<WebElement>(By.xpath(locatorInputs))
         if (inputs.isNotEmpty()) {
             val firstElement = inputs[0]
             return if (firstElement.isDisplayed)
@@ -547,7 +545,7 @@ class TableHelper(private val webCommand: WebCommand) {
             else ""
         }
 
-        val images = cell.findElements(By.xpath(".//img"))
+        val images = cell.findElements<WebElement>(By.xpath(".//img"))
         if (images.isNotEmpty()) {
             val imageOption = ImageOptions.valueOf(
                     if (isHeader) context.getStringData(HEADER_IMAGE, getDefault(HEADER_IMAGE))

@@ -186,6 +186,22 @@ public final class TextUtils {
         return replaced;
     }
 
+    public static String replaceTokens(String text,
+                                       String tokenPrefix,
+                                       String tokenSuffix,
+                                       Map<Object, Object> searchAndReplaces) {
+        if (StringUtils.isBlank(text)) { return text; }
+        if (MapUtils.isEmpty(searchAndReplaces)) { return text; }
+        final String prefix = StringUtils.isEmpty(tokenPrefix) ? "{" : tokenPrefix;
+        final String suffix = StringUtils.isEmpty(tokenSuffix) ? "}" : tokenSuffix;
+
+        final String[] replaced = {text};
+        searchAndReplaces.forEach((key, value) -> replaced[0] = StringUtils.replace(replaced[0],
+                                                                                    prefix + key + suffix,
+                                                                                    Objects.toString(value, "")));
+        return replaced[0];
+    }
+
     public static List<String> replaceItems(List<String> list, String find, String replaceWith) {
         if (CollectionUtils.isEmpty(list)) { return list; }
         if (StringUtils.isEmpty(find)) { return list; }

@@ -269,13 +269,13 @@ internal object DesktopUtils {
 
     @JvmStatic
     fun countChildren(elem: WebElement?) =
-        if (elem == null) 0 else CollectionUtils.size(elem.findElements(By.xpath("*")))
+        if (elem == null) 0 else CollectionUtils.size(elem.findElements<WebElement>(By.xpath("*")))
 
     @JvmStatic
     fun countChildren(element: WebElement, filter: (child: WebElement) -> Boolean): Int {
         // we don't know if there are any row in this data
         // so we use "*" to all children -- this is faster
-        val children = element.findElements(By.xpath("*"))
+        val children = element.findElements<WebElement>(By.xpath("*"))
         if (CollectionUtils.isEmpty(children)) return 0
         return children.sumBy { if (filter(it)) 1 else 0 }
     }
@@ -337,7 +337,7 @@ internal object DesktopUtils {
     @JvmStatic
     fun findFirstElement(element: WebElement?, xpath: String?) =
         if (element == null || StringUtils.isBlank(xpath)) null
-        else CollectionUtil.getOrDefault(element.findElements(By.xpath(xpath)), 0, null)
+        else CollectionUtil.getOrDefault(element.findElements<WebElement>(By.xpath(xpath)), 0, null)
 
     @JvmStatic
     fun reformatValue(value: String, formatRule: String?, fromTo: Boolean): String {

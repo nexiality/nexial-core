@@ -21,7 +21,7 @@ import com.google.gson.JsonObject
 import org.apache.commons.lang3.SystemUtils.OS_ARCH
 import org.apache.commons.lang3.SystemUtils.OS_NAME
 import org.nexial.commons.utils.CollectionUtil
-import org.nexial.core.NexialConst.Data.APIKEYS_USERSTACK
+import org.nexial.commons.utils.TextUtils
 import org.nexial.core.NexialConst.GSON
 import org.nexial.core.model.BrowserDevice
 import org.nexial.core.model.BrowserDeviceType
@@ -31,54 +31,64 @@ import org.nexial.core.model.BrowserOS
 import org.nexial.core.plugins.ws.WebServiceClient
 import org.nexial.core.utils.ConsoleUtils
 
-class UserStackAPI {
-    private val keys = APIKEYS_USERSTACK.toMutableList()
-    private val urlTemplate = "http://api.userstack.com/detect?access_key=%s&ua=%s"
+class UserStackAPI(val url: String, val apiKeys: MutableList<String>) {
 
     fun detectAsBrowserMeta(ua: String): BrowserMeta {
-        // could fail.. if all the available keys are invalid.. or network issue
+        val dummy = newDummyBrowserMeta(ua)
+        // could fail -> if all the available keys are invalid.. or network issue
         // but we mustn't hold up the execution
-        if (keys.isEmpty()) return newDummyBrowserMeta(ua)
+        if (apiKeys.isEmpty()) return dummy
 
-        val apiKey = CollectionUtil.randomSelectOne(keys)
-        val response = WebServiceClient(null).configureAsQuiet().disableContextConfiguration()
-            .get(urlTemplate.format(apiKey, ua), null)
-        return if (response.returnCode == 200) {
-            val json = GSON.fromJson(response.body, JsonObject::class.java)
-            if (json.has("error")) {
-                val error = json.getAsJsonObject("error")
-                ConsoleUtils.log("Error when invoking UserStack: " +
-                                 if (error.has("info")) error.get("info").asString else error.toString())
-                keys.remove(apiKey)
-                detectAsBrowserMeta(ua)
+        val apiKey = CollectionUtil.randomSelectOne(apiKeys)
+        return try {
+            val response = WebServiceClient(null).configureAsQuiet().disableContextConfiguration()
+                .get(TextUtils.replaceTokens(url, "{", "}", mapOf("accessKey" to apiKey, "ua" to ua)), null)
+            if (response.returnCode == 200) {
+                val json = GSON.fromJson(response.body, JsonObject::class.java)
+                if (json.has("error")) {
+                    val error = json.getAsJsonObject("error")
+                    ConsoleUtils.log("Error when invoking UserStack: " +
+                                     if (error.has("info")) error.get("info").asString else error.toString())
+                    apiKeys.remove(apiKey)
+                    detectAsBrowserMeta(ua)
+                } else {
+                    parseBrowserMeta(json, ua)
+                }
             } else {
-                parseBrowserMeta(json, ua)
+                // could fail.. if all the available keys are invalid.. or network issue
+                // but we mustn't hold up the execution
+                dummy
             }
-        } else {
-            // could fail.. if all the available keys are invalid.. or network issue
+        } catch (e: Exception) {
+            // could fail -> if all the available keys are invalid.. or network issue
             // but we mustn't hold up the execution
-            newDummyBrowserMeta(ua)
+            ConsoleUtils.error("Unable to determine browser metadata: ${e.message}")
+            dummy
         }
     }
 
     private fun newDummyBrowserMeta(ua: String): BrowserMeta =
-            BrowserMeta("UNABLE TO DETERMINE",
-                        "???",
-                        ua,
-                        BrowserOS(OS_NAME, OS_NAME, OS_ARCH),
-                        BrowserDevice(unknown, "UNKNOWN", "UNKNOWN"))
+        BrowserMeta("UNABLE TO DETERMINE",
+                    "???",
+                    ua,
+                    BrowserOS(OS_NAME, OS_NAME, OS_ARCH),
+                    BrowserDevice(unknown, "UNKNOWN", "UNKNOWN"))
 
     internal fun parseBrowserMeta(json: JsonObject, ua: String): BrowserMeta {
         val os = json.getAsJsonObject("os")
-        val device = json.getAsJsonObject("device")
         val browser = json.getAsJsonObject("browser")
-
-        val version = if (browser.get("version").isJsonNull) "" else browser.getAsJsonPrimitive("version").asString
-        val divBrand = if (device.get("brand").isJsonNull) "" else device.getAsJsonPrimitive("brand").asString
-        val devName = if (device.get("name").isJsonNull) "" else device.getAsJsonPrimitive("name").asString
-
-        return BrowserMeta(browser.get("name").asString, version, ua,
-                           BrowserOS(os.get("name").asString, os.get("code").asString, os.get("family").asString),
-                           BrowserDevice(BrowserDeviceType.valueOf(device.get("type").asString), divBrand, devName))
+        val device = json.getAsJsonObject("device")
+        return BrowserMeta(name = browser.get("name").asString,
+                           version = getOrDefault(browser, "version"),
+                           userAgent = ua,
+                           os = BrowserOS(name = os.get("name").asString,
+                                          code = os.get("code").asString,
+                                          family = os.get("family").asString),
+                           device = BrowserDevice(type = BrowserDeviceType.valueOf(device.get("type").asString),
+                                                  brand = getOrDefault(device, "brand"),
+                                                  name = getOrDefault(device, "name")))
     }
+
+    private fun getOrDefault(json: JsonObject, key: String) =
+        if (json.get(key).isJsonNull) "" else json.getAsJsonPrimitive(key).asString
 }

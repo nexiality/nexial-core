@@ -48,10 +48,11 @@ import org.nexial.core.logs.TrackTimeLogs;
 import org.nexial.core.mail.NexialMailer;
 import org.nexial.core.plugins.CanTakeScreenshot;
 import org.nexial.core.plugins.NexialCommand;
+import org.nexial.core.plugins.mobile.MobileProfile;
+import org.nexial.core.plugins.mobile.MobileService;
 import org.nexial.core.plugins.pdf.CommonKeyValueIdentStrategies;
 import org.nexial.core.plugins.sound.SoundMachine;
 import org.nexial.core.plugins.web.Browser;
-import org.nexial.core.plugins.web.WebMailer;
 import org.nexial.core.reports.ExecutionMailConfig;
 import org.nexial.core.spi.NexialExecutionEvent;
 import org.nexial.core.spi.NexialListenerFactory;
@@ -171,7 +172,7 @@ public class ExecutionContext {
     protected CanTakeScreenshot screenshotAgent;
     protected Syspath syspath;
     protected Map<String, String> currentCommandProfiles = new HashMap<>();
-    protected Map<String, WebMailer> webMails;
+    protected Map<String, MobileService> mobileServices = new HashMap<>();
     // protected ProfileHelper profileHelper;
 
     // spring-managed map of webdriver related configs.
@@ -179,16 +180,10 @@ public class ExecutionContext {
 
     protected Map<String, String> dbdriverHelperConfig;
 
+    protected boolean isInMacro = false;
+
     static final String KEY_COMPLEX = "__lAIxEn__";
     static final String DOT_LITERAL_REPLACER = "__53n7ry_4h34d__";
-
-    // variables which should not be changed during macroFlex command
-    private static final List<String> MACRO_FLEX_EXCLUDE_VAR = Arrays.asList(END_IMMEDIATE, FAIL_IMMEDIATE,
-                                                                             BREAK_CURRENT_ITERATION,
-                                                                             MACRO_STEP_FAILED,
-                                                                             MACRO_BREAK_CURRENT_ITERATION,
-                                                                             FAIL_FAST);
-    protected boolean isInMacro = false;
 
     class Function {
         String functionName;
@@ -399,8 +394,6 @@ public class ExecutionContext {
 
     public TemplateEngine getTemplateEngine() { return templateEngine; }
 
-    public Map<String, WebMailer> getWebMails() { return webMails; }
-
     public boolean isPluginLoaded(String target) { return plugins.isPluginLoaded(target); }
 
     public NexialCommand findPlugin(String target) {
@@ -448,6 +441,18 @@ public class ExecutionContext {
     public boolean isDelayBrowser() {
         return getBooleanConfig("web", currentCommandProfiles.get("web"), OPT_DELAY_BROWSER);
     }
+
+    public MobileService getMobileService(String profile) {
+        profile = StringUtils.defaultIfEmpty(profile, CMD_PROFILE_DEFAULT);
+        MobileService mobileService = mobileServices.get(profile);
+        if (mobileService == null) {
+            mobileService = new MobileService(new MobileProfile(this, profile));
+            mobileServices.put(profile, mobileService);
+        }
+        return mobileService;
+    }
+
+    public Map<String, MobileService> getMobileServices() { return mobileServices; }
 
     public Excel getTestScript() { return testScript; }
 
@@ -1440,29 +1445,37 @@ public class ExecutionContext {
     public Map<String, String> updateProfileConfig(String command, String profile, String config) {
         Map<String, String> configMap = getProfileConfig(command, profile);
 
-        if (StringUtils.isNotBlank(config)) {
-            // replace , with newline, except if comma is escaped.
-            config = StringUtils.remove(config, "\r");
-            config = StringUtils.replace(config, "\\,", "!@#>>*<<#@!");
-            config = StringUtils.replace(config, ",", "\n");
-            config = StringUtils.replace(config, "!@#>>*<<#@!", ",");
-            config = StringUtils.trim(config);
-            configMap.putAll(TextUtils.toMap(config, "\n", "="));
-        }
+        if (StringUtils.isBlank(config)) { return configMap; }
+
+        // replace , with newline, except if comma is escaped.
+        config = StringUtils.remove(config, "\r");
+        config = StringUtils.replace(config, "\\,", "!@#>>*<<#@!");
+        config = StringUtils.replace(config, ",", "\n");
+        config = StringUtils.replace(config, "!@#>>*<<#@!", ",");
+        config = StringUtils.trim(config);
+        return updateProfileConfig(command, profile, TextUtils.toMap(config, "\n", "="));
+    }
+
+    /**
+     * resolve a set of name-value configuration, based on a "profile", and store it in the current
+     * {@link ExecutionContext context}. This is useful for profile-aware commands where multiple instances of the
+     * same command co-exist and distinguish by the associated "profile".
+     */
+    public Map<String, String> updateProfileConfig(String command, String profile, Map<String, String> config) {
+        Map<String, String> configMap = getProfileConfig(command, profile);
+        if (MapUtils.isEmpty(config)) { return configMap; }
+
+        configMap.putAll(config);
 
         // config map is updated and ready for use
         setData(resolveProfileConfigKey(command, profile), configMap);
-
-        // if (StringUtils.isNotBlank(profile) && !StringUtils.equals(profile, CMD_PROFILE_DEFAULT)) {
-        // init command, if needed
-        // setData(resolveProfileCommandKey(command, profile), findPlugin(command + CMD_PROFILE_SEP + profile));
-        // }
 
         // remember the current profile
         currentCommandProfiles.put(command, profile);
 
         return configMap;
     }
+
 
     public Map<String, String> getProfileConfig(String command, String profile) {
         if (StringUtils.isEmpty(profile)) { profile = CMD_PROFILE_DEFAULT; }
@@ -2213,9 +2226,6 @@ public class ExecutionContext {
 
         // thymeleaf template engine
         templateEngine = springContext.getBean("htmlTemplateEngine", TemplateEngine.class);
-
-        // webmails
-        webMails = springContext.getBean("webMails", HashMap.class);
     }
 
     @NotNull

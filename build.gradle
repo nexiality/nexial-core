@@ -142,6 +142,7 @@ dependencies {
 
 	// https://mvnrepository.com/artifact/io.appium/java-client
 	//	compile("io.appium:java-client:${appiumVersion}")
+	compile("io.appium:java-client:${appiumVersion}")
 
 	// winium
 	// for Winium.Desktop.Driver.exe download: https://github.com/2gis/Winium.Desktop/releases/latest
