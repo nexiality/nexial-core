@@ -1643,6 +1643,10 @@ public final class NexialConst {
         public static final String OAUTH_TOKEN_TYPE_BEARER2 = "BearerToken";
         public static final String OAUTH_TOKEN_TYPE_MAC = "MAC";
         public static final String OAUTH_TOKEN_TYPE_BASIC = "Basic";
+        public static final String OAUTH_BASIC_AUTH_USERNAME_KEY = "basicAuth.usernameKey";
+        public static final String OAUTH_BASIC_AUTH_PASSWORD_KEY = "basicAuth.passwordKey";
+        public static final String OAUTH_URL_PALCEHOLDER = "{0}";
+        public static final String OAUTH_CUSTOM_TYPE = "custom";
 
         private Ws() {}
 

@@ -17,6 +17,20 @@
 
 package org.nexial.core.plugins.ws;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.net.URLEncoder;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.stream.Collectors;
+import javax.validation.constraints.NotNull;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -28,8 +42,10 @@ import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.lang3.math.NumberUtils;
+import org.json.JSONObject;
 import org.nexial.commons.utils.TextUtils;
 import org.nexial.commons.utils.web.URLEncodingUtils;
+import org.nexial.core.ExecutionThread;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.model.StepResult;
 import org.nexial.core.plugins.base.BaseCommand;
@@ -37,21 +53,11 @@ import org.nexial.core.utils.CheckUtils;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.OutputResolver;
 
-import javax.validation.constraints.NotNull;
-import java.io.File;
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.stream.Collectors;
-
 import static io.jsonwebtoken.SignatureAlgorithm.HS256;
 import static io.jsonwebtoken.impl.TextCodec.BASE64URL;
 import static org.apache.http.HttpHeaders.AUTHORIZATION;
 import static org.apache.http.HttpHeaders.CONTENT_TYPE;
-import static org.nexial.core.NexialConst.GSON_COMPRESSED;
-import static org.nexial.core.NexialConst.NL;
+import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.NexialConst.Ws.*;
 import static org.nexial.core.SystemVariables.getDefaultBool;
 import static org.nexial.core.plugins.ws.WebServiceClient.hideAuthDetails;
@@ -68,6 +74,17 @@ public class WsCommand extends BaseCommand {
 
     @Override
     public String getTarget() { return "ws"; }
+
+    protected Map<String, Map<String, String>> oauthProviderDetails;
+
+    public Map<String, Map<String, String>> getOauthProviderDetails() {
+        return oauthProviderDetails;
+    }
+
+    public void setOauthProviderDetails(
+            Map<String, Map<String, String>> oauthProviderDetails) {
+        this.oauthProviderDetails = oauthProviderDetails;
+    }
 
     public StepResult download(String url, String queryString, String saveTo) {
         requiresNotBlank(url, "invalid url", url);
@@ -99,13 +116,13 @@ public class WsCommand extends BaseCommand {
         return requestNoBody(url, queryString, var, "get");
     }
 
-    public StepResult post(String url, String body, String var) { return requestWithBody(url, body, var, "post"); }
+    public StepResult post(String url, String body, String var)  { return requestWithBody(url, body, var, "post"); }
 
-    public StepResult put(String url, String body, String var) { return requestWithBody(url, body, var, "put"); }
+    public StepResult put(String url, String body, String var)   { return requestWithBody(url, body, var, "put"); }
 
     public StepResult patch(String url, String body, String var) { return requestWithBody(url, body, var, "patch"); }
 
-    public StepResult head(String url, String var) { return requestNoBody(url, null, var, "head"); }
+    public StepResult head(String url, String var)               { return requestNoBody(url, null, var, "head"); }
 
     public StepResult delete(String url, String body, String var) {
         return StringUtils.isNotEmpty(body) ?
@@ -372,7 +389,100 @@ public class WsCommand extends BaseCommand {
         return StepResult.fail(failPrefix + "unknown/unsupported " + OAUTH_TOKEN_TYPE + "found: " + tokenType);
     }
 
-    /** download content of {@code @url}, assuming the content is of text nature. */
+    public StepResult oauthProfile(String var, String profile) {
+        requiresValidAndNotReadOnlyVariableName(var);
+        requiresNotBlank(profile, "Invalid profile", profile);
+
+        ExecutionContext context = ExecutionThread.get();
+        Map<String, String> config = context.getDataByPrefix(profile + ".");
+        if (MapUtils.isEmpty(config)) {
+            context.logCurrentStep("No OAuth2 configuration found for '" + profile + "'; Unable to connect.");
+            return null;
+        }
+
+        String type = config.get("type");
+        if (!type.equals(OAUTH_CUSTOM_TYPE)) {
+            Map<String, String> vendorDetails = oauthProviderDetails.get(type);
+
+            if (vendorDetails == null || vendorDetails.isEmpty()) {
+                return StepResult.fail(type + " is not a valid OAuth provider type.");
+            }
+            config.putAll(vendorDetails);
+        }
+
+        Map<String, String> responses;
+        try {
+            responses = getOAuthResponse(config);
+        } catch (Exception e) {
+            return StepResult.fail("An error occurred. Error message is " + e.getMessage());
+        }
+        context.setData(var, responses);
+        return StepResult.success("OAuth2 responses are:- " + responses);
+    }
+
+    private Map<String, String> getOAuthResponse(Map<String, String> config) throws IOException {
+        String oAuthUrl = config.get("url");
+        if (oAuthUrl.contains(OAUTH_URL_PALCEHOLDER)) {
+            oAuthUrl = oAuthUrl.replace(OAUTH_URL_PALCEHOLDER, config.get("tenant_id"));
+        }
+
+        if (!config.get("type").equals(OAUTH_CUSTOM_TYPE)) {
+            config.put(OAUTH_GRANT_TYPE, config.get("grantType"));
+        }
+
+        String basicAuthUsernameKey = config.get(OAUTH_BASIC_AUTH_USERNAME_KEY);
+        String basicAuthPasswordKey = config.get(OAUTH_BASIC_AUTH_PASSWORD_KEY);
+
+        String basicAuthUsername = config.get(basicAuthUsernameKey);
+        String basicAuthPassword = config.get(basicAuthPasswordKey);
+
+        String[] keys = {"url", "type", OAUTH_BASIC_AUTH_USERNAME_KEY, OAUTH_BASIC_AUTH_PASSWORD_KEY,
+                         basicAuthUsernameKey, basicAuthPasswordKey};
+        Arrays.stream(keys).forEach(config::remove);
+
+        StringBuilder postData = new StringBuilder();
+        for (Map.Entry<String, String> param : config.entrySet()) {
+            if (postData.length() != 0) {
+                postData.append('&');
+            }
+            postData.append(URLEncoder.encode(param.getKey(), DEF_FILE_ENCODING));
+            postData.append('=');
+            postData.append(URLEncoder.encode(String.valueOf(param.getValue()), DEF_FILE_ENCODING));
+        }
+        byte[] postDataBytes = postData.toString().getBytes(DEF_FILE_ENCODING);
+
+        URL url = new URL(oAuthUrl);
+        HttpURLConnection con = (HttpURLConnection) url.openConnection();
+        con.setDoOutput(true);
+        con.setUseCaches(false);
+        con.setRequestMethod("POST");
+
+        if (StringUtils.isNotEmpty(basicAuthUsername) && StringUtils.isNotEmpty(basicAuthPassword)) {
+            String encoding = java.util.Base64.getEncoder()
+                                              .encodeToString((basicAuthUsername + ":" + basicAuthPassword)
+                                                                      .getBytes("UTF-8"));
+            con.setRequestProperty("Authorization",
+                                   StringUtils.join(OAUTH_TOKEN_TYPE_BASIC, StringUtils.SPACE,  encoding));
+        }
+        con.getOutputStream().write(postDataBytes);
+
+        BufferedReader reader = new BufferedReader(new InputStreamReader(con.getInputStream()));
+        StringBuilder buffer = new StringBuilder();
+        for (String line = reader.readLine(); line != null; line = reader.readLine()) {
+            buffer.append(line);
+        }
+
+        Map<String, String> oauthResponse = new HashMap<>();
+        JSONObject json = new JSONObject(buffer.toString());
+        for (String key : json.keySet()) {
+            oauthResponse.put(key, String.valueOf(json.get(key)));
+        }
+        return oauthResponse;
+    }
+
+    /**
+     * download content of {@code @url}, assuming the content is of text nature.
+     */
     public static String resolveWebContent(String url) throws IOException {
         if (StringUtils.isBlank(url)) { throw new IOException("Unable to retrieve content from URL [" + url + "]"); }
         WebServiceClient wsClient = new WebServiceClient(null);
@@ -391,7 +501,9 @@ public class WsCommand extends BaseCommand {
         return response.getBody();
     }
 
-    /** download content of {@code @url}, assuming the content can be text or binary in nature */
+    /**
+     * download content of {@code @url}, assuming the content can be text or binary in nature
+     */
     public static byte[] resolveWebContentBytes(String url) throws IOException {
         if (StringUtils.isBlank(url)) { throw new IOException("Unable to retrieve content from URL [" + url + "]"); }
 

@@ -338,7 +338,51 @@
             <bean class="org.nexial.core.plugins.io.WordCommand"/>
         </entry>
         <entry key="ws">
-            <bean class="org.nexial.core.plugins.ws.WsCommand" p:verbose="false"/>
+            <bean class="org.nexial.core.plugins.ws.WsCommand" p:verbose="false">
+                <property name="oauthProviderDetails">
+                    <map key-type="java.lang.String" value-type="java.util.HashMap">
+                        <entry key="google">
+                            <map key-type="java.lang.String">
+                                <entry key="url" value="https://accounts.google.com/o/oauth2/token"/>
+                                <entry key="grantType" value="refresh_token"/>
+                                <entry key="basicAuth" value="false"/>
+                            </map>
+                        </entry>
+
+                        <entry key="microsoft">
+                            <map key-type="java.lang.String">
+                                <entry key="url" value="https://login.microsoftonline.com/{0}/oauth2/v2.0/token"/>
+                                <entry key="grantType" value="password"/>
+                                <entry key="basicAuth" value="true"/>
+                            </map>
+                        </entry>
+
+                        <entry key="okta">
+                            <map key-type="java.lang.String">
+                                <entry key="url" value="https://{0}.okta.com/oauth2/default/v1/token"/>
+                                <entry key="grantType" value="password"/>
+                                <entry key="basicAuth" value="false"/>
+                            </map>
+                        </entry>
+
+                        <entry key="twitter">
+                            <map key-type="java.lang.String">
+                                <entry key="url" value="https://api.twitter.com/oauth2/token"/>
+                                <entry key="grantType" value="client_credentials"/>
+                                <entry key="basicAuth" value="true"/>
+                            </map>
+                        </entry>
+
+                        <entry key="gitlab">
+                            <map key-type="java.lang.String">
+                                <entry key="url" value="https://gitlab.com/oauth/token"/>
+                                <entry key="grantType" value="password"/>
+                                <entry key="basicAuth" value="false"/>
+                            </map>
+                        </entry>
+                    </map>
+                </property>
+            </bean>
         </entry>
         <entry key="ws.async">
             <bean class="org.nexial.core.plugins.ws.AsyncWsCommand" p:verbose="false"/>
