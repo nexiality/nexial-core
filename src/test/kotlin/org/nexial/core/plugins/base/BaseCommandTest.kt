@@ -16,16 +16,13 @@
 
 package org.nexial.core.plugins.base
 
-import org.apache.commons.io.FileUtils
 import org.apache.commons.lang3.math.NumberUtils
 import org.junit.After
 import org.junit.Assert
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
-import org.nexial.core.NexialConst.DEF_FILE_ENCODING
 import org.nexial.core.model.MockExecutionContext
-import java.io.File
 import java.util.*
 import kotlin.test.assertTrue
 
@@ -550,8 +547,7 @@ class BaseCommandTest {
     @Test
     @Throws(Exception::class)
     fun assertEqualsNBSP() {
-        val expectedFile = "C:\\Users\\mikel\\AppData\\Roaming\\JetBrains\\IntelliJIdea2021.1\\scratches\\scratch_1.txt"
-        val expected = FileUtils.readFileToString(File(expectedFile), DEF_FILE_ENCODING)
+        val expected = "Vendor \"PCVen18903\" not found. Do you wish to create?"
         println("expected = $expected")
 
         val actual = "Vendor \"PCVen18903\" not found. Do you wish to create?"
