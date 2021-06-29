@@ -389,6 +389,14 @@ public class WsCommand extends BaseCommand {
         return StepResult.fail(failPrefix + "unknown/unsupported " + OAUTH_TOKEN_TYPE + "found: " + tokenType);
     }
 
+    /**
+     * Request to grant OAuth token(s) after reading the properties specified against the profile.
+     *
+     * @param var     the variable to store the result of the OAuth call.
+     * @param profile the profle contatining the details related to the OAuth like client_id, client_secret, username,
+     *                password et.
+     * @return {@link StepResult#success(String)} or {@link StepResult#fail(String)} based on the success or failure.
+     */
     public StepResult oauthProfile(String var, String profile) {
         requiresValidAndNotReadOnlyVariableName(var);
         requiresNotBlank(profile, "Invalid profile", profile);
@@ -420,6 +428,14 @@ public class WsCommand extends BaseCommand {
         return StepResult.success("OAuth2 responses are:- " + responses);
     }
 
+    /**
+     * Makes call to the OAuth url with the configuration values provided as part of profile. The necessary token(s) as
+     * well as the other information will be retrieved as part of the post request.
+     *
+     * @param config the OAuth configuration details like client_id, client_secret, username, password ,scope etc.
+     * @return OAuth related token(s) as well as other information needed for authenticating further calls.
+     * @throws IOException
+     */
     private Map<String, String> getOAuthResponse(Map<String, String> config) throws IOException {
         String oAuthUrl = config.get("url");
         if (oAuthUrl.contains(OAUTH_URL_PALCEHOLDER)) {
