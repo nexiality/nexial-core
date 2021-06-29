@@ -1412,6 +1412,11 @@ public class BaseCommand implements NexialCommand {
             actual = StringUtils.trim(actual);
         }
 
+        expected = StringUtils.replaceChars(expected, (char) 160, ' ');
+        expected = StringUtils.replaceChars(expected, (char) 255, ' ');
+        actual = StringUtils.replaceChars(actual, (char) 160, ' ');
+        actual = StringUtils.replaceChars(actual, (char) 255, ' ');
+        
         if (context.isTextMatchAsNumber()) {
             boolean isExpectedANumber = false;
             BigDecimal expectedBD = null;

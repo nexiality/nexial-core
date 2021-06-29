@@ -16,13 +16,16 @@
 
 package org.nexial.core.plugins.base
 
+import org.apache.commons.io.FileUtils
 import org.apache.commons.lang3.math.NumberUtils
 import org.junit.After
 import org.junit.Assert
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
+import org.nexial.core.NexialConst.DEF_FILE_ENCODING
 import org.nexial.core.model.MockExecutionContext
+import java.io.File
 import java.util.*
 import kotlin.test.assertTrue
 
@@ -542,5 +545,18 @@ class BaseCommandTest {
         var result = subject.assertArrayContain(array, expected)
         println("result = $result")
         Assert.assertTrue(result.isSuccess)
+    }
+
+    @Test
+    @Throws(Exception::class)
+    fun assertEqualsNBSP() {
+        val expectedFile = "C:\\Users\\mikel\\AppData\\Roaming\\JetBrains\\IntelliJIdea2021.1\\scratches\\scratch_1.txt"
+        val expected = FileUtils.readFileToString(File(expectedFile), DEF_FILE_ENCODING)
+        println("expected = $expected")
+
+        val actual = "Vendor \"PCVen18903\" not found. Do you wish to create?"
+        assertNotEquals("normal assert would fail", expected, actual)
+        assertTrue("but BaseCommand's assert will pass because we put special character handling there!",
+                   BaseCommand.assertEqualsInternal(expected, actual))
     }
 }
