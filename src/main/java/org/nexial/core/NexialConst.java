@@ -2035,11 +2035,25 @@ public final class NexialConst {
         protected static final String SCRIPT_EXT = (IS_OS_WINDOWS ? "bat" : "sh");
 
         public static final class Android {
-            public static final String ANDROID_SDK_HOME = USER_NEXIAL_HOME + "android" + separator + "sdk";
-            public static final String LICENSE_PATH = ANDROID_SDK_HOME + separator + "license";
-            public static final String SKIN_PATH = ANDROID_SDK_HOME + separator + "skin";
+            public static final String RESOURCE_BASE = "https://nexiality.github.io/documentation" +
+                                                       "/commands/mobile/resources";
+            public static final String CMDLINE_TOOLS_REDIRECT_URL = RESOURCE_BASE + "/android_cmdtools.url";
+            public static final String ANDROID_SDK_LICENSE_ZIP_URL = RESOURCE_BASE + "/android_sdk_licenses.zip";
+            public static final String ANDROID_SDK_SKINS_ZIP_URL = RESOURCE_BASE + "/android_sdk_skins.zip";
+            public static final String ANDROID_EMULATORS_URL = RESOURCE_BASE + "/android_emulators.json";
+
+            public static final String AVD_MANAGER_REL_PATH = "bin" + separator + "avdmanager." + SCRIPT_EXT;
+            public static final String SDK_MANAGER_REL_PATH = "bin" + separator + "sdkmanager." + SCRIPT_EXT;
+            public static final String SDK_REL_PATH = "android" + separator + "sdk";
+
+            public static final String ANDROID_SDK_HOME = USER_NEXIAL_HOME + SDK_REL_PATH;
+            public static final String LICENSE_PATH = ANDROID_SDK_HOME + separator + "licenses";
+            public static final String SKIN_PATH = ANDROID_SDK_HOME + separator + "skins";
             public static final String EMULATOR_PATH = ANDROID_SDK_HOME + separator + "emulator";
             public static final String BUILD_TOOLS_PATH = ANDROID_SDK_HOME + separator + "build-tools";
+            public static final String AVD_MANAGER = ANDROID_SDK_HOME + separator +
+                                                     "cmdline-tools" +  separator + "latest" + separator +
+                                                     AVD_MANAGER_REL_PATH;
             public static final String APK_SIGNER_FILE = "apksigner.jar";
             public static final String APK_SIGNER_DEST = ANDROID_SDK_HOME + separator + "tools" + separator + "lib" +
                                                          separator + APK_SIGNER_FILE;
@@ -2047,15 +2061,10 @@ public final class NexialConst {
             public static final String DEF_SYS_IMG_64 = SYSTEM_IMAGES_PREFIX + "android-30;google_apis;x86_64";
             public static final String DEF_SYS_IMG_32 = SYSTEM_IMAGES_PREFIX + "android-30;google_apis;x86";
 
-            public static final String CMDLINE_TOOLS_URL = "https://dl.google.com/android/repository/commandlinetools-win-7302050_latest.zip";
-            public static final String CMDLINE_TOOLS_UNZIP_LOCATION = JAVA_IO_TMPDIR + separator + "cmdtools";
-            public static final String AVD_MANAGER_REL_PATH = "bin" + separator + "avdmanager." + SCRIPT_EXT;
-            public static final String SDK_MANAGER_REL_PATH = "bin" + separator + "sdkmanager." + SCRIPT_EXT;
-            public static final String SDK_MANAGER = CMDLINE_TOOLS_UNZIP_LOCATION + separator + SDK_MANAGER_REL_PATH;
+            public static final String CMDLINE_TOOLS_PATH = StringUtils.appendIfMissing(JAVA_IO_TMPDIR, separator) +
+                                                            "nexial" + separator + "android" + separator + "cmdline-tools";
+            public static final String SDK_MANAGER = CMDLINE_TOOLS_PATH + separator + SDK_MANAGER_REL_PATH;
 
-            public static final String RESOURCE_BASE = "https://nexiality.github.io/documentation/commands/mobile/resources";
-            public static final String ANDROID_SDK_LICENSE_ZIP_URL = RESOURCE_BASE + "/android_sdk_licenses.zip";
-            public static final String ANDROID_SDK_SKINS_ZIP_URL = RESOURCE_BASE + "/android_sdk_skins.zip";
 
         }
     }
