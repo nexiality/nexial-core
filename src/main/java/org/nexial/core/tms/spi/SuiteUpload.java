@@ -1,16 +1,16 @@
 package org.nexial.core.tms.spi;
 
+import org.apache.commons.io.FilenameUtils;
+import org.json.simple.JSONObject;
+import org.nexial.core.tms.TMSOperation;
+import org.nexial.core.tms.model.TmsSuite;
+import org.nexial.core.tms.model.TmsTestCase;
+
 import java.io.File;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import org.apache.commons.io.FilenameUtils;
-import org.json.simple.JSONObject;
-import org.nexial.core.tms.TMSOperation;
-import org.nexial.core.tms.TmsFactory;
-import org.nexial.core.tms.model.TmsSuite;
-import org.nexial.core.tms.model.TmsTestCase;
 
 import static org.nexial.core.excel.ExcelConfig.ADDR_PLAN_EXECUTION_START;
 
@@ -19,7 +19,7 @@ import static org.nexial.core.excel.ExcelConfig.ADDR_PLAN_EXECUTION_START;
  */
 public class SuiteUpload {
 
-    private  String planPath;
+    private String planPath;
     private String subplan;
     private Map<String, Map<String, String>> testCaseToStep;
     private TMSOperation tms;
@@ -30,7 +30,7 @@ public class SuiteUpload {
 
     public SuiteUpload(String planPath, String subplan, String projectId) {
         this.planPath = planPath;
-        this.subplan  = subplan;
+        this.subplan = subplan;
         tms = new TmsFactory().getTmsInstance(projectId);
     }
 
@@ -41,26 +41,27 @@ public class SuiteUpload {
     /**
      * Create a new suite for the Nexial script file passed in
      *
-     * @param testCases List of valid {@link TmsTestCase} instances for each scenario inside the script
+     * @param testCases  List of valid {@link TmsTestCase} instances for each scenario inside the script
      * @param scriptName name of the script file
      * @return TmsSuite object containing details of the newly created suite
      */
     protected TmsSuite uploadScript(List<TmsTestCase> testCases,
-                                           String scriptName) {
+                                    String scriptName) {
         JSONObject createSuiteResponse = tms.createSuite(scriptName);
-        JSONObject addSectionResponse =
-                tms.addSection(scriptName, createSuiteResponse.get("id").toString());
-        Map<String, String> testCaseToScenario =
-                tms.addCases(addSectionResponse, testCases);
-        return new TmsSuite(scriptName, createSuiteResponse.get("id").toString(), testCaseToScenario,
-                            createSuiteResponse.get("url").toString());
+        String id = createSuiteResponse.get("id").toString();
+        String url = createSuiteResponse.get("url").toString();
+
+        JSONObject addSectionResponse = tms.addSection(scriptName, id);
+        Map<String, String> testCaseToScenario = tms.addCases(addSectionResponse, testCases);
+
+        return new TmsSuite(scriptName, id, testCaseToScenario, url);
     }
 
     /**
      * Create a new suite for the plan file passed in
      *
      * @param testCasesToPlanStep {@link Map} of {@link TmsTestCase} instance representing the scenarios specified in
-     *                                       each plan step
+     *                            each plan step
      * @return TmsSuite object containing details of the newly created suite
      */
     protected TmsSuite uploadPlan(LinkedHashMap<String, List<TmsTestCase>> testCasesToPlanStep) {
@@ -73,10 +74,10 @@ public class SuiteUpload {
             Map<String, String> addCasesResponseList = new HashMap<>();
             JSONObject createSuiteResponse = tms.createSuite(suiteName);
             JSONObject addSectionResponse =
-                    tms.addSection(suiteName, createSuiteResponse.get("id").toString());
+                tms.addSection(suiteName, createSuiteResponse.get("id").toString());
             for (String row : testCasesToPlanStep.keySet()) {
                 Map<String, String> caseToScenario =
-                        tms.addCases(addSectionResponse, testCasesToPlanStep.get(row));
+                    tms.addCases(addSectionResponse, testCasesToPlanStep.get(row));
                 addCasesResponseList.putAll(caseToScenario);
                 testCaseToStep.put(String.valueOf(i), caseToScenario);
                 i++;

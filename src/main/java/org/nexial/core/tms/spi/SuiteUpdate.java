@@ -1,22 +1,23 @@
 package org.nexial.core.tms.spi;
 
-import java.util.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.nexial.core.tms.TMSOperation;
-import org.nexial.core.tms.TmsFactory;
 import org.nexial.core.tms.model.Scenario;
 import org.nexial.core.tms.model.TestFile;
 import org.nexial.core.tms.model.TmsSuite;
 import org.nexial.core.tms.model.TmsTestCase;
 import org.nexial.core.tms.tools.CloseTestRun;
 
+import java.util.*;
+
 import static org.nexial.core.excel.ExcelConfig.ADDR_PLAN_EXECUTION_START;
 import static org.nexial.core.tms.TmsConst.*;
-import static org.nexial.core.tms.spi.TmsProcessor.*;
+import static org.nexial.core.tms.spi.TmsProcessor.getScenarioNames;
+import static org.nexial.core.tms.spi.TmsProcessor.getTestCaseFromJsonPlan;
 
 /**
  * Perform update operations on an already existing suite
@@ -36,8 +37,8 @@ public class SuiteUpdate {
 
     public SuiteUpdate(String filepath, TestFile file, String projectId) {
         this.filepath = filepath;
-        this.file     = file;
-        suiteId       = file.getSuiteId();
+        this.file = file;
+        suiteId = file.getSuiteId();
         tms = new TmsFactory().getTmsInstance(projectId);
     }
 
@@ -117,7 +118,7 @@ public class SuiteUpdate {
             List<TmsTestCase> testCases = testCasesToPlanStep.get(row);
             for (TmsTestCase testCase : testCases) {
                 existingTestCases.removeIf(
-                        t -> !testCase.getRow().equals(StringUtils.substringAfterLast(t.getTestCase(), "/")));
+                    t -> !testCase.getRow().equals(StringUtils.substringAfterLast(t.getTestCase(), "/")));
             }
             Map<String, String> updateResult = update(testCases, file.getSuiteId(), existingTestCases, PLAN);
             caseToScenario.putAll(updateResult);
@@ -144,8 +145,8 @@ public class SuiteUpdate {
      * @return Map of test case id to test case names
      */
     private Map<String, String> update(List<TmsTestCase> testCases,
-                                              String suiteId,
-                                              List<Scenario> existingTestCases, String fileType) {
+                                       String suiteId,
+                                       List<Scenario> existingTestCases, String fileType) {
         try {
             // delete any test cases not associated with any scenario in the sheet
             List<Scenario> deletedTestCases = deleteTestCase(testCases, existingTestCases, fileType);
@@ -175,7 +176,7 @@ public class SuiteUpdate {
      * @return List of {@link Scenario} instances for the test cases which were deleted
      */
     private List<Scenario> deleteTestCase(List<TmsTestCase> testCases,
-                                                 List<Scenario> existingTestRailCaseIds, String fileType) {
+                                          List<Scenario> existingTestRailCaseIds, String fileType) {
         // find test case in tms is not mapped to a scenario in the script and delete it
 
         List<String> deletedTestCaseIds = new ArrayList<>();
@@ -213,8 +214,8 @@ public class SuiteUpdate {
      * @return Map of the test case name to test case ids for tests which were added
      */
     private Map<String, String> addTestCase(List<TmsTestCase> testCases,
-                                                   String suiteId,
-                                                   List<Scenario> existingTestRailCases, String fileType) {
+                                            String suiteId,
+                                            List<Scenario> existingTestRailCases, String fileType) {
         // find any new scenario not mapped to a test case and add a new test case for it
         Map<String, String> addNewTestCaseResponses = new HashMap<>();
         List<String> existingTestCaseNames = new ArrayList<>();
@@ -240,7 +241,7 @@ public class SuiteUpdate {
                 System.exit(-1);
             }
             JSONObject addSectionResponse = (JSONObject) sections.get(0);
-            sectionId               = addSectionResponse.get(ID).toString();
+            sectionId = addSectionResponse.get(ID).toString();
             addNewTestCaseResponses = tms.addCases(addSectionResponse, testCasesToAdd);
         }
         return addNewTestCaseResponses;
@@ -253,11 +254,11 @@ public class SuiteUpdate {
      * @param testCases         List of possible test cases for each scenario inside the script file passed in as argument
      * @param existingTestCases List if test cases already existing inside TMS
      * @param scenariosToUpdate List of scenarios to update
-     * @return Map of test case ids to test case names after updation
+     * @return Map of test case ids to test case names after update
      */
     private Map<String, String> updateSpecifiedScenario(
-            List<TmsTestCase> testCases, List<Scenario> existingTestCases,
-            List<String> scenariosToUpdate) {
+        List<TmsTestCase> testCases, List<Scenario> existingTestCases,
+        List<String> scenariosToUpdate) {
 
         List<TmsTestCase> casesToUpdate = new ArrayList<>();
         List<String> caseIdsToUpdate = new ArrayList<>();
@@ -273,7 +274,7 @@ public class SuiteUpdate {
         // specified scenarios not found
         if (CollectionUtils.isEmpty(casesToUpdate)) {
             System.err.println(
-                    "The scenarios specified do not exist in the given script. Check the script name and the scenarios specified");
+                "The scenarios specified do not exist in the given script. Check the script name and the scenarios specified");
             System.exit(-1);
         }
         // retrieving the current test case ids of specified scenarios
@@ -300,7 +301,7 @@ public class SuiteUpdate {
             for (Scenario existingTestCase : existingTestCases) {
                 if (StringUtils.equals(existingTestCase.getName(), testCase.getName())) {
                     Map<String, String> response =
-                            tms.updateCase(existingTestCase.getTestCaseId(), testCase, false);
+                        tms.updateCase(existingTestCase.getTestCaseId(), testCase, false);
                     updateCaseResponses.putAll(response);
                 }
             }
@@ -319,7 +320,7 @@ public class SuiteUpdate {
      * @param testCases the {@link TmsTestCase} instances for the scenarios in the script file
      */
     private void reorderSuiteAfterScriptUpdate(TmsSuite suite,
-                                                      List<TmsTestCase> testCases) {
+                                               List<TmsTestCase> testCases) {
         StringBuilder scenariosInOrder = new StringBuilder();
         for (TmsTestCase tmsTestCase : testCases) {
             String tmsTestCaseName = tmsTestCase.getName();
@@ -338,8 +339,8 @@ public class SuiteUpdate {
      * @param scenarioNamesToStep the scenario names specified in the subplan for each plan step
      */
     private void reorderSuiteAfterPlanUpdate(String suiteId,
-                                                    Map<String, Map<String, String>> testCaseToPlanStep,
-                                                    LinkedHashMap<String, List<String>> scenarioNamesToStep) {
+                                             Map<String, Map<String, String>> testCaseToPlanStep,
+                                             LinkedHashMap<String, List<String>> scenarioNamesToStep) {
         StringBuilder scenariosInOrder = new StringBuilder();
         for (String step : testCaseToPlanStep.keySet()) {
             Map<String, String> map = testCaseToPlanStep.get(step);
