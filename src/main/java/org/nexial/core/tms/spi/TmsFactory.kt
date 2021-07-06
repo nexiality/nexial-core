@@ -1,15 +1,16 @@
-package org.nexial.core.tms
+package org.nexial.core.tms.spi
 
 import org.apache.commons.lang3.StringUtils
 import org.nexial.core.NexialConst.TMSSettings.*
+import org.nexial.core.tms.TMSOperation
 import org.nexial.core.tms.model.TMSAccessData
 import org.nexial.core.tms.spi.testrail.APIClient
 import org.nexial.core.tms.spi.testrail.TestRailOperations
 import org.springframework.context.support.ClassPathXmlApplicationContext
 
 class TmsFactory {
-    fun loadTmsData(): TMSAccessData? {
-        val springContext = ClassPathXmlApplicationContext("classpath:/nexial-init.xml")
+    fun loadTmsData(): TMSAccessData {
+        ClassPathXmlApplicationContext("classpath:/nexial-init.xml")
         val username = System.getProperty(TMS_USERNAME)
         val password = System.getProperty(TMS_PASSWORD)
         val url = System.getProperty(TMS_URL)
@@ -20,7 +21,7 @@ class TmsFactory {
     }
 
     fun getClient(data: TMSAccessData, urlSuffix: String = ""): APIClient {
-        val url = StringUtils.appendIfMissing(data.url, "/") + urlSuffix;
+        val url = StringUtils.appendIfMissing(data.url, "/") + urlSuffix
         val client = APIClient(url)
         client.user = data.user
         client.password = data.password
@@ -28,21 +29,21 @@ class TmsFactory {
     }
 
     fun getTmsInstance(projectId: String): TMSOperation? {
-        // get
-        val data = loadTmsData()
         if (StringUtils.isEmpty(projectId)) return null
-        var instance: TMSOperation? = null
-        when (data!!.source) {
+
+        val data = loadTmsData()
+        return when (data.source) {
             "testrail" -> {
                 //val client = getClient(data)
-                instance = TestRailOperations(projectId)
+                TestRailOperations(projectId)
             }
-            "azure" -> {
+            "azure"    -> {
                 // check ready to use valid credentials
                 val client = getClient(data, "${data.organisation}/$projectId/_apis/")
-                //instance = AzureDevopsOperation(projectId, client)
+                // AzureDevopsOperation(projectId, client)
+                null
             }
+            else       -> null
         }
-        return instance
     }
 }

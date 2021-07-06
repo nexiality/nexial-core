@@ -395,6 +395,36 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         return StepResult.success("deselected '" + array + "' on widgets matching '" + locator + "'");
     }
 
+    @NotNull
+    public StepResult selectDropdown(String locator, String optLocator, String optText) {
+        requiresNotBlank(locator, "Invalid locator for dropdown element", locator);
+        requiresNotBlank(optLocator, "Invalid locator for option elements", optLocator);
+        requiresNotEmpty(optText, "Invalid option text text", optText);
+
+        try {
+            // step 1: click on dropdown to activate option list
+            WebElement dropdown = findElement(locator);
+            ConsoleUtils.log("clicking dropdown '" + locator + "'...");
+            StepResult clickResult = clickInternal(dropdown);
+            if (clickResult.failed()) { return clickResult; }
+
+            // step 2: wait for the right option to appear
+            StepResult findTargetResult = waitForElementTextPresent(optLocator, optText);
+            if (findTargetResult.failed()) { return findTargetResult; }
+
+            // step 3: find dropdown item matching `optText`
+            WebElement targetItem = findElements(optLocator)
+                .stream().filter(item -> TextUtils.polyMatch(item.getText(), optText, true)).findFirst().orElse(null);
+            if (targetItem == null) { return StepResult.fail("Unable to find a dropdown option '" + optText + "'"); }
+
+            // step 4: click on matching item
+            ConsoleUtils.log("clicking dropdown option '" + optText + "'...");
+            return clickInternal(targetItem);
+        } catch (IllegalArgumentException e) {
+            return StepResult.fail(e.getMessage());
+        }
+    }
+
     /**
      * assert that an element can be found by {@code locator} and it contains {@code text}.  The textual content is
      * the visible (i.e. not hidden by CSS) innerText of this element, including sub-elements, without any leading
@@ -709,6 +739,22 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         } else {
             return StepResult.fail("Not all locators are present within %s ms (each): %s",
                                    maxWaitMs, TextUtils.toString(notPresent, NL, "", ""));
+        }
+    }
+
+    public StepResult waitForElementTextPresent(String locator, String text) {
+        requiresNotBlank(locator, "invalid locator", locator);
+
+        long maxWaitMs = getPollWaitMs();
+        By by = locatorHelper.findBy(locator);
+
+        boolean found = waitForCondition(maxWaitMs, driver ->
+            findElements(driver, by).stream().filter(item -> TextUtils.polyMatch(item.getText(), text, true))
+                                    .findFirst().orElse(null) != null);
+        if (!found) {
+            return StepResult.fail("No element matching to '%s' with text '%s' can be found", locator, text);
+        } else {
+            return StepResult.success("At least 1 element matching to '%s' with text '%s' is found", locator, text);
         }
     }
 

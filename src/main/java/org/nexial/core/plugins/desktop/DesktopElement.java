@@ -556,7 +556,12 @@ public class DesktopElement {
             targetElement = element;
         }
 
-        if (targetElement != null) { return getValue(targetElement); }
+        if (targetElement != null) {
+            // text area and text box should not get "formatted" or "trimmed" text, but raw text instead.
+            return elementType == FormattedTextbox || elementType == TextArea || elementType == Textbox ?
+                   getRawValue(targetElement, getLabel()) :
+                   getValue(targetElement);
+        }
 
         throw new IllegalArgumentException("Cannot resolve target element for '" + getLabel() + "'");
     }
@@ -2584,6 +2589,20 @@ public class DesktopElement {
         String name = StringUtils.trim(element.getAttribute("Name"));
         try {
             return getElementText(element, name);
+        } catch (WebDriverException e) {
+            ConsoleUtils.log("Unable to resolve text content for '" + label + "', retrying via @Name attribute...");
+            return name;
+        }
+    }
+
+    /**  as {@link #getValue(WebElement)} but without the auto-trimming. */
+    protected static String getRawValue(WebElement element, String label) {
+        if (element == null) { return null; }
+
+        String name = element.getAttribute("Name");
+        try {
+            String text = element.getText();
+            return StringUtils.defaultIfEmpty(text, name);
         } catch (WebDriverException e) {
             ConsoleUtils.log("Unable to resolve text content for '" + label + "', retrying via @Name attribute...");
             return name;

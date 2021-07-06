@@ -68,13 +68,13 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
     override fun forcefulTerminate() {
         context.mobileServices.forEach { (_, service) ->
             if (service == mobileService) mobileService = null
-            service.driver.closeApp()
+            service.shutdown()
         }
 
         context.mobileServices.clear()
 
         if (mobileService != null) {
-            mobileService!!.driver.closeApp()
+            mobileService!!.shutdown()
             mobileService = null
         }
     }

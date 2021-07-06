@@ -67,6 +67,9 @@ object WebDriverExceptionHelper {
             is UnhandledAlertException         -> "JavaScript alert dialog not properly handled: "
             is StaleElementReferenceException  -> "Referenced element is either not longer available or attached to the specified locator"
             is TimeoutException                -> "Timed out while referencing web element(s): "
+            is SessionNotCreatedException      ->
+                if (StringUtils.contains(e.message, "AppiumDriver")) "Unable to start Appium service: "
+                else "Unable to start WebDriver session: "
             else                               -> "UNKNOWN ERROR: "
         }
 

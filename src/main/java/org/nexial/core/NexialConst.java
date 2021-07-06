@@ -55,8 +55,7 @@ import static java.awt.image.BufferedImage.TYPE_INT_RGB;
 import static java.io.File.separator;
 import static java.math.RoundingMode.*;
 import static javax.naming.Context.*;
-import static org.apache.commons.lang3.SystemUtils.IS_OS_WINDOWS;
-import static org.apache.commons.lang3.SystemUtils.USER_HOME;
+import static org.apache.commons.lang3.SystemUtils.*;
 import static org.nexial.core.NexialConst.AwsSettings.*;
 import static org.nexial.core.NexialConst.CommonColor.COLOR_NAMES;
 import static org.nexial.core.NexialConst.Data.*;
@@ -65,6 +64,7 @@ import static org.nexial.core.NexialConst.Exec.*;
 import static org.nexial.core.NexialConst.Image.OPT_IMAGE_DIFF_COLOR;
 import static org.nexial.core.NexialConst.Integration.MAIL_PREFIX;
 import static org.nexial.core.NexialConst.Iteration.*;
+import static org.nexial.core.NexialConst.Project.USER_NEXIAL_HOME;
 import static org.nexial.core.NexialConst.Web.NS_BROWSER;
 import static org.nexial.core.NexialConst.Web.NS_WEB;
 import static org.nexial.core.NexialConst.Ws.WS_JSON_CONTENT_TYPE;
@@ -2028,6 +2028,36 @@ public final class NexialConst {
 
         // avoid pinching, zooming or dragging from screen edges
         public static final int EDGE_WIDTH = 10;
+
+        // log level to use when configuring appium to send log to external file
+        public static final String FILE_CONSOLE_LOG_LEVEL = "warn:debug";
+
+        protected static final String SCRIPT_EXT = (IS_OS_WINDOWS ? "bat" : "sh");
+
+        public static final class Android {
+            public static final String ANDROID_SDK_HOME = USER_NEXIAL_HOME + "android" + separator + "sdk";
+            public static final String LICENSE_PATH = ANDROID_SDK_HOME + separator + "license";
+            public static final String SKIN_PATH = ANDROID_SDK_HOME + separator + "skin";
+            public static final String EMULATOR_PATH = ANDROID_SDK_HOME + separator + "emulator";
+            public static final String BUILD_TOOLS_PATH = ANDROID_SDK_HOME + separator + "build-tools";
+            public static final String APK_SIGNER_FILE = "apksigner.jar";
+            public static final String APK_SIGNER_DEST = ANDROID_SDK_HOME + separator + "tools" + separator + "lib" +
+                                                         separator + APK_SIGNER_FILE;
+            public static final String SYSTEM_IMAGES_PREFIX = "system-images;";
+            public static final String DEF_SYS_IMG_64 = SYSTEM_IMAGES_PREFIX + "android-30;google_apis;x86_64";
+            public static final String DEF_SYS_IMG_32 = SYSTEM_IMAGES_PREFIX + "android-30;google_apis;x86";
+
+            public static final String CMDLINE_TOOLS_URL = "https://dl.google.com/android/repository/commandlinetools-win-7302050_latest.zip";
+            public static final String CMDLINE_TOOLS_UNZIP_LOCATION = JAVA_IO_TMPDIR + separator + "cmdtools";
+            public static final String AVD_MANAGER_REL_PATH = "bin" + separator + "avdmanager." + SCRIPT_EXT;
+            public static final String SDK_MANAGER_REL_PATH = "bin" + separator + "sdkmanager." + SCRIPT_EXT;
+            public static final String SDK_MANAGER = CMDLINE_TOOLS_UNZIP_LOCATION + separator + SDK_MANAGER_REL_PATH;
+
+            public static final String RESOURCE_BASE = "https://nexiality.github.io/documentation/commands/mobile/resources";
+            public static final String ANDROID_SDK_LICENSE_ZIP_URL = RESOURCE_BASE + "/android_sdk_licenses.zip";
+            public static final String ANDROID_SDK_SKINS_ZIP_URL = RESOURCE_BASE + "/android_sdk_skins.zip";
+
+        }
     }
 
     private NexialConst() { }
