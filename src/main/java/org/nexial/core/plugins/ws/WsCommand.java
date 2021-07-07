@@ -17,20 +17,6 @@
 
 package org.nexial.core.plugins.ws;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.net.URLEncoder;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.stream.Collectors;
-import javax.validation.constraints.NotNull;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -38,7 +24,6 @@ import io.jsonwebtoken.*;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.lang3.math.NumberUtils;
@@ -52,6 +37,21 @@ import org.nexial.core.plugins.base.BaseCommand;
 import org.nexial.core.utils.CheckUtils;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.OutputResolver;
+
+import javax.validation.constraints.NotNull;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.net.URLEncoder;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import static io.jsonwebtoken.SignatureAlgorithm.HS256;
 import static io.jsonwebtoken.impl.TextCodec.BASE64URL;
@@ -678,10 +678,13 @@ public class WsCommand extends BaseCommand {
      */
     @NotNull
     protected OutputResolver newOutputResolver(String body) {
-        return newOutputResolver(body, context.hasData(WS_REQ_FILE_AS_RAW) ?
-                                       context.getBooleanData(WS_REQ_FILE_AS_RAW) :
-                                       BooleanUtils.toBoolean(context.getDataByPrefix(WS_REQ_HEADER_PREFIX)
-                                                                     .get(CONTENT_TYPE)));
+        if (context.hasData(WS_REQ_FILE_AS_RAW)) {
+            return newOutputResolver(body, context.getBooleanData(WS_REQ_FILE_AS_RAW));
+        }
+
+        // any content-type starting with "text" (like "text/plain") would be treated as NOT binary
+        String contentType = context.getDataByPrefix(WS_REQ_HEADER_PREFIX).get(CONTENT_TYPE);
+        return newOutputResolver(body, !StringUtils.startsWith(contentType, "text"));
     }
 
     @NotNull

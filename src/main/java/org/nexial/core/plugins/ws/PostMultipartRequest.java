@@ -22,6 +22,7 @@ import org.apache.http.HttpEntity;
 import org.apache.http.HttpRequest;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.HttpEntityEnclosingRequestBase;
+import org.apache.http.entity.ContentType;
 import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.nexial.commons.utils.FileUtil;
 import org.nexial.commons.utils.TextUtils;
@@ -37,20 +38,26 @@ import static org.apache.http.entity.ContentType.DEFAULT_BINARY;
 import static org.apache.http.entity.mime.HttpMultipartMode.BROWSER_COMPATIBLE;
 import static org.nexial.core.NexialConst.Ws.WS_CONTENT_TYPE;
 import static org.nexial.core.NexialConst.Ws.WS_USER_AGENT;
-import static org.nexial.core.utils.ExecUtils.NEXIAL_MANIFEST;
 
 public class PostMultipartRequest extends PostRequest {
+    private final ExecutionContext context;
     private HttpEntity entity;
 
-    PostMultipartRequest(ExecutionContext context) { super(context); }
+    PostMultipartRequest(ExecutionContext context) {
+        super(context);
+        this.context = context;
+    }
 
     /**
      * payload is a "stringify" map of request (i.e. key1=value1\nkey2=value2\n...). {@literal fileParams} is a list
      * of request parameter keys that should be considered as files to be specified as multipart.
      */
     public void setPayload(String payload, String... fileParams) {
-        // ConsoleUtils.log("payload = " + payload);
-        // ConsoleUtils.log("fileParams = " + ArrayUtils.toString(fileParams));
+        boolean verbose = context.isVerbose();
+        if (verbose) {
+            ConsoleUtils.log("payload = " + payload);
+            ConsoleUtils.log("fileParams = " + ArrayUtils.toString(fileParams));
+        }
 
         MultipartEntityBuilder multipartEntityBuilder = MultipartEntityBuilder.create().setMode(BROWSER_COMPATIBLE);
 
@@ -58,18 +65,25 @@ public class PostMultipartRequest extends PostRequest {
         Map<String, String> params = TextUtils.toMap(payload, "\n", "=");
         if (ArrayUtils.isNotEmpty(fileParams)) {
             Arrays.stream(fileParams).forEach(name -> {
-                String filePath = params.get(name);
+                String filePath = params.remove(name);
                 if (FileUtil.isFileReadable(filePath)) {
-                    File file = new File(filePath);
-                    multipartEntityBuilder.addBinaryBody(name, file, DEFAULT_BINARY, file.getName());
-                    params.remove(name);
+                    if (verbose) { ConsoleUtils.log("adding %s as a multipart file", filePath); }
+                    multipartEntityBuilder.addBinaryBody(name, new File(filePath));
                 } else {
-                    ConsoleUtils.log("Unable to resolve [" + name + "=" + filePath + "] as a valid multipart file");
+                    ConsoleUtils.error("Unable to resolve [%s=%s] as a multipart file; %s might not be a valid path",
+                                       name, filePath, filePath);
                 }
             });
         }
 
-        params.forEach((name, value) -> multipartEntityBuilder.addTextBody(name, value, DEFAULT_BINARY));
+        ContentType contentType = getHeaders().containsKey(WS_CONTENT_TYPE) ?
+                                  ContentType.create(String.valueOf(getHeaders().get(WS_CONTENT_TYPE))) :
+                                  DEFAULT_BINARY;
+        if (verbose) {
+            ConsoleUtils.log("setting the remaining payload (%s) as %s",
+                             TextUtils.toString(params.keySet(), ","), contentType.toString());
+        }
+        params.forEach((name, value) -> multipartEntityBuilder.addTextBody(name, value, contentType));
 
         entity = multipartEntityBuilder.build();
     }
@@ -83,14 +97,17 @@ public class PostMultipartRequest extends PostRequest {
 
     @Override
     protected void setRequestHeaders(HttpRequest http) {
-        // must NOT forcefully set content type as multipart; HttpClient framework does the magic
-        addHeaderIfNotSpecified(WS_USER_AGENT, NEXIAL_MANIFEST);
-
         Map<String, Object> requestHeaders = new HashMap<>(getHeaders());
         if (MapUtils.isEmpty(requestHeaders)) { return; }
 
+        boolean verbose = context.isVerbose();
+
+        // must NOT forcefully set content type as multipart; HttpClient framework does the magic
         requestHeaders.remove(WS_USER_AGENT);
         requestHeaders.remove(WS_CONTENT_TYPE);
-        requestHeaders.keySet().forEach(name -> setRequestHeader(http, name, requestHeaders));
+        requestHeaders.keySet().forEach(name -> {
+            if (verbose) { ConsoleUtils.log("setting request header %s=%s", name, requestHeaders.get(name)); }
+            setRequestHeader(http, name, requestHeaders);
+        });
     }
 }

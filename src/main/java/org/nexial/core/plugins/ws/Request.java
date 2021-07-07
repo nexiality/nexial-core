@@ -17,13 +17,6 @@
 
 package org.nexial.core.plugins.ws;
 
-import java.io.Serializable;
-import java.io.UnsupportedEncodingException;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
-
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -35,6 +28,12 @@ import org.nexial.commons.utils.RegexUtils;
 import org.nexial.commons.utils.web.URLEncodingUtils;
 import org.nexial.core.model.ExecutionContext;
 import org.openqa.selenium.Cookie;
+
+import java.io.Serializable;
+import java.io.UnsupportedEncodingException;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 
 import static org.nexial.core.NexialConst.Ws.*;
 import static org.nexial.core.SystemVariables.getDefaultBool;
@@ -73,7 +72,6 @@ public abstract class Request implements Serializable {
             setEnableRedirects(defaultEnableRedirect);
             setAllowCircularRedirects(defaultWsCircularRedirect);
             setAllowRelativeRedirects(defaultWsRelativeRedirects);
-            setHeaders(reqHeaders);
         } else {
             setConnectionTimeout(context.getIntData(WS_CONN_TIMEOUT, defaultWsConnTimeout));
             setSocketTimeout(context.getIntData(WS_READ_TIMEOUT, defaultWsReadTimeout));
@@ -87,8 +85,7 @@ public abstract class Request implements Serializable {
             // since execution.getDataByPrefix() converts them to string automatically.
             Map<String, String> candidateProps = context.getDataByPrefix(WS_REQ_HEADER_PREFIX);
             if (MapUtils.isNotEmpty(candidateProps)) {
-                Set<String> candidatePropKeys = candidateProps.keySet();
-                for (String key : candidatePropKeys) {
+                candidateProps.keySet().forEach(key -> {
                     Object value = context.getObjectData(WS_REQ_HEADER_PREFIX + key);
                     if (value instanceof String) {
                         // string values are for keeps since they have been treated with token replacement logic
@@ -96,7 +93,7 @@ public abstract class Request implements Serializable {
                     } else {
                         reqHeaders.put(key, value);
                     }
-                }
+                });
             }
 
             setHeaders(reqHeaders);
