@@ -22,6 +22,7 @@ import org.nexial.core.plugins.CanTakeScreenshot
 import org.nexial.core.plugins.ForcefulTerminate
 import org.nexial.core.plugins.base.BaseCommand
 import org.nexial.core.plugins.base.ScreenshotUtils
+import org.nexial.core.plugins.mobile.Direction.*
 import org.nexial.core.utils.CheckUtils.*
 import org.nexial.core.utils.ConsoleUtils
 import org.nexial.core.utils.OutputFileUtils
@@ -29,7 +30,6 @@ import org.openqa.selenium.*
 import org.openqa.selenium.ScreenOrientation.LANDSCAPE
 import org.openqa.selenium.ScreenOrientation.PORTRAIT
 import org.openqa.selenium.interactions.Actions
-import org.openqa.selenium.remote.RemoteWebElement
 import org.openqa.selenium.support.ui.FluentWait
 import java.io.File.separator
 import java.time.Duration
@@ -140,7 +140,17 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
         requiresNotEmpty(text, "Invalid text", text)
         val element = findElement(locator)
         val mobileService = getMobileService()
-        Actions(mobileService.driver).sendKeys(element, text).pause(mobileService.profile.postActionWaitMs).perform()
+
+        // too fast?
+        // Actions(mobileService.driver).sendKeys(element, text).pause(mobileService.profile.postActionWaitMs).perform()
+        // try with additional waits to let the onscreen keyboard renders/settles
+        Actions(mobileService.driver)
+            .click(element)
+            .pause(mobileService.profile.postActionWaitMs)
+            .sendKeys(element, text)
+            .pause(mobileService.profile.postActionWaitMs)
+            .perform()
+
         return StepResult.success("Text '$text' typed on '$locator'")
     }
 
@@ -183,9 +193,25 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
     fun scroll(locator: String, direction: String): StepResult {
         requiresNotBlank(direction, "Invalid direction", direction)
 
-        val arguments = mutableMapOf("direction" to Direction.valueOf(direction.toUpperCase()).detail,
-                                     "element" to (findElement(locator) as RemoteWebElement).id)
-        getMobileService().driver.executeScript("mobile: scroll", arguments)
+        val dir = Direction.valueOf(direction.toUpperCase())
+        val elem = findElement(locator)
+
+        val driver = getMobileService().driver
+        val screenDimension = driver.manage().window().size
+
+        val offsets = when (dir) {
+            DOWN  -> Pair(0, screenDimension.height)
+            UP    -> Pair(0, screenDimension.height * -1)
+            LEFT  -> Pair(screenDimension.width * -1, 0)
+            RIGHT -> Pair(screenDimension.width, 0)
+        }
+
+        Actions(driver)
+            .moveToElement(elem)
+            .clickAndHold()
+            .moveByOffset(offsets.first, offsets.second)
+            .release()
+            .perform()
         return StepResult.success("Scroll $direction on '$locator'")
     }
 
@@ -264,6 +290,14 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
         return StepResult.success("Screenshot for '$locator' created on $file")
     }
 
+    fun saveCount(`var`: String, locator: String): StepResult {
+        requiresValidVariableName(`var`)
+        val matches = findElements(locator)
+        val count = CollectionUtils.size(matches)
+        context.setData(`var`, count)
+        return StepResult.success("$count match(es) of '$locator' found and its count is stored to data variable 'var'")
+    }
+
     // fun rotate(start: String, end: String): StepResult
     // fun assertTextPresent(locator: String, text: String): StepResult
     // fun back(locator: String, text: String): StepResult
@@ -273,12 +307,11 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
 
     fun closeApp(): StepResult {
         val mobileService = getMobileService()
-        mobileService.driver.closeApp()
+        mobileService.shutdown()
         context.mobileServices.remove(mobileService.profile.profile)
         this.mobileService = null
         return StepResult.success()
     }
-
 
     internal fun getMobileService(): MobileService {
         if (mobileService == null) throw IllegalStateException(ERR_NO_SERVICE)
@@ -305,6 +338,18 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
                       "looking for element that matches '$locator'"
             log(err)
             throw NoSuchElementException(err)
+        }
+    }
+
+    internal fun findElements(locator: String): List<WebElement>? {
+        requiresNotBlank(locator, "Invalid locator", locator)
+        return try {
+            newWaiter().withMessage("find elements via locator '$locator'")
+                .until { it.findElements(resolveFindBy(locator)) }
+        } catch (e: TimeoutException) {
+            log("Timed out after ${getMobileService().profile.explicitWaitMs}ms " +
+                "looking for any element that matches '$locator'")
+            null
         }
     }
 

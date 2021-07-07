@@ -241,10 +241,10 @@
                 data-th-text="${#dates.format(#dates.create(0,0,0,0,0,0,summary.elapsedTime), 'HH:mm:ss')}">00:00:00
             </td>
             <td class="reportStats scenarioPassed" data-th-text="${summary.resolveTotalScenariosPassed()}">1 / 1</td>
-            <td class="reportStats" data-th-text="${#numbers.formatInteger(summary.executed, 1, 'DEFAULT')}">0</td>
-            <td class="reportStats" data-th-text="${#numbers.formatInteger(summary.passCount, 1, 'DEFAULT')}">0</td>
-            <td class="reportStats" data-th-text="${#numbers.formatInteger(summary.failCount, 1, 'DEFAULT')}">0</td>
-            <td class="reportStats"
+            <td align="right" class="reportStats" data-th-text="${#numbers.formatInteger(summary.executed, 1, 'DEFAULT')}">0</td>
+            <td align="right" class="reportStats" data-th-text="${#numbers.formatInteger(summary.passCount, 1, 'DEFAULT')}">0</td>
+            <td align="right" class="reportStats" data-th-text="${#numbers.formatInteger(summary.failCount, 1, 'DEFAULT')}">0</td>
+            <td align="right" class="reportStats"
                 data-th-text="${#numbers.formatDecimal(summary.successRate * 100, 1, 2, 'DEFAULT')} + '%'"
                 data-th-class="${summary.successRate >= 1 ? 'allPass' : 'hasFailure'}">
                 100%

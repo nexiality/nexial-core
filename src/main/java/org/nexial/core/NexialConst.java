@@ -2046,6 +2046,10 @@ public final class NexialConst {
             public static final String SDK_MANAGER_REL_PATH = "bin" + separator + "sdkmanager." + SCRIPT_EXT;
             public static final String SDK_REL_PATH = "android" + separator + "sdk";
 
+            public static final String ANDROID_AVD_HOME =
+                StringUtils.appendIfMissing(new File(USER_HOME).getAbsolutePath(), separator) +
+                ".android" + separator + "avd";
+
             public static final String ANDROID_SDK_HOME = USER_NEXIAL_HOME + SDK_REL_PATH;
             public static final String LICENSE_PATH = ANDROID_SDK_HOME + separator + "licenses";
             public static final String SKIN_PATH = ANDROID_SDK_HOME + separator + "skins";

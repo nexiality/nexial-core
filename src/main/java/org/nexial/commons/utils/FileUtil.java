@@ -321,7 +321,9 @@ public final class FileUtil {
                     .collect(Collectors.toList());
     }
 
-    public static List<File> unzip(File zip, File target) throws IOException {
+    public static List<File> unzip(File zip, File target) throws IOException { return unzip(zip, target, true); }
+
+    public static List<File> unzip(File zip, File target, boolean verbose) throws IOException {
 
         // int unzipCount = 0;
         List<File> unzipped = new ArrayList<>();
@@ -339,7 +341,7 @@ public final class FileUtil {
             while (ze != null) {
                 String fileName = ze.getName();
                 File newFile = new File(target.getAbsolutePath() + separator + fileName);
-                ConsoleUtils.log("[" + zip + "]: Unzipping to " + newFile.getAbsolutePath());
+                if (verbose) { ConsoleUtils.log("[" + zip + "]: Unzipping to " + newFile.getAbsolutePath()); }
 
                 //create directories for sub directories in zip
                 new File(newFile.getParent()).mkdirs();
