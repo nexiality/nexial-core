@@ -17,9 +17,6 @@
 
 package org.nexial.core.plugins.ws;
 
-import java.io.Serializable;
-import java.io.UnsupportedEncodingException;
-
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpRequest;
 import org.apache.http.client.config.RequestConfig;
@@ -31,7 +28,11 @@ import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.nexial.core.model.ExecutionContext;
 
-import static org.nexial.core.NexialConst.Ws.*;
+import java.io.Serializable;
+import java.io.UnsupportedEncodingException;
+
+import static org.nexial.core.NexialConst.Ws.WS_CONTENT_LENGTH;
+import static org.nexial.core.NexialConst.Ws.WS_CONTENT_TYPE;
 
 public class PostRequest extends Request implements Serializable {
     protected String payload;
@@ -76,26 +77,25 @@ public class PostRequest extends Request implements Serializable {
 
     protected void prepPostRequest(RequestConfig requestConfig, HttpEntityEnclosingRequestBase http)
         throws UnsupportedEncodingException {
+
+        if (this instanceof PostMultipartRequest) {
+            ((PostMultipartRequest) this).prepPostRequest(requestConfig, http);
+            return;
+        }
+
         http.setConfig(requestConfig);
 
-        String charset = null;
-        String contentType = String.valueOf(getHeaders().get(WS_CONTENT_TYPE));
-        if (StringUtils.contains(contentType, CONTENT_TYPE_CHARSET)) {
-            charset = StringUtils.substringAfter(charset, CONTENT_TYPE_CHARSET);
-            if (StringUtils.contains(charset, "/")) { charset = null; }
-
-            contentType = StringUtils.removeEnd(
-                StringUtils.trim(StringUtils.substringBefore(contentType, CONTENT_TYPE_CHARSET)), ";");
-        }
-
+        ContentType contentType = resolveContentTypeAndCharset(getHeaders().get(WS_CONTENT_TYPE), null);
         if (payloadBytes != null) {
-            ContentType ct = contentType == null ? null :
-                             charset == null ? ContentType.create(contentType) :
-                             ContentType.create(contentType, charset);
-            http.setEntity(new ByteArrayEntity(payloadBytes, ct));
+            http.setEntity(new ByteArrayEntity(payloadBytes, contentType));
         } else {
-            http.setEntity(charset == null ? new StringEntity(payload, charset) : new StringEntity(payload));
+            if (contentType != null && contentType.getCharset() != null) {
+                http.setEntity(new StringEntity(payload, contentType.getCharset()));
+            } else {
+                http.setEntity(new StringEntity(payload));
+            }
         }
+
         setRequestHeaders(http);
     }
 

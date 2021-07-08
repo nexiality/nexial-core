@@ -34,7 +34,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.apache.http.entity.ContentType.DEFAULT_BINARY;
 import static org.apache.http.entity.mime.HttpMultipartMode.BROWSER_COMPATIBLE;
 import static org.nexial.core.NexialConst.Ws.WS_CONTENT_TYPE;
 import static org.nexial.core.NexialConst.Ws.WS_USER_AGENT;
@@ -78,9 +77,8 @@ public class PostMultipartRequest extends PostRequest {
             });
         }
 
-        ContentType contentType = getHeaders().containsKey(WS_CONTENT_TYPE) ?
-                                  ContentType.create(String.valueOf(getHeaders().get(WS_CONTENT_TYPE))) :
-                                  DEFAULT_BINARY;
+        ContentType contentType = resolveContentTypeAndCharset(getHeaders().get(WS_CONTENT_TYPE),
+                                                               "application/octet-stream");
         if (verbose) {
             ConsoleUtils.log(logId,
                              "setting the remaining payload (%s) as %s",

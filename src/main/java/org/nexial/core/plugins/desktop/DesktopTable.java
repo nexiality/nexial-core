@@ -191,10 +191,7 @@ public class DesktopTable extends DesktopElement {
                       .map(elem -> elem.getAttribute("Name")).orElse("");
     }
 
-    public List<List<String>> scanAllRows() {
-        TableData tableData = fetchAll();
-        return tableData.getRows();
-    }
+    public List<List<String>> scanAllRows() { return fetchAll().getRows(); }
 
     /** As of v3.7, we will support HierTable (aka ControlType.Tree) and converting to CSV structure (text) */
     public void clickRow(int row) {
@@ -934,7 +931,7 @@ public class DesktopTable extends DesktopElement {
         int height = NumberUtils.toInt(dimensions[3], -1);
         if (height == -1) { return offsetY; }
 
-        return (offsetY > height) ? height - (TABLE_ROW_HEIGHT/2) : offsetY;
+        return (offsetY > height) ? height - (TABLE_ROW_HEIGHT / 2) : offsetY;
     }
 
     private String treatColumnHeader(String header) {return normalizeSpace ? TextUtils.xpathNormalize(header) : header;}
@@ -1029,10 +1026,6 @@ public class DesktopTable extends DesktopElement {
             String postShortcut = m.group(2);
 
             if (context != null) { context.setData(CURRENT_DESKTOP_TABLE_ROW, tableRow); }
-
-            // driver.executeScript(shortcutPrefix + forceShortcutSyntax(value) +
-            //                      (StringUtils.isNotBlank(postShortcut) ? toShortcuts(postShortcut) : ""),
-            //                      cellElement);
             String script = shortcutPrefix + joinShortcuts(value) +
                             (StringUtils.isNotBlank(postShortcut) ? toShortcuts(postShortcut) : "");
             driver.executeScript(script, cellElement);

@@ -27,30 +27,32 @@ class MobileService(val profile: MobileProfile, val remoteUrl: String?) {
         val appiumUrl = when {
             remoteUrl != null                         -> URL(remoteUrl)
             StringUtils.isNotBlank(profile.serverUrl) -> URL(profile.serverUrl)
-            else                                      -> {
-                val builder = AppiumServiceBuilder()
-                builder.withArgument(SESSION_OVERRIDE)
-                builder.withArgument(RELAXED_SECURITY)
-                // builder.withArgument { "autoGrantPermissions" }
-
-                if (profile.logFile != null) {
-                    builder.withLogFile(File(profile.logFile))
-                    builder.withArgument(LOG_LEVEL, FILE_CONSOLE_LOG_LEVEL)
-                    builder.withArgument(DEBUG_LOG_SPACING)
-                }
-
-                val service = AppiumDriverLocalService.buildService(builder)
-                service.start()
-                val url = service.url
-                ConsoleUtils.log("appium server started on $url")
-
-                appiumService = service
-                url
-            }
+            else                                      -> startAppiumLocalService()
         }
 
         driver = AppiumDriver(appiumUrl, newCapabilities())
         driver.manage().timeouts().implicitlyWait(profile.implicitWaitMs, MILLISECONDS)
+    }
+
+    private fun startAppiumLocalService(): URL {
+        val builder = AppiumServiceBuilder()
+        builder.withArgument(SESSION_OVERRIDE)
+        builder.withArgument(RELAXED_SECURITY)
+        // builder.withArgument { "autoGrantPermissions" }
+
+        if (profile.logFile != null) {
+            builder.withLogFile(File(profile.logFile))
+            builder.withArgument(LOG_LEVEL, FILE_CONSOLE_LOG_LEVEL)
+            builder.withArgument(DEBUG_LOG_SPACING)
+        }
+
+        val service = AppiumDriverLocalService.buildService(builder)
+        service.start()
+        val url = service.url
+        ConsoleUtils.log("appium server started on $url")
+
+        appiumService = service
+        return url
     }
 
     fun isAndroid() = profile.mobileType == ANDROID

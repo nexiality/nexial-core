@@ -2250,6 +2250,14 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
             }
         }
 
+        // headless environment can't handle Robot-based screenshot
+        if (useNativeCapture) {
+            if (browser != null && browser.isHeadless()) {
+                error("Native screenshot is disabled in a headless environment - skipping screen capture");
+                return null;
+            }
+        }
+
         if (useNativeCapture) {
             log("using native screen capturing approach...");
             screenshotFile = new File(filename);
@@ -2440,6 +2448,11 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     protected void nativeDragTo(Point start, Point end) { nativeDragTo(start, end.x, end.y); }
 
     protected void nativeDragTo(Point start, int toXOffset, int toYOffset) {
+        if (browser != null && browser.isHeadless()) {
+            ConsoleUtils.log("Native DnD is not enabled for headless environment");
+            return;
+        }
+
         int toX = start.x + toXOffset;
         int toY = start.y + toYOffset;
         ConsoleUtils.log("start dragging from target element from " +

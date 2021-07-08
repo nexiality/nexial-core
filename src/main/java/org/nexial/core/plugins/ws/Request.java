@@ -24,6 +24,7 @@ import org.apache.http.Header;
 import org.apache.http.HttpRequest;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.HttpUriRequest;
+import org.apache.http.entity.ContentType;
 import org.nexial.commons.utils.RegexUtils;
 import org.nexial.commons.utils.web.URLEncodingUtils;
 import org.nexial.core.model.ExecutionContext;
@@ -34,6 +35,7 @@ import java.io.UnsupportedEncodingException;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 import static org.nexial.core.NexialConst.Ws.*;
 import static org.nexial.core.SystemVariables.getDefaultBool;
@@ -166,12 +168,41 @@ public abstract class Request implements Serializable {
 
     protected abstract HttpUriRequest prepRequest(RequestConfig requestConfig) throws UnsupportedEncodingException;
 
+    protected ContentType resolveContentTypeAndCharset(Object header, String defaultContentType) {
+        String contentTypeString = Objects.toString(header, defaultContentType);
+        if (StringUtils.isBlank(contentTypeString)) { return null; }
+
+        String charset = null;
+        String contentType = StringUtils.trim(contentTypeString);
+        if (StringUtils.contains(contentType, CONTENT_TYPE_CHARSET)) {
+            charset = StringUtils.substringAfter(contentType, CONTENT_TYPE_CHARSET);
+            if (StringUtils.contains(charset, "/")) { charset = null; }
+
+            contentType = StringUtils.removeEnd(
+                StringUtils.trim(StringUtils.substringBefore(contentType, CONTENT_TYPE_CHARSET)), ";");
+        }
+
+        if (StringUtils.isBlank(contentType)) { return null; }
+        if (StringUtils.isBlank(charset)) { return ContentType.create(contentType); }
+        return ContentType.create(contentType, charset);
+    }
+
     protected void setRequestHeaders(HttpRequest http) {
-        addHeaderIfNotSpecified(WS_CONTENT_TYPE, getContentType());
-        addHeaderIfNotSpecified(WS_USER_AGENT, NEXIAL_MANIFEST);
+        // must NOT forcefully set content type as multipart; HttpClient framework does the magic
+        if (!(this instanceof PostMultipartRequest)) {
+            addHeaderIfNotSpecified(WS_CONTENT_TYPE, getContentType());
+            addHeaderIfNotSpecified(WS_USER_AGENT, NEXIAL_MANIFEST);
+        }
 
         Map<String, Object> requestHeaders = getHeaders();
         if (MapUtils.isEmpty(requestHeaders)) { return; }
+
+        // must NOT forcefully set content type as multipart; HttpClient framework does the magic
+        if (this instanceof PostMultipartRequest) {
+            requestHeaders.remove(WS_USER_AGENT);
+            requestHeaders.remove(WS_CONTENT_TYPE);
+        }
+
         requestHeaders.keySet().forEach(name -> setRequestHeader(http, name, requestHeaders));
     }
 
