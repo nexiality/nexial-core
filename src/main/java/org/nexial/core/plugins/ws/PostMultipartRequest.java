@@ -40,6 +40,7 @@ import static org.nexial.core.NexialConst.Ws.WS_CONTENT_TYPE;
 import static org.nexial.core.NexialConst.Ws.WS_USER_AGENT;
 
 public class PostMultipartRequest extends PostRequest {
+    private static final String logId = "post-multipart";
     private final ExecutionContext context;
     private HttpEntity entity;
 
@@ -67,10 +68,11 @@ public class PostMultipartRequest extends PostRequest {
             Arrays.stream(fileParams).forEach(name -> {
                 String filePath = params.remove(name);
                 if (FileUtil.isFileReadable(filePath)) {
-                    if (verbose) { ConsoleUtils.log("adding %s as a multipart file", filePath); }
+                    if (verbose) { ConsoleUtils.log(logId, "adding %s as a multipart file", filePath); }
                     multipartEntityBuilder.addBinaryBody(name, new File(filePath));
                 } else {
-                    ConsoleUtils.error("Unable to resolve [%s=%s] as a multipart file; %s might not be a valid path",
+                    ConsoleUtils.error(logId,
+                                       "Unable to resolve [%s=%s] as a multipart file; %s might not be a valid path",
                                        name, filePath, filePath);
                 }
             });
@@ -80,7 +82,8 @@ public class PostMultipartRequest extends PostRequest {
                                   ContentType.create(String.valueOf(getHeaders().get(WS_CONTENT_TYPE))) :
                                   DEFAULT_BINARY;
         if (verbose) {
-            ConsoleUtils.log("setting the remaining payload (%s) as %s",
+            ConsoleUtils.log(logId,
+                             "setting the remaining payload (%s) as %s",
                              TextUtils.toString(params.keySet(), ","), contentType.toString());
         }
         params.forEach((name, value) -> multipartEntityBuilder.addTextBody(name, value, contentType));
@@ -106,7 +109,7 @@ public class PostMultipartRequest extends PostRequest {
         requestHeaders.remove(WS_USER_AGENT);
         requestHeaders.remove(WS_CONTENT_TYPE);
         requestHeaders.keySet().forEach(name -> {
-            if (verbose) { ConsoleUtils.log("setting request header %s=%s", name, requestHeaders.get(name)); }
+            if (verbose) { ConsoleUtils.log(logId, "setting request header %s=%s", name, requestHeaders.get(name)); }
             setRequestHeader(http, name, requestHeaders);
         });
     }

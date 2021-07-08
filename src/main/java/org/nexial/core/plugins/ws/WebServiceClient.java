@@ -221,7 +221,7 @@ public class WebServiceClient {
     }
 
     @NotNull
-    public PostRequest toPostMultipartRequest(String url, String payload, String fileParams) {
+    public PostMultipartRequest toPostMultipartRequest(String url, String payload, String fileParams) {
         PostMultipartRequest request = new PostMultipartRequest(resolveContextForRequest());
         request.setUrl(url);
         request.setPayload(payload, StringUtils.split(fileParams, context.getTextDelim()));

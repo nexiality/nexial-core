@@ -23,6 +23,7 @@ import org.nexial.core.plugins.ForcefulTerminate
 import org.nexial.core.plugins.base.BaseCommand
 import org.nexial.core.plugins.base.ScreenshotUtils
 import org.nexial.core.plugins.mobile.Direction.*
+import org.nexial.core.plugins.web.WebDriverExceptionHelper.resolveErrorMessage
 import org.nexial.core.utils.CheckUtils.*
 import org.nexial.core.utils.ConsoleUtils
 import org.nexial.core.utils.OutputFileUtils
@@ -33,6 +34,7 @@ import org.openqa.selenium.interactions.Actions
 import org.openqa.selenium.support.ui.FluentWait
 import java.io.File.separator
 import java.time.Duration
+import java.util.function.Function
 
 
 class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
@@ -102,6 +104,23 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
         }
     }
 
+    fun waitForElementPresent(locator: String, waitMs: String): StepResult {
+        requiresNotBlank(locator, "invalid locator", locator)
+        val maxWaitMs = deriveMaxWaitMs(waitMs)
+        val isPresent = waitForCondition(maxWaitMs) { isElementPresent(locator) }
+        return if (isPresent) {
+            StepResult.success("Element by locator '$locator' is present")
+        } else {
+            StepResult.fail("Element by locator '" + locator + "' is NOT present within " + maxWaitMs + "ms")
+        }
+    }
+
+    private fun deriveMaxWaitMs(waitMs: String): Long {
+        val defWaitMs = getMobileService().profile.explicitWaitMs
+        val maxWait = if (StringUtils.isBlank(waitMs)) defWaitMs else NumberUtils.toDouble(waitMs).toLong()
+        return if (maxWait < 1) defWaitMs else maxWait
+    }
+
     fun clickUntilNotFound(locator: String, waitMs: String, max: String): StepResult {
         val mobileService = getMobileService()
 
@@ -146,9 +165,9 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
         // try with additional waits to let the onscreen keyboard renders/settles
         Actions(mobileService.driver)
             .click(element)
-            .pause(mobileService.profile.postActionWaitMs)
+            // .pause(mobileService.profile.postActionWaitMs)
             .sendKeys(element, text)
-            .pause(mobileService.profile.postActionWaitMs)
+            // .pause(mobileService.profile.postActionWaitMs)
             .perform()
 
         return StepResult.success("Text '$text' typed on '$locator'")
@@ -369,11 +388,27 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
     internal fun isElementPresent(locator: String): Boolean {
         requiresNotBlank(locator, "Invalid locator", locator)
         return try {
-            newWaiter().until { it.findElement(resolveFindBy(locator)) } != null
+            newWaiter()
+                .withMessage("check for the present of an element via locator '$locator")
+                .until { it.findElement(resolveFindBy(locator)) } != null
         } catch (e: TimeoutException) {
             false
         }
     }
+
+    internal fun waitForCondition(maxWaitMs: Long, condition: Function<WebDriver, Any>) =
+        try {
+            newWaiter().until(condition) != null
+        } catch (e: TimeoutException) {
+            log("Condition not be met on within specified wait time of $maxWaitMs ms")
+            false
+        } catch (e: WebDriverException) {
+            log("Error while waiting for a condition to be met: ${resolveErrorMessage(e)}")
+            false
+        } catch (e: Exception) {
+            log("Error while waiting for a condition to be met: ${e.message}")
+            false
+        }
 
     private fun waitMs(ms: Long) = WaitOptions.waitOptions(Duration.ofMillis(ms))
 
