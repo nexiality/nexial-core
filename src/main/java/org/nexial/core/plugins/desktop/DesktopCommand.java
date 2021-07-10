@@ -43,13 +43,14 @@ import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.NativeInputHelper;
 import org.nexial.core.utils.OutputFileUtils;
 import org.nexial.seeknow.SeeknowData;
-import org.openqa.selenium.*;
+import org.openqa.selenium.By;
 import org.openqa.selenium.By.ByClassName;
 import org.openqa.selenium.By.ById;
 import org.openqa.selenium.By.ByName;
-import org.openqa.selenium.NoSuchElementException;
-import org.openqa.selenium.Rectangle;
 import org.openqa.selenium.By.ByXPath;
+import org.openqa.selenium.NoSuchElementException;
+import org.openqa.selenium.WebDriverException;
+import org.openqa.selenium.WebElement;
 import org.openqa.selenium.interactions.Actions;
 import org.openqa.selenium.support.ui.FluentWait;
 import org.openqa.selenium.winium.WiniumDriver;
@@ -57,7 +58,7 @@ import org.openqa.selenium.winium.WiniumDriver;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
-import java.awt.Point;
+import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Array;
@@ -151,28 +152,17 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
                 return null;
             }
 
-            List<String> dimension = null;
-            if (!context.getBooleanData(SCREENSHOT_FULLSCREEN, getDefaultBool(SCREENSHOT_FULLSCREEN))) {
-                dimension = TextUtils.toList(application.getAttribute(ATTR_BOUNDING_RECTANGLE), ",", true);
-            }
-
-            file = screenshot(filename, dimension);
+            boolean fullscreen = context.getBooleanData(SCREENSHOT_FULLSCREEN, getDefaultBool(SCREENSHOT_FULLSCREEN));
+            // null parameter for element would render full screen capturing
+            file = screenshot(filename, fullscreen ? null : application);
         }
 
         return postScreenshot(testStep, file);
     }
 
-    protected File screenshot(String targetFile, List<String> dimension) {
-        Rectangle rect = null;
-        if (CollectionUtils.size(dimension) == 4) {
-            rect = new Rectangle(NumberUtils.toInt(dimension.get(0)),
-                                 NumberUtils.toInt(dimension.get(1)),
-                                 NumberUtils.toInt(dimension.get(3)),
-                                 NumberUtils.toInt(dimension.get(2)));
-        }
-
+    protected File screenshot(String targetFile, WebElement element) {
         // also generate `OPT_LAST_SCREENSHOT_NAME` var in context
-        File imageFile = ScreenshotUtils.saveScreenshot(getDriver(), targetFile, rect);
+        File imageFile = ScreenshotUtils.saveScreenshot(getDriver(), targetFile, BoundingRectangle.asRectangle(element));
         if (imageFile == null) {
             error("Unable to capture screenshot via Winium driver");
             return null;
@@ -860,7 +850,7 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
         WebElement elem = findFirstElement(locator);
         if (elem == null) { return StepResult.fail("No component can be resolved via locator " + locator); }
 
-        File imageFile = toScreenshot(elem, file);
+        File imageFile = screenshot(file, elem);
         return StepResult.success("Screenshot captured for " + locator + ": " + imageFile);
     }
 
@@ -888,7 +878,7 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
 
         if (elem == null) { return StepResult.fail("No component can be resolved via its name " + name); }
 
-        File imageFile = toScreenshot(elem, file);
+        File imageFile = screenshot(file, elem);
         return StepResult.success("Screenshot captured for " + name + ": " + imageFile);
     }
 
@@ -1741,6 +1731,8 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
     public StepResult assertHierRow(String matchBy, String expected) {
         requiresNotBlank(matchBy, "Invalid 'matchBy' specified", matchBy);
         Map<String, String> rowData = getHierRow(matchBy);
+        if (rowData == null) { return StepResult.fail("Unable to retrieve row data based on '%s'", matchBy); }
+
         if (StringUtils.isBlank(expected)) {
             if (!rowData.isEmpty()) { return StepResult.fail("EXPECTS empty but row data found via " + matchBy); }
             return StepResult.success("EXPECTS empty and either empty row or no match was found");
@@ -1947,10 +1939,6 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
     protected boolean useExplicitWait() {
         return context == null ?
                getDefaultBool(EXPLICIT_WAIT) : context.getBooleanData(EXPLICIT_WAIT, getDefaultBool(EXPLICIT_WAIT));
-    }
-
-    protected File toScreenshot(WebElement elem, String file) {
-        return screenshot(file, TextUtils.toList(elem.getAttribute("BoundingRectangle"), ",", true));
     }
 
     protected static String deriveText(WebElement element) {
@@ -2653,6 +2641,7 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
         DesktopElement object = getRequiredElement(name, HierTable);
         if (object instanceof DesktopHierTable) {
             DesktopHierTable table = (DesktopHierTable) object;
+            table.handleExtraConfig();
             if (CollectionUtils.isEmpty(table.headers) && table.columnCount == UNDEFINED) { table.scanStructure(); }
             return table;
         } else {

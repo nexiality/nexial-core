@@ -5,6 +5,7 @@ import org.apache.commons.lang3.reflect.MethodUtils
 import org.nexial.core.model.ExecutionContext
 import org.nexial.core.plugins.NexialCommand
 import org.nexial.core.plugins.desktop.DesktopCommand
+import org.nexial.core.plugins.desktop.DesktopConst.ATTR_BOUNDING_RECTANGLE
 import org.nexial.core.plugins.desktop.ElementType
 import org.nexial.core.plugins.desktop.WiniumUtils
 import org.openqa.selenium.By
@@ -127,7 +128,7 @@ class DesktopInspector(val context: ExecutionContext) {
         }")
         println("  ${
             showWebElementProperty("Dimension (width,height,x,y)", element) {
-                val rect = it.getAttribute("BoundingRectangle")
+                val rect = it.getAttribute(ATTR_BOUNDING_RECTANGLE)
                 if (StringUtils.isBlank(rect)) "N/A" else "(${StringUtils.replace(rect, ",", ", ")})"
             }
         }")

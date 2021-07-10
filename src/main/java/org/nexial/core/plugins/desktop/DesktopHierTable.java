@@ -30,10 +30,13 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.nexial.commons.utils.RegexUtils;
 import org.nexial.commons.utils.TextUtils;
+import org.nexial.core.ExecutionThread;
+import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.model.StepResult;
 import org.nexial.core.utils.CheckUtils;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.JsonUtils;
+import org.nexial.core.utils.NativeInputHelper;
 import org.openqa.selenium.By;
 import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.WebDriverException;
@@ -42,6 +45,7 @@ import org.openqa.selenium.WebElement;
 import javax.annotation.Nonnull;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -84,9 +88,9 @@ public class DesktopHierTable extends DesktopElement {
         @Override
         public String toString() {
             return new ToStringBuilder(this, NO_CLASS_NAME_STYLE)
-                       .append("headers", headers)
-                       .append("columnCount", columnCount)
-                       .toString();
+                .append("headers", headers)
+                .append("columnCount", columnCount)
+                .toString();
         }
     }
 
@@ -95,22 +99,20 @@ public class DesktopHierTable extends DesktopElement {
     public static DesktopHierTable toInstance(DesktopElement component) {
         DesktopHierTable instance = new DesktopHierTable();
         copyTo(component, instance);
-        if (MapUtils.isNotEmpty(instance.extra)) {
-            if (instance.extra.containsKey("headers")) {
-                instance.headers = TextUtils.toList(instance.extra.get("headers"), ",", true);
-                instance.columnCount = CollectionUtils.size(instance.headers);
-            }
-            if (instance.extra.containsKey("hierarchyColumn")) {
-                instance.hierarchyColumn = instance.extra.get("hierarchyColumn");
-            }
-            if (instance.extra.containsKey("hierarchyList")) {
-                instance.hierarchyList = instance.extra.get("hierarchyList");
-            }
-            if (instance.extra.containsKey("categoryColumn")) {
-                instance.categoryColumn = instance.extra.get("categoryColumn");
-            }
-        }
+        instance.handleExtraConfig();
         return instance;
+    }
+
+    protected void handleExtraConfig() {
+        if (MapUtils.isNotEmpty(extra)) {
+            if (extra.containsKey("headers")) {
+                headers = TextUtils.toList(extra.get("headers"), ",", true);
+                columnCount = CollectionUtils.size(headers);
+            }
+            if (extra.containsKey("hierarchyColumn")) { hierarchyColumn = extra.get("hierarchyColumn"); }
+            if (extra.containsKey("hierarchyList")) { hierarchyList = extra.get("hierarchyList"); }
+            if (extra.containsKey("categoryColumn")) { categoryColumn = extra.get("categoryColumn"); }
+        }
     }
 
     public TreeMetaData toMetaData() {
@@ -130,9 +132,9 @@ public class DesktopHierTable extends DesktopElement {
     @Override
     public String toString() {
         return new ToStringBuilder(this, NO_CLASS_NAME_STYLE)
-                   .append("columnCount", columnCount)
-                   .append("headers", headers)
-                   .toString();
+            .append("columnCount", columnCount)
+            .append("headers", headers)
+            .toString();
     }
 
     public void scanStructure() {
@@ -201,7 +203,8 @@ public class DesktopHierTable extends DesktopElement {
             // if last match is found, use `nameValues` to construct a series of setValue()'s.
             Map<String, String> outcome = new ListOrderedMap<>();
             parentRow.findElements(By.xpath(LOCATOR_EDITOR))
-                     .forEach(cell -> outcome.put(cell.getAttribute("Name"), formatHierCellData(cell)));
+                     .forEach(cell -> outcome.put(TextUtils.xpathNormalize(cell.getAttribute("Name")),
+                                                  formatHierCellData(cell)));
             return outcome;
         }
     }
@@ -296,19 +299,29 @@ public class DesktopHierTable extends DesktopElement {
     protected WebElement expandToMatchedHierarchy(List<String> matchBy) {
         if (CollectionUtils.isEmpty(matchBy)) { return null; }
 
+        ExecutionContext context = ExecutionThread.get();
+        boolean verbose = context != null && context.isVerbose();
+
+        // first let's start from the first row
+        driver.executeScript(DesktopUtils.toShortcuts("CTRL-HOME"), element);
+
         String shortcutExpand = DesktopUtils.toShortcuts("CTRL-SPACE", "RIGHT");
         String xpathMatching = StringUtils.replace(XPATH_ROW_BY_CATEGORY_INFRAG4, "{name}", categoryColumn);
         WebElement parentRow = element;
 
         for (String matchValue : matchBy) {
             // 1. use `categoryColumn` and `matchBy` to construct XPATH for each level. assume we start from Level 1
-            WebElement matched = DesktopUtils.findFirstElement(parentRow,
-                                                               StringUtils.replace(xpathMatching, "{value}", matchValue));
+            WebElement matched =
+                DesktopUtils.findFirstElement(parentRow, StringUtils.replace(xpathMatching, "{value}", matchValue));
             if (matched == null) {
                 // if no element matched to xpath, then we have not reached the target level/row
                 parentRow = null;
                 break;
             }
+
+            if (verbose) { ConsoleUtils.log("desktop", "found row matching to '%s'", matchValue); }
+
+            scrollUntilOnScreen(element, matched);
 
             // 2. if level is found, expand it (unless it's the last one to match)
             driver.executeScript(shortcutExpand, matched);
@@ -321,6 +334,68 @@ public class DesktopHierTable extends DesktopElement {
 
         // 4. if we did not reach the last matching level, then return with nothing
         return parentRow;
+    }
+
+    /**
+     * use mouse wheel to scroll within {@literal viewElement} until {@literal targetElement} is visible within the
+     * bounding rectangle of {@literal viewElement}.
+     */
+    private void scrollUntilOnScreen(WebElement viewElement, WebElement targetElement) {
+        if (viewElement == null || targetElement == null) { return; }
+
+        BoundingRectangle viewRect = BoundingRectangle.newInstance(viewElement);
+        if (viewRect == null) { return; }
+
+        ExecutionContext context = ExecutionThread.get();
+        boolean verbose = context != null && context.isVerbose();
+
+        int scrollFromX = viewRect.getX() + (viewRect.getWidth() / 2);
+        int scrollFromY = viewRect.getY() + (viewRect.getHeight() / 2);
+        int minY = viewRect.getY();
+        int maxY = viewRect.getY() + viewRect.getHeight();
+
+        BoundingRectangle targetRect = BoundingRectangle.newInstance(targetElement);
+        int OFF_SCREEN_Y = 10000;
+        int targetY = targetRect == null ? OFF_SCREEN_Y : targetRect.getY();
+
+        // target element is within view dimension; we are done
+        if (targetY < maxY && targetY > minY) { return; }
+
+        // if not, let's scroll (/w wheel) a bit at a time and test for target element's "viewability"
+        int MAX_TRIES = 15;
+        int tries = 0;
+        while (targetY == OFF_SCREEN_Y || (targetY < minY || targetY > maxY)) {
+            // consider "off screen" means we should scroll down, which might be wrong.
+            // We'll take care of this in the next while loop
+            int scrollBy = (targetY == OFF_SCREEN_Y || targetY > maxY) ? 15 : -15;
+            if (verbose) {
+                ConsoleUtils.log("desktop",
+                                 "scrolling %s by %s pixels...",
+                                 scrollBy < 0 ? "up" : "down", Math.abs(scrollBy));
+            }
+            NativeInputHelper.mouseWheel(scrollBy, Collections.emptyList(), scrollFromX, scrollFromY);
+
+            tries++;
+            if (tries > MAX_TRIES) { break; }
+
+            targetRect = BoundingRectangle.newInstance(targetElement);
+            targetY = targetRect == null ? OFF_SCREEN_Y : targetRect.getY();
+        }
+
+        if (targetY == OFF_SCREEN_Y) {
+            // still offscreen? maybe we should have scroll up instead
+            tries = 0;
+            while (targetY == OFF_SCREEN_Y || targetY < minY) {
+                if (verbose) { ConsoleUtils.log("desktop", "scrolling up by 15 pixels..."); }
+                NativeInputHelper.mouseWheel(15, Collections.emptyList(), scrollFromX, scrollFromY);
+
+                tries++;
+                if (tries > MAX_TRIES) { break; }
+
+                targetRect = BoundingRectangle.newInstance(targetElement);
+                targetY = targetRect == null ? OFF_SCREEN_Y : targetRect.getY();
+            }
+        }
     }
 
     protected List<String> getHierCellChildData(List<String> matchBy, String fetchColumn) {
@@ -340,7 +415,7 @@ public class DesktopHierTable extends DesktopElement {
             JSONArray jsonArray = JsonUtils.toJSONArray(result.toString());
             List<String> data = new ArrayList<>();
 
-            if (jsonArray != null  && jsonArray.length() > 0) {
+            if (jsonArray != null && jsonArray.length() > 0) {
                 for (int i = 0; i < jsonArray.length(); i++) {
                     try {
                         if (jsonArray.get(i) instanceof JSONObject) {

@@ -37,6 +37,7 @@ import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.JsonUtils;
 import org.openqa.selenium.By;
 import org.openqa.selenium.NoSuchElementException;
+import org.openqa.selenium.Rectangle;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.interactions.Actions;
 
@@ -922,13 +923,10 @@ public class DesktopTable extends DesktopElement {
     private int resolveClickOffsetY(int row) {
         int offsetY = headerHeight + (TABLE_ROW_HEIGHT * row) + (TABLE_ROW_HEIGHT / 2);
 
-        String boundingRectangle = this.element.getAttribute("BoundingRectangle");
-        if (StringUtils.isBlank(boundingRectangle)) { return offsetY; }
+        Rectangle rectangle = BoundingRectangle.asRectangle(this.element);
+        if (rectangle == null) { return offsetY; }
 
-        String[] dimensions = StringUtils.split(boundingRectangle, ",");
-        if (ArrayUtils.getLength(dimensions) != 4) { return offsetY; }
-
-        int height = NumberUtils.toInt(dimensions[3], -1);
+        int height = rectangle.getHeight();
         if (height == -1) { return offsetY; }
 
         return (offsetY > height) ? height - (TABLE_ROW_HEIGHT / 2) : offsetY;

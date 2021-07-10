@@ -49,7 +49,7 @@ internal object DesktopUtils {
             StringUtils.rightPad("@Name=", DEF_OUTPUT_LABEL_WIDTH) + element.getAttribute("Name") + NL +
             StringUtils.rightPad("@ControlType=", DEF_OUTPUT_LABEL_WIDTH) + element.getAttribute("ControlType") + NL +
             StringUtils.rightPad("@BoundingRectangle=", DEF_OUTPUT_LABEL_WIDTH) +
-            element.getAttribute("BoundingRectangle") + NL
+            element.getAttribute(ATTR_BOUNDING_RECTANGLE) + NL
 
     @JvmStatic
     fun printDetails(element: DesktopElement?) =
@@ -62,7 +62,7 @@ internal object DesktopUtils {
             StringUtils.rightPad("control type=", DEF_OUTPUT_LABEL_WIDTH) + element.controlType + NL +
             StringUtils.rightPad("automation id=", DEF_OUTPUT_LABEL_WIDTH) + element.automationId + NL +
             StringUtils.rightPad("bound=", DEF_OUTPUT_LABEL_WIDTH) +
-            if (element.element == null) "UNKNOWN" else element.element.getAttribute("BoundingRectangle") + NL
+            if (element.element == null) "UNKNOWN" else element.element.getAttribute(ATTR_BOUNDING_RECTANGLE) + NL
 
     @JvmStatic
     fun toShortcutText(text: String) =
