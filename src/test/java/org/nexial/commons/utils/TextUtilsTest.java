@@ -717,4 +717,31 @@ public class TextUtilsTest {
         }
 
     }
+
+    @Test
+    public void substringBeforeWhitespace() {
+        assertNull(TextUtils.substringBeforeWhitespace(null));
+        assertEquals("", TextUtils.substringBeforeWhitespace(""));
+        assertEquals("", TextUtils.substringBeforeWhitespace(" "));
+        assertEquals("", TextUtils.substringBeforeWhitespace(" \t\n  \t"));
+        assertEquals("Johnny", TextUtils.substringBeforeWhitespace("Johnny was a rebel"));
+        assertEquals("Johnny", TextUtils.substringBeforeWhitespace("Johnny\twas a rebel"));
+        assertEquals("Johnny", TextUtils.substringBeforeWhitespace("Johnny\nwas a rebel"));
+        assertEquals("Johnny", TextUtils.substringBeforeWhitespace("Johnny\n\rwas a rebel"));
+        assertEquals("", TextUtils.substringBeforeWhitespace("Johnny"));
+    }
+
+    @Test
+    public void substringAfterWhitespace() {
+        assertNull(TextUtils.substringAfterWhitespace(null));
+        assertEquals("", TextUtils.substringAfterWhitespace(""));
+        assertEquals("", TextUtils.substringAfterWhitespace(" "));
+        assertEquals("\t\n  \t", TextUtils.substringAfterWhitespace(" \t\n  \t"));
+        assertEquals("was a rebel", TextUtils.substringAfterWhitespace("Johnny was a rebel"));
+        assertEquals("was a rebel", TextUtils.substringAfterWhitespace("Johnny\twas a rebel"));
+        assertEquals("was a rebel", TextUtils.substringAfterWhitespace("Johnny\nwas a rebel"));
+        assertEquals("\rwas a rebel", TextUtils.substringAfterWhitespace("Johnny\n\rwas a rebel"));
+        assertEquals("", TextUtils.substringAfterWhitespace("Johnny"));
+        assertEquals("", TextUtils.substringAfterWhitespace("Johnny "));
+    }
 }

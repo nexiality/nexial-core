@@ -77,6 +77,28 @@ public final class TextUtils {
                                                                                     "\t = ");
     private static final int TO_STRING_KEY_LENGTH = 14;
 
+    /** retrieve string before the first whitespace character found in {@literal text} */
+    public static String substringBeforeWhitespace(String text) { return substringOnWhitespace(text, true); }
+
+    /** retrieve string after the first whitespace character found in {@literal text} */
+    public static String substringAfterWhitespace(String text) { return substringOnWhitespace(text, false); }
+
+    private static String substringOnWhitespace(String text, boolean before) {
+        if (StringUtils.isEmpty(text)) { return text; }
+
+        int pos = -1;
+        final int strLen = text.length();
+        for (int i = 0; i < strLen; i++) {
+            if (Character.isWhitespace(text.charAt(i))) {
+                pos = i;
+                break;
+            }
+        }
+
+        if (pos == -1) { return ""; }
+        return before ? StringUtils.substring(text, 0, pos) : StringUtils.substring(text, pos + 1);
+    }
+
     /**
      * line break conversion strategies -- currently only two, namely (1)
      * convert to HTML BR tag, or (2) join with previous line.
@@ -233,7 +255,8 @@ public final class TextUtils {
      */
     public static String insertBefore(String text, String before, String insertWith) {
         if (StringUtils.isAnyEmpty(text, before, insertWith) || !StringUtils.contains(text, before)) { return text; }
-        return StringUtils.substringBefore(text, before) + insertWith + before + StringUtils.substringAfter(text, before);
+        return StringUtils.substringBefore(text, before) + insertWith + before +
+               StringUtils.substringAfter(text, before);
     }
 
     @NotNull

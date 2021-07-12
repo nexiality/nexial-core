@@ -74,10 +74,12 @@ import static org.nexial.core.utils.CheckUtils.*;
 import static org.nexial.core.utils.OutputFileUtils.CASE_INSENSIVE_SORT;
 
 public class BaseCommand implements NexialCommand {
-    protected static final IncrementStrategy STRATEGY_DEFAULT = ALPHANUM;
     private static final String TMP_DELIM = "<--~.$.~-->";
+    protected static final IncrementStrategy STRATEGY_DEFAULT = ALPHANUM;
+
     protected transient Map<String, Method> commandMethods = new HashMap<>();
     protected transient ExecutionContext context;
+
     protected long pauseMs;
     protected transient ContextScreenRecorder screenRecorder;
     protected Syspath syspath = new Syspath();

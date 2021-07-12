@@ -17,15 +17,18 @@
 
 package org.nexial.core.variable;
 
-import java.util.List;
-
 import org.apache.commons.collections4.CollectionUtils;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.model.MockExecutionContext;
 import org.nexial.core.variable.Expression.ExpressionFunction;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import static org.junit.Assert.*;
 
 public class ExpressionParserTest {
     private MockExecutionContext context;
@@ -44,30 +47,30 @@ public class ExpressionParserTest {
         ExpressionParser subject = new ExpressionParser(context);
 
         // null test
-        Assert.assertNull(subject.parse(null));
-        Assert.assertNull(subject.parse(""));
-        Assert.assertNull(subject.parse(" "));
-        Assert.assertNull(subject.parse(" \t \t \n  \t \r     \t\t"));
-        Assert.assertNull(subject.parse("this is a test, and there's nothing to do here"));
-        Assert.assertNull(subject.parse("you know, JSON's my favorite son!"));
-        Assert.assertNull(subject.parse("Everyone's list include ['JSON', 'TEXT', 'CSV']"));
-        Assert.assertNull(subject.parse("Where the [JSON of a ...] is that?"));
-        Assert.assertNull(subject.parse("blah blah blah [TEXT(yada yada)] not valid"));
+        assertNull(subject.parse(null));
+        assertNull(subject.parse(""));
+        assertNull(subject.parse(" "));
+        assertNull(subject.parse(" \t \t \n  \t \r     \t\t"));
+        assertNull(subject.parse("this is a test, and there's nothing to do here"));
+        assertNull(subject.parse("you know, JSON's my favorite son!"));
+        assertNull(subject.parse("Everyone's list include ['JSON', 'TEXT', 'CSV']"));
+        assertNull(subject.parse("Where the [JSON of a ...] is that?"));
+        assertNull(subject.parse("blah blah blah [TEXT(yada yada)] not valid"));
 
         // simple test
         String fixture = "[TEXT(hello world) => upper unique length]";
         Expression expr = subject.parse(fixture);
-        Assert.assertNotNull(expr);
-        Assert.assertEquals("TEXT", expr.getDataType().getName());
-        Assert.assertEquals("hello world", expr.getDataType().getTextValue());
+        assertNotNull(expr);
+        assertEquals("TEXT", expr.getDataType().getName());
+        assertEquals("hello world", expr.getDataType().getTextValue());
 
         List<ExpressionFunction> functions = expr.getFunctions();
-        Assert.assertEquals(3, CollectionUtils.size(functions));
-        Assert.assertEquals("upper", functions.get(0).getFunctionName());
-        Assert.assertEquals("unique", functions.get(1).getFunctionName());
-        Assert.assertEquals("length", functions.get(2).getFunctionName());
+        assertEquals(3, CollectionUtils.size(functions));
+        assertEquals("upper", functions.get(0).getFunctionName());
+        assertEquals("unique", functions.get(1).getFunctionName());
+        assertEquals("length", functions.get(2).getFunctionName());
 
-        Assert.assertEquals(fixture, expr.getOriginalExpression());
+        assertEquals(fixture, expr.getOriginalExpression());
     }
 
     @Test
@@ -88,31 +91,111 @@ public class ExpressionParserTest {
         assertSimpleExpression2(subject.parse("[LIST(hello,world,what's,up?!)=>insert(2,and)join(good,to,meet,you) ]"));
     }
 
+    @Test
+    public void collectFunctionGroups() throws Exception {
+        ExpressionParser subject = new ExpressionParser(context);
+
+        List<String> functionGroups = new ArrayList<>();
+        subject.collectFunctionGroups("", functionGroups);
+        assertTrue(functionGroups.isEmpty());
+
+        subject.collectFunctionGroups("  \t\n\n\t  \n", functionGroups);
+        assertTrue(functionGroups.isEmpty());
+
+        subject.collectFunctionGroups("operation", functionGroups);
+        assertEquals(1, functionGroups.size());
+        assertEquals("operation", functionGroups.get(0));
+
+        functionGroups.clear();
+        subject.collectFunctionGroups("op1\n op2 \n\tallPass", functionGroups);
+        assertEquals(3, functionGroups.size());
+        assertEquals("op1", functionGroups.get(0));
+        assertEquals("op2", functionGroups.get(1));
+        assertEquals("allPass", functionGroups.get(2));
+
+        functionGroups.clear();
+        subject.collectFunctionGroups("ascii-table()\n wait(1000) \n\t", functionGroups);
+        assertEquals(2, functionGroups.size());
+        assertEquals("ascii-table()", functionGroups.get(0));
+        assertEquals("wait(1000)", functionGroups.get(1));
+
+        functionGroups.clear();
+        subject.collectFunctionGroups("click(css=#id1)\n select(//*[@id='id2'],California)\n\t", functionGroups);
+        assertEquals(2, functionGroups.size());
+        assertEquals("click(css=#id1)", functionGroups.get(0));
+        assertEquals("select(//*[@id='id2'],California)", functionGroups.get(1));
+
+        System.out.println();
+        functionGroups.clear();
+        subject.collectFunctionGroups(" type(//input[contains(@name,'email')],no1home@yahoo.com) " +
+                                      "type(//input[contains(@name, 'password') and (@name=\"password\")],passmeNOT!) " +
+                                      "  wait   " +
+                                      "click(//input[contains(@name,  'password') and contains(@name,\"password\")]) " +
+                                      "allPass",
+                                      functionGroups);
+        assertEquals(5, functionGroups.size());
+        assertEquals("type(//input[contains(@name,'email')],no1home@yahoo.com)", functionGroups.get(0));
+        assertEquals("type(//input[contains(@name, 'password') and (@name=\"password\")],passmeNOT!)", functionGroups.get(1));
+        assertEquals("wait", functionGroups.get(2));
+        assertEquals("click(//input[contains(@name,  'password') and contains(@name,\"password\")])", functionGroups.get(3));
+        assertEquals("allPass", functionGroups.get(4));
+
+        System.out.println();
+        functionGroups.clear();
+        subject.collectFunctionGroups(
+            " click(//fieldset[ ./legend[normalize-space(string(.))='Login Information'] ]//input[@value='Save']) \n" +
+            "\tclick (//fieldset[ ./legend[normalize-space(string(.))='Address Information'] ]//input[@value='Save'])\n" +
+            " wait(1000)  " +
+            "type(//table[@id='tblUsers']//tr[ ./td[normalize-space(string(.))='${NewTestUser.firstName} ${NewTestUser.lastName}'] ]//a[@title='Edit User'],crypt:234810235978139847376) \n " +
+            "allPass",
+            functionGroups);
+        System.out.println(TextUtils.toString(functionGroups,"\n"));
+        assertEquals(5, functionGroups.size());
+        assertEquals("click(//fieldset[ ./legend[normalize-space(string(.))='Login Information'] ]//input[@value='Save'])",
+                     functionGroups.get(0));
+        assertEquals("click(//fieldset[ ./legend[normalize-space(string(.))='Address Information'] ]//input[@value='Save'])",
+                     functionGroups.get(1));
+        assertEquals("wait(1000)", functionGroups.get(2));
+        assertEquals("type(//table[@id='tblUsers']//tr[ ./td[normalize-space(string(.))='${NewTestUser.firstName} ${NewTestUser.lastName}'] ]//a[@title='Edit User'],crypt:234810235978139847376)",
+                     functionGroups.get(3));
+        assertEquals("allPass", functionGroups.get(4));
+
+        System.out.println();
+        functionGroups.clear();
+        subject.collectFunctionGroups(" click(//fieldset[contains (@name, 'sizable' ) ] )\n" +
+                                      " wait(1000)  ",
+                                      functionGroups);
+        System.out.println(TextUtils.toString(functionGroups,"\n"));
+        assertEquals(2, functionGroups.size());
+        assertEquals("click(//fieldset[contains(@name, 'sizable' ) ] )", functionGroups.get(0));
+        assertEquals("wait(1000)", functionGroups.get(1));
+    }
+
     private static void assertSimpleExpression(Expression expr) {
         List<ExpressionFunction> functions;
         functions = expr.getFunctions();
-        Assert.assertNotNull(expr);
-        Assert.assertEquals("TEXT", expr.getDataType().getName());
-        Assert.assertEquals("hello world", expr.getDataType().getTextValue());
-        Assert.assertEquals(3, functions.size());
-        Assert.assertEquals("upper", functions.get(0).getFunctionName());
-        Assert.assertTrue(functions.get(0).getParams().isEmpty());
-        Assert.assertEquals("unique", functions.get(1).getFunctionName());
-        Assert.assertTrue(functions.get(1).getParams().isEmpty());
-        Assert.assertEquals("length", functions.get(2).getFunctionName());
-        Assert.assertTrue(functions.get(2).getParams().isEmpty());
+        assertNotNull(expr);
+        assertEquals("TEXT", expr.getDataType().getName());
+        assertEquals("hello world", expr.getDataType().getTextValue());
+        assertEquals(3, functions.size());
+        assertEquals("upper", functions.get(0).getFunctionName());
+        assertTrue(functions.get(0).getParams().isEmpty());
+        assertEquals("unique", functions.get(1).getFunctionName());
+        assertTrue(functions.get(1).getParams().isEmpty());
+        assertEquals("length", functions.get(2).getFunctionName());
+        assertTrue(functions.get(2).getParams().isEmpty());
     }
 
     private static void assertSimpleExpression2(Expression expr) {
         List<ExpressionFunction> functions;
         functions = expr.getFunctions();
-        Assert.assertNotNull(expr);
-        Assert.assertEquals("LIST", expr.getDataType().getName());
-        Assert.assertEquals("hello,world,what's,up?!", expr.getDataType().getTextValue());
-        Assert.assertEquals(2, functions.size());
-        Assert.assertEquals("insert", functions.get(0).getFunctionName());
-        Assert.assertEquals("[2, and]", functions.get(0).getParams().toString());
-        Assert.assertEquals("join", functions.get(1).getFunctionName());
-        Assert.assertEquals("[good, to, meet, you]", functions.get(1).getParams().toString());
+        assertNotNull(expr);
+        assertEquals("LIST", expr.getDataType().getName());
+        assertEquals("hello,world,what's,up?!", expr.getDataType().getTextValue());
+        assertEquals(2, functions.size());
+        assertEquals("insert", functions.get(0).getFunctionName());
+        assertEquals("[2, and]", functions.get(0).getParams().toString());
+        assertEquals("join", functions.get(1).getFunctionName());
+        assertEquals("[good, to, meet, you]", functions.get(1).getParams().toString());
     }
 }
