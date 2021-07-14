@@ -17,13 +17,7 @@
 
 package org.nexial.core.variable;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
@@ -32,6 +26,13 @@ import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.ExecutionThread;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.utils.ConsoleUtils;
+
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import static org.nexial.core.NexialConst.Data.TEXT_DELIM;
 import static org.nexial.core.SystemVariables.getDefault;
@@ -51,7 +52,32 @@ final class ExpressionDataTypeBuilder {
     boolean isValidType(String expression) { return RegexUtils.isExact(expression, REGEX_VALID_TYPE, true); }
 
     List<String> parseExpressionGroups(String expression) {
-        return RegexUtils.collectGroups(expression, REGEX_VALID_TYPE, false, true);
+        List<String> groups = RegexUtils.collectGroups(expression, REGEX_VALID_TYPE, false, true);
+
+        // we expect 4 groups, as per regex REGEX_VALID_TYPE
+        // if we don't, then we won't bother cleaning up the "operations" group (group 4)
+        if (CollectionUtils.size(groups) == 4) {
+            String operations = groups.get(3);
+            // "operations" group is expected to be non-blank
+            // if blank found, then we'll remove it (invalidate the entire collected groups, thus)
+            if (StringUtils.isBlank(operations)) {
+                groups.remove(3);
+            } else {
+                // if we see ']' without any '[', then the ']' is the "operations" terminator
+                // otherwise, "operations" group is expected to end with either alphanumeric or ')', and end with ']'
+                String regexFixOps = StringUtils.contains(operations, "[") ?
+                                     "(.+[\\w\\d\\)]\\s*).*" :
+                                     "(.+[\\w\\d\\)]\\s*)\\].*";
+
+                List<String> opsGroups = RegexUtils.collectGroups(operations, regexFixOps, true, true);
+                if (CollectionUtils.size(opsGroups) > 0) {
+                    operations = opsGroups.get(0);
+                    groups.set(3, operations);
+                }
+            }
+        }
+
+        return groups;
     }
 
     ExpressionDataType newDataType(String dataType, String value) throws TypeConversionException {

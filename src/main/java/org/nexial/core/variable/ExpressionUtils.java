@@ -54,7 +54,6 @@ public class ExpressionUtils {
         if (context == null) { return value; }
 
         try {
-            // return OutputFileUtils.resolveContent(value, context, false, replaceTokens);
             return new OutputResolver(value, context, true, context.isResolveTextAsURL(), replaceTokens, false, false)
                        .getContent();
         } catch (Throwable e) {

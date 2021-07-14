@@ -985,6 +985,7 @@ public class ExpressionProcessorTest {
                   "   \"name\" : \"Mobiles\"," +
                   "   \"quantity\" : [LIST(247,475,89,67,17,49, 8) => sum]" +
                   "}," +
+                  "{" +
                   "   \"name\" : \"Laptops\"," +
                   "   \"quantity\" : [LIST(24,500,78,65,88,100,10) => sum]" +
                   "}" +
@@ -993,6 +994,7 @@ public class ExpressionProcessorTest {
                      "   \"name\" : \"Mobiles\"," +
                      "   \"quantity\" : 952" +
                      "}," +
+                     "{" +
                      "   \"name\" : \"Laptops\"," +
                      "   \"quantity\" : 865" +
                      "}" +
@@ -1666,6 +1668,68 @@ public class ExpressionProcessorTest {
                    allOf(is(not(nullValue())),
                          is(equalTo("David"))));
 
+        // series of same tests, where
+        // CASE 1: no escape parens
+        assertThat(subject.process("[CSV(" + csvFile + ") => " +
+                                   " parse(delim=\\,|header=true)" +
+                                   " removeRows(Department = Information Technology|Office Phone end with 1192)" +
+                                   " removeColumns(First Name|Last Name|Office Number|Office Phone|Mobile Phone|Fax)" +
+                                   " removeColumns(Address|City|State or Province|ZIP or Postal Code|Country or Region)" +
+                                   " renameColumn(User Name, user)" +
+                                   " renameColumn(Display Name, name)" +
+                                   " renameColumn(Job Title, position)" +
+                                   " renameColumn(Department, group)" +
+                                   " json" +
+                                   " extract([name=REGEX:(.*e.*){2\\,}].group)" +
+                                   " list" +
+                                   " descending " +
+                                   " combine(\\,)" +
+                                   " remove(\")" +
+                                   " text" +
+                                   "]"),
+                   allOf(is(not(nullValue())),
+                         is(equalTo("Information Technology,Human Resource,Finance"))));
+        // CASE 2: escape all parens
+        assertThat(subject.process("[CSV(" + csvFile + ") => " +
+                                   " parse(delim=\\,|header=true)" +
+                                   " removeRows(Department = Information Technology|Office Phone end with 1192)" +
+                                   " removeColumns(First Name|Last Name|Office Number|Office Phone|Mobile Phone|Fax)" +
+                                   " removeColumns(Address|City|State or Province|ZIP or Postal Code|Country or Region)" +
+                                   " renameColumn(User Name, user)" +
+                                   " renameColumn(Display Name, name)" +
+                                   " renameColumn(Job Title, position)" +
+                                   " renameColumn(Department, group)" +
+                                   " json" +
+                                   " extract([name=REGEX:\\(.*e.*\\){2\\,}].group)" +
+                                   " list" +
+                                   " descending " +
+                                   " combine(\\,)" +
+                                   " remove(\")" +
+                                   " text" +
+                                   "]"),
+                   allOf(is(not(nullValue())),
+                         is(equalTo("Information Technology,Human Resource,Finance"))));
+        // CASE 3: escape only closing parens
+        assertThat(subject.process("[CSV(" + csvFile + ") => " +
+                                   " parse(delim=\\,|header=true)" +
+                                   " removeRows(Department = Information Technology|Office Phone end with 1192)" +
+                                   " removeColumns(First Name|Last Name|Office Number|Office Phone|Mobile Phone|Fax)" +
+                                   " removeColumns(Address|City|State or Province|ZIP or Postal Code|Country or Region)" +
+                                   " renameColumn(User Name, user)" +
+                                   " renameColumn(Display Name, name)" +
+                                   " renameColumn(Job Title, position)" +
+                                   " renameColumn(Department, group)" +
+                                   " json" +
+                                   " extract([name=REGEX:(.*e.*\\){2\\,}].group)" +
+                                   " list" +
+                                   " descending " +
+                                   " combine(\\,)" +
+                                   " remove(\")" +
+                                   " text" +
+                                   "]"),
+                   allOf(is(not(nullValue())),
+                         is(equalTo("Information Technology,Human Resource,Finance"))));
+        // CASE 4: escape only opening parens
         assertThat(subject.process("[CSV(" + csvFile + ") => " +
                                    " parse(delim=\\,|header=true)" +
                                    " removeRows(Department = Information Technology|Office Phone end with 1192)" +

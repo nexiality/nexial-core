@@ -55,13 +55,13 @@ public class ExpressionParser {
 
         // create data type
         String datatype = StringUtils.trim(typeGrouping.get(0));
-        String datavalue = StringUtils.trim(typeGrouping.get(1));
-        datavalue = StringUtils.removeStart(datavalue, DATATYPE_START);
-        datavalue = StringUtils.removeEnd(datavalue, DATATYPE_END);
-        if (StringUtils.equals(datavalue, "null")) { datavalue = null; }
+        String dataValue = StringUtils.trim(typeGrouping.get(1));
+        dataValue = StringUtils.removeStart(dataValue, DATATYPE_START);
+        dataValue = StringUtils.removeEnd(dataValue, DATATYPE_END);
+        if (StringUtils.equals(dataValue, "null")) { dataValue = null; }
         ExpressionDataType dataType = null;
         try {
-            dataType = typeBuilder.newDataType(datatype, datavalue);
+            dataType = typeBuilder.newDataType(datatype, dataValue);
         } catch (TypeConversionException e) {
             if (!syntaxOnly) { throw e; }
         }
@@ -96,6 +96,7 @@ public class ExpressionParser {
                          .map(param -> StringUtils.replace(postFunctionParsingSubstitution(param, true),
                                                            ESCAPE_DELIM_SUBSTITUTION,
                                                            delim))
+                         .map(ExpressionParser::removeEscapes)
                          .collect(Collectors.toList());
 
             expr.addFunction(new ExpressionFunction(functionName, params));
@@ -103,20 +104,54 @@ public class ExpressionParser {
             // recollecting all the functions as for textual representation
 
             // collect anything before function e.g. spaces before function
-            String operation = StringUtils.substringBefore(text, group) + group;
+            String operation = "";
+            if (StringUtils.startsWith(StringUtils.trim(text), group)) {
+                operation = StringUtils.substringBefore(text, group) + group;
+                if (StringUtils.startsWith(text, operation + "()")) { operation += "()"; }
+                text = StringUtils.removeStart(text, operation);
+            } else {
+                if (StringUtils.startsWith(StringUtils.trim(text), functionName)) {
+                    // this means that there might be some whitespaces between function name and parameter list
+                    operation = StringUtils.substringBefore(text, functionName) + functionName;
 
-            // if function has no parameter given by ()
-            // e.g. EXCEL() => csv  is given as EXCEL() => csv()
-            operation += StringUtils.startsWith(text, operation + "()") ? "()" : "";
+                    // is there parameter list after function name?
+                    String originalParams = StringUtils.substringAfter(group, functionName);
+                    if (StringUtils.isNotBlank(originalParams)) {
+                        if (StringUtils.startsWith(StringUtils.trim(StringUtils.substringAfter(text, operation)),
+                                                   originalParams)) {
+                            // found parameter list after trimming
+                            operation +=
+                                StringUtils.substringBefore(StringUtils.substringAfter(text, operation),
+                                                            originalParams) +
+                                originalParams;
+                            text = StringUtils.substringAfter(text, originalParams);
+                        } else {
+                            // oh oh... not good
+                            ConsoleUtils.error("POSSIBLE PARSING ERROR around " + text + "; UNABLE TO MAP PARAMETERS");
+                            operation = group;
+                            // last attempt... probably won't do much good
+                            text = StringUtils.substringAfter(text, group);
+                        }
+                    } else {
+                        // no param, but do we have `()` in text?
+                        if (StringUtils.startsWith(text, operation + "()")) { operation += "()"; }
+                        text = StringUtils.removeStart(text, operation);
+                    }
+                } else {
+                    // oh oh... not good
+                    ConsoleUtils.error("POSSIBLE PARSING ERROR around " + text);
+                    operation = group;
+                    // last attempt... probably won't do much good
+                    text = StringUtils.substringAfter(text, group);
+                }
+            }
 
             newText.append(operation);
-            text = StringUtils.replaceOnce(text, operation, "");
 
             if (StringUtils.isBlank(text)) {
                 newText.append(text);
                 break;
             } else if (RegexUtils.isExact(text, EXPRESSION_END_REGEX, true)) {
-                // newText.append(RegexUtils.firstMatches(text, EXPRESSION_END_REGEX));
                 break;
             }
         }
@@ -205,6 +240,16 @@ public class ExpressionParser {
     }
 
     protected boolean containsMatchingParenthesis(String text) {
+        int posEscapedCloseParen = StringUtils.indexOf(text, "\\)");
+        int posEscapedOpenParen = StringUtils.indexOf(text, "\\(");
+        if (posEscapedCloseParen != -1 && posEscapedOpenParen != -1) {
+            text = StringUtils.remove(text, "\\(");
+            text = StringUtils.remove(text, "\\)");
+        } else {
+            if (StringUtils.endsWith(text, "\\)")) { return false; }
+            if (RegexUtils.match(text, "\\(.*\\\\[\\(\\)].*\\)")) { return true; }
+        }
+
         return StringUtils.countMatches(text, '(') == StringUtils.countMatches(text, ')');
     }
 
@@ -214,6 +259,7 @@ public class ExpressionParser {
         if (StringUtils.isBlank(text)) { return text; }
 
         for (Map.Entry<String, String> subst : FUNCTION_PARAM_SUBSTITUTIONS.entrySet()) {
+            if (subst.getKey().equals("\\(") || subst.getKey().equals("\\)")) { continue; }
             text = StringUtils.replace(text, subst.getKey(), subst.getValue());
         }
 
@@ -230,6 +276,14 @@ public class ExpressionParser {
 
         if (NON_DISPLAYABLE_REPLACEMENTS.containsKey(text)) { return NON_DISPLAYABLE_REPLACEMENTS.get(text); }
         if (StringUtils.equals(text, NULL)) { return null; }
+        return text;
+    }
+
+    private static String removeEscapes(String text) {
+        if (StringUtils.isBlank(text)) { return text; }
+        for (Map.Entry<String, String> subst : FUNCTION_PARAM_SUBSTITUTIONS.entrySet()) {
+            text = StringUtils.replace(text, subst.getKey(), StringUtils.removeStart(subst.getKey(), "\\"));
+        }
         return text;
     }
 }

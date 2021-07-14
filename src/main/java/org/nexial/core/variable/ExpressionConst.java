@@ -27,10 +27,6 @@ final class ExpressionConst {
     static final String DATATYPE_START = "(";
     static final String DATATYPE_END = ")";
     static final String REGEX_DEC_NUM = "^-?[0-9]*\\.[0-9]+$";
-
-    // e.g   max( ${listOfNumbers}   )
-    // min function name (aka operation) is 3 character
-    static final String REGEX_FUNCTION = "(\\s*[A-Za-z][0-9A-Za-z_\\-]{2,})(\\s*\\([^)]+\\)\\s*)?";
     static final String REGEX_VALID_TYPE_PREFIX = ".*\\[(";
     static final String REGEX_VALID_TYPE_SUFFIX = ")(\\(.*?\\))(\\s*\\=\\>\\s*)(.+)\\].*";
     static final Map<String, String> FUNCTION_PARAM_SUBSTITUTIONS = TextUtils.toMap("=",

@@ -171,6 +171,47 @@ public class ExpressionParserTest {
         assertEquals("wait(1000)", functionGroups.get(1));
     }
 
+    @Test
+    public void collectFunctionGroups2() throws Exception {
+        ExpressionParser subject = new ExpressionParser(context);
+
+        List<String> functionGroups = new ArrayList<>();
+
+        System.out.println();
+        functionGroups.clear();
+        subject.collectFunctionGroups("merge(apple,orange,chicken) size multiply(16.44)", functionGroups);
+        System.out.println(TextUtils.toString(functionGroups,"\n"));
+        assertEquals(3, functionGroups.size());
+        assertEquals("merge(apple,orange,chicken)", functionGroups.get(0));
+        assertEquals("size", functionGroups.get(1));
+        assertEquals("multiply(16.44)", functionGroups.get(2));
+
+        System.out.println();
+        functionGroups.clear();
+        subject.collectFunctionGroups("extract([name=REGEX:(.*e.*){2,}].group) list descending  combine(,) remove(\") text",
+                                      functionGroups);
+        System.out.println(TextUtils.toString(functionGroups,"\n"));
+        assertEquals(6, functionGroups.size());
+        assertEquals("extract([name=REGEX:(.*e.*){2,}].group)", functionGroups.get(0));
+        assertEquals("list", functionGroups.get(1));
+        assertEquals("descending", functionGroups.get(2));
+        assertEquals("combine(,)", functionGroups.get(3));
+        assertEquals("remove(\")", functionGroups.get(4));
+        assertEquals("text", functionGroups.get(5));
+
+        System.out.println();
+        functionGroups.clear();
+        subject.collectFunctionGroups("extract([name=REGEX:(.*e.*\\){2,}].group) list combine(\\,) remove(\") text",
+                                      functionGroups);
+        System.out.println(TextUtils.toString(functionGroups,"\n"));
+        assertEquals(5, functionGroups.size());
+        assertEquals("extract([name=REGEX:(.*e.*\\){2,}].group)", functionGroups.get(0));
+        assertEquals("list", functionGroups.get(1));
+        assertEquals("combine(\\,)", functionGroups.get(2));
+        assertEquals("remove(\")", functionGroups.get(3));
+        assertEquals("text", functionGroups.get(4));
+    }
+
     private static void assertSimpleExpression(Expression expr) {
         List<ExpressionFunction> functions;
         functions = expr.getFunctions();
