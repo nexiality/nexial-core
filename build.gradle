@@ -217,6 +217,8 @@ dependencies {
 	// compile("org.mongodb:mongodb-driver-async:${mongoDriverVersion}")
 	compile("org.mongodb:mongo-java-driver:${mongoDriverVersion}")
 	compile("org.xerial:sqlite-jdbc:${sqliteVersion}")
+	// support Azure database connectivity
+	implementation("com.microsoft.azure:msal4j:${msal4jVersion}")
 
 	// support: redis
 	compile("redis.clients:jedis:${jedisVersion}")

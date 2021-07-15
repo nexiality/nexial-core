@@ -130,7 +130,7 @@ REM # Make sure prerequisite environment variables are set
 
     del %TEMP%\java_version
 
-    if "%JAVA_SUPPORTS_MODULE%"=="true" ( set JAVA_OPT=%JAVA_OPT% --add-opens=java.base/java.util=ALL-UNNAMED )
+    if "%JAVA_SUPPORTS_MODULE%"=="true" ( set JAVA_OPT=%JAVA_OPT% --add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.util=ALL-UNNAMED )
 	goto :eof
 
 
