@@ -8,8 +8,8 @@ import org.apache.commons.lang3.BooleanUtils
 import org.apache.commons.lang3.StringUtils
 import org.apache.commons.lang3.SystemUtils.IS_OS_WINDOWS
 import org.apache.commons.lang3.SystemUtils.JAVA_IO_TMPDIR
+import org.nexial.commons.proc.ProcessInvoker
 import org.nexial.commons.proc.ProcessInvoker.WORKING_DIRECTORY
-import org.nexial.commons.proc.ProcessInvoker.invoke
 import org.nexial.commons.utils.*
 import org.nexial.core.NexialConst.DEF_CHARSET
 import org.nexial.core.NexialConst.Data.WIN32_CMD
@@ -39,11 +39,10 @@ object AndroidSetup {
     private val batchExt = if (IS_OS_WINDOWS) ".cmd" else ".sh"
 
     private const val resourceRoot = "/org/nexial/core/tools/appium/"
-    private val showDevicesTemplate = ResourceUtils.loadResource("${resourceRoot}show-android-devices$batchExt")
-    private val runEmuTemplate = ResourceUtils.loadResource("${resourceRoot}run-android-emulator$batchExt")
+    private val runEmuTemplateCmd = ResourceUtils.loadResource("${resourceRoot}run-android-emulator.cmd")
+    private val runEmuTemplateSh = ResourceUtils.loadResource("${resourceRoot}run-android-emulator.sh")
 
     private val projectBinRelPath = "artifact${separator}bin${separator}"
-    private val showDevicesBatch = "${projectBinRelPath}show-android-devices$batchExt"
     private const val runEmuBatchPrefix = "run-android-emulator-"
     private val runEmuPrefix = "${projectBinRelPath}$runEmuBatchPrefix"
 
@@ -113,11 +112,7 @@ object AndroidSetup {
         log("\nsetting up apksigner...")
         copyApkSigner()
 
-        // step 7: generate show_devices batch, if needed
-        log("\ncreating $showDevicesBatch")
-        createShowDevicesBatch()
-
-        // step 8: install emulator
+        // step 7: install emulator
         //  avdmanager.bat list device -c
         log("\ninstalling Android emulators...")
         val availableEmulators = retrieveAvailableEmulators(ANDROID_EMULATORS_URL)
@@ -163,7 +158,7 @@ object AndroidSetup {
 
     private fun retrieveInstalledSysImg(sdkManager: String): List<String> {
         val envRuntime = mapOf(WORKING_DIRECTORY to StringUtils.substringAfterLast(sdkManager, separator))
-        val installedPackages = invoke(sdkManager, optionListInstalledSysImg, envRuntime)
+        val installedPackages = ProcessInvoker.invoke(sdkManager, optionListInstalledSysImg, envRuntime)
         if (StringUtils.isNotBlank(installedPackages.stderr)) {
             System.err.println(installedPackages.stderr)
             exitProcess(-1)
@@ -247,7 +242,7 @@ object AndroidSetup {
 
     private fun installCommonPackages(sdkManager: String) {
         val envRuntime = mapOf(WORKING_DIRECTORY to StringUtils.substringAfterLast(sdkManager, separator))
-        val outcome = invoke(sdkManager, optionInstallCommPkg, envRuntime)
+        val outcome = ProcessInvoker.invoke(sdkManager, optionInstallCommPkg, envRuntime)
         verbose(outcome.stdout)
 
         val runtimeError = outcome.stderr
@@ -261,7 +256,7 @@ object AndroidSetup {
         val sdkManagerPath = StringUtils.substringBeforeLast(sdkManager, separator)
         val envRuntime = mapOf(WORKING_DIRECTORY to sdkManagerPath)
 
-        val listPackages = invoke(sdkManager, optionListSysImg, envRuntime)
+        val listPackages = ProcessInvoker.invoke(sdkManager, optionListSysImg, envRuntime)
 
         val sysImages = StringUtils.split(listPackages.stdout, "\n")
             .filter { StringUtils.startsWith(StringUtils.trim(it), SYSTEM_IMAGES_PREFIX) }
@@ -289,7 +284,7 @@ object AndroidSetup {
                 if (!sysImages.contains(userSysImg))
                     println("ERROR: Unknown system images specified - $userSysImg\n")
                 else {
-                    val outcome = invoke(sdkManager, optionInstall.plus(userSysImg), envRuntime)
+                    val outcome = ProcessInvoker.invoke(sdkManager, optionInstall.plus(userSysImg), envRuntime)
                     verbose(outcome.stdout)
 
                     if (StringUtils.isNotBlank(outcome.stderr)) {
@@ -313,17 +308,6 @@ object AndroidSetup {
 
         FileUtils.copyFile(apksignerFiles[0], File(APK_SIGNER_DEST))
         verbose("copied $APK_SIGNER_FILE to $APK_SIGNER_DEST")
-    }
-
-    private fun createShowDevicesBatch() {
-        val targetBatch = StringUtils.appendIfMissing(projectHome, separator) + showDevicesBatch
-        val batchContent = TextUtils.replace(showDevicesTemplate, mapOf(
-            "\${sdk.rel.path}" to SDK_REL_PATH,
-            "\${generator.signature}" to signature,
-            "\${generated.timestamp}" to DateUtility.getCurrentTimestampForLogging()
-        ))
-        FileUtils.write(File(targetBatch), batchContent, DEF_CHARSET)
-        verbose("created show-android-devices batch file: $targetBatch")
     }
 
     private fun retrieveAvailableEmulators(url: String): AvailableEmulators {
@@ -410,7 +394,7 @@ object AndroidSetup {
         println()
         print("Enter the system image to use for this emulator, or $cmdQuit to end: ")
 
-        var userSysImg = ""
+        var userSysImg: String
         var stop = false
         do {
             userSysImg = Scanner(System.`in`).nextLine()
@@ -427,10 +411,18 @@ object AndroidSetup {
     }
 
     private fun createAvd(userAvd: String?, userSysImg: String, target: EmulatorConfig) {
-        val createOutcome = invoke(
-            WIN32_CMD,
-            listOf("/C", "echo.|$AVD_MANAGER", "create", "avd", "-n", userAvd, "-k", "\"" + userSysImg + "\""),
-            mapOf(WORKING_DIRECTORY to StringUtils.substringAfterLast(SDK_MANAGER, separator)))
+        val processEnv = mapOf(WORKING_DIRECTORY to StringUtils.substringAfterLast(SDK_MANAGER, separator))
+        val createOutcome = if (IS_OS_WINDOWS) {
+            ProcessInvoker.invoke(
+                WIN32_CMD,
+                listOf("/C", "echo.|$AVD_MANAGER", "create", "avd", "-n", userAvd, "-k", "\"" + userSysImg + "\""),
+                processEnv)
+        } else
+            ProcessInvoker.invoke(
+                "bash",
+                listOf("-c", "echo no | $AVD_MANAGER create avd -n $userAvd -k '$userSysImg'"),
+                processEnv)
+
         if (StringUtils.isNotBlank(createOutcome.stderr)) {
             println("ERROR " + createOutcome.stderr + "\n")
             exitProcess(-1)
@@ -440,8 +432,7 @@ object AndroidSetup {
 
         val deleteList = listOf("hw.dPad", "hw.gpu.enabled", "hw.keyboard", "hw.lcd.density", "hw.lcd.height",
                                 "hw.lcd.width", "hw.mainKeys", "hw.ramSize", "hw.trackBall",
-                                "skin.dynamic", "skin.name", "skin.path"
-        )
+                                "skin.dynamic", "skin.name", "skin.path")
 
         val defAvdRam = 1536
         val avdDensity = 480
@@ -463,16 +454,19 @@ object AndroidSetup {
         addList.forEach { configIniContent.add(it) }
         FileUtils.writeStringToFile(configIni, configIniContent.joinToString(separator = "\n"), DEF_CHARSET)
 
-        val runEmulatorBatchContent = TextUtils.replace(runEmuTemplate, mapOf(
-            "\${skin}" to target.skin,
-            "\${avd.id}" to userAvd,
-            "\${sdk.rel.path}" to SDK_REL_PATH,
+        // generate emulator launch batch files
+        val batchTemplateReplacements: MutableMap<Any, Any> = mutableMapOf(
+            "\${avd.id}" to userAvd!!,
             "\${generator.signature}" to signature,
             "\${generated.timestamp}" to DateUtility.getCurrentTimestampForLogging()
-        ))
-        val targetBatchFile = StringUtils.appendIfMissing(projectHome, separator) + "$runEmuPrefix$userAvd$batchExt"
-        FileUtils.write(File(targetBatchFile), runEmulatorBatchContent, DEF_CHARSET)
-        verbose("created emulator batch file: $targetBatchFile")
+        )
+        val cmd = StringUtils.appendIfMissing(projectHome, separator) + "$runEmuPrefix${userAvd}.cmd"
+        FileUtils.write(File(cmd), TextUtils.replace(runEmuTemplateCmd, batchTemplateReplacements), DEF_CHARSET)
+        verbose("created emulator batch file: $cmd")
+
+        val sh = StringUtils.appendIfMissing(projectHome, separator) + "$runEmuPrefix${userAvd}.sh"
+        FileUtils.write(File(sh), TextUtils.replace(runEmuTemplateSh, batchTemplateReplacements), DEF_CHARSET)
+        verbose("created emulator batch file: $sh")
     }
 
     private fun log(message: String) {

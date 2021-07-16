@@ -193,7 +193,6 @@ public final class RuntimeUtils {
 
     protected static List<Integer> findRunningInstancesOnNIX(String prog) {
         try {
-            // ProcessOutcome outcome = ProcessInvoker.invoke(NIX_SHELL, Arrays.asList("-c", "\"pgrep " + prog + "\""), null);
             ProcessOutcome outcome = ProcessInvoker.invoke("pgrep", Collections.singletonList(prog), null);
             String output = outcome.getStdout();
             if (StringUtils.isBlank(output)) {
@@ -221,7 +220,6 @@ public final class RuntimeUtils {
 
     protected static List<Integer> findRunningInstancesOnWIN(String exeName) {
         try {
-            // ConsoleUtils.log("finding existing instances of " + exeName);
             ProcessOutcome outcome = ProcessInvoker.invoke(
                 WIN32_CMD,
                 Arrays.asList("/C", "tasklist", "/FO", "CSV", "/FI", "\"imagename eq " + exeName + "\"", "/NH"),
@@ -262,5 +260,4 @@ public final class RuntimeUtils {
             return null;
         }
     }
-
 }
