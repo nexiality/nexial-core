@@ -130,6 +130,8 @@ public class WsCommand extends BaseCommand {
                requestNoBody(url, "", var, "delete");
     }
 
+    public StepResult graphql(String url, String body, String var) { return requestWithBody(url, body, var, "graphql");}
+
     public StepResult assertReturnCode(String var, String returnCode) {
         requires(StringUtils.isNotBlank(var), "invalid variable", var);
 
@@ -613,12 +615,14 @@ public class WsCommand extends BaseCommand {
                 if (StringUtils.equals(method, "patch")) { response = client.patch(url, payloadBytes); }
                 if (StringUtils.equals(method, "put")) { response = client.put(url, payloadBytes); }
                 if (StringUtils.equals(method, "delete")) { response = client.deleteWithPayload(url, payloadBytes); }
+                if (StringUtils.equals(method, "graphql")) { response = client.graphql(url, payloadBytes); }
             } else {
                 String payload = outputResolver.getContent();
                 if (StringUtils.equals(method, "post")) { response = client.post(url, payload); }
                 if (StringUtils.equals(method, "patch")) { response = client.patch(url, payload); }
                 if (StringUtils.equals(method, "put")) { response = client.put(url, payload); }
                 if (StringUtils.equals(method, "delete")) { response = client.deleteWithPayload(url, payload); }
+                if (StringUtils.equals(method, "graphql")) { response = client.graphql(url, payload); }
             }
 
             context.setData(var, response);

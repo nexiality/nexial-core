@@ -41,7 +41,6 @@ import static org.nexial.core.NexialConst.Ws.*;
 import static org.nexial.core.SystemVariables.getDefaultBool;
 import static org.nexial.core.SystemVariables.getDefaultInt;
 import static org.nexial.core.plugins.ws.WebServiceClient.hideAuthDetails;
-import static org.nexial.core.utils.ExecUtils.NEXIAL_MANIFEST;
 
 public abstract class Request implements Serializable {
     protected String url;
@@ -189,19 +188,13 @@ public abstract class Request implements Serializable {
 
     protected void setRequestHeaders(HttpRequest http) {
         // must NOT forcefully set content type as multipart; HttpClient framework does the magic
-        if (!(this instanceof PostMultipartRequest)) {
-            addHeaderIfNotSpecified(WS_CONTENT_TYPE, getContentType());
-            addHeaderIfNotSpecified(WS_USER_AGENT, NEXIAL_MANIFEST);
-        }
+        if (!(this instanceof PostMultipartRequest)) { addHeaderIfNotSpecified(WS_CONTENT_TYPE, getContentType()); }
 
         Map<String, Object> requestHeaders = getHeaders();
         if (MapUtils.isEmpty(requestHeaders)) { return; }
 
         // must NOT forcefully set content type as multipart; HttpClient framework does the magic
-        if (this instanceof PostMultipartRequest) {
-            requestHeaders.remove(WS_USER_AGENT);
-            requestHeaders.remove(WS_CONTENT_TYPE);
-        }
+        if (this instanceof PostMultipartRequest) { requestHeaders.remove(WS_CONTENT_TYPE); }
 
         requestHeaders.keySet().forEach(name -> setRequestHeader(http, name, requestHeaders));
     }

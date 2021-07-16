@@ -78,11 +78,6 @@ public class PostRequest extends Request implements Serializable {
     protected void prepPostRequest(RequestConfig requestConfig, HttpEntityEnclosingRequestBase http)
         throws UnsupportedEncodingException {
 
-        if (this instanceof PostMultipartRequest) {
-            ((PostMultipartRequest) this).prepPostRequest(requestConfig, http);
-            return;
-        }
-
         http.setConfig(requestConfig);
 
         ContentType contentType = resolveContentTypeAndCharset(getHeaders().get(WS_CONTENT_TYPE), null);

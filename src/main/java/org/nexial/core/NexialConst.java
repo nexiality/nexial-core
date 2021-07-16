@@ -26,6 +26,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.SystemUtils;
+import org.apache.http.entity.mime.MIME;
 import org.jdom2.output.Format;
 import org.jdom2.output.XMLOutputter;
 import org.nexial.commons.utils.FileUtil;
@@ -1630,6 +1631,16 @@ public final class NexialConst {
         public static final String WS_JSON_CONTENT_TYPE = "application/json";
         public static final String WS_JSON_CONTENT_TYPE2 = WS_JSON_CONTENT_TYPE + ";" + CONTENT_TYPE_CHARSET + "UTF-8";
         public static final String WS_FORM_CONTENT_TYPE = "application/x-www-form-urlencoded";
+        // corresponds to the various multipart header settings supported by Apache HttpClient
+        // STRICT               - RFC 822, RFC 2045, RFC 2046 compliant
+        // BROWSER_COMPATIBLE   - browser-compatible mode, i.e. only write Content-Disposition; use content charset;
+        //                        meant for IE-5 or earlier
+        // RFC6532              - RFC 6532 compliant; essentially implementing the strict (RFC 822, RFC 2045, RFC
+        //                        2046 compliant) interpretation of the spec, BUT with the exception of allowing
+        //                        UTF-8 headers, as per RFC6532.
+        // possible choices: "standard", "strict", "browser"
+        public static final String WS_MULTIPART_MODE = registerSysVar(NS_WS + "multipart.spec", "standard");
+        public static final String WS_MULTIPART_CHARSET = registerSysVar(NS_WS + "multipart.charset");
 
         // oauth
         public static final String OAUTH_CLIENT_ID = "client_id";

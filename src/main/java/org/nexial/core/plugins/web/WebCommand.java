@@ -627,12 +627,14 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
      * @see LocatorHelper#resolveFilteringXPath(String)
      * @see #assertElementPresent(String)
      */
+    @NotNull
     public StepResult assertElementByAttributes(String nameValues) {
         requires(StringUtils.isNotBlank(nameValues), "empty name/value pair", nameValues);
         requires(StringUtils.contains(nameValues, "="), "invalid name/value pair", nameValues);
         return assertElementPresent(locatorHelper.resolveFilteringXPath(nameValues));
     }
 
+    @NotNull
     public StepResult waitForElementPresent(final String locator, String waitMs) {
         requiresNotBlank(locator, "invalid locator", locator);
         long maxWait = deriveMaxWaitMs(waitMs);
@@ -641,6 +643,32 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
             return StepResult.success("Element by locator '" + locator + "' is present");
         } else {
             return StepResult.fail("Element by locator '" + locator + "' is NOT present within " + maxWait + "ms");
+        }
+    }
+
+    @NotNull
+    public StepResult waitWhileElementNotPresent(String locator, String waitMs) {
+        requiresNotBlank(locator, "invalid locator", locator);
+        long maxWait = deriveMaxWaitMs(waitMs);
+
+        ensureReady();
+
+        FluentWait<WebDriver> waiter = newFluentWait(maxWait);
+        boolean found = false;
+
+        try {
+            Object target = waiter.until(object -> isElementPresent(locator));
+            found = target == null;
+        } catch (WebDriverException e) {
+            // it's ok to have timeout or web driver exception; it's a PASS
+        } catch (Exception e) {
+            throw e;
+        }
+
+        if (!found) {
+            return StepResult.success("Element by locator '%s' is NOT present within the last %s ms", locator, waitMs);
+        } else {
+            return StepResult.fail("Element by locator '%s' is found within %s ms", locator, maxWait);
         }
     }
 

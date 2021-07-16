@@ -181,6 +181,16 @@ public class WebServiceClient {
     }
 
     @NotNull
+    public Response graphql(String url, byte[] payload) throws IOException {
+        return invokeRequest(new GraphQLRequest(resolveContextForRequest(), url, null, payload));
+    }
+
+    @NotNull
+    public Response graphql(String url, String payload) throws IOException {
+        return invokeRequest(new GraphQLRequest(resolveContextForRequest(), url, payload, null));
+    }
+
+    @NotNull
     public Response head(String url) throws IOException {
         return invokeRequest(new HeadRequest(resolveContextForRequest(), url, null));
     }
@@ -354,15 +364,35 @@ public class WebServiceClient {
         if (context == null) { return; }
 
         String url = hideAuthDetails(http.getURI().toString());
+
+        String headers = "{" + TextUtils.toString(Arrays.asList(http.getAllHeaders()), ", ", ": ") + "}";
+
         String content = null;
         int contentLength = 0;
         boolean requestWithBody = request instanceof PostRequest;
         if (requestWithBody) {
-            content = ((PostRequest) request).getPayload();
-            contentLength = StringUtils.length(content);
-            if (contentLength == 0) {
-                byte[] contentBytes = ((PostRequest) request).getPayloadBytes();
-                contentLength = ArrayUtils.getLength(contentBytes);
+            if (request instanceof PostMultipartRequest) {
+                PostMultipartRequest mpRequest = ((PostMultipartRequest) request);
+
+                HttpEntity mpEntity = mpRequest.getEntity();
+                Header contentType = mpEntity.getContentType();
+                Header contentEncoding = mpEntity.getContentEncoding();
+                headers = StringUtils.substringBeforeLast(headers, "}");
+                if (!StringUtils.equals(headers, "{")) { headers += ";"; }
+                headers +=
+                    (contentType != null ? contentType.getName() + ": " + contentType.getValue() + ", " : "") +
+                    (contentEncoding != null ? contentEncoding.getName() + ": " + contentEncoding.getValue() : "") +
+                    "}";
+
+                contentLength = (int) mpEntity.getContentLength();
+                content = "<MULTIPART CONTENT>";
+            } else {
+                content = ((PostRequest) request).getPayload();
+                contentLength = StringUtils.length(content);
+                if (contentLength == 0) {
+                    byte[] contentBytes = ((PostRequest) request).getPayloadBytes();
+                    contentLength = ArrayUtils.getLength(contentBytes);
+                }
             }
         }
 
@@ -380,17 +410,18 @@ public class WebServiceClient {
         if (shouldLogDetail()) {
             StringBuilder details = new StringBuilder();
             appendLog(details, "Test Step       : ", ExecutionLogger.toHeader(testStep));
-            details.append(StringUtils.repeat("-", 80)).append(NL);
+            details.append(StringUtils.repeat("-", 100)).append(NL);
             appendLog(details, "Request Time    : ", DateUtility.formatLogDate(requestTimeMs));
             appendLog(details, "Request URL     : ", url);
             appendLog(details, "Request Method  : ", http.getMethod());
-            appendLog(details, "Request Headers : ", "{" + TextUtils.toString(request.getHeaders(), ", ", ": ") + "}");
+            appendLog(details, "Request Headers : ",
+                      headers);
             if (requestWithBody && contentLength > 0) {
                 appendLog(details, "Request Body    : ",
                           contentLength + " bytes. " +
                           (StringUtils.isNotEmpty(content) ? NL + content : " (binary content)"));
             }
-            details.append(StringUtils.repeat("-", 80)).append(NL);
+            details.append(StringUtils.repeat("-", 100)).append(NL);
             writeDetailLog(testStep, details.toString());
         }
     }
