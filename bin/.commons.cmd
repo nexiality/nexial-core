@@ -29,6 +29,10 @@
 		set DEFAULT_FIREFOX_BIN="%ProgramFiles(x86)%\Mozilla Firefox\firefox.exe"
 	)
 
+    REM android sdk
+    if not exist "%ANDROID_HOME%\nul" ( set ANDROID_HOME=%USERPROFILE%\.nexial\android\sdk )
+    if not exist "%ANDROID_SDK_ROOT%\nul" ( set ANDROID_SDK_ROOT=%USERPROFILE%\.nexial\android\sdk )
+
 	REM # setting Java runtime options and classpath
 	set JAVA_OPT=%JAVA_OPT% -ea
 	set JAVA_OPT=%JAVA_OPT% -Xss24m

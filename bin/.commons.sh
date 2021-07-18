@@ -169,7 +169,10 @@ if [[ -z "${DEFAULT_CHROME_BIN//}" ]]; then
     DEFAULT_CHROME_BIN=
 fi
 
-#FIREFOX_KEY=$([[ ${IS_MAC} = "true" ]] && echo "firefox-bin" || echo "firefox-bin" )
+# android sdk
+if [[ ! -f "${ANDROID_HOME}" ]] ; then ANDROID_HOME=~/.nexial/android/sdk ; fi
+if [[ ! -f "${ANDROID_SDK_ROOT}" ]] ; then ANDROID_SDK_ROOT=~/.nexial/android/sdk ; fi
+
 FIREFOX_KEY=firefox-bin
 export DEFAULT_FIREFOX_BIN="`resolveAppPath "${FIREFOX_KEY}"`"
 if [[ -z "${DEFAULT_FIREFOX_BIN//}" ]]; then
