@@ -29,6 +29,8 @@ class MobileService(val profile: MobileProfile, val remoteUrl: String?) {
             Path.of(USER_HOME, "node_modules", appiumBinaryRelPath),
             Path.of(System.getenv("ProgramFiles"), "Appium", "node_modules", appiumBinaryRelPath),
             Path.of(System.getenv("ProgramFiles(x86)"), "Appium", "node_modules", appiumBinaryRelPath),
+            Path.of(System.getenv("LOCALAPPDATA"), "Programs", "Appium", "resources", "app", "node_modules",
+                    appiumBinaryRelPath),
             Path.of(System.getenv("LOCALAPPDATA"), "Programs", "appium-desktop", "resources", "app", "node_modules",
                     appiumBinaryRelPath),
             Path.of(System.getenv("HOMEDRIVE"), "tools", "appium-desktop", "resources", "app", "node_modules",

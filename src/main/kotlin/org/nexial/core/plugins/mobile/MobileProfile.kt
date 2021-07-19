@@ -67,7 +67,7 @@ class MobileProfile(context: ExecutionContext, val profile: String) {
         else null
 
         // in case user set profile-specific url for appium service
-        serverUrl = serverConfig.remove("url")
+        serverUrl = this.serverConfig.remove("url")
 
         // find profile-specific Nexial behavior (such as wait time)
         implicitWaitMs = context.getIntConfig(commandName, profile, IMPLICIT_WAIT_MS).toLong()
@@ -75,6 +75,33 @@ class MobileProfile(context: ExecutionContext, val profile: String) {
         sessionTimeoutMs = context.getIntConfig(commandName, profile, SESSION_TIMEOUT_MS).toLong()
         postActionWaitMs = context.getIntConfig(commandName, profile, POST_ACTION_WAIT_MS).toLong()
 
+        // TODO: auto-detect deviceName, appVersion
+        /*
+$ adb devices -l
+List of devices attached
+emulator-5554          device product:sdk_gphone_x86_64_arm64 model:sdk_gphone_x86_64_arm64 device:generic_x86_64_arm64 transport_id:2
+
+$ adb shell getprop ro.build.version.release
+11
+
+        static String getDeviceName() {
+    String deviceName = "";
+    String shellCommand = "adb get-serialno"; // For platform use : adb shell getprop ro.build.version.release
+
+    try {
+        ProcessBuilder builder = new ProcessBuilder("cmd.exe", "/c", shellCommand);
+        builder.redirectErrorStream(true);
+        Process prc = builder.start();
+        BufferedReader output = new BufferedReader(new InputStreamReader(prc.getInputStream()));
+        deviceName = output.readLine();
+        prc.waitFor();
+    } catch (Exception e) {
+        e.printStackTrace();
+    }
+
+    return deviceName;
+}
+        */
         this.geoLocation = config.remove("geoLocation")
 
         this.config[PLATFORM_NAME] = mobileType.platformName

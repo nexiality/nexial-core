@@ -317,6 +317,15 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
         return StepResult.success("$count match(es) of '$locator' found and its count is stored to data variable 'var'")
     }
 
+    fun hideKeyboard(): StepResult {
+        val mobileService = getMobileService()
+        mobileService.driver.hideKeyboard()
+        // if (mobileService.isAndroid()) mobileService.driver.hideKeyboard()
+        // if (mobileService.isIOS()) (mobileService.driver as IOSDriver).hideKeyboard(TAP_OUTSIDE)
+        // if (mobileService.isIOS()) (mobileService.driver as IOSDriver).hideKeyboard(PRESS_KEY, "Return")
+        return StepResult.success("execute hide-keyboard successfully")
+    }
+
     // fun rotate(start: String, end: String): StepResult
     // fun assertTextPresent(locator: String, text: String): StepResult
     // fun back(locator: String, text: String): StepResult
