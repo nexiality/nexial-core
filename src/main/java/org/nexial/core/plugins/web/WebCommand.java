@@ -653,16 +653,23 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
         ensureReady();
 
+        long oldImplicitWaitMs = getPollWaitMs();
+        Timeouts timeouts = driver.manage().timeouts();
+        boolean timeoutChangesEnabled = browser.browserType.isTimeoutChangesEnabled();
+        // if browser supports implicit wait and we are not using explicit wait (`WEB_ALWAYS_WAIT`), then
+        // we'll change timeout's implicit wait time
+        if (timeoutChangesEnabled) { timeouts.implicitlyWait(maxWait, MILLISECONDS); }
+
         FluentWait<WebDriver> waiter = newFluentWait(maxWait);
         boolean found = false;
 
         try {
-            Object target = waiter.until(object -> isElementPresent(locator));
+            Object target = waiter.until(driver -> driver.findElements(locatorHelper.findBy(locator)));
             found = target == null;
         } catch (WebDriverException e) {
             // it's ok to have timeout or web driver exception; it's a PASS
-        } catch (Exception e) {
-            throw e;
+        } finally {
+            if (timeoutChangesEnabled) { timeouts.implicitlyWait(oldImplicitWaitMs, MILLISECONDS); }
         }
 
         if (!found) {
