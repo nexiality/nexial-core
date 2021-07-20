@@ -5,15 +5,16 @@ import io.appium.java_client.MobileElement
 import io.appium.java_client.MultiTouchAction
 import io.appium.java_client.TouchAction
 import io.appium.java_client.android.AndroidTouchAction
+import io.appium.java_client.ios.IOSDriver
 import io.appium.java_client.ios.IOSTouchAction
+import io.appium.java_client.remote.HideKeyboardStrategy.TAP_OUTSIDE
 import io.appium.java_client.touch.WaitOptions
 import io.appium.java_client.touch.offset.PointOption
 import org.apache.commons.collections4.CollectionUtils
 import org.apache.commons.collections4.MapUtils
 import org.apache.commons.lang3.StringUtils
 import org.apache.commons.lang3.math.NumberUtils
-import org.nexial.core.NexialConst.Mobile.EDGE_WIDTH
-import org.nexial.core.NexialConst.Mobile.ERR_NO_SERVICE
+import org.nexial.core.NexialConst.Mobile.*
 import org.nexial.core.ShutdownAdvisor
 import org.nexial.core.model.ExecutionContext
 import org.nexial.core.model.StepResult
@@ -87,13 +88,6 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
         return StepResult.success()
     }
 
-    fun click(locator: String): StepResult {
-        val element = findElement(locator)
-        val mobileService = getMobileService()
-        Actions(mobileService.driver).click(element).pause(mobileService.profile.postActionWaitMs).perform()
-        return StepResult.success("Clicked on '$locator'")
-    }
-
     fun assertElementPresent(locator: String): StepResult {
         return if (isElementPresent(locator))
             StepResult.success("EXPECTED element '$locator' found")
@@ -121,6 +115,13 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
         return if (maxWait < 1) defWaitMs else maxWait
     }
 
+    fun click(locator: String): StepResult {
+        val element = findElement(locator)
+        val mobileService = getMobileService()
+        withPostActionWait(Actions(mobileService.driver).click(element), mobileService)
+        return StepResult.success("Clicked on '$locator'")
+    }
+
     fun clickUntilNotFound(locator: String, waitMs: String, max: String): StepResult {
         val mobileService = getMobileService()
 
@@ -140,7 +141,7 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
 
         var element = findFirstMatch(locator)
         while (element != null) {
-            Actions(mobileService.driver).click(element).pause(waitMillis).perform()
+            withPostActionWait(Actions(mobileService.driver).click(element), waitMillis)
             element = findFirstMatch(locator)
             attempt++
 
@@ -155,6 +156,19 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
         return StepResult.success("$attempt click(s) performed on '$locator'")
     }
 
+    fun doubleClick(locator: String, xOffset: String, yOffset: String): StepResult {
+        requiresInteger(xOffset, "invalid x-offset", xOffset)
+        requiresInteger(yOffset, "invalid y-offset", yOffset)
+
+        val element = findElement(locator)
+        val mobileService = getMobileService()
+        withPostActionWait(
+            Actions(mobileService.driver).moveToElement(element, NumberUtils.toInt(xOffset), NumberUtils.toInt(yOffset))
+                .doubleClick(),
+            mobileService)
+        return StepResult.success("Double-clicked on '$locator'")
+    }
+
     fun type(locator: String, text: String): StepResult {
         requiresNotEmpty(text, "Invalid text", text)
         val element = findElement(locator)
@@ -162,13 +176,18 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
 
         // too fast?
         // Actions(mobileService.driver).sendKeys(element, text).pause(mobileService.profile.postActionWaitMs).perform()
+
         // try with additional waits to let the onscreen keyboard renders/settles
-        Actions(mobileService.driver)
-            .click(element)
-            // .pause(mobileService.profile.postActionWaitMs)
-            .sendKeys(element, text)
-            // .pause(mobileService.profile.postActionWaitMs)
-            .perform()
+        val actionPart1 = Actions(mobileService.driver).click(element)
+        if (mobileService.profile.hideKeyboard) {
+            actionPart1.perform()
+            hideKeyboard(true)
+            withPostActionWait(Actions(mobileService.driver).moveToElement(element, 2, 2).sendKeys(element, text),
+                               mobileService)
+        } else {
+            actionPart1.sendKeys(element, text)
+            withPostActionWait(actionPart1, mobileService)
+        }
 
         return StepResult.success("Text '$text' typed on '$locator'")
     }
@@ -184,8 +203,8 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
         //  - Android: 300 ms
         //  - iOS: 200 ms
         // final value depends on your app and could be greater
-        val ANIMATION_TIME = 200L
-        val PRESS_TIME = 200L
+        val animationTime = 200L
+        val pressTime = 200L
 
         val mobileService = getMobileService()
         val driver = mobileService.driver
@@ -197,8 +216,8 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
         // execute swipe using TouchAction
         return try {
             newTouchAction(mobileService)
-                .press(startFrom).waitAction(waitMs(PRESS_TIME))
-                .moveTo(endAt).waitAction(waitMs(ANIMATION_TIME))
+                .press(startFrom).waitAction(waitMs(pressTime))
+                .moveTo(endAt).waitAction(waitMs(animationTime))
                 .release()
                 .perform()
             StepResult.success("Successfully swiped from $start to $end")
@@ -318,11 +337,7 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
     }
 
     fun hideKeyboard(): StepResult {
-        val mobileService = getMobileService()
-        mobileService.driver.hideKeyboard()
-        // if (mobileService.isAndroid()) mobileService.driver.hideKeyboard()
-        // if (mobileService.isIOS()) (mobileService.driver as IOSDriver).hideKeyboard(TAP_OUTSIDE)
-        // if (mobileService.isIOS()) (mobileService.driver as IOSDriver).hideKeyboard(PRESS_KEY, "Return")
+        hideKeyboard(false)
         return StepResult.success("execute hide-keyboard successfully")
     }
 
@@ -419,6 +434,14 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
             false
         }
 
+    private fun withPostActionWait(action: Actions, mobileService: MobileService) {
+        withPostActionWait(action, mobileService.profile.postActionWaitMs)
+    }
+
+    private fun withPostActionWait(action: Actions, postWaitMs: Long) {
+        if (postWaitMs > MIN_WAIT_MS) action.pause(postWaitMs).perform() else action.perform()
+    }
+
     private fun waitMs(ms: Long) = WaitOptions.waitOptions(Duration.ofMillis(ms))
 
     private fun newTouchAction(mobileService: MobileService): TouchAction<*> =
@@ -438,4 +461,15 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
 
     private fun withinLimit(least: Int, most: Int, number: Int) =
         if (number < least) least else if (number > most) most else number
+
+    private fun hideKeyboard(tryHarder: Boolean) {
+        val mobileService = getMobileService()
+        if (!tryHarder) {
+            mobileService.driver.hideKeyboard()
+        } else {
+            if (mobileService.isAndroid()) mobileService.driver.hideKeyboard()
+            if (mobileService.isIOS()) (mobileService.driver as IOSDriver).hideKeyboard(TAP_OUTSIDE)
+            // if (mobileService.isIOS()) (mobileService.driver as IOSDriver).hideKeyboard(PRESS_KEY, "Return")
+        }
+    }
 }

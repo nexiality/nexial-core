@@ -22,6 +22,7 @@ class MobileProfile(context: ExecutionContext, val profile: String) {
     internal var postActionWaitMs: Long
     internal val geoLocation: String?
     internal val logFile: String?
+    internal val hideKeyboard: Boolean
 
     /*
     todo: investigate
@@ -74,6 +75,7 @@ class MobileProfile(context: ExecutionContext, val profile: String) {
         explicitWaitMs = context.getIntConfig(commandName, profile, EXPLICIT_WAIT_MS).toLong()
         sessionTimeoutMs = context.getIntConfig(commandName, profile, SESSION_TIMEOUT_MS).toLong()
         postActionWaitMs = context.getIntConfig(commandName, profile, POST_ACTION_WAIT_MS).toLong()
+        hideKeyboard = context.getBooleanConfig(commandName, profile, HIDE_KEYBOARD)
 
         // TODO: auto-detect deviceName, appVersion
         /*

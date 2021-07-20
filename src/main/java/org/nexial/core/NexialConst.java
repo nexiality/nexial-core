@@ -2025,13 +2025,18 @@ public final class NexialConst {
         public static final String EXPLICIT_WAIT_MS = registerSysVar(NS_MOBILE + "explicitWaitMs", 5000);
 
         // default 2 second time out for implicit wait
-        public static final String IMPLICIT_WAIT_MS = registerSysVar(NS_MOBILE + "implicitWaitMs", 2000);
+        public static final String IMPLICIT_WAIT_MS = registerSysVar(NS_MOBILE + "implicitWaitMs", 0);
 
-        // default 10 minutes
-        public static final String SESSION_TIMEOUT_MS = registerSysVar(NS_MOBILE + "sessionTimeoutMs", 600000);
+        // default 5 minutes
+        public static final String SESSION_TIMEOUT_MS = registerSysVar(NS_MOBILE + "sessionTimeoutMs", 300000);
 
         // delay between click, type, swipe, tab, etc. actions
-        public static final String POST_ACTION_WAIT_MS = registerSysVar(NS_MOBILE + "postActionWaitMs", 1200);
+        public static final String POST_ACTION_WAIT_MS = registerSysVar(NS_MOBILE + "postActionWaitMs", 0);
+
+        // high keyboard before typing
+        public static final String HIDE_KEYBOARD = registerSysVar(NS_MOBILE + "hideKeyboard", true);
+
+        public static final int MIN_WAIT_MS = 200;
 
         public static final String ERR_NO_SERVICE =
             "No mobile driver available at this time. Please be sure to invoke use(profile) command prior to other " +

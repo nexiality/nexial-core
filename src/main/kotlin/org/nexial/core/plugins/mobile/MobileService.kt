@@ -11,6 +11,7 @@ import org.apache.commons.lang3.SystemUtils.USER_HOME
 import org.apache.tika.utils.SystemUtils.IS_OS_WINDOWS
 import org.nexial.commons.utils.FileUtil
 import org.nexial.core.NexialConst.Mobile.FILE_CONSOLE_LOG_LEVEL
+import org.nexial.core.NexialConst.Mobile.MIN_WAIT_MS
 import org.nexial.core.plugins.mobile.MobileType.ANDROID
 import org.nexial.core.plugins.mobile.MobileType.IOS
 import org.nexial.core.utils.ConsoleUtils
@@ -73,7 +74,9 @@ class MobileService(val profile: MobileProfile, val remoteUrl: String?) {
         }
 
         driver = AppiumDriver(appiumUrl, newCapabilities())
-        driver.manage().timeouts().implicitlyWait(profile.implicitWaitMs, MILLISECONDS)
+        if (profile.implicitWaitMs > MIN_WAIT_MS) {
+            driver.manage().timeouts().implicitlyWait(profile.implicitWaitMs, MILLISECONDS)
+        }
     }
 
     private fun startAppiumLocalService(): URL {
@@ -142,7 +145,7 @@ class MobileService(val profile: MobileProfile, val remoteUrl: String?) {
 
     private fun newCapabilities(): DesiredCapabilities {
         val caps = DesiredCapabilities()
-        caps.setCapability(NEW_COMMAND_TIMEOUT, profile.sessionTimeoutMs)
+        caps.setCapability(NEW_COMMAND_TIMEOUT, profile.sessionTimeoutMs / 1000)
         caps.setCapability(AUTOMATION_NAME, profile.mobileType.automationName)
         caps.setCapability(PRINT_PAGE_SOURCE_ON_FIND_FAILURE, true)
 
