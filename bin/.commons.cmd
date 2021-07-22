@@ -30,8 +30,8 @@
 	)
 
     REM android sdk
-    if not exist "%ANDROID_HOME%\nul" ( set ANDROID_HOME=%USERPROFILE%\.nexial\android\sdk )
-    if not exist "%ANDROID_SDK_ROOT%\nul" ( set ANDROID_SDK_ROOT=%USERPROFILE%\.nexial\android\sdk )
+    if not exist "%ANDROID_HOME%\nul" ( set ANDROID_HOME=%USERPROFILE%\.nexial\android\sdk)
+    if not exist "%ANDROID_SDK_ROOT%\nul" ( set ANDROID_SDK_ROOT=%USERPROFILE%\.nexial\android\sdk)
 
 	REM # setting Java runtime options and classpath
 	set JAVA_OPT=%JAVA_OPT% -ea
@@ -92,25 +92,25 @@ REM # Make sure prerequisite environment variables are set
 
     %JAVA% -version > %TEMP%\java_version 2>&1
     findstr /C:"\ \"16" %TEMP%\java_version
-    if %ERRORLEVEL% EQU 0 ( set JAVA_VERSION=16 )
+    if %ERRORLEVEL% EQU 0 ( set JAVA_VERSION=16)
 
     findstr /C:"\ \"15" %TEMP%\java_version
-    if %ERRORLEVEL% EQU 0 ( set JAVA_VERSION=15 )
+    if %ERRORLEVEL% EQU 0 ( set JAVA_VERSION=15)
 
     findstr /C:"\ \"14" %TEMP%\java_version
-    if %ERRORLEVEL% EQU 0 ( set JAVA_VERSION=14 )
+    if %ERRORLEVEL% EQU 0 ( set JAVA_VERSION=14)
 
     findstr /C:"\ \"13" %TEMP%\java_version
-    if %ERRORLEVEL% EQU 0 ( set JAVA_VERSION=13 )
+    if %ERRORLEVEL% EQU 0 ( set JAVA_VERSION=13)
 
     findstr /C:"\ \"12" %TEMP%\java_version
-    if %ERRORLEVEL% EQU 0 ( set JAVA_VERSION=12 )
+    if %ERRORLEVEL% EQU 0 ( set JAVA_VERSION=12)
 
     findstr /C:"\ \"11" %TEMP%\java_version
-    if %ERRORLEVEL% EQU 0 ( set JAVA_VERSION=11 )
+    if %ERRORLEVEL% EQU 0 ( set JAVA_VERSION=11)
 
     findstr /C:"\ \"10" %TEMP%\java_version
-    if %ERRORLEVEL% EQU 0 ( set JAVA_VERSION=10 )
+    if %ERRORLEVEL% EQU 0 ( set JAVA_VERSION=10)
 
     findstr /C:"\ \"1.9" %TEMP%\java_version
     if %ERRORLEVEL% EQU 0 (
@@ -134,7 +134,7 @@ REM # Make sure prerequisite environment variables are set
 
     del %TEMP%\java_version
 
-    if "%JAVA_SUPPORTS_MODULE%"=="true" ( set JAVA_OPT=%JAVA_OPT% --add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.util=ALL-UNNAMED )
+    if "%JAVA_SUPPORTS_MODULE%"=="true" ( set JAVA_OPT=%JAVA_OPT% --add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.util=ALL-UNNAMED)
 	goto :eof
 
 
