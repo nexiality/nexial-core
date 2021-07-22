@@ -26,14 +26,8 @@ class MobileProfile(context: ExecutionContext, val profile: String) {
 
     /*
     todo: investigate
-        ~~caps.setCapability("platformName", "Android");
-        ~~caps.setCapability("deviceName", "Android Emulator");
-        ~~caps.setCapability("automationName", "UiAutomator2");
-        ~~caps.setCapability("appPackage", "com.google.android.apps.maps");
-        ~~caps.setCapability("appActivity", "com.google.android.maps.MapsActivity");
         caps.setCapability("intentAction", "android.intent.action.VIEW");
         ~~caps.setCapability("optionalIntentArguments", "-d geo:46.457398,-119.407305");
-
         https://appium.io/docs/en/writing-running-appium/caps/
     */
 

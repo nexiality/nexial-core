@@ -37,7 +37,7 @@ import java.util.stream.Collectors;
 import static org.nexial.core.utils.CheckUtils.requiresNotBlank;
 import static org.nexial.core.utils.OutputFileUtils.CASE_INSENSIVE_SORT;
 
-class LocatorHelper {
+public class LocatorHelper {
     // handle cases:
     // //a/b/c
     // .//a/b/c
@@ -119,7 +119,7 @@ class LocatorHelper {
         return "//*[contains(" + applyLowercaseNormalize("string(.)") + "," + lowerCaseNormalize(label) + ")]";
     }
 
-    protected String normalizeXpathText(String label) {
+    public static String normalizeXpathText(String label) {
         if (StringUtils.isEmpty(label)) { return "''"; }
 
         List<String> sections = JRegexUtils.collectGroups(label, "[^'\"]+|['\"]");
@@ -314,7 +314,7 @@ class LocatorHelper {
         }
 
         if (CollectionUtils.isEmpty(expected) && CollectionUtils.isEmpty(actual)) {
-            return StepResult.fail("No data for cmparison, hence no order can be asserted");
+            return StepResult.fail("No data for comparison, hence no order can be asserted");
         }
 
         // now make 'expected' organized as expected

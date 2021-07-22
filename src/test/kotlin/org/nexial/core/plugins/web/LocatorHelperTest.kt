@@ -57,19 +57,19 @@ class LocatorHelperTest {
     @Throws(Exception::class)
     fun testNormalizeXpathText() {
         // basic
-        Assert.assertEquals(subject.normalizeXpathText(""), "''")
-        Assert.assertEquals(subject.normalizeXpathText(null), "''")
-        Assert.assertEquals(subject.normalizeXpathText("Hello"), "'Hello'")
-        Assert.assertEquals(subject.normalizeXpathText("Hello Jimmy Johnson"), "'Hello Jimmy Johnson'")
+        Assert.assertEquals(LocatorHelper.normalizeXpathText(""), "''")
+        Assert.assertEquals(LocatorHelper.normalizeXpathText(null), "''")
+        Assert.assertEquals(LocatorHelper.normalizeXpathText("Hello"), "'Hello'")
+        Assert.assertEquals(LocatorHelper.normalizeXpathText("Hello Jimmy Johnson"), "'Hello Jimmy Johnson'")
 
         // quotes
-        Assert.assertEquals(subject.normalizeXpathText("Bob's Pizza"), "concat('Bob',\"'\",'s Pizza')")
-        Assert.assertEquals(subject.normalizeXpathText("Review \"Cardholder\"'s Enrollments"),
+        Assert.assertEquals(LocatorHelper.normalizeXpathText("Bob's Pizza"), "concat('Bob',\"'\",'s Pizza')")
+        Assert.assertEquals(LocatorHelper.normalizeXpathText("Review \"Cardholder\"'s Enrollments"),
                             "concat('Review ','\"','Cardholder','\"',\"'\",'s Enrollments')")
-        Assert.assertEquals(subject.normalizeXpathText("'Special K'"), "concat(\"'\",'Special K',\"'\")")
-        Assert.assertEquals(subject.normalizeXpathText("New's \"flash\""),
+        Assert.assertEquals(LocatorHelper.normalizeXpathText("'Special K'"), "concat(\"'\",'Special K',\"'\")")
+        Assert.assertEquals(LocatorHelper.normalizeXpathText("New's \"flash\""),
                             "concat('New',\"'\",'s ','\"','flash','\"')")
-        Assert.assertEquals(subject.normalizeXpathText(" 'Final' \"Space\" "),
+        Assert.assertEquals(LocatorHelper.normalizeXpathText(" 'Final' \"Space\" "),
                             "concat(' ',\"'\",'Final',\"'\",' ','\"','Space','\"',' ')")
     }
 

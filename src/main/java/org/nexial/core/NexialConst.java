@@ -26,7 +26,6 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.SystemUtils;
-import org.apache.http.entity.mime.MIME;
 import org.jdom2.output.Format;
 import org.jdom2.output.XMLOutputter;
 import org.nexial.commons.utils.FileUtil;
@@ -2022,19 +2021,19 @@ public final class NexialConst {
         public static final String URL = "url";
 
         // default 5 second time out for explicit wait
-        public static final String EXPLICIT_WAIT_MS = registerSysVar(NS_MOBILE + "explicitWaitMs", 5000);
+        public static final String EXPLICIT_WAIT_MS = registerSysVar(NS_MOBILE + ".explicitWaitMs", 5000);
 
         // default 2 second time out for implicit wait
-        public static final String IMPLICIT_WAIT_MS = registerSysVar(NS_MOBILE + "implicitWaitMs", 0);
+        public static final String IMPLICIT_WAIT_MS = registerSysVar(NS_MOBILE + ".implicitWaitMs", 0);
 
-        // default 5 minutes
-        public static final String SESSION_TIMEOUT_MS = registerSysVar(NS_MOBILE + "sessionTimeoutMs", 300000);
+        // default 0 means no time out
+        public static final String SESSION_TIMEOUT_MS = registerSysVar(NS_MOBILE + ".sessionTimeoutMs", 0);
 
         // delay between click, type, swipe, tab, etc. actions
-        public static final String POST_ACTION_WAIT_MS = registerSysVar(NS_MOBILE + "postActionWaitMs", 0);
+        public static final String POST_ACTION_WAIT_MS = registerSysVar(NS_MOBILE + ".postActionWaitMs", 0);
 
         // high keyboard before typing
-        public static final String HIDE_KEYBOARD = registerSysVar(NS_MOBILE + "hideKeyboard", true);
+        public static final String HIDE_KEYBOARD = registerSysVar(NS_MOBILE + ".hideKeyboard", true);
 
         public static final int MIN_WAIT_MS = 200;
 

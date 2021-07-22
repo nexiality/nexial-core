@@ -10,6 +10,7 @@ import org.json.JSONObject
 import org.jsoup.Jsoup
 import org.nexial.core.NexialConst.WebMail.BROWSER_CONFIG
 import org.nexial.core.NexialConst.WebMail.MAILINATOR_BROWSER_PROFILE
+import org.nexial.core.plugins.web.LocatorHelper.normalizeXpathText
 import org.nexial.core.plugins.ws.WebServiceClient
 import org.nexial.core.utils.ConsoleUtils
 import org.nexial.core.utils.JSONPath
@@ -81,7 +82,7 @@ class Mailinator : WebMailer() {
         // find index of "Subject"
         val indexSubject =
             web.collectTextList(locators.listingHeaders).indexOfFirst { it.contains(labelSubject, true) }
-        val search = web.locatorHelper.normalizeXpathText(searchCriteria.trim())
+        val search = normalizeXpathText(searchCriteria.trim())
         val emailRowLocator = String.format(locators.matchedEmail, indexSubject + 2, search)
         val emailIds = web.getAttributeValues(emailRowLocator, "id").map { it.trim() }.toList()
         web.closeAll()

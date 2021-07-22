@@ -639,9 +639,7 @@ public class ExecutionContext {
 
     public double getDoubleData(String name, double def) { return NumberUtils.toDouble(getStringData(name), def); }
 
-    public boolean getBooleanData(String name) {
-        return Boolean.parseBoolean(StringUtils.lowerCase(getStringData(name)));
-    }
+    public boolean getBooleanData(String name) { return BooleanUtils.toBoolean(getStringData(name)); }
 
     public boolean getBooleanData(String name, boolean def) {
         String value = getStringData(name);
@@ -1531,9 +1529,9 @@ public class ExecutionContext {
         if (StringUtils.isBlank(profile)) { return contextValue; }
 
         Map<String, String> config = getProfileConfig(command, profile);
-        if (MapUtils.isEmpty(config) || StringUtils.isBlank(profile)) { return contextValue; }
+        if (MapUtils.isEmpty(config)) { return contextValue; }
 
-        String configValue = config.get(withProfile(profile, key));
+        String configValue = config.get(key);
         if (StringUtils.isBlank(configValue)) { return contextValue; }
 
         return NumberUtils.toDouble(configValue, contextValue);
@@ -1547,9 +1545,9 @@ public class ExecutionContext {
         if (StringUtils.isBlank(profile)) { return contextValue; }
 
         Map<String, String> config = getProfileConfig(command, profile);
-        if (MapUtils.isEmpty(config) || StringUtils.isBlank(profile)) { return contextValue; }
+        if (MapUtils.isEmpty(config)) { return contextValue; }
 
-        String configValue = config.get(withProfile(profile, key));
+        String configValue = config.get(key);
         if (StringUtils.isBlank(configValue)) { return contextValue; }
 
         return BooleanUtils.toBoolean(configValue);
