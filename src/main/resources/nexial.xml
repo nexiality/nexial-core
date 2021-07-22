@@ -357,6 +357,14 @@
                             </map>
                         </entry>
 
+                        <entry key="microsoft-refresh">
+                            <map key-type="java.lang.String">
+                                <entry key="url" value="https://login.microsoftonline.com/{0}/oauth2/v2.0/token"/>
+                                <entry key="grantType" value="refresh_token"/>
+                                <entry key="basicAuth" value="false"/>
+                            </map>
+                        </entry>
+
                         <entry key="okta">
                             <map key-type="java.lang.String">
                                 <entry key="url" value="https://{0}.okta.com/oauth2/default/v1/token"/>
