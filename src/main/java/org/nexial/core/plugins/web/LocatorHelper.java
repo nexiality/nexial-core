@@ -95,13 +95,13 @@ public class LocatorHelper {
 
         if (StringUtils.startsWith(locator, "xpath=")) {
             String xpath = StringUtils.substring(locator, "xpath=".length());
-            if (allowRelative) { return By.xpath(xpath); }
-            return By.xpath(fixBadXpath(xpath));
+            return allowRelative ? By.xpath(xpath) : By.xpath(fixBadXpath(xpath));
         }
 
         for (String startsWith : PATH_STARTS_WITH) {
-            if (allowRelative) { return By.xpath(locator); }
-            if (StringUtils.startsWith(locator, startsWith)) { return By.xpath(fixBadXpath(locator)); }
+            if (StringUtils.startsWith(locator, startsWith)) {
+                return allowRelative ? By.xpath(locator) : By.xpath(fixBadXpath(locator));
+            }
         }
 
         if (StringUtils.startsWith(locator, "tag=")) {

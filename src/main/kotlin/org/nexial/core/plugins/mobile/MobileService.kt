@@ -71,7 +71,7 @@ class MobileService(val profile: MobileProfile, val remoteUrl: String?) {
         )
     }
     private val adbLocation = Paths.get(
-        StringUtils.defaultIfEmpty(System.getenv("ANDROID_HOME"), System.getenv("ANDROID_SDK_ROOT")),
+        StringUtils.trim(StringUtils.defaultIfEmpty(System.getenv("ANDROID_HOME"), System.getenv("ANDROID_SDK_ROOT"))),
         "platform-tools",
         if (IS_OS_WINDOWS) "adb.exe" else "adb"
     ).toFile().absolutePath
@@ -92,6 +92,7 @@ class MobileService(val profile: MobileProfile, val remoteUrl: String?) {
 
     val driver: AppiumDriver<MobileElement>
     var appiumService: AppiumDriverLocalService? = null
+    val locatorHelper: MobileLocatorHelper
 
     constructor(profile: MobileProfile) : this(profile, null)
 
@@ -110,6 +111,8 @@ class MobileService(val profile: MobileProfile, val remoteUrl: String?) {
         if (profile.implicitWaitMs > MIN_WAIT_MS) {
             driver.manage().timeouts().implicitlyWait(profile.implicitWaitMs, MILLISECONDS)
         }
+
+        locatorHelper = MobileLocatorHelper(this)
     }
 
     private fun startAppiumLocalService(): URL {
@@ -213,7 +216,7 @@ class MobileService(val profile: MobileProfile, val remoteUrl: String?) {
         safeSetCap(caps, PRINT_PAGE_SOURCE_ON_FIND_FAILURE,
                    if (profile.config.containsKey(PRINT_PAGE_SOURCE_ON_FIND_FAILURE))
                        BooleanUtils.toBoolean(profile.config[PRINT_PAGE_SOURCE_ON_FIND_FAILURE])
-                   else true)
+                   else false)
 
         if (profile.hideKeyboard) {
             caps.setCapability(UNICODE_KEYBOARD, true)

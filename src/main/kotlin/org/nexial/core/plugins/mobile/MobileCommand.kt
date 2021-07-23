@@ -18,10 +18,10 @@ import org.apache.commons.lang3.BooleanUtils
 import org.apache.commons.lang3.StringUtils
 import org.apache.commons.lang3.math.NumberUtils
 import org.nexial.commons.utils.TextUtils
+import org.nexial.core.NexialConst.*
 import org.nexial.core.NexialConst.Mobile.*
-import org.nexial.core.NexialConst.OPT_LAST_OUTPUT_LINK
-import org.nexial.core.NexialConst.OPT_LAST_OUTPUT_PATH
 import org.nexial.core.NexialConst.PolyMatcher.*
+import org.nexial.core.NexialConst.Web.GROUP_LOCATOR_SUFFIX
 import org.nexial.core.ShutdownAdvisor
 import org.nexial.core.model.ExecutionContext
 import org.nexial.core.model.StepResult
@@ -101,21 +101,97 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
         return StepResult.success()
     }
 
-    fun assertElementPresent(locator: String): StepResult {
-        return if (isElementPresent(locator))
+    fun assertElementPresent(locator: String): StepResult =
+        if (isElementPresent(locator))
             StepResult.success("EXPECTED element '$locator' found")
-        else {
-            val msg = "Expected element not found at '$locator'"
-            ConsoleUtils.log(msg)
-            StepResult.fail(msg)
+        else
+            StepResult.fail("Expected element not found at '$locator'")
+
+    fun assertElementsPresent(prefix: String): StepResult {
+        requiresNotBlank(prefix, "Invalid prefix", prefix)
+
+        val locators = context.getDataByPrefix(prefix)
+        if (MapUtils.isEmpty(locators)) return StepResult.fail("No data variables with prefix '$prefix'")
+
+        val runId = context.runId
+        var allPassed = true
+        val logs = StringBuilder()
+        val errors = StringBuilder()
+        var locatorsFound = 0
+
+        locators.filterKeys { it.endsWith(GROUP_LOCATOR_SUFFIX) }.forEach { (key, locator) ->
+            locatorsFound++
+            var message = "[${StringUtils.substringBefore(key, GROUP_LOCATOR_SUFFIX)}] "
+
+            val found = try {
+                if (assertElementPresent(locator).isSuccess) {
+                    message += "found via '$locator'"
+                    ConsoleUtils.log(runId, message)
+                    true
+                } else
+                    false
+            } catch (e: WebDriverException) {
+                message += "NOT FOUND via '" + locator + "': " + resolveErrorMessage(e)
+                ConsoleUtils.error(runId, message)
+                false
+            } catch (e: Throwable) {
+                message += "NOT FOUND via '" + locator + "': " + e.message
+                ConsoleUtils.error(runId, message)
+                false
+            }
+
+            logs.append(message).append(NL)
+            if (!found) {
+                allPassed = false
+                errors.append(message).append(NL)
+            }
         }
+
+        if (locatorsFound < 1) return StepResult.fail(
+            "No data variables of prefix '$prefix' contains the required '$GROUP_LOCATOR_SUFFIX' suffix")
+
+        val message = logs.toString()
+        val errorsFound = errors.toString()
+        if (context.isVerbose) log(message) else if (!allPassed) log(errorsFound)
+        return if (allPassed) StepResult.success(message) else StepResult.fail(errorsFound)
     }
 
-    fun assertTextPresent(locator: String, text: String): StepResult {
-        return if (TextUtils.polyMatch(findElement(locator).text, text))
+    fun assertElementVisible(locator: String): StepResult =
+        // val windowSize: Dimension = driver.manage().window().getSize()
+        if (isElementVisible(locator))
+            StepResult.success("EXPECTED element '$locator' is present and visible")
+        else
+            StepResult.fail("Expected element '$locator' is either not present or not visible")
+
+    fun assertTextPresent(locator: String, text: String): StepResult =
+        if (TextUtils.polyMatch(findElement(locator).text, text))
             StepResult.success("Element of '${locator}' contains text matching '${text}'")
         else
             StepResult.fail("Element of '${locator}' DOES NOT contains text matching '${text}'")
+
+    fun saveText(`var`: String, locator: String): StepResult {
+        requiresValidAndNotReadOnlyVariableName(`var`)
+
+        val elementText = findElement(locator).text
+        if (StringUtils.isEmpty(elementText))
+            context.removeData(`var`)
+        else
+            context.setData(`var`, elementText)
+
+        return StepResult.success("The text of element '${locator}' saved to `${`var`}` data variable")
+    }
+
+    fun saveTextArray(`var`: String, locator: String): StepResult {
+        requiresValidAndNotReadOnlyVariableName(`var`)
+
+        val textArray = collectTextList(locator)
+        if (CollectionUtils.isNotEmpty(textArray)) {
+            context.setData(`var`, textArray)
+        } else {
+            context.removeData(`var`)
+        }
+
+        return StepResult.success("stored content of '$locator' as '$`var`'")
     }
 
     fun waitForElementPresent(locator: String, waitMs: String): StepResult {
@@ -130,9 +206,8 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
     }
 
     fun click(locator: String): StepResult {
-        val element = findElement(locator)
         val mobileService = getMobileService()
-        withPostActionWait(Actions(mobileService.driver).click(element), mobileService)
+        withPostActionWait(Actions(mobileService.driver).click(findElement(locator)), mobileService)
         return StepResult.success("Clicked on '$locator'")
     }
 
@@ -269,7 +344,9 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
             else
                 StepResult.fail("Element '${locator}' not cleared; current text is '${currentText}'")
         } else {
-            withPostActionWait(Actions(mobileService.driver).click(element).sendKeys(element, text), mobileService)
+            element.sendKeys(text)
+            val postWaitMs = mobileService.profile.postActionWaitMs
+            if (postWaitMs > MIN_WAIT_MS) waitFor(postWaitMs as Int)
             StepResult.success("Text '$text' typed on '$locator'")
         }
     }
@@ -312,18 +389,57 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
 
     fun scroll(locator: String, direction: String): StepResult {
         requiresNotBlank(direction, "Invalid direction", direction)
+        val dir = Direction.values().find { it.detail.equals(direction, true) }
+                  ?: throw IllegalArgumentException("Invalid direction $direction")
 
-        val dir = Direction.valueOf(direction.toUpperCase())
         val elem = findElement(locator)
-
         val driver = getMobileService().driver
         val screenDimension = driver.manage().window().size
 
         val offsets = when (dir) {
-            DOWN  -> Pair(0, screenDimension.height)
-            UP    -> Pair(0, screenDimension.height * -1)
-            LEFT  -> Pair(screenDimension.width * -1, 0)
-            RIGHT -> Pair(screenDimension.width, 0)
+            DOWN_10P  -> Pair(0, (screenDimension.height * 0.1).toInt())
+            DOWN_20P  -> Pair(0, (screenDimension.height * 0.2).toInt())
+            DOWN_30P  -> Pair(0, (screenDimension.height * 0.3).toInt())
+            DOWN_40P  -> Pair(0, (screenDimension.height * 0.4).toInt())
+            DOWN_50P  -> Pair(0, (screenDimension.height * 0.5).toInt())
+            DOWN_60P  -> Pair(0, (screenDimension.height * 0.6).toInt())
+            DOWN_70P  -> Pair(0, (screenDimension.height * 0.7).toInt())
+            DOWN_80P  -> Pair(0, (screenDimension.height * 0.8).toInt())
+            DOWN_90P  -> Pair(0, (screenDimension.height * 0.9).toInt())
+            DOWN      -> Pair(0, screenDimension.height)
+
+            UP_10P    -> Pair(0, (screenDimension.height * 0.1 * -1).toInt())
+            UP_20P    -> Pair(0, (screenDimension.height * 0.2 * -1).toInt())
+            UP_30P    -> Pair(0, (screenDimension.height * 0.3 * -1).toInt())
+            UP_40P    -> Pair(0, (screenDimension.height * 0.4 * -1).toInt())
+            UP_50P    -> Pair(0, (screenDimension.height * 0.5 * -1).toInt())
+            UP_60P    -> Pair(0, (screenDimension.height * 0.6 * -1).toInt())
+            UP_70P    -> Pair(0, (screenDimension.height * 0.7 * -1).toInt())
+            UP_80P    -> Pair(0, (screenDimension.height * 0.8 * -1).toInt())
+            UP_90P    -> Pair(0, (screenDimension.height * 0.9 * -1).toInt())
+            UP        -> Pair(0, screenDimension.height * -1)
+
+            LEFT_10P  -> Pair((screenDimension.width * 0.1 * -1).toInt(), 0)
+            LEFT_20P  -> Pair((screenDimension.width * 0.2 * -1).toInt(), 0)
+            LEFT_30P  -> Pair((screenDimension.width * 0.3 * -1).toInt(), 0)
+            LEFT_40P  -> Pair((screenDimension.width * 0.4 * -1).toInt(), 0)
+            LEFT_50P  -> Pair((screenDimension.width * 0.5 * -1).toInt(), 0)
+            LEFT_60P  -> Pair((screenDimension.width * 0.6 * -1).toInt(), 0)
+            LEFT_70P  -> Pair((screenDimension.width * 0.7 * -1).toInt(), 0)
+            LEFT_80P  -> Pair((screenDimension.width * 0.8 * -1).toInt(), 0)
+            LEFT_90P  -> Pair((screenDimension.width * 0.9 * -1).toInt(), 0)
+            LEFT      -> Pair(screenDimension.width * -1, 0)
+
+            RIGHT_10P -> Pair((screenDimension.width * 0.1).toInt(), 0)
+            RIGHT_20P -> Pair((screenDimension.width * 0.2).toInt(), 0)
+            RIGHT_30P -> Pair((screenDimension.width * 0.3).toInt(), 0)
+            RIGHT_40P -> Pair((screenDimension.width * 0.4).toInt(), 0)
+            RIGHT_50P -> Pair((screenDimension.width * 0.5).toInt(), 0)
+            RIGHT_60P -> Pair((screenDimension.width * 0.6).toInt(), 0)
+            RIGHT_70P -> Pair((screenDimension.width * 0.7).toInt(), 0)
+            RIGHT_80P -> Pair((screenDimension.width * 0.8).toInt(), 0)
+            RIGHT_90P -> Pair((screenDimension.width * 0.9).toInt(), 0)
+            RIGHT     -> Pair(screenDimension.width, 0)
         }
 
         Actions(driver)
@@ -449,20 +565,8 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
 
     fun screenshot(file: String, locator: String): StepResult {
         if (!isScreenshotEnabled) return StepResult.skipped("screen capturing disabled")
-
         requiresNotBlank(file, "invalid file", file)
-
-        val element = findElement(locator)
-        val size = element.size
-        val location = element.location
-        val dimension = Rectangle(location.x, location.y, size.height, size.width)
-
-        val mobileService = getMobileService()
-        val driver = mobileService.driver
-
-        // todo: generate `OPT_LAST_SCREENSHOT_NAME` var in context? output to cloud?
-        val screenshot = ScreenshotUtils.saveScreenshot(driver, file, dimension)
-                         ?: return StepResult.fail("Unable to capture screenshot on '$locator'")
+        val screenshot = ScreenshotUtils.saveScreenshot(findElement(locator), file)
         return postScreenshot(screenshot, locator)
     }
 
@@ -534,7 +638,7 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
             .ignoring(WebDriverException::class.java)
     }
 
-    internal fun resolveFindBy(locator: String) = if (locator.startsWith("/")) By.xpath(locator) else By.id(locator)
+    internal fun resolveFindBy(locator: String) = getMobileService().locatorHelper.resolve(locator)
 
     internal fun findElement(locator: String): WebElement {
         requiresNotBlank(locator, "Invalid locator", locator)
@@ -549,7 +653,7 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
         }
     }
 
-    internal fun findElements(locator: String): List<WebElement>? {
+    internal fun findElements(locator: String): List<WebElement> {
         requiresNotBlank(locator, "Invalid locator", locator)
         return try {
             newWaiter().withMessage("find elements via locator '$locator'")
@@ -557,7 +661,7 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
         } catch (e: TimeoutException) {
             log("Timed out after ${getMobileService().profile.explicitWaitMs}ms " +
                 "looking for any element that matches '$locator'")
-            null
+            listOf()
         }
     }
 
@@ -574,12 +678,43 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
         }
     }
 
+    internal fun collectTextList(locator: String) = collectTextList(findElements(locator))
+
+    internal fun collectTextList(matches: List<WebElement>): List<String> =
+        if (CollectionUtils.isEmpty(matches)) listOf() else matches.map { it.text }.toList()
+
     internal fun isElementPresent(locator: String): Boolean {
         requiresNotBlank(locator, "Invalid locator", locator)
         return try {
             newWaiter()
                 .withMessage("check for the present of an element via locator '$locator")
                 .until { it.findElement(resolveFindBy(locator)) } != null
+        } catch (e: TimeoutException) {
+            false
+        }
+    }
+
+    internal fun isElementVisible(locator: String): Boolean {
+        requiresNotBlank(locator, "Invalid locator", locator)
+        return try {
+            val element = newWaiter()
+                .withMessage("check for the present of an element via locator '$locator")
+                .until { it.findElement(resolveFindBy(locator)) }
+            if (element == null)
+                false
+            else {
+                val mobileType = getMobileService().profile.mobileType
+                when {
+                    mobileType.isIOS()     -> {
+                        if (StringUtils.equals(element.getAttribute("type"), "XCUIElementTypeImage"))
+                            BooleanUtils.toBoolean(element.findElementByXPath("./..").getAttribute("visible"))
+                        else
+                            BooleanUtils.toBoolean(element.getAttribute("visible"))
+                    }
+                    mobileType.isAndroid() -> BooleanUtils.toBoolean(element.getAttribute("displayed"))
+                    else                   -> true
+                }
+            }
         } catch (e: TimeoutException) {
             false
         }
