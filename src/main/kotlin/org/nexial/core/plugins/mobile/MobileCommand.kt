@@ -442,12 +442,13 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
             RIGHT     -> Pair(screenDimension.width, 0)
         }
 
-        Actions(driver)
-            .moveToElement(elem)
-            .clickAndHold()
-            .moveByOffset(offsets.first, offsets.second)
-            .release()
-            .perform()
+        withPostActionWait(Actions(driver)
+                               .moveToElement(elem)
+                               .clickAndHold()
+                               .moveByOffset(offsets.first, offsets.second)
+                               .release()
+                               .pause(500L),
+                           getMobileService())
         return StepResult.success("Scroll $direction on '$locator'")
     }
 
@@ -595,6 +596,28 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
     fun back() = keyPress(BACK.code)
     fun forward() = executeCommand("forward")
     fun recentApps() = keyPress(APP_SWITCH.code)
+
+    fun select(locator: String, item: String): StepResult {
+        requiresNotBlank(item, "invalid item specified", item)
+
+        val mobileService = getMobileService()
+        if (mobileService.profile.mobileType.isAndroid()) {
+            val result = click(locator)
+            if (result.failed()) return result
+
+            waitFor(800)
+
+            val itemElement = (mobileService.driver as AndroidDriver).findElementByAndroidUIAutomator(
+                "new UiScrollable(new UiSelector().scrollable(true)).scrollIntoView(new UiSelector().text(\"${item}\"))")
+            return if (itemElement != null) {
+                itemElement.click()
+                StepResult.success("dropdown option '${item}' selected")
+            } else
+                StepResult.fail("Unable to find dropdown option '${item}'")
+        }
+
+        return StepResult.fail("This command does not support iOS device at this time (#patience_is_a_virtue)")
+    }
 
     // todo: need to figure out permission issue
     // Original error: Error executing adbExec. Original error: 'Command '... ... \\platform-tools\\adb.exe -P 5037

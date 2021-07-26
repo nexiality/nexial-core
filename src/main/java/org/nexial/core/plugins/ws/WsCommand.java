@@ -55,6 +55,8 @@ import java.util.stream.Collectors;
 
 import static io.jsonwebtoken.SignatureAlgorithm.HS256;
 import static io.jsonwebtoken.impl.TextCodec.BASE64URL;
+import static java.util.Base64.*;
+import static org.apache.commons.lang3.StringUtils.SPACE;
 import static org.apache.http.HttpHeaders.AUTHORIZATION;
 import static org.apache.http.HttpHeaders.CONTENT_TYPE;
 import static org.nexial.core.NexialConst.*;
@@ -66,8 +68,7 @@ import static org.nexial.core.utils.CheckUtils.requiresNotBlank;
 
 public class WsCommand extends BaseCommand {
     protected boolean verbose;
-
-    public void setVerbose(boolean verbose) { this.verbose = verbose; }
+    protected Map<String, Map<String, String>> oauthProviderDetails;
 
     @Override
     public void init(ExecutionContext context) { super.init(context); }
@@ -75,14 +76,11 @@ public class WsCommand extends BaseCommand {
     @Override
     public String getTarget() { return "ws"; }
 
-    protected Map<String, Map<String, String>> oauthProviderDetails;
+    public void setVerbose(boolean verbose) { this.verbose = verbose; }
 
-    public Map<String, Map<String, String>> getOauthProviderDetails() {
-        return oauthProviderDetails;
-    }
+    public Map<String, Map<String, String>> getOauthProviderDetails() { return oauthProviderDetails; }
 
-    public void setOauthProviderDetails(
-            Map<String, Map<String, String>> oauthProviderDetails) {
+    public void setOauthProviderDetails(Map<String, Map<String, String>> oauthProviderDetails) {
         this.oauthProviderDetails = oauthProviderDetails;
     }
 
@@ -116,13 +114,13 @@ public class WsCommand extends BaseCommand {
         return requestNoBody(url, queryString, var, "get");
     }
 
-    public StepResult post(String url, String body, String var)  { return requestWithBody(url, body, var, "post"); }
+    public StepResult post(String url, String body, String var) { return requestWithBody(url, body, var, "post"); }
 
-    public StepResult put(String url, String body, String var)   { return requestWithBody(url, body, var, "put"); }
+    public StepResult put(String url, String body, String var) { return requestWithBody(url, body, var, "put"); }
 
     public StepResult patch(String url, String body, String var) { return requestWithBody(url, body, var, "patch"); }
 
-    public StepResult head(String url, String var)               { return requestNoBody(url, null, var, "head"); }
+    public StepResult head(String url, String var) { return requestNoBody(url, null, var, "head"); }
 
     public StepResult delete(String url, String body, String var) {
         return StringUtils.isNotEmpty(body) ?
@@ -476,11 +474,8 @@ public class WsCommand extends BaseCommand {
         con.setRequestMethod("POST");
 
         if (StringUtils.isNotEmpty(basicAuthUsername) && StringUtils.isNotEmpty(basicAuthPassword)) {
-            String encoding = java.util.Base64.getEncoder()
-                                              .encodeToString((basicAuthUsername + ":" + basicAuthPassword)
-                                                                      .getBytes("UTF-8"));
-            con.setRequestProperty("Authorization",
-                                   StringUtils.join(OAUTH_TOKEN_TYPE_BASIC, StringUtils.SPACE,  encoding));
+            String encoding = getEncoder().encodeToString((basicAuthUsername + ":" + basicAuthPassword).getBytes("UTF-8"));
+            con.setRequestProperty("Authorization", StringUtils.join(OAUTH_TOKEN_TYPE_BASIC, SPACE, encoding));
         }
         con.getOutputStream().write(postDataBytes);
 
@@ -503,13 +498,14 @@ public class WsCommand extends BaseCommand {
      */
     public static String resolveWebContent(String url) throws IOException {
         if (StringUtils.isBlank(url)) { throw new IOException("Unable to retrieve content from URL [" + url + "]"); }
+
         WebServiceClient wsClient = new WebServiceClient(null);
         Response response = wsClient.get(url, null);
         int returnCode = response.getReturnCode();
         if (returnCode <= 199 || returnCode >= 300) {
             // sleep and try again...
             try { Thread.sleep(5000); } catch (InterruptedException e) { }
-            response   = wsClient.get(url, null);
+            response = wsClient.get(url, null);
             returnCode = response.getReturnCode();
             if (returnCode <= 199 || returnCode >= 300) {
                 // give up...
@@ -531,7 +527,7 @@ public class WsCommand extends BaseCommand {
         if (returnCode <= 199 || returnCode >= 300) {
             // sleep and try again...
             try { Thread.sleep(5000); } catch (InterruptedException e) { }
-            response   = wsClient.get(url, null);
+            response = wsClient.get(url, null);
             returnCode = response.getReturnCode();
             if (returnCode <= 199 || returnCode >= 300) {
                 // give up
