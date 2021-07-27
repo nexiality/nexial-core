@@ -23,6 +23,7 @@ class MobileProfile(context: ExecutionContext, val profile: String) {
     internal val geoLocation: String?
     internal val logFile: String?
     internal val hideKeyboard: Boolean
+    internal val explicitWaitEnabled: Boolean
 
     /*
     todo: investigate
@@ -67,6 +68,7 @@ class MobileProfile(context: ExecutionContext, val profile: String) {
         // find profile-specific Nexial behavior (such as wait time)
         implicitWaitMs = context.getIntConfig(commandName, profile, IMPLICIT_WAIT_MS).toLong()
         explicitWaitMs = context.getIntConfig(commandName, profile, EXPLICIT_WAIT_MS).toLong()
+        explicitWaitEnabled = explicitWaitMs > MIN_WAIT_MS
         sessionTimeoutMs = context.getIntConfig(commandName, profile, SESSION_TIMEOUT_MS).toLong()
         postActionWaitMs = context.getIntConfig(commandName, profile, POST_ACTION_WAIT_MS).toLong()
         hideKeyboard = context.getBooleanConfig(commandName, profile, HIDE_KEYBOARD)

@@ -157,7 +157,6 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
     }
 
     fun assertElementVisible(locator: String): StepResult =
-        // val windowSize: Dimension = driver.manage().window().getSize()
         if (isElementVisible(locator))
             StepResult.success("EXPECTED element '$locator' is present and visible")
         else
@@ -346,7 +345,7 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
         } else {
             element.sendKeys(text)
             val postWaitMs = mobileService.profile.postActionWaitMs
-            if (postWaitMs > MIN_WAIT_MS) waitFor(postWaitMs as Int)
+            if (postWaitMs > MIN_WAIT_MS) waitFor(postWaitMs.toInt())
             StepResult.success("Text '$text' typed on '$locator'")
         }
     }
@@ -653,52 +652,65 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
         return mobileService as MobileService
     }
 
-    internal fun newWaiter(): FluentWait<AppiumDriver<MobileElement>> {
+    internal fun newWaiter(message: String) = newWaiter(getMobileService().profile.explicitWaitMs, message)
+
+    internal fun newWaiter(waitMs: Long, message: String): FluentWait<AppiumDriver<MobileElement>> {
         val mobileService = getMobileService()
         return FluentWait(mobileService.driver)
-            .withTimeout(Duration.ofMillis(mobileService.profile.explicitWaitMs))
+            .withTimeout(Duration.ofMillis(waitMs))
             .pollingEvery(Duration.ofMillis(10))
             .ignoring(WebDriverException::class.java)
+            .withMessage(message)
     }
 
     internal fun resolveFindBy(locator: String) = getMobileService().locatorHelper.resolve(locator)
 
     internal fun findElement(locator: String): WebElement {
         requiresNotBlank(locator, "Invalid locator", locator)
-        return try {
-            newWaiter().withMessage("find element via locator '$locator'")
-                .until { it.findElement(resolveFindBy(locator)) }
-        } catch (e: TimeoutException) {
-            val err = "Timed out after ${getMobileService().profile.explicitWaitMs}ms " +
-                      "looking for element that matches '$locator'"
-            log(err)
-            throw NoSuchElementException(err)
-        }
+        val findBy = resolveFindBy(locator)
+        val profile = getMobileService().profile
+        return if (profile.explicitWaitEnabled)
+            try {
+                newWaiter("find element via locator '$locator'").until { it.findElement(findBy) }
+            } catch (e: TimeoutException) {
+                val err = "Timed out after ${profile.explicitWaitMs}ms looking for element that matches '$locator'"
+                log(err)
+                throw NoSuchElementException(err)
+            }
+        else
+            getMobileService().driver.findElement(findBy)
     }
 
     internal fun findElements(locator: String): List<WebElement> {
         requiresNotBlank(locator, "Invalid locator", locator)
-        return try {
-            newWaiter().withMessage("find elements via locator '$locator'")
-                .until { it.findElements(resolveFindBy(locator)) }
-        } catch (e: TimeoutException) {
-            log("Timed out after ${getMobileService().profile.explicitWaitMs}ms " +
-                "looking for any element that matches '$locator'")
-            listOf()
-        }
+        val findBy = resolveFindBy(locator)
+        val profile = getMobileService().profile
+        return if (profile.explicitWaitEnabled)
+            try {
+                newWaiter("find elements via locator '$locator'").until { it.findElements(findBy) }
+            } catch (e: TimeoutException) {
+                log("Timed out after ${profile.explicitWaitMs}ms looking for any element that matches '$locator'")
+                listOf()
+            }
+        else
+            getMobileService().driver.findElements(findBy)
     }
 
     internal fun findFirstMatch(locator: String): WebElement? {
         requiresNotBlank(locator, "Invalid locator", locator)
-        return try {
-            val matches = newWaiter().withMessage("find element via locator '$locator'")
-                .until { it.findElements(resolveFindBy(locator)) }
-            if (CollectionUtils.isEmpty(matches)) null else matches[0]
-        } catch (e: TimeoutException) {
-            log("Timed out after ${getMobileService().profile.explicitWaitMs}ms " +
-                "looking for any element that matches '$locator'")
-            null
-        }
+        val findBy = resolveFindBy(locator)
+        val profile = getMobileService().profile
+        val matches = if (profile.explicitWaitEnabled)
+            try {
+                newWaiter("find element via locator '$locator'").until { it.findElements(findBy) }
+            } catch (e: TimeoutException) {
+                log("Timed out after ${profile.explicitWaitMs}ms looking for any element that matches '$locator'")
+                null
+            }
+        else
+            getMobileService().driver.findElements(findBy)
+
+        return if (CollectionUtils.isEmpty(matches)) null else matches?.get(0)
     }
 
     internal fun collectTextList(locator: String) = collectTextList(findElements(locator))
@@ -708,44 +720,53 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
 
     internal fun isElementPresent(locator: String): Boolean {
         requiresNotBlank(locator, "Invalid locator", locator)
-        return try {
-            newWaiter()
-                .withMessage("check for the present of an element via locator '$locator")
-                .until { it.findElement(resolveFindBy(locator)) } != null
-        } catch (e: TimeoutException) {
-            false
-        }
+        val findBy = resolveFindBy(locator)
+        val profile = getMobileService().profile
+        return if (profile.explicitWaitEnabled)
+            try {
+                newWaiter("check for the present of an element via locator '$locator")
+                    .until { it.findElement(findBy) } != null
+            } catch (e: TimeoutException) {
+                false
+            }
+        else
+            getMobileService().driver.findElement(findBy) != null
     }
 
     internal fun isElementVisible(locator: String): Boolean {
         requiresNotBlank(locator, "Invalid locator", locator)
-        return try {
-            val element = newWaiter()
-                .withMessage("check for the present of an element via locator '$locator")
-                .until { it.findElement(resolveFindBy(locator)) }
-            if (element == null)
-                false
-            else {
-                val mobileType = getMobileService().profile.mobileType
-                when {
-                    mobileType.isIOS()     -> {
-                        if (StringUtils.equals(element.getAttribute("type"), "XCUIElementTypeImage"))
-                            BooleanUtils.toBoolean(element.findElementByXPath("./..").getAttribute("visible"))
-                        else
-                            BooleanUtils.toBoolean(element.getAttribute("visible"))
-                    }
-                    mobileType.isAndroid() -> BooleanUtils.toBoolean(element.getAttribute("displayed"))
-                    else                   -> true
-                }
+        val findBy = resolveFindBy(locator)
+
+        val profile = getMobileService().profile
+        val element = if (profile.explicitWaitEnabled)
+            try {
+                newWaiter("check for the present of an element via locator '$locator").until { it.findElement(findBy) }
+            } catch (e: TimeoutException) {
+                null
             }
-        } catch (e: TimeoutException) {
+        else
+            getMobileService().driver.findElement(findBy)
+
+        return if (element == null)
             false
+        else {
+            val mobileType = getMobileService().profile.mobileType
+            when {
+                mobileType.isIOS()     -> {
+                    if (StringUtils.equals(element.getAttribute("type"), "XCUIElementTypeImage"))
+                        BooleanUtils.toBoolean(element.findElementByXPath("./..").getAttribute("visible"))
+                    else
+                        BooleanUtils.toBoolean(element.getAttribute("visible"))
+                }
+                mobileType.isAndroid() -> BooleanUtils.toBoolean(element.getAttribute("displayed"))
+                else                   -> true
+            }
         }
     }
 
     internal fun waitForCondition(maxWaitMs: Long, condition: Function<WebDriver, Any>) =
         try {
-            newWaiter().until(condition) != null
+            newWaiter(maxWaitMs, "wait $maxWaitMs ms for specified condition is reached").until(condition) != null
         } catch (e: TimeoutException) {
             log("Condition not be met on within specified wait time of $maxWaitMs ms")
             false
@@ -792,10 +813,13 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
         if (postWaitMs > MIN_WAIT_MS) action.pause(postWaitMs).perform() else action.perform()
     }
 
+    /**
+     * derive at a sensible wait time for each "wait for element" task
+     */
     private fun deriveMaxWaitMs(waitMs: String): Long {
         val defWaitMs = getMobileService().profile.explicitWaitMs
         val maxWait = if (StringUtils.isBlank(waitMs)) defWaitMs else NumberUtils.toDouble(waitMs).toLong()
-        return if (maxWait < 1) defWaitMs else maxWait
+        return if (maxWait < MIN_WAIT_MS) defWaitMs else maxWait
     }
 
     private fun waitMs(ms: Long) = WaitOptions.waitOptions(Duration.ofMillis(ms))
