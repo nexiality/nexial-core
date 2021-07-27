@@ -1686,6 +1686,8 @@ public final class NexialConst {
 
         // Temporary Mail Constants.
         public static final String WEBMAIL_TEMPORARYMAIL = "temporary-mail";
+        public static final String WEBMAIL_TEMPORARYMAIL_DOWNLOAD_URL_BASE =
+                "http://temporary-mail.net/mailbox/vattach";
 
         private WebMail() { }
 

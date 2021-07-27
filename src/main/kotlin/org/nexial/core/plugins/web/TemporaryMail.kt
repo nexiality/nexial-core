@@ -46,12 +46,18 @@ class TemporaryMail : WebMailer() {
                             ""
                         } else {
                             val contentJson = JsonUtils.toJSONObject(contentResponse.body)
+                            val attachments: MutableList<String> = ArrayList()
+                            for (i in contentJson.getJSONArray("attachments")) {
+                                val fileDetails = i as JSONObject
+                                attachments.add(fileDetails.getString("filename"))
+                            }
                             val email = EmailDetails(
-                                    id = id,
-                                    subject = subject,
-                                    from = retrieveFrom(contentJson),
-                                    to = "${mail.getString("mailbox")}@temporary-mail.net",
-                                    time = receivedDate,
+                                id = id,
+                                subject = subject,
+                                from = retrieveFrom(contentJson),
+                                to = "${mail.getString("mailbox")}@temporary-mail.net",
+                                time = receivedDate,
+                                attachments = attachments
                             )
                             email.content = cleanMailContent(contentJson.getJSONObject("body").getString("text"))
                             email.html = contentJson.getJSONObject("body").getString("html")

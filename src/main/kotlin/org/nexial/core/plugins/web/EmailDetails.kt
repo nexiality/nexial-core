@@ -16,6 +16,7 @@ import java.time.LocalDateTime
  *  * links([EmailDetails.links]) in the Email
  *  * Time([EmailDetails.time]) at which the email is received.
  *  * Id ([EmailDetails.id]) of the email. This is generally the Id of the tr element.
+ *  * attachments ([EmailDetails.attachments]) of the email. This is generally the Id of the tr element.
  *
  */
 data class EmailDetails(
@@ -24,6 +25,7 @@ data class EmailDetails(
     val from: String,
     val to: String,
     val time: LocalDateTime,
+    val attachments: List<String>
 ) {
 
     var content: String? = null
@@ -58,12 +60,13 @@ data class EmailDetails(
 
     override fun toString(): String {
         return "id      = $id\n" +
-               "subject = $subject\n" +
-               "from    = $from\n" +
-               "to      = $to\n" +
-               "time    = $time\n" +
-               "content = $content\n" +
-               "html    = $html\n" +
-               "links   = $links"
+            "subject = $subject\n" +
+            "from    = $from\n" +
+            "to      = $to\n" +
+            "time    = $time\n" +
+            "content = $content\n" +
+            "html    = $html\n" +
+            "links   = $links" +
+            "attachments = $attachments"
     }
 }
