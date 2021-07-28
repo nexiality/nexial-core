@@ -56,8 +56,6 @@ public abstract class Request implements Serializable {
     protected String contentType = WS_JSON_CONTENT_TYPE;
 
     Request(ExecutionContext context) {
-        Map<String, Object> reqHeaders = new HashMap<>();
-
         int defaultWsConnTimeout = getDefaultInt(WS_CONN_TIMEOUT);
         int defaultWsReadTimeout = getDefaultInt(WS_READ_TIMEOUT);
         boolean defaultKeepAlive = getDefaultBool(WS_KEEP_ALIVE);
@@ -86,6 +84,7 @@ public abstract class Request implements Serializable {
             // since execution.getDataByPrefix() converts them to string automatically.
             Map<String, String> candidateProps = context.getDataByPrefix(WS_REQ_HEADER_PREFIX);
             if (MapUtils.isNotEmpty(candidateProps)) {
+                Map<String, Object> reqHeaders = new HashMap<>();
                 candidateProps.keySet().forEach(key -> {
                     Object value = context.getObjectData(WS_REQ_HEADER_PREFIX + key);
                     if (value instanceof String) {
@@ -95,9 +94,8 @@ public abstract class Request implements Serializable {
                         reqHeaders.put(key, value);
                     }
                 });
+                setHeaders(reqHeaders);
             }
-
-            setHeaders(reqHeaders);
         }
     }
 
@@ -188,7 +186,10 @@ public abstract class Request implements Serializable {
 
     protected void setRequestHeaders(HttpRequest http) {
         // must NOT forcefully set content type as multipart; HttpClient framework does the magic
-        if (!(this instanceof PostMultipartRequest)) { addHeaderIfNotSpecified(WS_CONTENT_TYPE, getContentType()); }
+        // also for GetRequest Content Type is NOT required
+        if (!(this instanceof PostMultipartRequest) && !(this instanceof GetRequest)) {
+            addHeaderIfNotSpecified(WS_CONTENT_TYPE, getContentType());
+        }
 
         Map<String, Object> requestHeaders = getHeaders();
         if (MapUtils.isEmpty(requestHeaders)) { return; }

@@ -2044,6 +2044,11 @@ public final class NexialConst {
         // avoid pinching, zooming or dragging from screen edges
         public static final int EDGE_WIDTH = 10;
 
+        public static final String DROPDOWN_TEXT_LINE_HEIGHT = registerSysVar(NS_MOBILE + ".dropdown.lineHeight", 76);
+        public static final String DROPDOWN_LINES_TO_SCROLL = registerSysVar(NS_MOBILE + ".dropdown.linesPerScroll", 8);
+        public static final String DROPDOWN_MAX_SCROLL = registerSysVar(NS_MOBILE + ".dropdown.maxScrolls", 5);
+
+
         // log level to use when configuring appium to send log to external file
         public static final String FILE_CONSOLE_LOG_LEVEL = "warn:debug";
 

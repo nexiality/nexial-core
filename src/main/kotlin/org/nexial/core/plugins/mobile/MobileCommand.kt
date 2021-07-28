@@ -163,7 +163,7 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
             StepResult.fail("Expected element '$locator' is either not present or not visible")
 
     fun assertTextPresent(locator: String, text: String): StepResult =
-        if (TextUtils.polyMatch(findElement(locator).text, text))
+        if (findElements(locator).any { TextUtils.polyMatch(it.text, text) })
             StepResult.success("Element of '${locator}' contains text matching '${text}'")
         else
             StepResult.fail("Element of '${locator}' DOES NOT contains text matching '${text}'")
@@ -238,16 +238,16 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
                 xpath.append("contains(@text,${normalizeXpathText(text.toLowerCase())})]")
 
             StringUtils.startsWith(text, START)            ->
-                xpath.append("starts-with(@text,'${text}')]")
+                xpath.append("starts-with(@text,${normalizeXpathText(text)})]")
 
             StringUtils.startsWith(text, START_ANY_CASE)   ->
-                xpath.append("starts-with(lower-case(@text),'${text.toLowerCase()}')]")
+                xpath.append("starts-with(lower-case(@text),${normalizeXpathText(text.toLowerCase())})]")
 
             StringUtils.startsWith(text, END)              ->
-                xpath.append("ends-with(@text,'${text}')]")
+                xpath.append("ends-with(@text,${normalizeXpathText(text)})]")
 
             StringUtils.startsWith(text, END_ANY_CASE)     ->
-                xpath.append("ends-with(lower-case(@text),'${text.toLowerCase()}')]")
+                xpath.append("ends-with(lower-case(@text),${normalizeXpathText(text.toLowerCase())})]")
 
             StringUtils.startsWith(text, LENGTH)           -> {
                 requiresPositiveNumber(text, "invalid number specified as length", text)
@@ -600,14 +600,55 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
         requiresNotBlank(item, "invalid item specified", item)
 
         val mobileService = getMobileService()
+        val driver = mobileService.driver
+        val profileName = mobileService.profile.profile
+
         if (mobileService.profile.mobileType.isAndroid()) {
             val result = click(locator)
             if (result.failed()) return result
 
             waitFor(800)
 
-            val itemElement = (mobileService.driver as AndroidDriver).findElementByAndroidUIAutomator(
-                "new UiScrollable(new UiSelector().scrollable(true)).scrollIntoView(new UiSelector().text(\"${item}\"))")
+            // find the number of scrollables (usually the last one is the right one)
+            val scrollables =
+                driver.findElements(By.xpath("//*[@scrollable='true' and @displayed='true' and @enabled='true']"))
+
+            // the last one is likely the right one
+            val scrollTarget = if (CollectionUtils.isEmpty(scrollables)) {
+                // try another way
+                val scrollables2 =
+                    driver.findElements(By.xpath("//android.widget.ScrollView[@displayed='true' and @enabled='true']"))
+                if (CollectionUtils.isEmpty(scrollables2)) return StepResult.fail("Unable to locate a usable dropdown")
+
+                scrollables2[scrollables2.size - 1]
+            } else
+                scrollables[scrollables.size - 1]
+
+            // determine how many lines to scroll (if needed)
+            val scrollAmount = context.getIntConfig(target, profileName, DROPDOWN_TEXT_LINE_HEIGHT) *
+                               context.getIntConfig(target, profileName, DROPDOWN_LINES_TO_SCROLL) * -1
+            val maxScrolls = context.getIntConfig(target, profileName, DROPDOWN_MAX_SCROLL)
+
+            val findByOption = By.xpath("//*[@text=${normalizeXpathText(item)}]")
+
+            var scrollCount = 0
+            var itemElement: WebElement? = null
+            while (itemElement == null) {
+                itemElement = scrollTarget.findElements(findByOption).getOrNull(0)
+
+                if (scrollCount >= maxScrolls) break
+
+                if (itemElement == null) {
+                    Actions(driver).moveToElement(scrollTarget, 50, 5)
+                        .clickAndHold()
+                        .moveByOffset(0, scrollAmount)
+                        .release()
+                        .perform()
+                    scrollCount++
+                } else
+                    break
+            }
+
             return if (itemElement != null) {
                 itemElement.click()
                 StepResult.success("dropdown option '${item}' selected")

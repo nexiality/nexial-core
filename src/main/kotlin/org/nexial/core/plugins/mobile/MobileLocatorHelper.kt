@@ -2,6 +2,7 @@ package org.nexial.core.plugins.mobile
 
 import io.appium.java_client.MobileBy
 import org.apache.commons.lang3.StringUtils
+import org.nexial.core.plugins.web.LocatorHelper.normalizeXpathText
 import org.openqa.selenium.By
 
 /**
@@ -18,6 +19,7 @@ class MobileLocatorHelper(private val mobileService: MobileService) {
     private val prefixPredicate = "predicate"
     private val prefixClassChain = "cc"
     private val prefixName = "name"
+    private val prefixText = "text"
 
     // todo
     private val prefixImage = "image"
@@ -43,6 +45,7 @@ class MobileLocatorHelper(private val mobileService: MobileService) {
             prefixAccessibility                    -> MobileBy.AccessibilityId(loc)
             prefixClass                            -> By.className(loc)
             prefixXPath                            -> By.xpath(if (allowRelative) loc else fixBadXpath(loc))
+            prefixText                             -> By.xpath("//*[@text=${normalizeXpathText(loc)}]")
 
             // ios specific
             prefixPredicate                        ->
