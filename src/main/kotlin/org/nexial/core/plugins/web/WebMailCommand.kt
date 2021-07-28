@@ -8,9 +8,9 @@ import org.nexial.core.model.ExecutionContext
 import org.nexial.core.model.StepResult
 import org.nexial.core.plugins.base.BaseCommand
 import org.nexial.core.utils.CheckUtils
-import org.nexial.core.utils.CheckUtils.requiresNotBlank
-import org.nexial.core.utils.CheckUtils.requiresPositiveNumber
+import org.nexial.core.utils.CheckUtils.*
 import org.springframework.util.CollectionUtils
+import java.io.File
 
 /**
  * This command is used to check the emails sent to fake email (webmail) sites like
@@ -123,6 +123,58 @@ class WebMailCommand : BaseCommand() {
             StepResult.success("Email with id $id is deleted.")
         else
             StepResult.fail("Email deletion failed.")
+    }
+
+    /**
+     * Downloads the email attachment corresponding to the email id to the destination location specified resulting in
+     * [StepResult.success] with appropriate message. If the email or the attachment does not exist then it will
+     * result in [StepResult.fail] with appropriate message.
+     *
+     * If the email provider does not support attachments this will again result in [StepResult.fail].
+     *
+     * @param profile email profile.
+     * @param id      Email id.
+     * @param attachment email attachment
+     * @param saveTo location where the attachment should be downloaded.
+     * @return [StepResult.success] or [StepResult.fail] based on attachment is downloaded or not.
+     */
+    fun attachment(profile: String, id: String, attachment: String, saveTo: String): StepResult {
+        requiresNotBlank(profile, "profile cannot be empty.")
+        requiresNotBlank(id, "email id cannot be empty.")
+        requiresNotBlank(attachment, "email attachment cannot be empty.")
+        requiresNotBlank(saveTo, "Destination path to save the attachment cannot be empty.")
+
+        val saveDir = StringUtils.substringBeforeLast(saveTo, File.separator)
+        requiresReadWritableDirectory(saveDir, "The following path is not a valid directory", saveDir)
+
+        val mailProfile = resolveProfile(profile)
+        mailProfile.mailer.attachment(web!!, mailProfile, id, attachment, saveTo)
+        return StepResult.success("Email attachment downloaded : $saveTo")
+    }
+
+    /**
+     * Downloads the email attachments corresponding to the email id to the destination location specified resulting in
+     * [StepResult.success] with appropriate message. If the email does not exist then it will
+     * result in [StepResult.fail] with appropriate message.
+     *
+     * If the email provider does not support attachments this will again result in [StepResult.fail].
+     *
+     * @param profile email profile.
+     * @param id      Email id.
+     * @param saveDir location where the attachment should be downloaded.
+     * @return [StepResult.success] or [StepResult.fail] based on attachment is downloaded or not.
+     */
+    fun attachments(profile: String, id: String, saveDir: String): StepResult {
+        requiresNotBlank(profile, "profile cannot be empty.")
+        requiresNotBlank(id, "email id cannot be empty.")
+        requiresNotBlank(saveDir, "Destination folder path to save the attachment cannot be empty.")
+        requiresReadWritableDirectory(saveDir, "The following path is not a valid directory", saveDir)
+
+        val mailProfile = resolveProfile(profile)
+        val failedAttachmentsCount = mailProfile.mailer.attachments(web!!, mailProfile, id, saveDir)
+        return if (failedAttachmentsCount == 0)
+            StepResult.success("Email attachment(s) downloaded to $saveDir.")
+        else StepResult.fail("$failedAttachmentsCount attachments failed to download.")
     }
 
 

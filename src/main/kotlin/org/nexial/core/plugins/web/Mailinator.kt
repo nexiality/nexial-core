@@ -98,7 +98,8 @@ class Mailinator : WebMailer() {
             from = JSONPath.find(jsonObject, "data.from"),
             time = Instant.ofEpochMilli(NumberUtils.toLong(JSONPath.find(jsonObject, "data.time")))
                 .atZone(ZoneId.systemDefault())
-                .toLocalDateTime()
+                .toLocalDateTime(),
+            attachments = ArrayList()
         )
 
         val parts = JsonUtils.toJSONArray(JSONPath.find(jsonObject, "data.parts"))
@@ -153,7 +154,6 @@ class Mailinator : WebMailer() {
         wsClient.get(String.format(urlDeleteMail, id), "")
         return true
     }
-
 }
 
 private class MailinatorClient(val inbox: String, val subjectSearch: String, val noOlderThanMinutes: Long) :

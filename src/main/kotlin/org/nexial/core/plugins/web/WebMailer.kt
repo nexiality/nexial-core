@@ -3,9 +3,15 @@ package org.nexial.core.plugins.web
 import org.apache.commons.lang3.StringUtils
 import org.nexial.core.NexialConst.NAMESPACE
 import org.nexial.core.NexialConst.Web.*
+import org.nexial.core.NexialConst.WebMail.WEBMAIL_TEMPORARYMAIL
+import org.nexial.core.NexialConst.WebMail.WEBMAIL_TEMPORARYMAIL_DOWNLOAD_URL_BASE
 import org.nexial.core.SystemVariables.getDefaultInt
 import org.nexial.core.model.ExecutionContext
+import org.nexial.core.model.StepResult
+import org.nexial.core.plugins.ws.WebServiceClient
 import org.nexial.core.utils.CheckUtils.*
+import org.nexial.core.utils.ConsoleUtils
+import java.io.File
 import java.util.*
 
 /**
@@ -61,16 +67,103 @@ abstract class WebMailer {
     abstract fun delete(web: WebCommand, profile: WebMailProfile, id: String): Boolean
 
     /**
+     * Download an email attachment related to the email with the id and the attachment name
+     * specified against the profile which results in [StepResult.success]. If the email id/attachment
+     * does not exist then it will result in [StepResult.fail] with appropriate message.
+     *
+     * @param web the [WebCommand] passed in.
+     * @param profile the [WebMailProfile] profile passed in.
+     * @param id             the Email id passed in.
+     * @param attachment     the Email attachment file name  passed in.
+     * @param saveTo     the full path of the file download location.
+     *
+     * @return [StepResult.success] or [StepResult.fail] based on mail is deleted or not.
+     *
+     * @throws IllegalArgumentException if there is no attachment with the file name specified.
+     * @throws RuntimeException if the file download fails.
+     */
+    open fun attachment(
+        web: WebCommand, profile: WebMailProfile, id: String, attachment: String, saveTo: String
+    ) {
+        val email = web.context.getObjectData(deriveEmailContentVar(profile, id), EmailDetails::class.java)
+        val attachments = email?.attachments
+
+        val index = attachments!!.indexOf(attachment)
+        if (index == -1) {
+            ConsoleUtils.log("There is no attachment with the name $attachment.")
+            throw IllegalArgumentException("There is no attachment with the name $attachment in the email with id $id.")
+        }
+
+        var baseUrl = StringUtils.EMPTY
+        if (profile.provider == WEBMAIL_TEMPORARYMAIL) {
+            baseUrl = WEBMAIL_TEMPORARYMAIL_DOWNLOAD_URL_BASE
+        }
+
+        val url = "$baseUrl/${profile.inbox}/${id}/${index}/${attachment}"
+        val response = WebServiceClient(web.context).download(url, StringUtils.EMPTY, saveTo)
+        if (response.returnCode < 200 || response.returnCode > 299) {
+            throw RuntimeException(
+                "Unable to download mail $id from ${profile.inbox}." +
+                    " The api response is : ${response.statusText}"
+            )
+        }
+    }
+
+    /**
+     * Download attachment(s) related to the email with the id and the attachment name
+     * specified against the profile which results in [StepResult.success]. If the email id or attachments
+     * does not exist then it will result in [StepResult.fail] with appropriate message.
+     *
+     * @param web the [WebCommand] passed in.
+     * @param profile the [WebMailProfile] profile passed in.
+     * @param id             the Email id passed in.
+     * @param saveDir the location where the files should be downloaded.
+     * @return no. of files failed to download.
+     *
+     * @throws IllegalArgumentException in case there are no attachments to the email.
+     */
+    open fun attachments(web: WebCommand, profile: WebMailProfile, id: String, saveDir: String): Int {
+        val email = web.context.getObjectData(deriveEmailContentVar(profile, id), EmailDetails::class.java)
+        val attachments = email?.attachments
+
+        if (attachments!!.isEmpty()) {
+            throw IllegalArgumentException("There are no attachments to the email with id $id")
+        }
+
+        var failedDownloads = 0
+
+        for (attachment in attachments) {
+            val index = attachments.indexOf(attachment)
+            var baseUrl = StringUtils.EMPTY
+            if (profile.provider == WEBMAIL_TEMPORARYMAIL) {
+                baseUrl = WEBMAIL_TEMPORARYMAIL_DOWNLOAD_URL_BASE
+            }
+
+            val url = "$baseUrl/${profile.inbox}/${id}/${index}/${attachment}"
+            val file = "${StringUtils.appendIfMissing(saveDir, File.separator)}${File.separator}${attachment}"
+            val response = WebServiceClient(web.context).download(url, StringUtils.EMPTY, file)
+
+            if (response.returnCode < 200 || response.returnCode > 299) {
+                ConsoleUtils.error("Unable to download attachment $attachment. Response is ${response.statusText}")
+                failedDownloads++
+            }
+        }
+        return failedDownloads
+    }
+
+    /**
      * Retrieves the maxLoadTime for a page or a component to load. The value set in the
      *
      * @param context [ExecutionContext] passed in.
      * @return maxLoadTime computed.
      */
     fun getMaxLoadTime(context: ExecutionContext) =
-            context.getIntData(WEB_PAGE_LOAD_WAIT_MS, getDefaultInt(WEB_PAGE_LOAD_WAIT_MS)).toString()
+        context.getIntData(WEB_PAGE_LOAD_WAIT_MS, getDefaultInt(WEB_PAGE_LOAD_WAIT_MS)).toString()
 
-    protected fun deriveEmailContentVar(profile: WebMailProfile,
-                                        emailId: String) = "${NAMESPACE}${profile.profileName}.$emailId"
+    protected fun deriveEmailContentVar(
+        profile: WebMailProfile,
+        emailId: String
+    ) = "${NAMESPACE}${profile.profileName}.$emailId"
 
     protected fun cleanMailContent(text: String?) =
         if (StringUtils.isEmpty(text))
