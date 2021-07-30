@@ -1,11 +1,11 @@
 /*
- * Copyright 2012-2018 the original author or authors.
+ * Copyright 2012-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *       http://www.apache.org/licenses/LICENSE-2.0
+ * 	http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -71,13 +71,10 @@ import org.thymeleaf.TemplateEngine;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
-import java.io.File;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Array;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.TypeVariable;
-import java.net.URLEncoder;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -100,7 +97,7 @@ import static org.nexial.core.SystemVariables.*;
 import static org.nexial.core.excel.ext.CipherHelper.CRYPT_IND;
 
 /**
- * represent the state of an test execution.  Differ from {@link ExecutionDefinition}, it contains the derived
+ * represent the state of a test execution.  Differ from {@link ExecutionDefinition}, it contains the derived
  * test script and test data details, along with the thread-bound test context whereby a test run is being
  * maintained.
  */
@@ -422,12 +419,6 @@ public class ExecutionContext {
 
     @NotNull
     public String getBrowserType() {
-        // gotta push default to context
-        // String browser = System.getProperty(BROWSER);
-        // String browser = StringUtils.remove(System.getProperty(BROWSER, getStringData(BROWSER, DEF_BROWSER)), ".");
-        // setData(BROWSER, browser);
-        // return browser;
-
         // DO NOT SET BROWSER TYPE TO SYSTEM PROPS, SINCE THIS WILL PREVENT ITERATION-LEVEL OVERRIDES
         // System.setProperty(BROWSER, browserType);
 
@@ -476,7 +467,7 @@ public class ExecutionContext {
     }
 
     /**
-     * "fail-fast" is stiffled for Nexial Interactive so that we can uncover more issues during interactive mode.
+     * "fail-fast" is stifled for Nexial Interactive so that we can uncover more issues during interactive mode.
      */
     public boolean isFailFast() { return getBooleanData(FAIL_FAST, getDefaultBool(FAIL_FAST)) && !isInteractiveMode(); }
 
@@ -687,17 +678,18 @@ public class ExecutionContext {
     public Map<String, String> getDataByPrefix(String prefix) {
         Map<String, String> props = new LinkedHashMap<>();
 
+        String prefix1 = macroAwarePrefix(prefix);
         data.forEach((key, value) -> {
-            if (StringUtils.startsWith(key, prefix)) {
-                props.put(StringUtils.substringAfter(key, prefix), replaceTokens(Objects.toString(value)));
+            if (StringUtils.startsWith(key, prefix1)) {
+                props.put(StringUtils.substringAfter(key, prefix1), replaceTokens(Objects.toString(value)));
             }
         });
 
-        // scan system properties later so that they can override those also found in `data`
+        // scan system properties _later_ so that they can override those also found in `data`
         System.getProperties().forEach((key, value) -> {
             String sKey = key.toString();
-            if (StringUtils.startsWith(sKey, prefix)) {
-                props.put(StringUtils.substringAfter(sKey, prefix), replaceTokens(Objects.toString(value)));
+            if (StringUtils.startsWith(sKey, prefix1)) {
+                props.put(StringUtils.substringAfter(sKey, prefix1), replaceTokens(Objects.toString(value)));
             }
         });
 
@@ -706,7 +698,7 @@ public class ExecutionContext {
 
     @NotNull
     public Collection<String> getDataNames(String prefix) {
-        // ordered data names during collection; we have no way to predetermined the right order
+        // ordered data names during collection; we have no way to predetermine the right order
         Set<String> names = new TreeSet<>();
 
         names.addAll(data.keySet()
@@ -724,7 +716,7 @@ public class ExecutionContext {
 
     @NotNull
     public Collection<String> getDataNamesByRegex(String regex) {
-        // ordered data names during collection; we have no way to predetermined the right order
+        // ordered data names during collection; we have no way to predetermine the right order
         Set<String> names = new TreeSet<>();
 
         names.addAll(data.keySet()
@@ -792,10 +784,10 @@ public class ExecutionContext {
     }
 
     public void removeDataByPrefix(String prefix) {
-        List<String> collectData = data.keySet().stream()
-                                       .filter(key -> StringUtils.startsWith(key, prefix))
-                                       .collect(Collectors.toList());
-        collectData.forEach(this::removeData);
+        String prefix1 = macroAwarePrefix(prefix);
+        data.keySet().stream()
+            .filter(key -> StringUtils.startsWith(key, prefix1))
+            .collect(Collectors.toList()).forEach(this::removeData);
     }
 
     public void setData(String name, String value) {
@@ -817,14 +809,6 @@ public class ExecutionContext {
             // logic updated; see below
             // if (updateSysProps || referenceDataForExecution.contains(name)) { System.setProperty(name, value); }
             if (updateSysProps) { System.setProperty(name, value); }
-
-            // we'll update the system property for the same data variable IFF
-            // 1. `updateSysProps` is true  - OR -
-            // 2. the data variable is found as a sysprop AND
-            // 3. the same data variable is not considered as READ-ONLY
-            // if (updateSysProps || (StringUtils.isNotEmpty(System.getProperty(name)) && !isReadOnlyData(name))) {
-            //     System.setProperty(name, value);
-            // }
         }
     }
 
@@ -852,13 +836,19 @@ public class ExecutionContext {
 
     public static boolean asNull(String value) { return value == null || StringUtils.equals(value, NULL); }
 
-    public static boolean asEmpty(String value) {return StringUtils.isEmpty(value) || StringUtils.equals(value, EMPTY);}
+    public static boolean asEmpty(String value) {
+        return StringUtils.isEmpty(value) || StringUtils.equals(value, EMPTY);
+    }
 
-    public static boolean asBlank(String value) {return StringUtils.isBlank(value) || StringUtils.equals(value, BLANK);}
+    public static boolean asBlank(String value) {
+        return StringUtils.isBlank(value) || StringUtils.equals(value, BLANK);
+    }
 
     public static boolean asNullOrEmpty(String value) { return asNull(value) || asEmpty(value); }
 
-    public static boolean asNullOrEmptyOrBlank(String value) {return asBlank(value) || asEmpty(value) || asNull(value);}
+    public static boolean asNullOrEmptyOrBlank(String value) {
+        return asBlank(value) || asEmpty(value) || asNull(value);
+    }
 
     public String replaceTokens(String text) { return replaceTokens(text, false); }
 
@@ -885,7 +875,7 @@ public class ExecutionContext {
         Set<String> tokens = findTokens(text);
 
         List<String> ignoredVars = TextUtils.toList(getRawStringData(OPT_VAR_EXCLUDE_LIST), getTextDelim(), false);
-        if (CollectionUtils.isNotEmpty(ignoredVars)) { tokens.removeAll(ignoredVars); }
+        if (CollectionUtils.isNotEmpty(ignoredVars)) { ignoredVars.forEach(tokens::remove); }
 
         boolean allTokenResolvedToNull = CollectionUtils.isNotEmpty(tokens);
         boolean unresolvedAsIs = getDefaultBool(OPT_VAR_DEFAULT_AS_IS);
@@ -910,7 +900,9 @@ public class ExecutionContext {
                 } else {
                     // otherwise, this token is not defined in context nor system prop.
                     // so we'll replace it with empty string
-                    if (tokens.size() == 1 && StringUtils.equals(text, tokenized)) { return unresolvedAsIs ? text : "";}
+                    if (tokens.size() == 1 && StringUtils.equals(text, tokenized)) {
+                        return unresolvedAsIs ? text : "";
+                    }
                     if (!unresolvedAsIs) { text = StringUtils.replace(text, tokenized, ""); }
                 }
 
@@ -937,7 +929,7 @@ public class ExecutionContext {
 
                 String stringValue = StringUtils.defaultString(getStringData(token));
                 // if we need to conceal crypt and this token resolves from a crypt value,
-                // then we'll revert back to its crypt form
+                // then we'll revert to its crypt form
                 // stringValue = CellTextReader.readValue(stringValue);
                 if (retainCrypt && CellTextReader.isCrypt(stringValue)) { stringValue = tokenized; }
 
@@ -986,7 +978,7 @@ public class ExecutionContext {
                     text = StringUtils.replace(text, firstIndexRef, stringValue);
                 }
 
-                // finally replace token after all index ref's are handled
+                // finally, replace token after all index ref's are handled
                 text = StringUtils.replace(text, tokenized, stringValue);
             } else if (Collection.class.isAssignableFrom(valueType) || valueType.isArray()) {
                 collectionValues.put(token, value);
@@ -1394,13 +1386,13 @@ public class ExecutionContext {
             // if (!StringUtils.equals(data, CellTextReader.readValue(data))) { return true; }
             if (CellTextReader.isCrypt(data)) { return true; }
 
-            // no variables means no crypt
+            // no variables mean no crypt
             Set<String> variables = findTokens(data);
             return CollectionUtils.isNotEmpty(variables) &&
                    variables.stream()
                             .anyMatch(var -> CellTextReader.isCrypt(replaceTokens(TOKEN_START + var + TOKEN_END)));
         } catch (RuntimeException e) {
-            // don't worry it now.. Nexial will eventually barf at such exception later on (and probably at a better spot).
+            // don't worry it now. Nexial will eventually barf at such exception later on (and probably at a better spot).
             return false;
         }
     }
@@ -2032,15 +2024,6 @@ public class ExecutionContext {
         return text;
     }
 
-    protected String[] resolveDeferredTokens(String[] text) {
-        if (ArrayUtils.isEmpty(text)) { return text; }
-
-        List<String> replaced = new ArrayList<>();
-        for (String item : text) { replaced.add(resolveDeferredTokens(item)); }
-
-        return replaced.toArray(new String[0]);
-    }
-
     protected String mergeProperty(String value) {
         // find the last one first as a way to deal with nested tokens
         int startIdx = StringUtils.lastIndexOf(value, TOKEN_START);
@@ -2082,26 +2065,6 @@ public class ExecutionContext {
         return "";
     }
 
-    protected String encodeForUrl(String filename) {
-        try {
-            String fileLocation = StringUtils.replace(filename, "\\", "/");
-            String filePath = StringUtils.substringBeforeLast(fileLocation, "/");
-            String fileNameOnly =
-                URLEncoder.encode(
-                    OutputFileUtils.webFriendly(StringUtils.substringAfterLast(fileLocation, "/")),
-                    "UTF-8");
-
-            fileLocation = filePath + "/" + fileNameOnly;
-            if (File.separatorChar == '\\') { fileLocation = StringUtils.replace(fileLocation, "/", "\\"); }
-
-            return fileLocation;
-        } catch (UnsupportedEncodingException e) {
-            // shouldn't have problems since the file
-            ConsoleUtils.error("Unable to encode filename '" + filename + "': " + e.getMessage());
-            return filename;
-        }
-    }
-
     protected void clearCurrentTestStep() { this.currentTestStep = null; }
 
     protected TestProject adjustPath(ExecutionDefinition execDef) {
@@ -2126,18 +2089,18 @@ public class ExecutionContext {
         // 1. make range for data
         Worksheet dataSheet = testScript.worksheet(SHEET_MERGED_DATA);
 
-        ExcelAddress addr = new ExcelAddress("A1");
-        XSSFCell firstCell = dataSheet.cell(addr);
+        ExcelAddress address = new ExcelAddress("A1");
+        XSSFCell firstCell = dataSheet.cell(address);
         if (StringUtils.isBlank(Excel.getCellValue(firstCell))) {
             throw new IllegalArgumentException("File (" + testScript + "), Worksheet (" + dataSheet.getName() + "): " +
                                                "no test data defined");
         }
 
         // 2. retrieve all data in range
-        int endRowIndex = dataSheet.findLastDataRow(addr) + 1;
+        int endRowIndex = dataSheet.findLastDataRow(address) + 1;
         for (int i = 1; i < endRowIndex; i++) {
-            ExcelAddress addrRow = new ExcelAddress("A" + i + ":B" + i);
-            List<XSSFCell> row = dataSheet.cells(addrRow).get(0);
+            ExcelAddress addressRow = new ExcelAddress("A" + i + ":B" + i);
+            List<XSSFCell> row = dataSheet.cells(addressRow).get(0);
             String name = Excel.getCellValue(row.get(0));
             String value = Excel.getCellValue(row.get(1));
             // no longer checks for blank value, we'll accept data value as is since it's been dealt with in
@@ -2251,19 +2214,19 @@ public class ExecutionContext {
     private String flattenAsString(Object value) {
         if (value == null) { return ""; }
 
-        // object[][] should be flatten same as Map<>
-        // object[] should be flatten same as Collection<>
+        // object[][] be flattened same as Map<>
+        // object[] be flattened same as Collection<>
         //
-        // Collection<Map<>> would be flatten as
+        // Collection<Map<>> be flattened as
         //  key1=value1
         //  key2=value2, key3=value3
         //  key4=value4
         //
-        // Map<Object,Collection<>> would be flatten as
+        // Map<Object,Collection<>> would be flattened as
         //  key1=value1,value2
         //  key2=value3,value4
         //
-        // Collection<Collection<>> would be flatten as
+        // Collection<Collection<>> would be flattened as
         //  value1,value1a,value1b,value2,value2a,value2b
 
         StringBuilder buffer = new StringBuilder();
@@ -2347,7 +2310,7 @@ public class ExecutionContext {
     private String flattenCollection(Collection value, String name) {
         if (CollectionUtils.isEmpty(value)) { return null; }
 
-        // it's possible that we are looking for a "object.prop" replacement. We should check if "value" is a
+        // it's possible that we are looking for an "object.prop" replacement. We should check if "value" is a
         // "Collection of map" or just a "collection with props" instance.
         Object testObject = IterableUtils.get(value, 0);
         boolean isMapType = Map.class.isAssignableFrom(testObject.getClass());
@@ -2370,7 +2333,7 @@ public class ExecutionContext {
                     try {
                         itemValue = BeanUtils.getSimpleProperty(value, name);
                     } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
-                        // I guess we _REALLY_ don't have this one.. set it as null then
+                        // I guess we _REALLY_ don't have this one, set it as null
                         itemValue = nullValue;
                     }
                 } else {
@@ -2414,6 +2377,13 @@ public class ExecutionContext {
         if (System.getProperties().containsKey(MACRO_FLEX_PREFIX + name)) { return MACRO_FLEX_PREFIX + name; }
         if (data.containsKey(MACRO_FLEX_PREFIX + name)) { return MACRO_FLEX_PREFIX + name; }
         return name;
+    }
+
+    @Nonnull
+    private String macroAwarePrefix(String prefix) {
+        return StringUtils.startsWith(prefix, NAMESPACE) ?
+               prefix :
+               !isInMacro ? prefix : MACRO_FLEX_PREFIX + prefix;
     }
 
     @Nonnull

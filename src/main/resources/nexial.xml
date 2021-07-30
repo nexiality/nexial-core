@@ -416,24 +416,36 @@
                 <value>disable-popup-blocking</value>
                 <!-- Reloading a page that came from a POST normally prompts the user. -->
                 <value>disable-prompt-on-repost</value>
+
                 <value>disable-smooth-scrolling</value>
+
                 <!-- Disable syncing to a Google account -->
                 <value>disable-sync</value>
+                <value>disable-infobars</value>
                 <value>hide-scrollbars</value>
+
                 <value>allow-http-screen-capture</value>
                 <value>allow-running-insecure-localhost</value>
                 <value>allow-insecure-localhost</value>
+                <value>disable-web-security</value>
+                <value>allow-running-insecure-content</value>
+
                 <!-- Disable all chrome extensions -->
                 <value>disable-extensions</value>
                 <value>disable-extensions-file-access-check</value>
+                <!-- : Disable some built-in extensions that aren't affected by `disable-extensions -->
+                <value>disable-component-extensions-with-background-pages</value>
+
                 <!-- Disable the default browser check, do not prompt to set it as such -->
                 <value>no-default-browser-check</value>
                 <value>ignore-certificate-errors</value>
-                <value>mute-audio</value>
                 <value>disable-resize-lock</value>
                 <value>disable-print-preview</value>
                 <value>disable-breakpad</value>
                 <value>enable-ui-devtools</value>
+
+                <!-- media -->
+                <value>mute-audio</value>
 
                 <!-- Disable some built-in extensions that aren't affected by `disable-extensions` -->
                 <value>disable-component-extensions-with-background-pages</value>
@@ -456,12 +468,17 @@
 
                 <!--  Avoid messages like "New printer on your network" -->
                 <value>disable-device-discovery-notifications</value>
+                <value>disable-notifications</value>
 
                 <!-- Disables Domain Reliability Monitoring, which tracks whether the browser has difficulty contacting Google-owned sites and uploads reports to Google. -->
                 <value>disable-domain-reliability</value>
+                <value>disable-hang-monitor</value>
 
-                <value>disable-web-security</value>
-                <value>allow-running-insecure-content</value>
+                <!-- disable client-side phishing detection -->
+                <value>disable-client-side-phishing-detection</value>
+
+                <!-- force the chrome native prompt to go silent -->
+                <value>enable-strict-powerful-feature-restrictions</value>
             </array>
         </property>
         <property name="firefoxBinArgs">

@@ -149,7 +149,7 @@ public class Browser implements ForcefulTerminate {
 
     public void setChromeOptions(List<String> chromeOptions) { this.chromeOptions = chromeOptions; }
 
-    public void setFirefoxIntPrefs(Map<String, Integer> firefoxIntPrefs) { this.firefoxIntPrefs = firefoxIntPrefs;}
+    public void setFirefoxIntPrefs(Map<String, Integer> firefoxIntPrefs) { this.firefoxIntPrefs = firefoxIntPrefs; }
 
     public void setFirefoxBooleanPrefs(Map<String, Boolean> prefs) { this.firefoxBooleanPrefs = prefs; }
 
@@ -368,7 +368,7 @@ public class Browser implements ForcefulTerminate {
         // now we need to "remember" the browser type (even if it's default) so that the #data tab of output file will
         // display the browser type used during execution
         String profileBrowser = withProfile(profile, BROWSER);
-        if (!context.hasData(profileBrowser)) {context.setData(profileBrowser, browser); }
+        if (!context.hasData(profileBrowser)) { context.setData(profileBrowser, browser); }
 
         try {
             if (isRunSafari()) { driver = initSafari(); }
@@ -613,19 +613,20 @@ public class Browser implements ForcefulTerminate {
         ChromeOptions options = new ChromeOptions();
         if (headless) {
             options.setHeadless(true);
-            options.addArguments("--disable-gpu");
             options.addArguments("--no-sandbox");
+            options.addArguments("--disable-dev-shm-usage");
+            options.addArguments("--use-fake-device-for-media-stream");
+            options.addArguments("--autoplay-policy=user-gesture-required");
         }
 
         List<String> configurableOptions = new ArrayList<>(this.chromeOptions);
         if (resolveConfig(CHROME_ENABLE_EXTENSION, getDefaultBool(CHROME_ENABLE_EXTENSION))) {
             configurableOptions.remove("disable-extensions");
             configurableOptions.remove("disable-extensions-file-access-check");
+            configurableOptions.remove("disable-component-extensions-with-background-pages");
         }
 
         options.addArguments(configurableOptions);
-        // force the chrome native prompt to go silent
-        options.addArguments("enable-strict-powerful-feature-restrictions");
 
         // time to experiment...
         Map<String, Object> prefs = new HashMap<>();
@@ -1144,7 +1145,9 @@ public class Browser implements ForcefulTerminate {
         if (StringUtils.isNotBlank(windowSize)) {
             Pattern p = Pattern.compile(REGEX_WINDOW_SIZE);
             Matcher m = p.matcher(windowSize);
-            if (!m.matches()) {throw new RuntimeException("The valid window size not defined.. Found : " + windowSize);}
+            if (!m.matches()) {
+                throw new RuntimeException("The valid window size not defined.. Found : " + windowSize);
+            }
 
             String[] dim = StringUtils.split(windowSize, "x");
 

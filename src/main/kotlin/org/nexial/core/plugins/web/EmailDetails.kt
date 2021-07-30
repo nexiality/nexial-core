@@ -60,13 +60,13 @@ data class EmailDetails(
 
     override fun toString(): String {
         return "id      = $id\n" +
-            "subject = $subject\n" +
-            "from    = $from\n" +
-            "to      = $to\n" +
-            "time    = $time\n" +
-            "content = $content\n" +
-            "html    = $html\n" +
-            "links   = $links" +
-            "attachments = $attachments"
+               "subject = $subject\n" +
+               "from    = $from\n" +
+               "to      = $to\n" +
+               "time    = $time\n" +
+               "content = $content\n" +
+               "html    = $html\n" +
+               "links   = $links" +
+               "attachments = $attachments"
     }
 }
