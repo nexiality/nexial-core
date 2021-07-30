@@ -113,6 +113,7 @@ object CommandConst {
 
         "web.assertAttributeContains(locator,attrName,contains)" to "web.assertAttributeContain(locator,attrName,contains)",
         "web.assertAttributeNotContains(locator,attrName,contains)" to "web.assertAttributeNotContain(locator,attrName,contains)",
+        "web.assertElementNotPresent(locator)" to "web.assertElementNotPresent(locator.maxWaitMs)",
         "web.screenshot(file,locator)" to "web.screenshot(file,locator,removeFixed)",
         "web.screenshot(file,locator,ignoreLocators)" to "web.screenshot(file,locator)",
         "web.screenshotInFull(file,timeout)" to "web.screenshotInFull(file,timeout,removeFixed)",
@@ -181,6 +182,7 @@ object CommandConst {
 
         "tn.5250.saveTableAsCSV",
 
+        "web.assertElementNotPresent",
         "web.waitForElementPresent",
         "web.waitUntilDisabled",
         "web.waitUntilEnabled",

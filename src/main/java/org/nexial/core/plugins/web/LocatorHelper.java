@@ -246,11 +246,6 @@ public class LocatorHelper {
     }
 
     @NotNull
-    protected StepResult assertElementNotPresent(String locator) {
-        return new StepResult(!delegator.isElementPresent(locator));
-    }
-
-    @NotNull
     protected StepResult assertContainCount(String locator, String text, String count) {
         return assertCount(locator, text, count, false);
     }

@@ -452,9 +452,15 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     }
 
     @NotNull
-    public StepResult assertElementNotPresent(String locator) {
+    public StepResult assertElementNotPresent(String locator, String maxWaitMs) {
+        long waitMs = 5000;
+        if (StringUtils.isNotBlank(maxWaitMs)) {
+            requiresPositiveNumber(maxWaitMs, "invalid max wait ms", maxWaitMs);
+            waitMs = NumberUtils.toLong(maxWaitMs);
+        }
+
         try {
-            return locatorHelper.assertElementNotPresent(locator);
+            return new StepResult(isElementNotPresent(locator, waitMs));
         } catch (NoSuchElementException | TimeoutException e) {
             // that's fine.  we expected that..
             return StepResult.success("Element '%s' is not available", locator);
@@ -2347,7 +2353,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         if (driver == null) { return StepResult.success("No driver found; browser likely already closed"); }
 
         if (browser == null) {
-            try { driver.close();} catch (Exception e) { }
+            try { driver.close(); } catch (Exception e) { }
             driver = null;
             return StepResult.success("Browser already closed");
         }
@@ -3170,6 +3176,22 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     protected int getElementCount(String locator) {
         List<WebElement> elements = findElements(locator);
         return CollectionUtils.isEmpty(elements) ? 0 : elements.size();
+    }
+
+    protected boolean isElementNotPresent(String locator, long maxWaitMs) {
+        ensureReady();
+        By by = locatorHelper.findBy(locator);
+
+        // first check; short-circuit
+        WebElement found = driver.findElement(by);
+        if (found == null) { return true; }
+
+        try {
+            return newFluentWait(maxWaitMs).withMessage("ensure no element found via locator " + locator)
+                                           .until(driver -> driver.findElement(by) == null ? found : null) != null;
+        } catch (TimeoutException | NoSuchElementException e) {
+            return true;
+        }
     }
 
     protected boolean isElementPresent(String locator) { return findElement(locator) != null; }
