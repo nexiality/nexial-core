@@ -1,11 +1,11 @@
 /*
- * Copyright 2012-2018 the original author or authors.
+ * Copyright 2012-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *       http://www.apache.org/licenses/LICENSE-2.0
+ * 	http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,10 +17,10 @@
 
 package org.nexial.core.excel.ext;
 
+import org.apache.commons.lang3.StringUtils;
+
 import java.util.HashMap;
 import java.util.Map;
-
-import org.apache.commons.lang3.StringUtils;
 
 import static org.nexial.core.NexialConst.TOKEN_END;
 import static org.nexial.core.NexialConst.TOKEN_START;
@@ -31,7 +31,7 @@ public final class CellTextReader {
     private static final Map<String, String> ORIGINALS = new HashMap<>();
     private static final CipherHelper CIPHER = new CipherHelper();
 
-    private CellTextReader() {}
+    private CellTextReader() { }
 
     public static String getText(String cellString) {
         if (!StringUtils.startsWith(cellString, CRYPT_IND)) { return cellString; }

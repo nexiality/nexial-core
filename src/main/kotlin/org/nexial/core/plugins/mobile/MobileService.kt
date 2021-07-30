@@ -1,3 +1,20 @@
+/*
+ * Copyright 2012-2021 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * 	http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
+
 package org.nexial.core.plugins.mobile
 
 import io.appium.java_client.AppiumDriver
@@ -90,14 +107,15 @@ class MobileService(val profile: MobileProfile, val remoteUrl: String?) {
                                          "safariOpenLinksInBackground", "keepKeyChains", "showIOSLog",
                                          "enableAsyncExecuteFromHttps", "skipLogCapture", "skipLogCapture")
 
-    val driver: AppiumDriver<MobileElement>
-    var appiumService: AppiumDriverLocalService? = null
-    val locatorHelper: MobileLocatorHelper
+    private var appiumUrl: URL
+    internal val driver: AppiumDriver<MobileElement>
+    internal var appiumService: AppiumDriverLocalService? = null
+    internal val locatorHelper: MobileLocatorHelper
 
     constructor(profile: MobileProfile) : this(profile, null)
 
     init {
-        val appiumUrl = when {
+        appiumUrl = when {
             remoteUrl != null                         -> URL(remoteUrl)
             StringUtils.isNotBlank(profile.serverUrl) -> URL(profile.serverUrl)
             else                                      -> startAppiumLocalService()
@@ -113,29 +131,6 @@ class MobileService(val profile: MobileProfile, val remoteUrl: String?) {
         }
 
         locatorHelper = MobileLocatorHelper(this)
-    }
-
-    private fun startAppiumLocalService(): URL {
-        resolveEnv()
-
-        val builder = AppiumServiceBuilder()
-        builder.withArgument(SESSION_OVERRIDE)
-        builder.withArgument(RELAXED_SECURITY)
-        // builder.withArgument { "autoGrantPermissions" }
-
-        if (profile.logFile != null) {
-            builder.withLogFile(File(profile.logFile))
-            builder.withArgument(LOG_LEVEL, FILE_CONSOLE_LOG_LEVEL)
-            builder.withArgument(DEBUG_LOG_SPACING)
-        }
-
-        val service = AppiumDriverLocalService.buildService(builder)
-        service.start()
-        val url = service.url
-        ConsoleUtils.log("appium server started on $url")
-
-        appiumService = service
-        return url
     }
 
     fun isAndroid() = profile.mobileType == ANDROID
@@ -168,6 +163,44 @@ class MobileService(val profile: MobileProfile, val remoteUrl: String?) {
                 if (outcome.exitStatus == 0) " successfully terminated"
                 else "did not terminate successfully") + output)
         }
+    }
+
+    fun getAppiumUrl() = appiumUrl
+
+    fun manifest() =
+        mapOf("type" to profile.mobileType.platformName,
+              "device name" to profile.config.getValue("deviceName"),
+              "avd" to profile.config.getValue("avd"),
+              "platform version" to profile.config.getValue("platformVersion"),
+              "appium url" to appiumUrl.toString(),
+              "implicit wait" to "${profile.implicitWaitMs}ms",
+              "explicit wait" to "${profile.explicitWaitMs}ms",
+              "session timeout" to "${profile.sessionTimeoutMs}ms",
+              "post action" to "${profile.postActionWaitMs}ms")
+            .filterValues { StringUtils.isNotBlank(it) && it != "0ms" }
+            .mapKeys { "mobile:${it.key}" }
+
+    private fun startAppiumLocalService(): URL {
+        resolveEnv()
+
+        val builder = AppiumServiceBuilder()
+        builder.withArgument(SESSION_OVERRIDE)
+        builder.withArgument(RELAXED_SECURITY)
+        // builder.withArgument { "autoGrantPermissions" }
+
+        if (profile.logFile != null) {
+            builder.withLogFile(File(profile.logFile))
+            builder.withArgument(LOG_LEVEL, FILE_CONSOLE_LOG_LEVEL)
+            builder.withArgument(DEBUG_LOG_SPACING)
+        }
+
+        val service = AppiumDriverLocalService.buildService(builder)
+        service.start()
+        val url = service.url
+        ConsoleUtils.log("appium server started on $url")
+
+        appiumService = service
+        return url
     }
 
     private fun resolveEnv() {
@@ -266,5 +299,4 @@ class MobileService(val profile: MobileProfile, val remoteUrl: String?) {
         caps.setCapability(cap, value)
         return caps
     }
-
 }

@@ -437,8 +437,14 @@ public class ExecutionContext {
         profile = StringUtils.defaultIfEmpty(profile, CMD_PROFILE_DEFAULT);
         MobileService mobileService = mobileServices.get(profile);
         if (mobileService == null) {
-            mobileService = new MobileService(new MobileProfile(this, profile));
+            MobileProfile mobileProfile = new MobileProfile(this, profile);
+            mobileService = new MobileService(mobileProfile);
             mobileServices.put(profile, mobileService);
+
+            // (2021/07/29, automike): added scenarioRef to mark the mobile device in use
+            Map<String, String> manifest = mobileService.manifest();
+            if (isVerbose()) { getLogger().log(getCurrentTestStep(), "" + manifest); }
+            manifest.keySet().forEach(key -> addScenarioReferenceData(key, manifest.get(key)));
         }
         return mobileService;
     }
