@@ -65,8 +65,12 @@ if NOT [%NEXIAL_OUTPUT%]==[] (
     set JAVA_OPT=%JAVA_OPT% -Dnexial.defaultOutBase=%NEXIAL_OUTPUT%
 )
 
+REM download nexial-lib-x.x.zip to userhome/.nexial/lib
+CALL "%NEXIAL_HOME%\bin\nexial-lib-downloader.cmd" %*
+set NEXIAL_RC=%ERRORLEVEL%
+
 REM run nexial now
-set runNexial=%JAVA% -classpath "%PROJECT_CLASSPATH%;%NEXIAL_CLASSES%;%NEXIAL_LIB%\nexial*.jar;%NEXIAL_LIB%\*;%USERPROFILE%\.nexial\jar\*" %MAX_MEM% %JAVA_OPT% -Djava.library.path="%USERPROFILE%\.nexial\dll" org.nexial.core.Nexial %*
+set runNexial=%JAVA% -classpath "%PROJECT_CLASSPATH%;%NEXIAL_CLASSES%;%NEXIAL_LIB%\nexial*.jar;%USERPROFILE%\.nexial\jar\*;%NEXIAL_LIB%\*;%USER_HOME_NEXIAL_LIB%\*" %MAX_MEM% %JAVA_OPT% -Djava.library.path="%USERPROFILE%\.nexial\dll" org.nexial.core.Nexial %*
 echo.
 %runNexial%
 set NEXIAL_RC=%ERRORLEVEL%

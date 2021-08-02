@@ -46,7 +46,7 @@ REM ----------------------------------------------------------------------------
 REM run converter now
 REM --------------------------------------------------------------------------------
 echo.
-%JAVA_EXE% -classpath "%LIB_PATH%\*" %JAVA_OPT% org.nexial.core.tools.SeleniumScriptConverter %*
+%JAVA_EXE% -classpath "%LIB_PATH%\*;%USER_HOME_NEXIAL_LIB%\*" %JAVA_OPT% org.nexial.core.tools.SeleniumScriptConverter %*
 
 
 :exit

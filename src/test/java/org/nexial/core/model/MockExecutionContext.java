@@ -34,9 +34,10 @@ import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.ExecutionThread;
 import org.nexial.core.NexialConst.BrowserType;
 import org.nexial.core.aws.NexialS3Helper;
-import org.nexial.core.plugins.NexialCommand;
-import org.nexial.core.plugins.web.Browser;
 import org.nexial.core.logs.ExecutionLogger;
+import org.nexial.core.plugins.NexialCommand;
+import org.nexial.core.plugins.db.LocalDbCommand;
+import org.nexial.core.plugins.web.Browser;
 import org.nexial.core.variable.ExpressionProcessor;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
@@ -53,6 +54,8 @@ public class MockExecutionContext extends ExecutionContext {
     protected Map<String, NexialCommand> plugins = new HashMap<>();
     protected String projectHome;
     public Browser mockBrowser;
+    public LocalDbCommand localdb;
+    public String result = "";
 
     public MockExecutionContext() { this(false); }
 
@@ -68,6 +71,7 @@ public class MockExecutionContext extends ExecutionContext {
         if (withSpring) {
             this.springContext = new ClassPathXmlApplicationContext("classpath:/nexial.xml");
             this.otc = springContext.getBean("otc", NexialS3Helper.class);
+            this.localdb = springContext.getBean("localdb", LocalDbCommand.class);
             this.mockBrowser = springContext.getBean("browserTemplate", Browser.class);
             this.failfastCommands = springContext.getBean("failfastCommands", new ArrayList<String>().getClass());
             this.builtinFunctions = springContext.getBean("builtinFunctions", new HashMap<String, Object>().getClass());

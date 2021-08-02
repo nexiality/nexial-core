@@ -11,6 +11,7 @@
 	set NEXIAL_HOME=%~dp0..
 	set NEXIAL_LIB=%NEXIAL_HOME%\lib
 	set NEXIAL_CLASSES=%NEXIAL_HOME%\classes
+	set USER_HOME_NEXIAL_LIB=%USERPROFILE%\.nexial\lib
 
 	if exist "%LOCALAPPDATA%\Google\Chrome\Application\chrome.exe" (
 		set DEFAULT_CHROME_BIN="%LOCALAPPDATA%\Google\Chrome\Application\chrome.exe"

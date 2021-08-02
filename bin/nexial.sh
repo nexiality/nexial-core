@@ -46,12 +46,15 @@ if [[ "${NEXIAL_POST_EXEC_SHELL}" != "" ]]; then
   export JAVA_OPT="${JAVA_OPT} -Dnexial.postExecEnv=${NEXIAL_POST_EXEC_SHELL}"
 fi
 
+# download nexial-lib-x.x.zip to userhome/.nexial/lib
+eval "$NEXIAL_HOME/bin/nexial-lib-downloader.sh $*"
+rc=$?
 
 # run nexial now
 echo
 
 runNexial='${JAVA} ${MAX_MEM} \
-    -classpath "${PROJECT_CLASSPATH}:${NEXIAL_CLASSES}:${NEXIAL_LIB}/nexial*.jar:${NEXIAL_LIB}/*:~/.nexial/jar/*" \
+    -classpath "${PROJECT_CLASSPATH}:${NEXIAL_CLASSES}:${NEXIAL_LIB}/nexial*.jar:~/.nexial/jar/*:${NEXIAL_LIB}/*:${USER_HOME_NEXIAL_LIB}/*" \
     -XX:+UnlockExperimentalVMOptions \
     -XX:+ExplicitGCInvokesConcurrent \
     -Dwebdriver.chrome.bin="`echo ${CHROME_BIN} | sed '"'s/\ /\\\ /g'"'`" \

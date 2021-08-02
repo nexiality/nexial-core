@@ -33,39 +33,18 @@
     <bean id="gsonBuilder" class="com.google.gson.GsonBuilder" init-method="setPrettyPrinting"/>
     <bean id="gson" factory-bean="gsonBuilder" factory-method="create"/>
 
-    <util:map id="soundResources" key-type="java.lang.String" value-type="java.lang.String">
-        <entry key="error1" value="sound/error1.mp3"/>
-        <entry key="error2" value="sound/error2.mp3"/>
-        <entry key="error3" value="sound/error3.mp3"/>
-        <entry key="error4" value="sound/error4.mp3"/>
-        <entry key="error5" value="sound/error5.mp3"/>
-
-        <entry key="alert1" value="sound/alert1.mp3"/>
-        <entry key="alert2" value="sound/alert2.mp3"/>
-        <entry key="alert3" value="sound/alert3.mp3"/>
-        <entry key="alert4" value="sound/alert4.mp3"/>
-        <entry key="alert5" value="sound/alert5.mp3"/>
-
-        <entry key="chime1" value="sound/chime1.mp3"/>
-        <entry key="chime2" value="sound/chime2.mp3"/>
-        <entry key="chime3" value="sound/chime3.mp3"/>
-        <entry key="chime4" value="sound/chime4.mp3"/>
-        <entry key="chime5" value="sound/chime5.mp3"/>
-        <entry key="chime6" value="sound/chime6.mp3"/>
-
-        <entry key="fail1" value="sound/fail1.mp3"/>
-        <entry key="fail2" value="sound/fail2.mp3"/>
-
-        <entry key="success1" value="sound/success1.mp3"/>
-        <entry key="success2" value="sound/success2.mp3"/>
-        <entry key="success3" value="sound/success3.mp3"/>
-    </util:map>
-
     <bean id="soundMachine" class="org.nexial.core.plugins.sound.SoundMachine" scope="prototype" init-method="init"
           p:tts-ref="tts"
-          p:soundResources-ref="soundResources"
-          p:notReadMessage="tts not configured. See https://nexiality.github.io/documentation/commands/sound/speak(text).html#setup for setup details."
-    />
+          p:notReadMessage="tts not configured. See https://nexiality.github.io/documentation/commands/sound/speak(text).html#setup for setup details.">
+
+        <property name="soundFileInfo">
+            <map key-type="java.lang.String" value-type="java.lang.String">
+                <entry key="downloadFrom" value="https://nexiality.github.io/documentation/commands/sound/"/>
+                <entry key="downloadTo" value="${user.home}/.nexial/sound/"/>
+                <entry key="fileExtension" value=".mp3"/>
+            </map>
+        </property>
+    </bean>
 
     <bean id="executionEventListener" class="org.nexial.core.model.ExecutionEventListener"
           p:mailIncludeMeta="false"

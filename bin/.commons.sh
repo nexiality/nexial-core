@@ -157,6 +157,7 @@ export PROJECT_BASE=~/projects
 export NEXIAL_HOME=$(cd `dirname $0`/..; pwd -P)
 export NEXIAL_LIB=${NEXIAL_HOME}/lib
 export NEXIAL_CLASSES=${NEXIAL_HOME}/classes
+export USER_HOME_NEXIAL_LIB=~/.nexial/lib
 export IS_MAC=$([[ "`uname -s`" = "Darwin" ]] && echo "true" || echo "false" )
 export CACHE_FILE=$([[ ${IS_MAC} = "true" ]] && echo "$HOME/.nexial/cache.macos" || echo "$HOME/.nexial/cache.nix" )
 

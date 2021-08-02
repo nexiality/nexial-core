@@ -25,6 +25,8 @@ import org.nexial.commons.utils.FileUtil;
 import org.nexial.commons.utils.ResourceUtils;
 import org.nexial.core.IntegrationConfigException;
 import org.nexial.core.aws.TtsHelper;
+import org.nexial.core.plugins.ws.Response;
+import org.nexial.core.plugins.ws.WebServiceClient;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.ExecUtils;
 
@@ -40,8 +42,9 @@ import static org.nexial.core.utils.CheckUtils.requiresNotBlank;
  */
 public class SoundMachine {
     private TtsHelper tts;
-    private Map<String, String> soundResources;
     private String notReadMessage;
+    private Map<String, String> soundFileInfo;
+
 
     class AudioLineListener implements LineListener {
         boolean completed = false;
@@ -79,7 +82,9 @@ public class SoundMachine {
 
     public void setTts(TtsHelper tts) { this.tts = tts; }
 
-    public void setSoundResources(Map<String, String> soundResources) { this.soundResources = soundResources; }
+    public void setSoundFileInfo(Map<String, String> soundFileInfo) {
+        this.soundFileInfo = soundFileInfo;
+    }
 
     public boolean isReadyFroTTS() { return tts != null && tts.isReadyForUse(); }
 
@@ -97,8 +102,10 @@ public class SoundMachine {
 
         requiresNotBlank(audio, "Invalid audio preset or file", audio);
 
-        audio = StringUtils.trim(audio);
-        String audioFile = soundResources.getOrDefault(audio, audio);
+        String audioFile = StringUtils.trim(audio);
+        if (!FileUtil.isFileReadable(new File(audioFile))) {
+            audioFile = downloadFile(audioFile);
+        }
         if (StringUtils.endsWithIgnoreCase(audioFile, ".mp3")) {
             playMp3(audioFile);
         } else {
@@ -159,5 +166,23 @@ public class SoundMachine {
         AudioPlayer player = new AudioPlayer(clip);
         player.run();
 
+    }
+
+    private String downloadFile(String audioFile) throws IOException {
+        if (ExecUtils.isRunningInZeroTouchEnv()) { return ""; }
+
+        String audioResource = StringUtils.trim(audioFile);
+        String extn = soundFileInfo.get("fileExtension");
+        String fileName = StringUtils.appendIfMissing(audioResource, extn);
+        String downloadTo = soundFileInfo.get("downloadTo") + fileName;
+        String url = soundFileInfo.get("downloadFrom") + fileName;
+        if (!new File(downloadTo).exists()) {
+            WebServiceClient wsClient = new WebServiceClient(null).configureAsQuiet().disableContextConfiguration();
+            Response response = wsClient.download(url, null, downloadTo);
+            if(response.getReturnCode() >= 400){
+                throw new IOException("Unable to download audio file: "+audioFile);
+            }
+        }
+        return downloadTo;
     }
 }

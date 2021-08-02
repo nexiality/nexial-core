@@ -188,11 +188,12 @@ dependencies {
 	compile("org.apache.pdfbox:xmpbox:${pdfboxVersion}")
 
 	// support: poi/msoffice
-	compile("org.apache.poi:poi:${poiVersion}")
-	compile("org.apache.poi:poi-ooxml:${poiVersion}")
-	// compile("org.apache.poi:poi-ooxml-schemas:${poiVersion}")
-	compile("org.apache.poi:ooxml-schemas:1.4")
-
+	compile("org.apache.poi:poi:${poiVersion}"){
+		exclude group: 'org.apache.poi', module: 'poi-ooxml-schemas'
+	}
+	compile("org.apache.poi:poi-ooxml:${poiVersion}"){
+		exclude group: 'org.apache.poi', module: 'poi-ooxml-schemas'
+	}
 
 	// support: json
 	compile("org.json:json:${jsonVersion}")
@@ -216,7 +217,6 @@ dependencies {
 	// support: data sources
 	// compile("org.mongodb:mongodb-driver-async:${mongoDriverVersion}")
 	compile("org.mongodb:mongo-java-driver:${mongoDriverVersion}")
-	compile("org.xerial:sqlite-jdbc:${sqliteVersion}")
 	// support Azure database connectivity
 	implementation("com.microsoft.azure:msal4j:${msal4jVersion}")
 
@@ -251,7 +251,11 @@ dependencies {
 	compile("pl.touk:throwing-function:1.3")
 
 	compile("org.apache.tika:tika-core:${tikaVersion}")
-	compile("org.apache.tika:tika-parsers:${tikaVersion}")
+	compile("org.apache.tika:tika-parsers:${tikaVersion}") {
+		exclude group: 'org.bouncycastle', module: 'bcprov-jdk15on'
+		exclude group: 'edu.ucar', module: 'grib'
+		exclude group: 'edu.ucar', module: 'cdm'
+	}
 
 	// support: ssh, scp, sftp
 	compile("com.jcraft:jsch:+")
@@ -365,13 +369,37 @@ task distro {
 	dependsOn build
 }
 
+
+task generateNexialLib(type: Zip) {
+	group "generate-nexial-lib"
+	description "create nexial-lib-x.x.zip"
+	baseName = 'nexial-lib'
+	version = new File('./lib/nexial-lib-version.txt').readLines().get(0)
+	from 'lib'
+}
+
+task copyLibToUserHomeNexial {
+	group "Build"
+	dependsOn build
+	def userhome = env.HOME ? env.HOME : env.USERPROFILE
+	copy {
+		from 'lib'
+		into "${userhome}/.nexial/lib"
+	}
+}
+
 distributions {
 	main {
 		contents {
 			into('lib') {
 				from jar
-				from 'lib'
-				from(project.configurations.runtime)
+				from(project.configurations.runtime){
+					ConfigurableFileTree  tree = fileTree(dir: 'lib', include: '*.jar')
+					tree.each { File file -> exclude file.name }
+				}
+				from('lib'){
+					include "nexial-lib-version.txt"
+				}
 			}
 			into('template') {
 				from 'template'

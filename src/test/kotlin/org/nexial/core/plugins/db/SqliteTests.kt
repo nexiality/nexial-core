@@ -17,28 +17,36 @@
 
 package org.nexial.core.plugins.db
 
-import org.apache.commons.io.FileUtils
 import org.junit.Test
-import java.io.File
-import java.sql.Connection
-import java.sql.DriverManager
-import java.sql.Statement
+import org.nexial.core.model.MockExecutionContext
+import kotlin.test.assertNotNull
+import kotlin.test.assertTrue
 
 class SqliteTests {
 
     @Test
     fun testConnection() {
-        val conn: Connection = DriverManager.getConnection("jdbc:sqlite::memory:")
-        val stmt: Statement = conn.createStatement()
-        val statements: List<String> = arrayListOf("create table sample(id, name)",
-                                                   "insert into sample values(1, \"Jimmy\")",
-                                                   "insert into sample values(2, \"Bob\")",
-                                                   "backup to backup.db")
-        statements.forEach { statement: String -> stmt.execute(statement) }
+        val localDb = "nexial.localdb"
+        val context = MockExecutionContext(true)
+        val localdbObj = context.localdb
 
-        FileUtils.listFiles(File("."), arrayOf("db"), false).forEach { db ->
-            println(db?.absolutePath)
-            db?.delete()
+        for ((key, value) in localdbObj.connectionProps) {
+            context.setData(key, value)
         }
+        localdbObj.rdbms.dataAccess.setContext(context)
+        val dao = localdbObj.rdbms.dataAccess.resolveDao(localDb)
+
+        assertNotNull(dao)
+
+        val statements: List<SqlComponent> =
+            arrayListOf(SqlComponent("create table IF NOT EXISTS sample(id, name)"),
+                        SqlComponent("delete from sample"),
+                        SqlComponent("insert into sample values(1, 'Jimmy')"))
+
+        statements.forEach { query: SqlComponent -> dao.executeSqls(listOf(query)) }
+
+        val outcome = dao.executeSqls(listOf(SqlComponent("select count(id) as count from sample")))
+        assertNotNull(outcome)
+        assertTrue { outcome.size >= 1 }
     }
 }

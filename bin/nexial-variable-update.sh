@@ -13,7 +13,7 @@ for var in "$@"; do args="$args \"$var\""; done
 echo
 echo
 
-eval ${JAVA} -classpath "${NEXIAL_CLASSES}:${NEXIAL_LIB}/nexial*.jar:${NEXIAL_LIB}/*" ${JAVA_OPT} org.nexial.core.tools.DataVariableUpdater $args
+eval ${JAVA} -classpath "${NEXIAL_CLASSES}:${NEXIAL_LIB}/nexial*.jar:${NEXIAL_LIB}/*:${USER_HOME_NEXIAL_LIB}/*" ${JAVA_OPT} org.nexial.core.tools.DataVariableUpdater $args
 ret=$?
 
 echo
