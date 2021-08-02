@@ -21,6 +21,10 @@ if exist %USER_HOME_NEXIAL_LIB%\%libVersionFile% (
     if NOT ERRORLEVEL 0 goto :exit
     %JAVA% -classpath %NEXIAL_CLASSES%;%NEXIAL_LIB%\nexial*.jar;%NEXIAL_LIB%\* %JAVA_OPT% org.nexial.core.tools.NexialLibDownloader %NEXIAL_HOME% %*
 
+if NOT ERRORLEVEL 0 (
+ echo Error while downloading the nexial-lib. Please retry.
+ goto :exit
+)
 endlocal
 exit /b 0
 goto :eof
@@ -33,4 +37,4 @@ goto :eof
 
 :exit
 	endlocal
-	exit /b 1
+	exit /b %ERRORLEVEL%
