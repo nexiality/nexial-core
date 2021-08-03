@@ -66,7 +66,7 @@ if NOT [%NEXIAL_OUTPUT%]==[] (
 )
 
 REM download nexial-lib-x.x.zip to userhome/.nexial/lib
-CALL "%NEXIAL_HOME%\bin\nexial-lib-downloader.cmd" %*
+CALL "%NEXIAL_HOME%\bin\nexial-lib-downloader.cmd"
 set NEXIAL_RC=%ERRORLEVEL%
 if NOT ERRORLEVEL 0 goto :exit
 

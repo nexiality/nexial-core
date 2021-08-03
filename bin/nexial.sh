@@ -47,7 +47,7 @@ if [[ "${NEXIAL_POST_EXEC_SHELL}" != "" ]]; then
 fi
 
 # download nexial-lib-x.x.zip to userhome/.nexial/lib
-eval "$NEXIAL_HOME/bin/nexial-lib-downloader.sh $*"
+eval "$NEXIAL_HOME/bin/nexial-lib-downloader.sh"
 rc=$?
 
 # run nexial now
