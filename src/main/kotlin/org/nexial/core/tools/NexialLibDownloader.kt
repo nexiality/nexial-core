@@ -15,21 +15,21 @@ import kotlin.system.exitProcess
 
 object NexialLibDownloader {
 
-    private const val DOWNLOAD_TO_DIR_NAME = "lib"
-    private const val NEXIAL_LIB_BASE_URL = "https://github.com/nexiality/fixes/releases/download/"
-    private const val ZIP_FILE_NAME_PREFIX = "nexial-lib-"
-    private const val LIB_VERSION_FILENAME = "nexial-lib-version.txt"
+    internal const val DOWNLOAD_TO_DIR_NAME = "lib"
+    internal const val NEXIAL_LIB_BASE_URL = "https://github.com/nexiality/fixes/releases/download/"
+    internal const val ZIP_FILE_NAME_PREFIX = "nexial-lib-"
+    internal const val LIB_VERSION_FILENAME = "nexial-lib-version.txt"
 
-    private const val MSG_DOWNLOADING = "Your Nexial support library is outdated. Nexial is downloading the latest " +
-                                        "support library now. It will take a few minutes..."
-    private const val MSG_UPDATED = "Your Nexial support library is updated to version"
-    private const val MSG_INSTALLING = "The latest support library has been downloaded. Installing it now..."
+    internal const val MSG_DOWNLOADING = "Your Nexial support library is outdated. Nexial is downloading the latest " +
+                                         "support library now. It will take a few minutes..."
+    internal const val MSG_UPDATED = "Your Nexial support library is updated to version"
+    internal const val MSG_INSTALLING = "The latest support library has been downloaded. Installing it now..."
 
-    private const val EC_UPDATE_FAILED = 1
-    private const val EC_MISSING_INPUT = 2
+    internal const val EC_UPDATE_FAILED = 1
+    internal const val EC_MISSING_INPUT = 2
 
-    private val nexialLibLoc = File("$USER_NEXIAL_HOME$DOWNLOAD_TO_DIR_NAME$separator")
-    private var nexialHome = ""
+    internal val nexialLibLoc = File("$USER_NEXIAL_HOME$DOWNLOAD_TO_DIR_NAME$separator")
+    internal var nexialHome = ""
 
     @JvmStatic
     fun main(args: Array<String>) {
@@ -48,7 +48,7 @@ object NexialLibDownloader {
             exitProcess(EC_MISSING_INPUT)
     }
 
-    private fun updateLibrary() {
+    internal fun updateLibrary() {
         val requiredVer = getRequiredNexialLibVersion()
         if (StringUtils.isNotBlank(requiredVer)) {
             val tagName = "$ZIP_FILE_NAME_PREFIX$requiredVer"
@@ -66,7 +66,7 @@ object NexialLibDownloader {
         }
     }
 
-    private fun getRequiredNexialLibVersion(): String {
+    internal fun getRequiredNexialLibVersion(): String {
         val versionFilePath = "${nexialHome}lib$separator$LIB_VERSION_FILENAME"
         return if (FileUtil.isFileReadable(File(versionFilePath)))
             FileUtils.readFileToString(File(versionFilePath), DEF_CHARSET).trim()
@@ -74,7 +74,7 @@ object NexialLibDownloader {
     }
 
     @Throws(IOException::class)
-    private fun downloadFile(downloadUrl: String, downloadTo: String) {
+    internal fun downloadFile(downloadUrl: String, downloadTo: String) {
         val libFile = File(downloadTo)
         if (libFile.exists()) FileUtils.deleteQuietly(libFile)
 
@@ -86,5 +86,4 @@ object NexialLibDownloader {
             throw IOException("Error occurred while downloading Nexial support library from $downloadUrl: " +
                               response.statusText)
     }
-
 }
