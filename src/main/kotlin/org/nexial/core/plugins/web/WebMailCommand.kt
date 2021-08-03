@@ -172,8 +172,7 @@ class WebMailCommand : BaseCommand() {
 
         val mailProfile = resolveProfile(profile)
         val failedAttachmentsCount = mailProfile.mailer.attachments(web!!, mailProfile, id, saveDir)
-        return if (failedAttachmentsCount == 0)
-            StepResult.success("Email attachment(s) downloaded to $saveDir.")
+        return if (failedAttachmentsCount == 0) StepResult.success("Email attachment(s) downloaded to $saveDir.")
         else StepResult.fail("$failedAttachmentsCount attachments failed to download.")
     }
 

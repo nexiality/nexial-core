@@ -17,6 +17,7 @@ import java.time.format.DateTimeFormatter
 class TemporaryMail : WebMailer() {
     private val apiBase = "https://www.temporary-mail.net/api/v1/mailbox/"
     private val dateTimeFormat = "yyyy-MM-dd'T'HH:mm:ssz"
+    private val mailSuffix = "@temporary-mail.net"
 
     override fun search(web: WebCommand, profile: WebMailProfile, searchCriteria: String, duration: Long):
             Set<String?> {
@@ -46,21 +47,19 @@ class TemporaryMail : WebMailer() {
                             ""
                         } else {
                             val contentJson = JsonUtils.toJSONObject(contentResponse.body)
-                            val attachments: MutableList<String> = ArrayList()
-                            for (i in contentJson.getJSONArray("attachments")) {
-                                val fileDetails = i as JSONObject
-                                attachments.add(fileDetails.getString("filename"))
-                            }
+
                             val email = EmailDetails(
                                 id = id,
                                 subject = subject,
                                 from = retrieveFrom(contentJson),
-                                to = "${mail.getString("mailbox")}@temporary-mail.net",
-                                time = receivedDate,
-                                attachments = attachments
-                            )
+                                to = "${mail.getString("mailbox")}$mailSuffix",
+                                time = receivedDate)
                             email.content = cleanMailContent(contentJson.getJSONObject("body").getString("text"))
                             email.html = contentJson.getJSONObject("body").getString("html")
+                            contentJson.getJSONArray("attachments")
+                                .map { (it as JSONObject).getString("filename") }
+                                .forEach { email.addAttachment(it) }
+
                             web.context.setData(deriveEmailContentVar(profile, email.id), email)
                             email.id
                         }

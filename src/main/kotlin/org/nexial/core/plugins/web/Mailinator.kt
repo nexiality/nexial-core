@@ -98,9 +98,7 @@ class Mailinator : WebMailer() {
             from = JSONPath.find(jsonObject, "data.from"),
             time = Instant.ofEpochMilli(NumberUtils.toLong(JSONPath.find(jsonObject, "data.time")))
                 .atZone(ZoneId.systemDefault())
-                .toLocalDateTime(),
-            attachments = ArrayList()
-        )
+                .toLocalDateTime())
 
         val parts = JsonUtils.toJSONArray(JSONPath.find(jsonObject, "data.parts"))
         if (parts.length() == 1) {
