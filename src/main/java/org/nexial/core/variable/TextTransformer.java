@@ -17,15 +17,7 @@
 
 package org.nexial.core.variable;
 
-import java.io.IOException;
-import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
-
+import com.google.gson.JsonElement;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.set.ListOrderedSet;
 import org.apache.commons.lang3.ArrayUtils;
@@ -37,17 +29,16 @@ import org.jdom2.JDOMException;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Document.OutputSettings.Syntax;
-import org.nexial.commons.utils.FileUtil;
-import org.nexial.commons.utils.RegexUtils;
-import org.nexial.commons.utils.ResourceUtils;
-import org.nexial.commons.utils.TextUtils;
-import org.nexial.commons.utils.XmlUtils;
+import org.nexial.commons.utils.*;
 import org.nexial.core.ExecutionThread;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.plugins.ws.WsCommand;
 import org.nexial.core.utils.ConsoleUtils;
 
-import com.google.gson.JsonElement;
+import java.io.IOException;
+import java.lang.reflect.Method;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import static org.nexial.core.NexialConst.Data.EXPRESSION_RESOLVE_URL;
 import static org.nexial.core.NexialConst.Data.TEXT_DELIM;
@@ -79,6 +70,15 @@ public class TextTransformer<T extends TextDataType> extends Transformer<T> {
     public T title(T data) {
         if (data == null || StringUtils.isBlank(data.getValue())) { return data; }
         data.setValue(WordUtils.capitalizeFully(data.getValue()));
+        return data;
+    }
+
+    /**
+     * switch all lowercase to uppercase, and vice versa
+     */
+    public T swapCases(T data) {
+        if (data == null || StringUtils.isBlank(data.getValue())) { return data; }
+        data.setValue(StringUtils.swapCase(data.getValue()));
         return data;
     }
 
@@ -141,7 +141,9 @@ public class TextTransformer<T extends TextDataType> extends Transformer<T> {
     public NumberDataType count(T data, String searchFor) {
         try {
             NumberDataType number = new NumberDataType("0");
-            if (data == null || StringUtils.isEmpty(data.getValue()) || StringUtils.isEmpty(searchFor)) {return number;}
+            if (data == null || StringUtils.isEmpty(data.getValue()) || StringUtils.isEmpty(searchFor)) {
+                return number;
+            }
 
             int count = StringUtils.countMatches(data.getValue(), fixControlChars(searchFor));
             number.setValue(count);
@@ -259,7 +261,9 @@ public class TextTransformer<T extends TextDataType> extends Transformer<T> {
     }
 
     public T replaceRegex(T data, String regexSearch, String replaceWith) {
-        if (data == null || StringUtils.isEmpty(data.getTextValue()) || StringUtils.isEmpty(regexSearch)) {return data;}
+        if (data == null || StringUtils.isEmpty(data.getTextValue()) || StringUtils.isEmpty(regexSearch)) {
+            return data;
+        }
         data.setValue(RegexUtils.replace(fixControlChars(data.getTextValue()),
                                          fixControlChars(regexSearch), fixControlChars(replaceWith)));
         return data;
@@ -574,9 +578,9 @@ public class TextTransformer<T extends TextDataType> extends Transformer<T> {
         if (CollectionUtils.isEmpty(matches)) { return list; }
 
         String[] extracted = matches.stream().map(
-            match -> includeBeginEnd ?
-                     match :
-                     RegexUtils.removeMatches(RegexUtils.removeMatches(match, "^" + beginRegex), endRegex + "$"))
+                                        match -> includeBeginEnd ?
+                                                 match :
+                                                 RegexUtils.removeMatches(RegexUtils.removeMatches(match, "^" + beginRegex), endRegex + "$"))
                                     .toArray(String[]::new);
         list.setValue(extracted);
         list.setTextValue(TextUtils.toString(extracted, list.getDelim(), "", ""));

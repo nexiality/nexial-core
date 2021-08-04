@@ -627,6 +627,15 @@ public class ExpressionProcessorTest {
     }
 
     @Test
+    public void processText_swapCases() throws Exception {
+        ExpressionProcessor subject = new ExpressionProcessor(context);
+        assertEquals("", subject.process("[TEXT() => swapCases]"));
+        assertEquals("hELLO wORLD!", subject.process("[TEXT(Hello World!) => swapCases]"));
+        assertEquals("!! O !!", subject.process("[TEXT(!! o !!) => swap-cases]"));
+        assertEquals("\n\t \t\n", subject.process("[TEXT(\n\t \t\n) => swapCases]"));
+    }
+
+    @Test
     public void processList() throws Exception {
         ExpressionProcessor subject = new ExpressionProcessor(context);
 
