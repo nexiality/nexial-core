@@ -7,6 +7,7 @@ checkJava
 resolveEnv
 
 # download nexial-lib-x.x.zip to userhome/.nexial/lib
+chmod +x $NEXIAL_HOME/bin/nexial-lib-downloader.sh
 eval "$NEXIAL_HOME/bin/nexial-lib-downloader.sh"
 rc=$?
 if [ $rc -ne 0 ]; then
