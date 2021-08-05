@@ -9,6 +9,14 @@ resolveEnv
 args=""
 for var in "$@"; do args="$args \"$var\""; done
 
+# download nexial-lib-x.x.zip to userhome/.nexial/lib
+echo
+eval "$NEXIAL_HOME/bin/nexial-lib-downloader.sh"
+ret=$?
+if [ $ret -ne 0 ]; then
+    exit $ret
+fi
+
 # run now
 echo
 echo

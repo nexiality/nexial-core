@@ -18,7 +18,14 @@ if NOT ERRORLEVEL 0 goto :exit
 
 echo.
 
+REM download nexial-lib-x.x.zip to userhome/.nexial/lib
+CALL "%NEXIAL_HOME%\bin\nexial-lib-downloader.cmd"
+set NEXIAL_RC=%ERRORLEVEL%
+if NOT ERRORLEVEL 0 goto :exit
+
+
 REM run now
+echo.
 %JAVA% -classpath %NEXIAL_CLASSES%;%NEXIAL_LIB%\nexial*.jar;%NEXIAL_LIB%\*;%USER_HOME_NEXIAL_LIB%\* %JAVA_OPT% org.nexial.core.tools.TestScriptUpdater %*
 
 endlocal
