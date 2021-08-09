@@ -70,4 +70,12 @@ object JsLib {
 
     @JvmStatic
     fun isTrue(jsObject: Any?) = jsObject != null && StringUtils.equals(jsObject.toString(), "true")
+
+    private const val isCheckboxOrRadio = "(arguments[0].hasAttribute('type','checkbox') || arguments[0].hasAttribute('type','radio')"
+
+    @JvmStatic
+    fun check() = "if ($isCheckboxOrRadio) && !arguments[0].checked) { arguments[0].click(); }"
+
+    @JvmStatic
+    fun uncheck() = "if ($isCheckboxOrRadio) && arguments[0].checked) { arguments[0].click(); }"
 }

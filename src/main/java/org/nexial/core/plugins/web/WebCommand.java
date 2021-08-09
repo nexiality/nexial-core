@@ -255,22 +255,14 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
     public StepResult checkAll(String locator, String waitMs) {
         requiresInteger(waitMs, "invalid waitMs", waitMs);
-        String script = "if (arguments[0].hasAttribute('type','checkbox') && !arguments[0].checked) {" +
-                        "   arguments[0].click(); " +
-                        "}";
-        int waitTime = NumberUtils.toInt(waitMs);
-        return execJsOnEachElements(locator, script, waitTime) ?
+        return execJsOnEachElements(locator, JsLib.check(), NumberUtils.toInt(waitMs)) ?
                StepResult.success("CheckBox elements (" + locator + ") are checked") :
                StepResult.fail("Check FAILED on element(s) '" + locator + "'");
     }
 
     public StepResult uncheckAll(String locator, String waitMs) {
         requiresInteger(waitMs, "invalid waitMs", waitMs);
-        String script = "if (arguments[0].hasAttribute('type','checkbox') && arguments[0].checked) {" +
-                        "   arguments[0].click();" +
-                        "}";
-        int waitTime = NumberUtils.toInt(waitMs);
-        return execJsOnEachElements(locator, script, waitTime) ?
+        return execJsOnEachElements(locator, JsLib.uncheck(), NumberUtils.toInt(waitMs)) ?
                StepResult.success("CheckBox elements (" + locator + ") are unchecked") :
                StepResult.fail("Uncheck FAILED on element(s) '" + locator + "'");
     }
