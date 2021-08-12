@@ -29,6 +29,7 @@ import org.nexial.core.model.TestStep
 import org.nexial.core.plugins.CanTakeScreenshot
 import org.nexial.core.plugins.ForcefulTerminate
 import org.nexial.core.plugins.base.BaseCommand
+import org.nexial.core.plugins.base.NumberCommand
 import org.nexial.core.plugins.base.ScreenshotUtils
 import org.nexial.core.plugins.mobile.Direction.*
 import org.nexial.core.plugins.web.LocatorHelper.normalizeXpathText
@@ -52,10 +53,12 @@ import kotlin.math.max
 
 // https://github.com/appium/appium-base-driver/blob/master/lib/protocol/routes.js#L345
 class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
+    private lateinit var numberCommand: NumberCommand
     private var mobileService: MobileService? = null
 
-    override fun init(context: ExecutionContext?) {
+    override fun init(context: ExecutionContext) {
         super.init(context)
+        numberCommand = context.findPlugin("number") as NumberCommand
         ShutdownAdvisor.addAdvisor(this)
     }
 
@@ -568,6 +571,16 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
         requiresNotBlank(file, "invalid file", file)
         val screenshot = ScreenshotUtils.saveScreenshot(findElement(locator), file)
         return postScreenshot(screenshot, locator)
+    }
+
+    fun assertCount(locator: String, count: String): StepResult {
+        requiresPositiveNumber(count, "invalid count", count)
+        val actual = CollectionUtils.size(findElements(locator))
+        return if (numberCommand.assertEqual(count, actual.toString()).isSuccess) {
+            StepResult.success("EXPECTED element count ($actual) found")
+        } else {
+            StepResult.fail("element count ($actual) DID NOT match expected count ($count)")
+        }
     }
 
     fun saveCount(`var`: String, locator: String): StepResult {
