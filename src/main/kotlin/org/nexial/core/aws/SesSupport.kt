@@ -114,7 +114,7 @@ class SesSupport : AwsSupport() {
         if (StringUtils.isNotBlank(config.html)) {
             val footer = "$HTML_FOOTER_PREFIX$xmailer$HTML_FOOTER_POSTFIX"
             val content = if (REGEX_HAS_TAG.matcher(config.html).matches()) {
-                val document = Jsoup.parse(config.html)
+                val document = Jsoup.parse(config.html!!)
                 document.body().append(footer)
                 document.html()
             } else {

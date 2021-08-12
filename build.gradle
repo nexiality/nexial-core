@@ -306,11 +306,13 @@ jar {
 }
 
 tasks.withType(Test) {
+	mkdir "${System.properties['user.home']}/tmp"
 	maxParallelForks = 10
 	systemProperty 'nexial.home', projectDir
 	systemProperty 'user.country', 'US'
 	systemProperty 'user.language', 'en'
 	systemProperty 'user.timezone', 'PST'
+	systemProperty 'java.io.tmpdir', "${System.properties['user.home']}/tmp"
 }
 
 test {

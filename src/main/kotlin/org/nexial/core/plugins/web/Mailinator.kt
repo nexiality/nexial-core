@@ -90,21 +90,25 @@ class Mailinator : WebMailer() {
         return emailIds
     }
 
-    private fun toEmailDetails(jsonObject: JSONObject?): EmailDetails {
+    private fun toEmailDetails(jsonObject: JSONObject): EmailDetails {
         val email = EmailDetails(
-            id = JSONPath.find(jsonObject, "data.id"),
-            subject = JSONPath.find(jsonObject, "data.subject"),
-            to = JSONPath.find(jsonObject, "data.headers.to"),
-            from = JSONPath.find(jsonObject, "data.from"),
+            id = JSONPath.find(jsonObject, "data.id")
+                 ?: throw IllegalArgumentException("email id not found"),
+            subject = JSONPath.find(jsonObject, "data.subject")
+                      ?: throw IllegalArgumentException("email subject not found"),
+            to = JSONPath.find(jsonObject, "data.headers.to")
+                 ?: throw IllegalArgumentException("email recipient not found"),
+            from = JSONPath.find(jsonObject, "data.from")
+                   ?: throw IllegalArgumentException("email sender not found"),
             time = Instant.ofEpochMilli(NumberUtils.toLong(JSONPath.find(jsonObject, "data.time")))
                 .atZone(ZoneId.systemDefault())
                 .toLocalDateTime())
 
         val parts = JsonUtils.toJSONArray(JSONPath.find(jsonObject, "data.parts"))
         if (parts.length() == 1) {
-            val contentBody = parts.getJSONObject(0).getString("body")
-
-            val headers = parts.getJSONObject(0).getJSONObject("headers")
+            val part = parts.getJSONObject(0)
+            val contentBody = part.getString("body")
+            val headers = part.getJSONObject("headers")
             val isHtmlContent = StringUtils.contains(headers?.getString("content-type") ?: "", "html")
 
             if (isHtmlContent) {
@@ -118,10 +122,15 @@ class Mailinator : WebMailer() {
             for (i in 0 until parts.length()) {
                 val part = parts.getJSONObject(i)
                 val headers = part.getJSONObject("headers") ?: continue
-                if (headers.getString("content-type").contains("html"))
-                    email.html = part.getString("body")
-                if (headers.getString("content-type").contains("plain"))
-                    email.content = cleanMailContent(part.getString("body"))
+                val contentBody = part.getString("body")
+                if (headers.has("content-type")) {
+                    if (headers.getString("content-type").contains("html")) {
+                        email.content = cleanMailContent(Jsoup.parse(contentBody).wholeText())
+                        email.html = contentBody
+                    }
+                    if (headers.getString("content-type").contains("plain"))
+                        email.content = cleanMailContent(contentBody)
+                }
             }
         }
 

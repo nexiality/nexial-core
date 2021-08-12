@@ -1927,7 +1927,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
             // ignore this... move on.
             ConsoleUtils.log("Unable to reference element (" + locator + "), possibly due to page loading; wait...");
             if (waitForElementPresent(locator, getPollWaitMs() + "").failed()) {
-                error("Web element '" + value + "' no longer available after its value is cleared");
+                error("Web element '" + locator + "' no longer available after its value is cleared");
             } else {
                 // do what we came here for...
                 clearValue(element);
@@ -2634,7 +2634,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         try {
             after = element.getAttribute("value");
         } catch (WebDriverException e) {
-            // hmm... something's afoot.. but we shouldn't alarm the populous...
+            // hmm... something's afoot... but we shouldn't alarm the populous...
             ConsoleUtils.log("Unable to retrieve value from the 'value' attribute after clearing the target element");
         }
 
@@ -3121,7 +3121,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     @NotNull
     protected FluentWait<WebDriver> newFluentWait(long waitMs) {
         return new FluentWait<>(driver).withTimeout(Duration.ofMillis(waitMs))
-                                       .pollingEvery(Duration.ofMillis(10))
+                                       .pollingEvery(Duration.ofMillis(25))
                                        .ignoring(NotFoundException.class, StaleElementReferenceException.class);
     }
 

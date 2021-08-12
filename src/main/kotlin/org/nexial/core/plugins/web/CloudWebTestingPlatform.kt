@@ -25,7 +25,6 @@ import org.nexial.core.model.ExecutionSummary
 import org.nexial.core.utils.ConsoleUtils
 import org.openqa.selenium.WebDriver
 import org.openqa.selenium.remote.RemoteWebDriver
-import javax.validation.constraints.NotNull
 
 abstract class CloudWebTestingPlatform protected constructor(protected var context: ExecutionContext) {
     var os: String? = null
@@ -73,7 +72,7 @@ abstract class CloudWebTestingPlatform protected constructor(protected var conte
     // @JvmStatic
     // protected resolveSessionId() = getSessionId(context)
 
-    abstract fun initWebDriver(): @NotNull WebDriver?
+    abstract fun initWebDriver(): WebDriver
 
     protected fun saveSessionId(driver: RemoteWebDriver) {
         context.addScriptReferenceData(SESSION_ID, driver.sessionId.toString())
@@ -92,7 +91,7 @@ abstract class CloudWebTestingPlatform protected constructor(protected var conte
                                      targetScope: ExecutionEvent?) {
             if (context == null || summary == null || targetScope == null) return
 
-            if (!CloudWebTesting.isValidReportScope(targetScope)) {
+            if (!isValidReportScope(targetScope)) {
                 ConsoleUtils.error("Execution Scope '${targetScope.eventName}' currently not supported for status " +
                                    "report on cloud-based browser execution")
                 return
@@ -107,7 +106,7 @@ abstract class CloudWebTestingPlatform protected constructor(protected var conte
             // special case for BrowserStack and CrossBrowserTesting
             // https://www.browserstack.com/automate/rest-api
 
-            // this means we were running browser in this script.. now let's report status
+            // this means we were running browser in this script... now let's report status
             val browser = BrowserType.valueOf(browserType)
             if (browser == BrowserType.browserstack &&
                 isReportStatusMatchingScope(targetScope,
@@ -134,7 +133,7 @@ abstract class CloudWebTestingPlatform protected constructor(protected var conte
         }
 
         @JvmStatic
-        protected fun formatStatusDescription(summary: ExecutionSummary): @NotNull String? {
+        protected fun formatStatusDescription(summary: ExecutionSummary): String {
             return "total: ${summary.totalSteps}, " +
                    "pass: ${summary.passCount}, " +
                    "fail: ${summary.failCount}, " +

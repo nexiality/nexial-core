@@ -187,10 +187,13 @@ fi
 # --------------------------------------------------------------------------------
 # setting Java runtime options and classpath
 # --------------------------------------------------------------------------------
+mkdir ~/tmp > /dev/null 2>&1
+
 JAVA_OPT="${JAVA_OPT} -ea"
 JAVA_OPT="${JAVA_OPT} --add-opens=java.base/java.util=ALL-UNNAMED"
 JAVA_OPT="${JAVA_OPT} --add-opens=java.base/java.lang=ALL-UNNAMED"
 JAVA_OPT="${JAVA_OPT} -Xss24m"
+JAVA_OPT="${JAVA_OPT} -Djava.io.tmpdir=~/tmp"
 JAVA_OPT="${JAVA_OPT} -Dfile.encoding=UTF-8"
 # JAVA_OPT="${JAVA_OPT} -Djava.awt.headless=true"
 JAVA_OPT="${JAVA_OPT} -Dnexial.home=${NEXIAL_HOME}"

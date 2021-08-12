@@ -77,7 +77,7 @@ data class JsonMeta(val type: Type, var name: String?, var node: String?) {
 
     private fun displayType(meta: JsonMeta) =
             when {
-                meta?.value == null -> "null"
+                meta.value == null -> "null"
                 meta.isObject       -> "object"
                 meta.isArray        -> "array"
                 meta.isLeaf         -> JsonUtils.getPrimitiveType(meta.value as JsonPrimitive)

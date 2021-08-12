@@ -19,17 +19,13 @@ package org.nexial.core.plugins.pdf
 import org.apache.commons.lang3.StringUtils
 import org.apache.pdfbox.pdmodel.PDDocument
 import org.apache.pdfbox.text.PDFTextStripper
-import org.nexial.core.NexialConst.Pdf.PDF_USE_ASCII
 import org.nexial.core.NexialConst.Pdf.MIME_PDF
+import org.nexial.core.NexialConst.Pdf.PDF_USE_ASCII
 import org.nexial.core.SystemVariables.getDefaultBool
 import org.nexial.core.model.ExecutionContext
 import org.nexial.core.utils.CheckUtils.requiresReadableFile
 import org.nexial.core.utils.ConsoleUtils
-import java.io.ByteArrayOutputStream
-import java.io.File
-import java.io.IOException
-import java.io.OutputStreamWriter
-import java.io.Writer
+import java.io.*
 
 object PdfTextExtractor {
 
@@ -146,7 +142,7 @@ object PdfTextExtractor {
             val file = spec.embeddedFile
             if (file != null && StringUtils.equals(file.subtype, MIME_PDF)) {
                 ConsoleUtils.log("Found embed PDF: '" + spec.filename + "', size: " + file.size)
-                var subDoc: PDDocument? = null
+                var subDoc: PDDocument?
                 file.createInputStream().use { fis -> subDoc = PDDocument.load(fis) }
                 try {
                     stripper.writeText(subDoc, output)
