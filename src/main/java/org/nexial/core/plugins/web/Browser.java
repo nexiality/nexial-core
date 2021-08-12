@@ -617,6 +617,8 @@ public class Browser implements ForcefulTerminate {
             options.addArguments("--disable-dev-shm-usage");
             options.addArguments("--use-fake-device-for-media-stream");
             options.addArguments("--autoplay-policy=user-gesture-required");
+            options.addArguments("--disable-gpu"); // applicable to windows os and linux
+            options.addArguments("--disable-software-rasterizer");
         }
 
         List<String> configurableOptions = new ArrayList<>(this.chromeOptions);
