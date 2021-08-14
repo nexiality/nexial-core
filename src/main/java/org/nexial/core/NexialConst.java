@@ -2010,6 +2010,10 @@ public final class NexialConst {
         public static final String REGEX_IS_RGBA = "rgba\\([0-9,\\ ]+\\)";
         public static final String REGEX_IS_HEX_COLOR = "^#([0-9a-f]{3}|[0-9a-f]{6})$";
 
+        // framework support
+        public static final String OPT_IS_REACT = registerSysVar(NS_WEB + "useReact", false);
+        public static final String OPT_IS_ANGULAR = registerSysVar(NS_WEB + "useAngular", false);
+
         private Web() {}
 
         // reference by enclosing class to force initialization (possibly prior to any reference at runtime)

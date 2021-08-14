@@ -2610,10 +2610,12 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         // prior to clearing
         String before = element.getAttribute("value");
 
-        if (browser.isRunElectron() ||
-            context.getBooleanData(WEB_CLEAR_WITH_BACKSPACE, getDefaultBool(WEB_CLEAR_WITH_BACKSPACE))) {
+        boolean useBackspace = browser.isRunElectron() ||
+                    context.getBooleanData(WEB_CLEAR_WITH_BACKSPACE, getDefaultBool(WEB_CLEAR_WITH_BACKSPACE)) ||
+                    context.getBooleanConfig(getTarget(), profile, OPT_IS_REACT);
+        if (useBackspace) {
             if (StringUtils.isNotEmpty(before)) {
-                // persistently delete character.. but if app insist on "autocompleting" then we'll give up
+                // persistently delete character... but if app insist on "autocompleting" then we'll give up
                 String beforeBackspace;
                 String afterBackspace;
                 do {
@@ -3017,6 +3019,10 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
                                context.getBooleanConfig(getTarget(), getProfile(), FORCE_JS_CLICK) :
                                browser.favorJSClick();
         if (jsExecutor == null) { forceJSClick = false; }
+        if (forceJSClick) {
+            // react is not friendly towards JS click
+            if (context.getBooleanConfig(getTarget(), profile, OPT_IS_REACT)) { forceJSClick = false; }
+        }
 
         try {
             // @id doesn't matter anymore...
