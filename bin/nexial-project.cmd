@@ -18,19 +18,21 @@ if NOT ERRORLEVEL 0 goto :exit
 if "%1"=="" goto :reportBadInputAndExit
 
 :createDir
-     rem project name might be specified as a directory
-     echo "%1"|find ":\" > nul
-     if errorlevel 0 (
-        rem project specified is a directory. let's make sure it's created
-        mkdir "%1" > nul 2> nul
-        if not errorlevel 0 (
-            echo ERROR: Unable to create specified project directory %1
-            echo Check your input and try again
-            echo.
-            exit /b -1
-            goto :eof
-        )
-     )
+	rem project name might be specified as a directory
+	echo "%1"|find ":\" > nul
+	if "%errorlevel%"=="0" (
+		rem project specified is a directory. let's make sure it's created
+		mkdir "%1" > nul 2> nul
+		if not "%errorlevel%"=="0" (
+			echo ERROR: Unable to create specified project directory %1
+			echo Check your input and try again
+			echo.
+			exit /b -1
+			goto :eof
+		)
+	) else (
+		echo %1 is not a directory, prepend it with %PROJECT_BASE%
+	)
 
 	if exist %1 (
 		set PROJECT_HOME=%1
