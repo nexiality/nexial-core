@@ -389,6 +389,64 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
         }
     }
 
+    /**
+     * scroll until `searchFor` is found. `searchFor` would be a locator
+     * `locator` should represent the scrollable container by which the target text can be found
+     * `direction` supports UP, DOWN, LEFT, RIGHT
+     */
+    fun scrollUntilFound(scrollTarget: String, direction: String, searchFor: String, maxWaitMs: String): StepResult {
+        requiresNotBlank(searchFor, "Invalid text", searchFor)
+
+        if (StringUtils.isNotBlank(maxWaitMs)) requiresInteger(maxWaitMs, "Invalid maxWaitMs", maxWaitMs)
+
+        requiresNotBlank(direction, "Invalid direction", direction)
+        val dir = Direction.values().find { it.detail.equals(direction, true) }
+                  ?: throw IllegalArgumentException("Invalid direction $direction")
+
+        // 1. make sure the specified scroll container exists
+        val timeoutBy =
+            if (StringUtils.isNotBlank(maxWaitMs) || maxWaitMs.trim() == "-1") -1
+            else System.currentTimeMillis() + NumberUtils.toLong(maxWaitMs)
+        val scrollArea = findElement(scrollTarget)
+        val scrollAreaWidth = scrollArea.rect.width
+        val scrollAreaHeight = scrollArea.rect.height
+
+        // 2. figure out the offset to use depending on `direction`
+        val offsets = when (dir) {
+            DOWN  -> Pair(Point(5, 5), Point(0, (scrollAreaHeight * 0.5).toInt()))
+            UP    -> Pair(Point(5, (scrollAreaHeight * 0.5).toInt()), Point(0, (scrollAreaHeight * -0.5).toInt()))
+            LEFT  -> Pair(Point((scrollAreaWidth * 0.5).toInt(), 5), Point((scrollAreaWidth * -0.5).toInt(), 0))
+            RIGHT -> Pair(Point(5, 5), Point((scrollAreaWidth * 0.5).toInt(), 0))
+            else  -> throw IllegalArgumentException("Invalid direction; Percentage on direction not supported - $dir")
+        }
+
+        // 3. getting ready to scroll and search
+        val targetLocator = resolveFindBy(searchFor)
+        val waiter = newWaiter(1000, "scrolling ${dir.name} to find $searchFor")
+        val driver = getMobileService().driver
+
+        var matches = waiter.until<List<WebElement>> { scrollArea.findElements(targetLocator) }
+        while (matches.isEmpty()) {
+            if (timeoutBy != (-1).toLong() && System.currentTimeMillis() >= timeoutBy)
+                return StepResult.fail("time out while scrolling ${dir.detail} to find $searchFor")
+
+            Actions(driver)
+                .moveToElement(scrollArea, offsets.first.x, offsets.first.y)
+                .clickAndHold()
+                .moveByOffset(offsets.second.x, offsets.second.y)
+                .release()
+                .pause(250L)
+                .perform()
+            matches = waiter.until<List<WebElement>> { scrollArea.findElements(targetLocator) }
+        }
+
+        // 4. all done
+        return if (matches.isNotEmpty())
+            StepResult.success("Element '${searchFor}' found after some scrolling on '${scrollTarget}")
+        else
+            StepResult.fail("Element '${searchFor}' cannot be found after scrolling on '${scrollTarget}")
+    }
+
     fun scroll(locator: String, direction: String): StepResult {
         requiresNotBlank(direction, "Invalid direction", direction)
         val dir = Direction.values().find { it.detail.equals(direction, true) }
