@@ -251,6 +251,11 @@ public final class NexialConst {
     public static final int MAX_FORMULA_CHAR = 8192;
     public static final long MIN_JSON_FILE_SIZE = 1024L;
 
+    // project.properties file
+    // regex to find key value pair
+    public static final String PROPERTIES_REGEX = "(.*?(?<!\\\\))(=|:)(.*)";
+    public static final String PROPERTIES_SECTION_START = "####";
+
     public static class PolyMatcher {
         public static final List<String> MATCHES = new ArrayList<>();
         public static final String CONTAIN = register("CONTAIN:");

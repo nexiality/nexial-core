@@ -17,14 +17,18 @@
 
 package org.nexial.commons.utils;
 
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.SystemUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.junit.Test;
-
-import java.io.File;
-import java.util.*;
 
 import static java.io.File.separator;
 import static org.junit.Assert.*;
@@ -465,6 +469,7 @@ public class TextUtilsTest {
                              "mydata.treatNullAs==[NULL]\n" +
                              "\n" +
                              "myData                =yourData\n" +
+                             "myValue\n" +
                              "ourData               =Theirs\n" +
                              "all.the.kings.horse   =and king's men\n" +
                              "couldn't put          =Humpty Dumpty together again\n" +
@@ -472,6 +477,9 @@ public class TextUtilsTest {
                              "my.datasource.url=jdbc://myserver:1099/dbname;prop1=value1;prop2=#hash2;prop3=!what\n" +
                              "broken==\n" +
                              "rotten=\n" +
+                             "nothing\\=something to put     =yourData1\n" +
+                             "myData1                =yourData1 \\\n" +
+                             "myValue1\n" +
                              "gotten=";
 
         String tmpPropFile = StringUtils.appendIfMissing(SystemUtils.getJavaIoTmpDir().getAbsolutePath(), separator) +
@@ -485,6 +493,8 @@ public class TextUtilsTest {
         assertEquals("=[NULL]", propMap.get("mydata.treatNullAs"));
         assertEquals("=", propMap.get("broken"));
         assertEquals("", propMap.get("gotten"));
+        assertEquals("yourData1", propMap.get("nothing=something to put"));
+        assertEquals("yourData1 myValue1", propMap.get("myData1"));
         assertEquals("${nexial.web.explicitWait}", propMap.get("nexial.lenientStringCompare"));
         assertEquals("jdbc://myserver:1099/dbname;prop1=value1;prop2=#hash2;prop3=!what",
                      propMap.get("my.datasource.url"));

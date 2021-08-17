@@ -17,6 +17,17 @@
 
 package org.nexial.commons.utils;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.lang.reflect.Array;
+import java.math.BigDecimal;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
+import javax.annotation.Nullable;
+import javax.validation.constraints.NotNull;
+
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.IterableUtils;
 import org.apache.commons.collections4.MapUtils;
@@ -28,24 +39,12 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.nexial.core.utils.ConsoleUtils;
 
-import javax.annotation.Nullable;
-import javax.validation.constraints.NotNull;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.lang.reflect.Array;
-import java.math.BigDecimal;
-import java.util.*;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.Collectors;
-
-import static java.awt.event.KeyEvent.CHAR_UNDEFINED;
+import static java.awt.event.KeyEvent.*;
 import static java.lang.Character.UnicodeBlock.SPECIALS;
 import static java.lang.System.lineSeparator;
 import static org.nexial.commons.utils.TextUtils.CleanNumberStrategy.CSV;
 import static org.nexial.commons.utils.TextUtils.CleanNumberStrategy.OCTAL;
-import static org.nexial.core.NexialConst.DEF_FILE_ENCODING;
-import static org.nexial.core.NexialConst.NL;
+import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.NexialConst.PolyMatcher.*;
 
 /**
@@ -1028,22 +1027,42 @@ public final class TextUtils {
     public static Map<String, String> loadProperties(String propFile) { return loadProperties(propFile, false); }
 
     public static Map<String, String> loadProperties(String propFile, boolean trimKey) {
-        if (!FileUtil.isFileReadable(propFile, 5)) { return null; }
-
+        // load only properties without sections
         Map<String, String> properties = new LinkedHashMap<>();
+        Map<String, Map<String, String>> properties1 = loadProperties(propFile, trimKey, false);
+        if (properties1 != null) { properties1.values().forEach(properties::putAll); }
+        return properties;
+    }
+
+    public static Map<String, Map<String, String>> loadProperties(String propFile, boolean trimKey,
+                                                                  boolean readCommentAsKeyValue) {
+        // load properties as section to key-value pair
+        if (!FileUtil.isFileReadable(propFile, 5)) { return null; }
+        String section = "";
+        Map<String, Map<String, String>> properties = new LinkedHashMap<>();
         try {
             List<String> lines = FileUtils.readLines(new File(propFile), DEF_FILE_ENCODING);
             for (int i = 0; i < lines.size(); i++) {
                 String line = lines.get(i);
                 if (StringUtils.isBlank(line)) { continue; }
-                if (StringUtils.startsWith(line.trim(), "#") || StringUtils.startsWith(line.trim(), "!")) { continue; }
+                boolean isComment = StringUtils.startsWithAny(line.trim(), "#", "!");
 
+                if (isComment) {
+                    if (StringUtils.startsWithAny(line.trim(), PROPERTIES_SECTION_START)) {
+                        section = StringUtils.substringAfter(line, PROPERTIES_SECTION_START);
+                        continue;
+                    } else if (!readCommentAsKeyValue) { continue; }
+                }
                 if (StringUtils.endsWith(line, "\\")) {
                     line = StringUtils.removeEnd(line, "\\");
 
                     // handle continuation
                     for (int j = i + 1; j < lines.size(); j++) {
                         String continuation = StringUtils.stripStart(lines.get(j), " \t");
+                        if (isComment) {
+                            if (!StringUtils.startsWithAny(continuation, "#", ":")) { break; }
+                            continuation = StringUtils.substring(continuation, 1);
+                        }
                         if (StringUtils.endsWith(continuation, "\\")) {
                             line += StringUtils.removeEnd(continuation, "\\");
                         } else {
@@ -1054,32 +1073,25 @@ public final class TextUtils {
                     }
                 }
 
-                int posEqual = StringUtils.indexOf(line, "=");
-                int posColon = StringUtils.indexOf(line, ":");
-                String key;
-                String value;
-                if (posEqual == -1) {
-                    if (posColon == -1) {
-                        // not name/value pair
-                        key = line;
-                        value = "";
-                    } else {
-                        key = StringUtils.substringBefore(line, ":");
-                        value = StringUtils.substringAfter(line, ":");
-                    }
-                } else {
-                    if (posColon == -1) {
-                        key = StringUtils.substringBefore(line, "=");
-                        value = StringUtils.substringAfter(line, "=");
-                    } else {
-                        String delim = posEqual < posColon ? "=" : ":";
-                        key = StringUtils.substringBefore(line, delim);
-                        value = StringUtils.substringAfter(line, delim);
-                    }
-                }
+                String key = line;
+                String value = "";
+
+                List<String> collectGroups = RegexUtils.collectGroups(line, PROPERTIES_REGEX, false, true);
+                if (CollectionUtils.isNotEmpty(collectGroups)) {
+                    key = StringUtils.replace(StringUtils.replace(collectGroups.get(0), "\\=", "="), "\\:", ":");
+                    value = collectGroups.get(2);
+                } else if (readCommentAsKeyValue) { continue; }
 
                 if (trimKey) { key = StringUtils.trim(key); }
-                properties.put(key, value);
+
+                if (properties.containsKey(section)) {
+                    Map<String, String> maps = properties.get(section);
+                    maps.put(key, value);
+                } else {
+                    Map<String, String> keyValueMap = new LinkedHashMap<>();
+                    keyValueMap.put(key, value);
+                    properties.put(section, keyValueMap);
+                }
             }
         } catch (IOException e) {
             ConsoleUtils.error("Unable to read project properties " + propFile + ": " + e.getMessage());
@@ -1226,8 +1238,9 @@ public final class TextUtils {
         StringBuilder csvBuffer = new StringBuilder();
         values.forEach(row -> {
             StringBuilder rowBuffer = new StringBuilder();
-            row.forEach(cell -> rowBuffer.append(cell.contains(delim) ? StringUtils.wrapIfMissing(cell, "\"") : cell)
-                                         .append(delim));
+            row.forEach(cell -> rowBuffer
+                                    .append(cell.contains(delim) ? StringUtils.wrapIfMissing(cell, "\"") : cell)
+                                    .append(delim));
             csvBuffer.append(StringUtils.removeEnd(rowBuffer.toString(), delim)).append(recordDelim);
         });
         return csvBuffer.toString();
@@ -1239,7 +1252,8 @@ public final class TextUtils {
 
         AtomicReference<String> safe = new AtomicReference<>(text);
         if (oneLine) {
-            CSV_SAFE_REPLACEMENT.forEach((find, replace) -> safe.set(StringUtils.replace(safe.get(), find, replace)));
+            CSV_SAFE_REPLACEMENT.forEach((find, replace) -> safe.set(StringUtils
+                                                                         .replace(safe.get(), find, replace)));
             safe.set(StringUtils.replace(safe.get(), "\r", ""));
             safe.set(StringUtils.replace(safe.get(), "\n", " "));
             safe.set(StringUtils.replace(safe.get(), "\t", " "));
@@ -1308,7 +1322,11 @@ public final class TextUtils {
         if (isNegative) { text = "-" + text; }
 
         // we still good?
-        if (!NumberUtils.isCreatable(text)) {throw new IllegalArgumentException("'" + text + " is not a valid number");}
+        if (!NumberUtils.isCreatable(text)) {
+            throw new IllegalArgumentException("'" +
+                                               text +
+                                               " is not a valid number");
+        }
 
         // we good
         return text;
