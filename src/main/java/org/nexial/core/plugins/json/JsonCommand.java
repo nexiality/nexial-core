@@ -17,14 +17,17 @@
 
 package org.nexial.core.plugins.json;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.gson.*;
-import com.networknt.schema.JsonSchema;
-import com.networknt.schema.JsonSchemaFactory;
-import com.networknt.schema.SpecVersion.VersionFlag;
-import com.networknt.schema.SpecVersionDetector;
-import com.networknt.schema.ValidationMessage;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+import javax.validation.constraints.NotNull;
+
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.IterableUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -38,12 +41,19 @@ import org.nexial.core.plugins.base.BaseCommand;
 import org.nexial.core.utils.*;
 import org.nexial.core.utils.JsonEditor.JsonEditorConfig;
 
-import javax.validation.constraints.NotNull;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.util.*;
-import java.util.stream.Collectors;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import com.google.gson.JsonSyntaxException;
+import com.networknt.schema.JsonSchema;
+import com.networknt.schema.JsonSchemaFactory;
+import com.networknt.schema.SpecVersion.VersionFlag;
+import com.networknt.schema.SpecVersionDetector;
+import com.networknt.schema.ValidationMessage;
 
 import static org.nexial.core.NexialConst.DEF_CHARSET;
 import static org.nexial.core.NexialConst.Data.*;
@@ -243,7 +253,6 @@ public class JsonCommand extends BaseCommand {
 
         requires(StringUtils.isNotBlank(schema) && !context.isNullValue(schema), "empty schema", schema);
 
-        ObjectMapper mapper = new ObjectMapper();
         try {
             String jsonSchemaContent;
             if (OutputFileUtils.isContentReferencedAsClasspathResource(schema, context)) {
@@ -254,15 +263,7 @@ public class JsonCommand extends BaseCommand {
             }
 
             if (StringUtils.isBlank(jsonSchemaContent)) { return StepResult.fail("invalid schema: " + schema); }
-            JsonNode jsonSchemaNode = mapper.readTree(jsonSchemaContent);
-            // if schema is not found, default to latest
-            VersionFlag versionFlag = StringUtils.contains(jsonSchemaContent, "$schema") ?
-                                      SpecVersionDetector.detect(jsonSchemaNode) :
-                                      VersionFlag.V201909;
-            JsonSchemaFactory factory = JsonSchemaFactory.getInstance(versionFlag);
-            JsonSchema jsonSchema = factory.getSchema(jsonSchemaNode);
-
-            Set<ValidationMessage> report = jsonSchema.validate(jsonNode);
+            Set<ValidationMessage> report = validateJsonWithSchema(jsonNode, jsonSchemaContent);
             return CollectionUtils.isEmpty(report) ?
                    StepResult.success("json validated successfully against schema") :
                    StepResult.fail(parseSchemaValidationError(report));
@@ -270,6 +271,21 @@ public class JsonCommand extends BaseCommand {
             ConsoleUtils.log("Error reading as file '" + schema + "': " + e.getMessage());
             return StepResult.fail("Unable to retrieve JSON schema: " + e.getMessage());
         }
+    }
+
+    public static Set<ValidationMessage> validateJsonWithSchema(JsonNode jsonNode,
+                                                         String jsonSchemaContent)
+        throws JsonProcessingException {
+        ObjectMapper mapper = new ObjectMapper();
+        JsonNode jsonSchemaNode = mapper.readTree(jsonSchemaContent);
+        // if schema is not found, default to latest
+        VersionFlag versionFlag = StringUtils.contains(jsonSchemaContent, "$schema") ?
+                                  SpecVersionDetector.detect(jsonSchemaNode) :
+                                  VersionFlag.V201909;
+        JsonSchemaFactory factory = JsonSchemaFactory.getInstance(versionFlag);
+        JsonSchema jsonSchema = factory.getSchema(jsonSchemaNode);
+
+        return jsonSchema.validate(jsonNode);
     }
 
     public StepResult assertWellformed(String json) {
