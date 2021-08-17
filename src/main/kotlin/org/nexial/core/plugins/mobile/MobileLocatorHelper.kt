@@ -18,8 +18,11 @@ package org.nexial.core.plugins.mobile
 
 import io.appium.java_client.MobileBy
 import org.apache.commons.lang3.StringUtils
+import org.nexial.commons.utils.RegexUtils
 import org.nexial.commons.utils.TextUtils
+import org.nexial.core.NexialConst.PolyMatcher.*
 import org.nexial.core.plugins.web.LocatorHelper.normalizeXpathText
+import org.nexial.core.utils.CheckUtils.requiresPositiveNumber
 import org.openqa.selenium.By
 
 /**
@@ -38,6 +41,7 @@ class MobileLocatorHelper(private val mobileService: MobileService) {
     private val prefixName = "name"
     private val prefixText = "text"
     private val prefixNearby = "nearby"
+    private val prefixDescription = "desc"
 
     // todo
     private val prefixImage = "image"
@@ -55,28 +59,93 @@ class MobileLocatorHelper(private val mobileService: MobileService) {
 
         val strategy = StringUtils.trim(StringUtils.lowerCase(StringUtils.substringBefore(locator, "=")))
         val loc = StringUtils.trim(StringUtils.substringAfter(locator, "="))
+        val normalized = normalizeXpathText(loc)
         val isIOS = mobileService.profile.mobileType.isIOS()
+        val isAndroid = mobileService.profile.mobileType.isAndroid()
 
         return when (strategy) {
             // standard ones
-            prefixId, prefixName, prefixResourceId -> By.id(loc)
-            prefixAccessibility                    -> MobileBy.AccessibilityId(loc)
-            prefixClass                            -> By.className(loc)
-            prefixXPath                            -> By.xpath(if (allowRelative) loc else fixBadXpath(loc))
-            prefixText                             -> By.xpath("//*[@text=${normalizeXpathText(loc)}]")
-            prefixNearby                           -> handleNearbyLocator(mobileService.profile.mobileType, loc)
+            prefixId, prefixName -> By.id(loc)
+            prefixResourceId     -> By.xpath("//*[@resource-id=$normalized]")
+            prefixAccessibility  -> MobileBy.AccessibilityId(loc)
+            prefixClass          -> By.className(loc)
+            prefixXPath          -> By.xpath(if (allowRelative) loc else fixBadXpath(loc))
+            prefixText           -> resolveTextLocator(loc)
+            prefixNearby         -> handleNearbyLocator(mobileService.profile.mobileType, loc)
 
             // ios specific
-            prefixPredicate                        ->
+            prefixPredicate      ->
                 if (isIOS) MobileBy.iOSNsPredicateString(loc)
                 else throw IllegalArgumentException("This locator is only supported on iOS device: $locator")
-            prefixClassChain                       ->
+            prefixClassChain     ->
                 if (isIOS) MobileBy.iOSClassChain(loc)
                 else throw IllegalArgumentException("This locator is only supported on iOS device: $locator")
 
+            // android specific
+            prefixDescription    ->
+                if (isAndroid) By.xpath("//*[@content-desc=$normalized]")
+                else throw IllegalArgumentException("This locator is only support on Android device: $locator")
+
             // catch all
-            else                                   -> return By.id(loc)
+            else                 -> return By.id(loc)
         }
+    }
+
+    internal fun resolveAlt(locator: String): List<By> {
+        if (StringUtils.isBlank(locator)) throw IllegalArgumentException("Invalid locator: $locator")
+
+        val strategy = StringUtils.trim(StringUtils.lowerCase(StringUtils.substringBefore(locator, "=")))
+        val loc = StringUtils.trim(StringUtils.substringAfter(locator, "="))
+        val normalized = normalizeXpathText(loc)
+
+        val alt = mutableListOf<By>()
+        when (strategy) {
+            prefixResourceId  -> alt.add(By.xpath("//*[@resource-id=${normalized}]"))
+            prefixDescription -> alt.add(By.xpath("//*[@name=${normalized}]"))
+        }
+        return alt
+    }
+
+    private fun resolveTextLocator(text: String) = By.xpath("//*[${resolveTextFilter(text)}]")
+
+    internal fun resolveTextFilter(text: String) = when {
+        StringUtils.startsWith(text, REGEX)            ->
+            throw IllegalArgumentException("PolyMatcher REGEX is not supported for 'text=...' locator")
+        StringUtils.startsWith(text, NUMERIC)          ->
+            throw IllegalArgumentException("PolyMatcher NUMERIC is not supported for this command")
+
+        StringUtils.startsWith(text, CONTAIN)          ->
+            "contains(@text,${normalizeText(text, CONTAIN)})"
+        StringUtils.startsWith(text, CONTAIN_ANY_CASE) ->
+            "contains(@text,${normalizeLower(text, CONTAIN_ANY_CASE)})"
+        StringUtils.startsWith(text, START)            ->
+            "starts-with(@text,${normalizeText(text, START)})"
+        StringUtils.startsWith(text, START_ANY_CASE)   ->
+            "starts-with(lower-case(@text),${normalizeLower(text, START_ANY_CASE)})"
+        StringUtils.startsWith(text, END)              ->
+            "ends-with(@text,${normalizeText(text, END)})"
+        StringUtils.startsWith(text, END_ANY_CASE)     ->
+            "ends-with(lower-case(@text),${normalizeLower(text, END_ANY_CASE)})"
+        StringUtils.startsWith(text, LENGTH)           ->
+            "string-length(@text)=${normalizeText(text, LENGTH)}"
+        StringUtils.startsWith(text, EXACT)            ->
+            "@text=${normalizeText(text, EXACT)}"
+        else                                           ->
+            "@text=${normalizeXpathText(text)}"
+    }
+
+    private fun normalizeLower(text: String, after: String) = normalizeText(text, after, true)
+    private fun normalizeText(text: String, after: String) = normalizeText(text, after, false)
+    private fun normalizeText(text: String, after: String, lowercase: Boolean): String {
+        var matchBy = text.substringAfter(after)
+
+        if (lowercase) matchBy = matchBy.toLowerCase()
+        if (after == LENGTH) {
+            matchBy = matchBy.trim()
+            requiresPositiveNumber(matchBy, "invalid number specified as length", matchBy)
+        }
+
+        return normalizeXpathText(matchBy)
     }
 
     internal fun resolve(locator: String) = resolve(locator, false)
@@ -95,10 +164,12 @@ class MobileLocatorHelper(private val mobileService: MobileService) {
     companion object {
         private const val leftOf = "left-of"
         private const val rightOf = "right-of"
-        private const val regexNearbyNameValueSpec = "\\s*.+\\s*=\\s*.+\\s*"
+        private const val above = "above"
+        private const val below = "below"
+        private const val regexNearbyNameValueSpec = "\\s*.+\\s*[=:]\\s*.+\\s*"
 
         /**
-         * Expected format: `nearby={left-of|right-of=text}{attribute_with_value_as_true,attribute=value,...}`
+         * Expected format: `nearby={left-of|right-of|below|above:text}{attribute_with_value_as_true,attribute=value,...}`
          *
          * Only looking for element that are visible and usable, hence implied:
          * - android: @displayed='true' and @enabled='true'
@@ -123,12 +194,13 @@ class MobileLocatorHelper(private val mobileService: MobileService) {
             TextUtils.groups(specs.trim(), "{", "}", false).forEach { group ->
                 group.split(",").forEach { part ->
                     if (part.matches(Regex(regexNearbyNameValueSpec))) {
-                        val name = part.substringBefore("=").trim()
-                        val value = normalizeXpathText(part.substringAfter("=").trim())
+                        val useNearByHint = RegexUtils.match(part, "^(left-of|right-of|above|below):.+$")
+                        val name = part.substringBefore(if (useNearByHint) ":" else "=").trim()
+                        val value = normalizeXpathText(part.substringAfter(if (useNearByHint) ":" else "=").trim())
                         when (name) {
-                            leftOf  -> parts.add("following-sibling::*[1][@text=$value]")
-                            rightOf -> parts.add("preceding-sibling::*[1][@text=$value]")
-                            else    -> parts.add("@$name=$value")
+                            leftOf, above  -> parts.add("following-sibling::*[1][@text=$value]")
+                            rightOf, below -> parts.add("preceding-sibling::*[1][@text=$value]")
+                            else           -> parts.add("@$name=$value")
                         }
                     } else
                         parts.add("@${part.trim()}='true'")

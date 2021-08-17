@@ -20,7 +20,6 @@ import org.apache.commons.lang3.math.NumberUtils
 import org.nexial.commons.utils.TextUtils
 import org.nexial.core.NexialConst.*
 import org.nexial.core.NexialConst.Mobile.*
-import org.nexial.core.NexialConst.PolyMatcher.*
 import org.nexial.core.NexialConst.Web.GROUP_LOCATOR_SUFFIX
 import org.nexial.core.ShutdownAdvisor
 import org.nexial.core.model.ExecutionContext
@@ -49,12 +48,15 @@ import java.io.IOException
 import java.time.Duration
 import java.util.*
 import java.util.function.Function
+import kotlin.math.absoluteValue
 import kotlin.math.max
 
 // https://github.com/appium/appium-base-driver/blob/master/lib/protocol/routes.js#L345
 class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
     private lateinit var numberCommand: NumberCommand
     private var mobileService: MobileService? = null
+    private val scrollableLocator = "//*[@scrollable='true' and @displayed='true' and @enabled='true']"
+    private val scrollableLocator2 = "//android.widget.ScrollView[@displayed='true' and @enabled='true']"
 
     override fun init(context: ExecutionContext) {
         super.init(context)
@@ -165,6 +167,12 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
         else
             StepResult.fail("Expected element '$locator' is either not present or not visible")
 
+    fun assertElementNotVisible(locator: String): StepResult =
+        if (!isElementVisible(locator))
+            StepResult.success("Element '$locator' is either not present or not visible, as EXPECTED")
+        else
+            StepResult.fail("element '$locator' is visible, which is NOT as expected")
+
     fun assertTextPresent(locator: String, text: String): StepResult =
         if (findElements(locator).any { TextUtils.polyMatch(it.text, text) })
             StepResult.success("Element of '${locator}' contains text matching '${text}'")
@@ -213,57 +221,11 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
         return StepResult.success("Clicked on '$locator'")
     }
 
-    /**
-     * partially supports polymatcher
-     */
+    /** partially supports polymatcher */
     fun clickByDisplayText(text: String): StepResult {
         requiresNotBlank(text, "invalid display text", text)
-
-        val xpath = StringBuilder("//*[@displayed='true' and ")
-
-        when {
-            StringUtils.startsWith(text, EMPTY)            ->
-                return StepResult.fail("PolyMatcher $EMPTY is not supported for this command")
-
-            StringUtils.startsWith(text, BLANK)            ->
-                return StepResult.fail("PolyMatcher $BLANK is not supported for this command")
-
-            StringUtils.startsWith(text, NUMERIC)          ->
-                return StepResult.fail("PolyMatcher $NUMERIC is not supported for this command")
-
-            StringUtils.startsWith(text, REGEX)            ->
-                return StepResult.fail("PolyMatcher $REGEX is not supported for this command")
-
-            StringUtils.startsWith(text, CONTAIN)          ->
-                xpath.append("contains(@text,${normalizeXpathText(text)})]")
-
-            StringUtils.startsWith(text, CONTAIN_ANY_CASE) ->
-                xpath.append("contains(@text,${normalizeXpathText(text.toLowerCase())})]")
-
-            StringUtils.startsWith(text, START)            ->
-                xpath.append("starts-with(@text,${normalizeXpathText(text)})]")
-
-            StringUtils.startsWith(text, START_ANY_CASE)   ->
-                xpath.append("starts-with(lower-case(@text),${normalizeXpathText(text.toLowerCase())})]")
-
-            StringUtils.startsWith(text, END)              ->
-                xpath.append("ends-with(@text,${normalizeXpathText(text)})]")
-
-            StringUtils.startsWith(text, END_ANY_CASE)     ->
-                xpath.append("ends-with(lower-case(@text),${normalizeXpathText(text.toLowerCase())})]")
-
-            StringUtils.startsWith(text, LENGTH)           -> {
-                requiresPositiveNumber(text, "invalid number specified as length", text)
-                xpath.append("string-length(@text)=$text]")
-            }
-
-            StringUtils.startsWith(text, EXACT)            ->
-                xpath.append("@text=${normalizeXpathText(text)}]")
-
-            else                                           ->
-                xpath.append("@text=${normalizeXpathText(text)}]")
-        }
-
+        val xpath = StringBuilder("//*[@displayed='true' and " +
+                                  "${getMobileService().locatorHelper.resolveTextFilter(text)}]")
         return click(xpath.toString())
     }
 
@@ -674,60 +636,71 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
         val driver = mobileService.driver
         val profileName = mobileService.profile.profile
 
-        if (mobileService.profile.mobileType.isAndroid()) {
-            val result = click(locator)
-            if (result.failed()) return result
-
+        return if (mobileService.profile.mobileType.isAndroid()) {
+            // 1. click on the dropdown to display the options
+            val select = findElement(locator)
+            withPostActionWait(Actions(mobileService.driver).click(select), mobileService)
             waitFor(800)
 
-            // find the number of scrollables (usually the last one is the right one)
-            val scrollables =
-                driver.findElements(By.xpath("//*[@scrollable='true' and @displayed='true' and @enabled='true']"))
-
-            // the last one is likely the right one
-            val scrollTarget = if (CollectionUtils.isEmpty(scrollables)) {
-                // try another way
-                val scrollables2 =
-                    driver.findElements(By.xpath("//android.widget.ScrollView[@displayed='true' and @enabled='true']"))
-                if (CollectionUtils.isEmpty(scrollables2)) return StepResult.fail("Unable to locate a usable dropdown")
-
-                scrollables2[scrollables2.size - 1]
-            } else
-                scrollables[scrollables.size - 1]
-
-            // determine how many lines to scroll (if needed)
-            val scrollAmount = context.getIntConfig(target, profileName, DROPDOWN_TEXT_LINE_HEIGHT) *
-                               context.getIntConfig(target, profileName, DROPDOWN_LINES_TO_SCROLL) * -1
-            val maxScrolls = context.getIntConfig(target, profileName, DROPDOWN_MAX_SCROLL)
-
-            val findByOption = By.xpath("//*[@text=${normalizeXpathText(item)}]")
-
-            var scrollCount = 0
-            var itemElement: WebElement? = null
-            while (itemElement == null) {
-                itemElement = scrollTarget.findElements(findByOption).getOrNull(0)
-
-                if (scrollCount >= maxScrolls) break
-
-                if (itemElement == null) {
-                    Actions(driver).moveToElement(scrollTarget, 50, 5)
-                        .clickAndHold()
-                        .moveByOffset(0, scrollAmount)
-                        .release()
-                        .perform()
-                    scrollCount++
-                } else
-                    break
+            // 2. find all scrollable containers
+            var scrollables = driver.findElements(By.xpath(scrollableLocator))
+            if (CollectionUtils.isEmpty(scrollables)) {
+                scrollables = driver.findElements(By.xpath(scrollableLocator2))
+                if (CollectionUtils.isEmpty(scrollables)) return StepResult.fail("Unable to locate a usable dropdown")
             }
 
-            return if (itemElement != null) {
-                itemElement.click()
+            // 3. find the most likely scrollable container
+            val scrollTarget = if (scrollables.size == 1)
+                scrollables[0]
+            else {
+                // lastResort is usually the top level scrollable container (x or y < 10)
+                val lastResort = scrollables.find { elem -> elem.rect.x < 10 || elem.rect.y < 10 }
+                if (lastResort != null) scrollables.remove(lastResort)
+
+                if (scrollables.size > 1) {
+                    // find the closest one with the most similar width
+                    val matchWidth = select.rect.width
+                    val matchY = select.rect.y
+                    scrollables.sortBy { elem ->
+                        (elem.rect.y - matchY).absoluteValue *
+                        (elem.rect.width - matchWidth).absoluteValue / matchWidth
+                    }
+                }
+                scrollables[0]
+            }
+
+            // 4. determine how many lines to scroll (if needed)
+            val maxScrolls = context.getIntConfig(target, profileName, DROPDOWN_MAX_SCROLL)
+            // val scrollAmount = context.getIntConfig(target, profileName, DROPDOWN_TEXT_LINE_HEIGHT) *
+            //                    context.getIntConfig(target, profileName, DROPDOWN_LINES_TO_SCROLL) * -1
+            val scrollAmount = scrollTarget.rect.height / 2
+            val startFrom = Point(0, scrollAmount - 5)
+            val scrollTo = Point(0, (scrollAmount / 2) * -1)
+
+            // 5. scroll downwards until specified item is found
+            val waiter = newWaiter(1000, "identifying option '${item}'")
+            var scrollCount = 0
+            val findByOption = By.xpath(".//*[@text=${normalizeXpathText(item)}]")
+            var itemElement = waiter.until { scrollTarget.findElements(findByOption) }
+            while (CollectionUtils.isEmpty(itemElement)) {
+                if (scrollCount++ >= maxScrolls) break
+                Actions(driver)
+                    .moveToElement(scrollTarget, startFrom.x, startFrom.y)
+                    .clickAndHold()
+                    .moveByOffset(scrollTo.x, scrollTo.y)
+                    .release()
+                    .pause(500L)
+                    .perform()
+                itemElement = waiter.until { scrollTarget.findElements(findByOption) }
+            }
+
+            if (CollectionUtils.isNotEmpty(itemElement)) {
+                itemElement[0].click()
                 StepResult.success("dropdown option '${item}' selected")
             } else
                 StepResult.fail("Unable to find dropdown option '${item}'")
-        }
-
-        return StepResult.fail("This command does not support iOS device at this time (#patience_is_a_virtue)")
+        } else
+            StepResult.fail("This command does not support iOS device at this time (#patience_is_a_virtue)")
     }
 
     // todo: need to figure out permission issue
@@ -836,7 +809,7 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
         val profile = getMobileService().profile
         return if (profile.explicitWaitEnabled)
             try {
-                newWaiter("check for the present of an element via locator '$locator")
+                newWaiter("check for the present of an element via locator '$locator'")
                     .until { it.findElement(findBy) } != null
             } catch (e: TimeoutException) {
                 false

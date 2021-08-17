@@ -201,4 +201,12 @@ BANDAGING/CASTING
         assertEquals("right-of=Yes", groups[0])
         assertEquals("clickable,class=android.widget.GroupView", groups[1])
     }
+
+    @Test
+    fun test_isMatch() {
+        val regex = "^(left-of|right-of|above|below):.+$"
+        assertTrue(RegexUtils.match("left-of:Cellphone", regex))
+        assertTrue(RegexUtils.match("below:Your Password", regex))
+        assertTrue(RegexUtils.match("right-of:Male", regex))
+    }
 }
