@@ -1,3 +1,20 @@
+/*
+ * Copyright 2012-2021 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * 	http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
+
 package org.nexial.core.plugins.web
 
 import org.apache.commons.lang3.StringUtils
@@ -8,8 +25,10 @@ import org.java_websocket.extensions.permessage_deflate.PerMessageDeflateExtensi
 import org.java_websocket.handshake.ServerHandshake
 import org.json.JSONObject
 import org.jsoup.Jsoup
+import org.nexial.core.NexialConst.Web.OPT_DELAY_BROWSER
 import org.nexial.core.NexialConst.WebMail.BROWSER_CONFIG
 import org.nexial.core.NexialConst.WebMail.MAILINATOR_BROWSER_PROFILE
+import org.nexial.core.model.ExecutionContext
 import org.nexial.core.plugins.web.LocatorHelper.normalizeXpathText
 import org.nexial.core.plugins.ws.WebServiceClient
 import org.nexial.core.utils.ConsoleUtils
@@ -35,7 +54,7 @@ class Mailinator : WebMailer() {
     // private val timeFormat = "EEE MMM dd yyyy HH:mm:ss zZ"
     private val locators = Locators(url)
 
-    override fun search(web: WebCommand, profile: WebMailProfile, searchCriteria: String, duration: Long): Set<String> {
+    override fun search(context: ExecutionContext, profile: WebMailProfile, searchCriteria: String, duration: Long): Set<String> {
         val matchingEmails = mutableSetOf<String>()
 
         val client = MailinatorClient(profile.inbox, searchCriteria, duration)
@@ -45,7 +64,7 @@ class Mailinator : WebMailer() {
         }
 
         // fallback to headless browser
-        if (matchingEmails.isEmpty()) matchingEmails.addAll(searchViaWebCommand(web, profile, searchCriteria))
+        if (matchingEmails.isEmpty()) matchingEmails.addAll(searchViaWebCommand(context, profile, searchCriteria))
 
         // if neither WS or headless browser works, then we give up
         if (matchingEmails.isEmpty()) return emptySet()
@@ -66,16 +85,26 @@ class Mailinator : WebMailer() {
                     ""
                 else {
                     val email = toEmailDetails(jsonObject)
-                    web.context.setData(deriveEmailContentVar(profile, email.id), email)
+                    context.setData(deriveEmailContentVar(profile, email.id), email)
                     email.id
                 }
             }
         }.filter { StringUtils.isNotEmpty(it) }.toSet()
     }
 
-    private fun searchViaWebCommand(web: WebCommand,
+    private fun searchViaWebCommand(context: ExecutionContext,
                                     profile: WebMailProfile,
                                     searchCriteria: String): List<String> {
+
+        val web = if (!context.isPluginLoaded("web")) {
+            val currentDelayBrowser = context.getBooleanData(OPT_DELAY_BROWSER)
+            context.setData(OPT_DELAY_BROWSER, true)
+            val newWeb = context.findPlugin("web") as WebCommand
+            context.setData(OPT_DELAY_BROWSER, currentDelayBrowser)
+            newWeb
+        } else
+            context.findPlugin("web") as WebCommand
+
         web.switchBrowser(MAILINATOR_BROWSER_PROFILE, BROWSER_CONFIG)
         openEmailListingPage(web, profile)
 
@@ -150,8 +179,8 @@ class Mailinator : WebMailer() {
         web.waitForCondition(NumberUtils.toLong(maxLoadTime)) { web.isBrowserLoadComplete }
     }
 
-    override fun delete(web: WebCommand, profile: WebMailProfile, id: String): Boolean {
-        val email = web.context.getObjectData(deriveEmailContentVar(profile, id), EmailDetails::class.java)
+    override fun delete(context: ExecutionContext, profile: WebMailProfile, id: String): Boolean {
+        val email = context.getObjectData(deriveEmailContentVar(profile, id), EmailDetails::class.java)
         if (email == null) {
             ConsoleUtils.error("$logPrefix There is no email with this id.")
             return false
