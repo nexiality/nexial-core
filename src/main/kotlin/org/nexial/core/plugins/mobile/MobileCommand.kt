@@ -31,7 +31,6 @@ import org.nexial.core.plugins.base.BaseCommand
 import org.nexial.core.plugins.base.NumberCommand
 import org.nexial.core.plugins.base.ScreenshotUtils
 import org.nexial.core.plugins.mobile.Direction.*
-import org.nexial.core.plugins.web.LocatorHelper.normalizeXpathText
 import org.nexial.core.plugins.web.WebDriverExceptionHelper.resolveErrorMessage
 import org.nexial.core.utils.CheckUtils.*
 import org.nexial.core.utils.ConsoleUtils
@@ -48,20 +47,8 @@ import java.io.IOException
 import java.time.Duration
 import java.util.*
 import java.util.function.Function
-import kotlin.Any
-import kotlin.Boolean
-import kotlin.Exception
-import kotlin.IllegalArgumentException
-import kotlin.IllegalStateException
-import kotlin.Int
-import kotlin.Long
-import kotlin.Pair
-import kotlin.String
-import kotlin.Throwable
-import kotlin.Throws
 import kotlin.math.absoluteValue
 import kotlin.math.max
-import kotlin.to
 
 // https://github.com/appium/appium-base-driver/blob/master/lib/protocol/routes.js#L345
 class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
@@ -415,15 +402,23 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
             if (StringUtils.isBlank(maxWaitMs) || maxWaitMs.trim() == "-1") -1
             else System.currentTimeMillis() + NumberUtils.toLong(maxWaitMs)
         val scrollArea = findElement(scrollTarget)
-        val scrollAreaWidth = scrollArea.rect.width
         val scrollAreaHeight = scrollArea.rect.height
+        val scrollAreaWidth = scrollArea.rect.width
+        val afterHoldWaitMs = 10L
+        val afterMoveWaitMs = 10L
+        val afterReleaseWaitMs = 250L
 
-        // 2. figure out the offset to use depending on `direction`
+        // 2. figure out the offsets to use based on `direction`
+        val startX = scrollAreaWidth / 2 * -1 + 10
+        val startY = scrollAreaHeight / 2 * -1 + 10
+        val factor = 0.5
+        val yOffset = (scrollAreaHeight * factor).toInt()
+        val xOffset = (scrollAreaWidth * factor).toInt()
         val offsets = when (dir) {
-            DOWN  -> Pair(Point(5, 5), Point(0, (scrollAreaHeight * 0.25).toInt()))
-            UP    -> Pair(Point(5, (scrollAreaHeight * 0.25).toInt()), Point(0, (scrollAreaHeight * -0.25).toInt()))
-            LEFT  -> Pair(Point((scrollAreaWidth * 0.25).toInt(), 5), Point((scrollAreaWidth * -0.25).toInt(), 0))
-            RIGHT -> Pair(Point(5, 5), Point((scrollAreaWidth * 0.25).toInt(), 0))
+            DOWN  -> Pair(Point(startX, 1), Point(0, yOffset))
+            UP    -> Pair(Point(startX, 1), Point(0, yOffset * -1))
+            LEFT  -> Pair(Point(1, startY), Point(xOffset * -1, 0))
+            RIGHT -> Pair(Point(1, startY), Point(xOffset, 0))
             else  -> throw IllegalArgumentException("Invalid direction; Percentage on direction not supported - $dir")
         }
 
@@ -439,10 +434,9 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
 
             Actions(driver)
                 .moveToElement(scrollArea, offsets.first.x, offsets.first.y)
-                .clickAndHold()
-                .moveByOffset(offsets.second.x, offsets.second.y)
-                .release()
-                .pause(250L)
+                .clickAndHold().pause(afterHoldWaitMs)
+                .moveByOffset(offsets.second.x, offsets.second.y).pause(afterMoveWaitMs)
+                .release().pause(afterReleaseWaitMs)
                 .perform()
             matches = waiter.until<List<MobileElement>> { scrollArea.findElements(targetLocator) }
         }
@@ -725,7 +719,7 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
             // 5. scroll downwards until specified item is found
             val waiter = newWaiter(1000, "identifying option '${item}'")
             var scrollCount = 0
-            val findByOption = By.xpath(".//*[@text=${normalizeXpathText(item)}]")
+            val findByOption = By.xpath(".//*[${MobileLocatorHelper.resolveTextFilter(item)}]")
             var itemElement = waiter.until { scrollTarget.findElements(findByOption) }
             while (CollectionUtils.isEmpty(itemElement)) {
                 if (scrollCount++ >= maxScrolls) break
