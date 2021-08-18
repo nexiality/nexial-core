@@ -642,6 +642,10 @@ public final class NexialConst {
         public static final String CMD_PROFILE_SEP = "::";
         public static final String CMD_PROFILE_DEFAULT = "DEFAULT";
 
+        // high priority overrides that must be honored before artifact parsing
+        public static final List<String> PRIORITY_OVERRIDES = Arrays.asList(
+            ENV_NAME, PROJ_PROP_TRIM_KEY, OPT_RUN_ID_PREFIX, OPT_MANAGE_MEM, ENABLE_EMAIL);
+
         // saveTableAsCSV and saveDivsAsCSV
         public static final class SaveGridAsCSV {
             private static final String _NS = registerSysVarGroup(NS_WEB + "saveGrid.");
@@ -1599,8 +1603,8 @@ public final class NexialConst {
         public static final String NS_WS_ASYNC = NS_WS + "async.";
 
         // default to 3 minutes
-        public static final String WS_ASYNC_SHUTDOWN_TIMEOUT = registerSysVar(NS_WS_ASYNC + "shutdownWaitMs",
-                                                                              3 * 60 * 1000);
+        public static final String WS_ASYNC_SHUTDOWN_TIMEOUT = registerSysVar(NS_WS_ASYNC + "shutdownWaitMs", 180000);
+
         public static final String WS_BASIC_NAMESPACE = NS_WS + "basic.";
         public static final String WS_BASIC_PWD = registerSysVar(WS_BASIC_NAMESPACE + "password");
         public static final String WS_BASIC_USER = registerSysVar(WS_BASIC_NAMESPACE + "user");
@@ -1660,8 +1664,11 @@ public final class NexialConst {
         public static final String OAUTH_TOKEN_TYPE_BASIC = "Basic";
         public static final String OAUTH_BASIC_AUTH_USERNAME_KEY = "basicAuth.usernameKey";
         public static final String OAUTH_BASIC_AUTH_PASSWORD_KEY = "basicAuth.passwordKey";
-        public static final String OAUTH_URL_PALCEHOLDER = "{0}";
+        public static final String OAUTH_URL_PLACEHOLDER = "{0}";
         public static final String OAUTH_CUSTOM_TYPE = "custom";
+
+        // mime types
+        public static final List<String> TEXT_MIME_TYPES = Arrays.asList("text", "json", "xml", "csv", "html");
 
         private Ws() {}
 

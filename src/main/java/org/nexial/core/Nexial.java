@@ -24,7 +24,6 @@ import org.apache.commons.cli.ParseException;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
@@ -302,6 +301,18 @@ public class Nexial {
             }
         }
 
+        // high priority overrides take place here
+        if (cmd.hasOption(OVERRIDE)) {
+            Arrays.stream(cmd.getOptionValues(OVERRIDE))
+                  .filter(override -> StringUtils.countMatches(override, "=") == 1)
+                  .map(override -> StringUtils.split(override, "="))
+                  .filter(pair -> PRIORITY_OVERRIDES.contains(pair[0]))
+                  .forEach(pair -> {
+                      ConsoleUtils.log("adding/override (priority) System variable " + pair[0] + "=" + pair[1]);
+                      System.setProperty(pair[0], pair[1]);
+                  });
+        }
+
         boolean isInteractive = cmd.hasOption(INTERACTIVE);
 
         // check for clean up temp directory
@@ -334,14 +345,13 @@ public class Nexial {
         // any variable override?
         // this is synonymous to using `JAVA_OPT=-D....` from console prior to executing Nexial
         if (cmd.hasOption(OVERRIDE)) {
-            String[] overrides = cmd.getOptionValues(OVERRIDE);
-            Arrays.stream(overrides).forEach(data -> {
-                String[] pair = StringUtils.split(data, "=");
-                if (ArrayUtils.getLength(pair) == 2) {
-                    ConsoleUtils.log("adding/override data variable " + pair[0] + "=" + pair[1]);
-                    System.setProperty(pair[0], pair[1]);
-                }
-            });
+            Arrays.stream(cmd.getOptionValues(OVERRIDE))
+                  .filter(override -> StringUtils.countMatches(override, "=") == 1)
+                  .map(override -> StringUtils.split(override, "="))
+                  .forEach(pair -> {
+                      ConsoleUtils.log("adding/override data variable " + pair[0] + "=" + pair[1]);
+                      System.setProperty(pair[0], pair[1]);
+                  });
         }
 
         ConsoleUtils.log("input files and output directory resolved...");

@@ -46,16 +46,13 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import static io.jsonwebtoken.SignatureAlgorithm.HS256;
 import static io.jsonwebtoken.impl.TextCodec.BASE64URL;
-import static java.util.Base64.*;
+import static java.util.Base64.getEncoder;
 import static org.apache.commons.lang3.StringUtils.SPACE;
 import static org.apache.http.HttpHeaders.AUTHORIZATION;
 import static org.apache.http.HttpHeaders.CONTENT_TYPE;
@@ -438,8 +435,8 @@ public class WsCommand extends BaseCommand {
      */
     private Map<String, String> getOAuthResponse(Map<String, String> config) throws IOException {
         String oAuthUrl = config.get("url");
-        if (oAuthUrl.contains(OAUTH_URL_PALCEHOLDER)) {
-            oAuthUrl = oAuthUrl.replace(OAUTH_URL_PALCEHOLDER, config.get("tenant_id"));
+        if (oAuthUrl.contains(OAUTH_URL_PLACEHOLDER)) {
+            oAuthUrl = oAuthUrl.replace(OAUTH_URL_PLACEHOLDER, config.get("tenant_id"));
         }
 
         if (!config.get("type").equals(OAUTH_CUSTOM_TYPE)) {
@@ -684,7 +681,9 @@ public class WsCommand extends BaseCommand {
 
         // any content-type starting with "text" (like "text/plain") would be treated as NOT binary
         String contentType = context.getDataByPrefix(WS_REQ_HEADER_PREFIX).get(CONTENT_TYPE);
-        return newOutputResolver(body, !StringUtils.startsWith(contentType, "text"));
+        boolean isBinary = StringUtils.isNotBlank(contentType) &&
+                           TEXT_MIME_TYPES.stream().noneMatch(contentType::contains);
+        return newOutputResolver(body, isBinary);
     }
 
     @NotNull
