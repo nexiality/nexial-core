@@ -48,8 +48,20 @@ import java.io.IOException
 import java.time.Duration
 import java.util.*
 import java.util.function.Function
+import kotlin.Any
+import kotlin.Boolean
+import kotlin.Exception
+import kotlin.IllegalArgumentException
+import kotlin.IllegalStateException
+import kotlin.Int
+import kotlin.Long
+import kotlin.Pair
+import kotlin.String
+import kotlin.Throwable
+import kotlin.Throws
 import kotlin.math.absoluteValue
 import kotlin.math.max
+import kotlin.to
 
 // https://github.com/appium/appium-base-driver/blob/master/lib/protocol/routes.js#L345
 class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
@@ -111,6 +123,40 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
             StepResult.success("EXPECTED element '$locator' found")
         else
             StepResult.fail("Expected element not found at '$locator'")
+
+    fun assertElementNotPresent(locator: String): StepResult =
+        if (isElementPresent(locator))
+            StepResult.fail("Element matching to '$locator' is found, which is NOT as expected")
+        else
+            StepResult.success("No element matching to '$locator' can be found, as EXPECTED")
+
+    fun assertElementEnabled(locator: String): StepResult {
+        return try {
+            val element = findElement(locator)
+            if (Objects.isNull(element)) StepResult.fail("No element found via locator '${locator}'")
+
+            if (BooleanUtils.toBoolean(element.getAttribute("enabled")))
+                StepResult.success("Element matching '${locator}' is enabled as EXPECTED")
+            else
+                StepResult.fail("Element matching '${locator}' is NOT enabled")
+        } catch (e: WebDriverException) {
+            StepResult.fail("Unable to find an element via '${locator}': ${e.localizedMessage}")
+        }
+    }
+
+    fun assertElementDisabled(locator: String): StepResult {
+        return try {
+            val element = findElement(locator)
+            if (Objects.isNull(element)) StepResult.fail("No element found via locator '${locator}'")
+
+            if (BooleanUtils.toBoolean(element.getAttribute("enabled")))
+                StepResult.fail("Element matching '${locator}' is NOT disabled")
+            else
+                StepResult.success("Element matching '${locator}' is disabled as EXPECTED")
+        } catch (e: WebDriverException) {
+            StepResult.fail("Unable to find an element via '${locator}': ${e.localizedMessage}")
+        }
+    }
 
     fun assertElementsPresent(prefix: String): StepResult {
         requiresNotBlank(prefix, "Invalid prefix", prefix)
@@ -224,8 +270,7 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
     /** partially supports polymatcher */
     fun clickByDisplayText(text: String): StepResult {
         requiresNotBlank(text, "invalid display text", text)
-        val xpath = StringBuilder("//*[@displayed='true' and " +
-                                  "${getMobileService().locatorHelper.resolveTextFilter(text)}]")
+        val xpath = StringBuilder("//*[@displayed='true' and ${MobileLocatorHelper.resolveTextFilter(text)}]")
         return click(xpath.toString())
     }
 
@@ -352,8 +397,8 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
     }
 
     /**
-     * scroll until `searchFor` is found. `searchFor` would be a locator
-     * `locator` should represent the scrollable container by which the target text can be found
+     * scroll until `searchFor` is found. `searchFor` would be a locator.
+     * The `locator` should represent the scrollable container by which the target text can be found
      * `direction` supports UP, DOWN, LEFT, RIGHT
      */
     fun scrollUntilFound(scrollTarget: String, direction: String, searchFor: String, maxWaitMs: String): StepResult {
@@ -367,7 +412,7 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
 
         // 1. make sure the specified scroll container exists
         val timeoutBy =
-            if (StringUtils.isNotBlank(maxWaitMs) || maxWaitMs.trim() == "-1") -1
+            if (StringUtils.isBlank(maxWaitMs) || maxWaitMs.trim() == "-1") -1
             else System.currentTimeMillis() + NumberUtils.toLong(maxWaitMs)
         val scrollArea = findElement(scrollTarget)
         val scrollAreaWidth = scrollArea.rect.width
@@ -375,10 +420,10 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
 
         // 2. figure out the offset to use depending on `direction`
         val offsets = when (dir) {
-            DOWN  -> Pair(Point(5, 5), Point(0, (scrollAreaHeight * 0.5).toInt()))
-            UP    -> Pair(Point(5, (scrollAreaHeight * 0.5).toInt()), Point(0, (scrollAreaHeight * -0.5).toInt()))
-            LEFT  -> Pair(Point((scrollAreaWidth * 0.5).toInt(), 5), Point((scrollAreaWidth * -0.5).toInt(), 0))
-            RIGHT -> Pair(Point(5, 5), Point((scrollAreaWidth * 0.5).toInt(), 0))
+            DOWN  -> Pair(Point(5, 5), Point(0, (scrollAreaHeight * 0.25).toInt()))
+            UP    -> Pair(Point(5, (scrollAreaHeight * 0.25).toInt()), Point(0, (scrollAreaHeight * -0.25).toInt()))
+            LEFT  -> Pair(Point((scrollAreaWidth * 0.25).toInt(), 5), Point((scrollAreaWidth * -0.25).toInt(), 0))
+            RIGHT -> Pair(Point(5, 5), Point((scrollAreaWidth * 0.25).toInt(), 0))
             else  -> throw IllegalArgumentException("Invalid direction; Percentage on direction not supported - $dir")
         }
 
@@ -387,7 +432,7 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
         val waiter = newWaiter(1000, "scrolling ${dir.name} to find $searchFor")
         val driver = getMobileService().driver
 
-        var matches = waiter.until<List<WebElement>> { scrollArea.findElements(targetLocator) }
+        var matches = waiter.until<List<MobileElement>> { scrollArea.findElements(targetLocator) }
         while (matches.isEmpty()) {
             if (timeoutBy != (-1).toLong() && System.currentTimeMillis() >= timeoutBy)
                 return StepResult.fail("time out while scrolling ${dir.detail} to find $searchFor")
@@ -399,7 +444,7 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
                 .release()
                 .pause(250L)
                 .perform()
-            matches = waiter.until<List<WebElement>> { scrollArea.findElements(targetLocator) }
+            matches = waiter.until<List<MobileElement>> { scrollArea.findElements(targetLocator) }
         }
 
         // 4. all done
@@ -750,7 +795,8 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
 
     internal fun resolveFindBy(locator: String) = getMobileService().locatorHelper.resolve(locator)
 
-    internal fun findElement(locator: String): WebElement {
+    @Throws(NoSuchElementException::class)
+    internal fun findElement(locator: String): MobileElement {
         requiresNotBlank(locator, "Invalid locator", locator)
         val findBy = resolveFindBy(locator)
         val profile = getMobileService().profile
@@ -766,88 +812,34 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
             getMobileService().driver.findElement(findBy)
     }
 
-    internal fun findElements(locator: String): List<WebElement> {
-        requiresNotBlank(locator, "Invalid locator", locator)
-        val findBy = resolveFindBy(locator)
-        val profile = getMobileService().profile
-        return if (profile.explicitWaitEnabled)
-            try {
-                newWaiter("find elements via locator '$locator'").until { it.findElements(findBy) }
-            } catch (e: TimeoutException) {
-                log("Timed out after ${profile.explicitWaitMs}ms looking for any element that matches '$locator'")
-                listOf()
-            }
-        else
-            getMobileService().driver.findElements(findBy)
-    }
-
-    internal fun findFirstMatch(locator: String): WebElement? {
-        requiresNotBlank(locator, "Invalid locator", locator)
-        val findBy = resolveFindBy(locator)
-        val profile = getMobileService().profile
-        val matches = if (profile.explicitWaitEnabled)
-            try {
-                newWaiter("find element via locator '$locator'").until { it.findElements(findBy) }
-            } catch (e: TimeoutException) {
-                log("Timed out after ${profile.explicitWaitMs}ms looking for any element that matches '$locator'")
-                null
-            }
-        else
-            getMobileService().driver.findElements(findBy)
-
-        return if (CollectionUtils.isEmpty(matches)) null else matches?.get(0)
-    }
-
-    internal fun collectTextList(locator: String) = collectTextList(findElements(locator))
-
-    internal fun collectTextList(matches: List<WebElement>): List<String> =
-        if (CollectionUtils.isEmpty(matches)) listOf() else matches.map { it.text }.toList()
-
-    internal fun isElementPresent(locator: String): Boolean {
-        requiresNotBlank(locator, "Invalid locator", locator)
-        val findBy = resolveFindBy(locator)
-        val profile = getMobileService().profile
-        return if (profile.explicitWaitEnabled)
-            try {
-                newWaiter("check for the present of an element via locator '$locator'")
-                    .until { it.findElement(findBy) } != null
-            } catch (e: TimeoutException) {
-                false
-            }
-        else
-            getMobileService().driver.findElement(findBy) != null
-    }
-
-    internal fun isElementVisible(locator: String): Boolean {
-        requiresNotBlank(locator, "Invalid locator", locator)
-        val findBy = resolveFindBy(locator)
-
-        val profile = getMobileService().profile
-        val element = if (profile.explicitWaitEnabled)
-            try {
-                newWaiter("check for the present of an element via locator '$locator").until { it.findElement(findBy) }
-            } catch (e: TimeoutException) {
-                null
-            }
-        else
-            getMobileService().driver.findElement(findBy)
-
-        return if (element == null)
+    internal fun isElementPresent(locator: String) =
+        try {
+            !Objects.isNull(findElement(locator))
+        } catch (e: WebDriverException) {
             false
-        else {
-            val mobileType = getMobileService().profile.mobileType
-            when {
-                mobileType.isIOS()     -> {
-                    if (StringUtils.equals(element.getAttribute("type"), "XCUIElementTypeImage"))
-                        BooleanUtils.toBoolean(element.findElementByXPath("./..").getAttribute("visible"))
-                    else
-                        BooleanUtils.toBoolean(element.getAttribute("visible"))
-                }
-                mobileType.isAndroid() -> BooleanUtils.toBoolean(element.getAttribute("displayed"))
-                else                   -> true
-            }
         }
-    }
+
+    internal fun isElementVisible(locator: String) =
+        try {
+            val element = findElement(locator)
+            if (Objects.isNull(element))
+                false
+            else {
+                val mobileType = getMobileService().profile.mobileType
+                when {
+                    mobileType.isIOS()     -> {
+                        if (StringUtils.equals(element.getAttribute("type"), "XCUIElementTypeImage"))
+                            BooleanUtils.toBoolean(element.findElementByXPath("./..").getAttribute("visible"))
+                        else
+                            BooleanUtils.toBoolean(element.getAttribute("visible"))
+                    }
+                    mobileType.isAndroid() -> BooleanUtils.toBoolean(element.getAttribute("displayed"))
+                    else                   -> true
+                }
+            }
+        } catch (e: NoSuchElementException) {
+            false
+        }
 
     internal fun waitForCondition(maxWaitMs: Long, condition: Function<WebDriver, Any>) =
         try {
@@ -862,6 +854,31 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
             log("Error while waiting for a condition to be met: ${e.message}")
             false
         }
+
+    internal fun findElements(locator: String): List<MobileElement> {
+        requiresNotBlank(locator, "Invalid locator", locator)
+        val findBy = resolveFindBy(locator)
+        val profile = getMobileService().profile
+        return if (profile.explicitWaitEnabled)
+            try {
+                newWaiter("find elements via locator '$locator'").until { it.findElements(findBy) }
+            } catch (e: TimeoutException) {
+                log("Timed out after ${profile.explicitWaitMs}ms looking for any element that matches '$locator'")
+                listOf()
+            }
+        else
+            getMobileService().driver.findElements(findBy)
+    }
+
+    internal fun findFirstMatch(locator: String): MobileElement? {
+        val matches = findElements(locator)
+        return if (CollectionUtils.isEmpty(matches)) null else matches[0]
+    }
+
+    internal fun collectTextList(locator: String) = collectTextList(findElements(locator))
+
+    internal fun collectTextList(matches: List<MobileElement>): List<String> =
+        if (CollectionUtils.isEmpty(matches)) listOf() else matches.map { it.text }.toList()
 
     @Throws(IOException::class)
     internal fun postScreenshot(target: File, locator: String?): StepResult {

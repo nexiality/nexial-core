@@ -18,12 +18,16 @@ package org.nexial.core.plugins.mobile
 
 import io.appium.java_client.MobileBy
 import org.apache.commons.lang3.StringUtils
+import org.apache.commons.lang3.math.NumberUtils
 import org.nexial.commons.utils.RegexUtils
 import org.nexial.commons.utils.TextUtils
 import org.nexial.core.NexialConst.PolyMatcher.*
 import org.nexial.core.plugins.web.LocatorHelper.normalizeXpathText
+import org.nexial.core.utils.CheckUtils.requiresInteger
 import org.nexial.core.utils.CheckUtils.requiresPositiveNumber
+import org.nexial.core.utils.ConsoleUtils
 import org.openqa.selenium.By
+import java.lang.Integer.MAX_VALUE
 
 /**
  * References:
@@ -108,46 +112,6 @@ class MobileLocatorHelper(private val mobileService: MobileService) {
 
     private fun resolveTextLocator(text: String) = By.xpath("//*[${resolveTextFilter(text)}]")
 
-    internal fun resolveTextFilter(text: String) = when {
-        StringUtils.startsWith(text, REGEX)            ->
-            throw IllegalArgumentException("PolyMatcher REGEX is not supported for 'text=...' locator")
-        StringUtils.startsWith(text, NUMERIC)          ->
-            throw IllegalArgumentException("PolyMatcher NUMERIC is not supported for this command")
-
-        StringUtils.startsWith(text, CONTAIN)          ->
-            "contains(@text,${normalizeText(text, CONTAIN)})"
-        StringUtils.startsWith(text, CONTAIN_ANY_CASE) ->
-            "contains(@text,${normalizeLower(text, CONTAIN_ANY_CASE)})"
-        StringUtils.startsWith(text, START)            ->
-            "starts-with(@text,${normalizeText(text, START)})"
-        StringUtils.startsWith(text, START_ANY_CASE)   ->
-            "starts-with(lower-case(@text),${normalizeLower(text, START_ANY_CASE)})"
-        StringUtils.startsWith(text, END)              ->
-            "ends-with(@text,${normalizeText(text, END)})"
-        StringUtils.startsWith(text, END_ANY_CASE)     ->
-            "ends-with(lower-case(@text),${normalizeLower(text, END_ANY_CASE)})"
-        StringUtils.startsWith(text, LENGTH)           ->
-            "string-length(@text)=${normalizeText(text, LENGTH)}"
-        StringUtils.startsWith(text, EXACT)            ->
-            "@text=${normalizeText(text, EXACT)}"
-        else                                           ->
-            "@text=${normalizeXpathText(text)}"
-    }
-
-    private fun normalizeLower(text: String, after: String) = normalizeText(text, after, true)
-    private fun normalizeText(text: String, after: String) = normalizeText(text, after, false)
-    private fun normalizeText(text: String, after: String, lowercase: Boolean): String {
-        var matchBy = text.substringAfter(after)
-
-        if (lowercase) matchBy = matchBy.toLowerCase()
-        if (after == LENGTH) {
-            matchBy = matchBy.trim()
-            requiresPositiveNumber(matchBy, "invalid number specified as length", matchBy)
-        }
-
-        return normalizeXpathText(matchBy)
-    }
-
     internal fun resolve(locator: String) = resolve(locator, false)
 
     internal fun fixBadXpath(locator: String?): String? {
@@ -166,7 +130,13 @@ class MobileLocatorHelper(private val mobileService: MobileService) {
         private const val rightOf = "right-of"
         private const val above = "above"
         private const val below = "below"
+        private const val item = "item"
+        private const val container = "container"
+        private const val scrollContainer = "scroll-container"
+
         private const val regexNearbyNameValueSpec = "\\s*.+\\s*[=:]\\s*.+\\s*"
+        private const val regexSurrounding =
+            "^\\s*($leftOf|$rightOf|$above|$below|$container|$scrollContainer|$item)\\s*:\\s*.+$"
 
         /**
          * Expected format: `nearby={left-of|right-of|below|above:text}{attribute_with_value_as_true,attribute=value,...}`
@@ -182,7 +152,6 @@ class MobileLocatorHelper(private val mobileService: MobileService) {
         internal fun handleNearbyLocator(mobileType: MobileType, specs: String): By {
             val errorPrefix = "Invalid NEARBY locator '$specs'"
             if (StringUtils.isBlank(specs)) throw IllegalArgumentException(errorPrefix)
-            //
             if (!TextUtils.isBetween(specs.trim(), "{", "}"))
                 throw IllegalArgumentException("$errorPrefix - Invalid format")
 
@@ -191,23 +160,108 @@ class MobileLocatorHelper(private val mobileService: MobileService) {
             else if (mobileType.isIOS()) parts.add("@visible='true'")
 
             // aggressively trim off extraneous leading/trailing spaces
+            val ancestorBuilder = StringBuilder()
+            var index = -1
             TextUtils.groups(specs.trim(), "{", "}", false).forEach { group ->
                 group.split(",").forEach { part ->
                     if (part.matches(Regex(regexNearbyNameValueSpec))) {
-                        val useNearByHint = RegexUtils.match(part, "^(left-of|right-of|above|below):.+$")
+                        val useNearByHint = RegexUtils.match(part, regexSurrounding)
                         val name = part.substringBefore(if (useNearByHint) ":" else "=").trim()
-                        val value = normalizeXpathText(part.substringAfter(if (useNearByHint) ":" else "=").trim())
+                        val value = part.substringAfter(if (useNearByHint) ":" else "=").trim()
+                        val textFilter = resolveTextFilter(value)
+                        val siblingTextFilter = "[$textFilter or .//*[$textFilter]]"
                         when (name) {
-                            leftOf, above  -> parts.add("following-sibling::*[1][@text=$value]")
-                            rightOf, below -> parts.add("preceding-sibling::*[1][@text=$value]")
-                            else           -> parts.add("@$name=$value")
+                            leftOf, above   -> {
+                                parts.add("following-sibling::*[1]$siblingTextFilter")
+                                index = MAX_VALUE
+                            }
+
+                            rightOf, below  -> {
+                                parts.add("preceding-sibling::*[1]$siblingTextFilter")
+                                index = 1
+                            }
+
+                            container       -> {
+                                parts.add(textFilter)
+                                ancestorBuilder.append("/ancestor::*[contains(lower-case(@class),'group')]")
+                            }
+
+                            scrollContainer -> {
+                                parts.add(textFilter)
+                                ancestorBuilder.append("/ancestor::*[contains(lower-case(@class),'scroll')]")
+                            }
+
+                            item            -> {
+                                requiresInteger(value, "item value must be a number", part)
+                                val itemIndex = NumberUtils.toInt(value)
+                                if (itemIndex < 1) throw IllegalArgumentException("item value must be greater than 0")
+                                index = itemIndex
+                            }
+
+                            else            -> parts.add(resolveFilter(name, value))
                         }
                     } else
                         parts.add("@${part.trim()}='true'")
                 }
             }
 
-            return By.xpath(parts.joinToString(prefix = "//*[", separator = " and ", postfix = "]"))
+            // consider index (ie. {item:...})
+            var xpath = parts.joinToString(prefix = "//*[", separator = " and ", postfix = "]")
+            if (ancestorBuilder.isNotBlank())
+                xpath = "($xpath$ancestorBuilder)[last()${if (index > 0) "-$index" else ""}]"
+            else if (index > 0) xpath = "($xpath)[${if (index == MAX_VALUE) "last()" else "" + index}]"
+
+            ConsoleUtils.log("resolved $specs to $xpath")
+            return By.xpath(xpath)
+        }
+
+        internal fun resolveTextFilter(text: String) = resolveFilter("text", text)
+
+        internal fun resolveFilter(attribute: String, value: String) = when {
+            StringUtils.startsWith(value, REGEX)            ->
+                throw IllegalArgumentException("PolyMatcher REGEX not supported for this locator: $attribute=$value")
+
+            StringUtils.startsWith(value, NUMERIC)          ->
+                throw IllegalArgumentException("PolyMatcher NUMERIC not supported for this locator: $attribute=$value")
+
+            StringUtils.startsWith(value, CONTAIN)          ->
+                "contains(@$attribute,${normalizeText(value, after = CONTAIN, lowercase = false)})"
+
+            StringUtils.startsWith(value, CONTAIN_ANY_CASE) ->
+                "contains(lower-case(@$attribute),${normalizeText(value, after = CONTAIN_ANY_CASE, lowercase = true)})"
+
+            StringUtils.startsWith(value, START)            ->
+                "starts-with(@$attribute,${normalizeText(value, after = START, lowercase = false)})"
+
+            StringUtils.startsWith(value, START_ANY_CASE)   ->
+                "starts-with(lower-case(@$attribute),${normalizeText(value, after = START_ANY_CASE, lowercase = true)})"
+
+            StringUtils.startsWith(value, END)              ->
+                "ends-with(@$attribute,${normalizeText(value, after = END, lowercase = false)})"
+
+            StringUtils.startsWith(value, END_ANY_CASE)     ->
+                "ends-with(lower-case(@$attribute),${normalizeText(value, after = END_ANY_CASE, lowercase = true)})"
+
+            StringUtils.startsWith(value, LENGTH)           ->
+                "string-length(@$attribute)=${normalizeText(value, after = LENGTH, lowercase = false)}"
+
+            StringUtils.startsWith(value, EXACT)            ->
+                "@$attribute=${normalizeText(value, after = EXACT, lowercase = false)}"
+
+            else                                            ->
+                "@$attribute=${normalizeXpathText(value)}"
+        }
+
+        private fun normalizeText(text: String, after: String, lowercase: Boolean): String {
+            var matchBy = text.substringAfter(after)
+
+            if (lowercase) matchBy = matchBy.toLowerCase()
+            if (after == LENGTH) {
+                matchBy = matchBy.trim()
+                requiresPositiveNumber(matchBy, "invalid number specified as length", matchBy)
+            }
+
+            return normalizeXpathText(matchBy)
         }
     }
 }
