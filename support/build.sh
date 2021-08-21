@@ -34,6 +34,7 @@ cd ..
 rm -frv support
 
 cd bin
+chmod -fR 755 *.sh
 ./nexial-script-update.sh -v -t ../template
 
 build_ret=$?
