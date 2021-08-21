@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env bash
 
 # -----------------------------------------------------------------------------
 # set up
@@ -58,6 +58,7 @@ rm -frv support
 # -----------------------------------------------------------------------------
 echo Update Nexial templates with latest command listing
 cd bin
+chmod -fR 755 *.sh
 ./nexial-script-update.sh -v -t ../template
 
 build_ret=$?
