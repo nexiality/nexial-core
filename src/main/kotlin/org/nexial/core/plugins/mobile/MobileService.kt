@@ -93,10 +93,12 @@ class MobileService(val profile: MobileProfile, val remoteUrl: String?) {
         if (IS_OS_WINDOWS) "adb.exe" else "adb"
     ).toFile().absolutePath
 
-    private val numericCapNames = listOf("remoteAppsCacheLimit", "interKeyDelay", "webviewConnectRetries")
+    private val numericCapNames = listOf("remoteAppsCacheLimit", "interKeyDelay", "webviewConnectRetries",
+                                         "appium:maxInstances")
     private val booleanCapNames = listOf("ensureWebviewsHavePages", "allowTestPackages", "useKeystore",
-                                         "enableWebviewDetailsCollection", "dontStopAppOnReset", "unicodeKeyboard",
-                                         "resetKeyboard", "noSign", "ignoreUnimportantViews", "disableAndroidWatchers",
+                                         "enableWebviewDetailsCollection", "appium:enableWebviewDetailsCollection",
+                                         "dontStopAppOnReset", "unicodeKeyboard", "resetKeyboard", "noSign",
+                                         "ignoreUnimportantViews", "disableAndroidWatchers",
                                          "recreateChromeDriverSessions", "nativeWebScreenshot", "autoGrantPermissions",
                                          "gpsEnabled", "skipDeviceInitialization", "chromedriverDisableBuildCheck",
                                          "skipUnlock", "autoLaunch", "skipLogcatCapture", "disableWindowAnimation",
@@ -105,7 +107,9 @@ class MobileService(val profile: MobileProfile, val remoteUrl: String?) {
                                          "autoAcceptAlerts", "autoDismissAlerts", "nativeInstrumentsLib",
                                          "nativeWebTap", "safariAllowPopups", "safariIgnoreFraudWarning",
                                          "safariOpenLinksInBackground", "keepKeyChains", "showIOSLog",
-                                         "enableAsyncExecuteFromHttps", "skipLogCapture", "skipLogCapture")
+                                         "enableAsyncExecuteFromHttps", "skipLogCapture", "skipLogCapture",
+                                         "noReset","restart", "useNewWDA"
+    )
 
     private var appiumUrl: URL
     internal val driver: AppiumDriver<MobileElement>
@@ -169,9 +173,9 @@ class MobileService(val profile: MobileProfile, val remoteUrl: String?) {
 
     fun manifest() =
         mapOf("type" to profile.mobileType.platformName,
-              "device name" to profile.config.getValue("deviceName"),
-              "avd" to profile.config.getValue("avd"),
-              "platform version" to profile.config.getValue("platformVersion"),
+              "device name" to profile.config["deviceName"],
+              "avd" to profile.config["avd"],
+              "platform version" to profile.config["platformVersion"],
               "appium url" to appiumUrl.toString(),
               "implicit wait" to "${profile.implicitWaitMs}ms",
               "explicit wait" to "${profile.explicitWaitMs}ms",

@@ -40,7 +40,7 @@ class SystemVarListing {
                         vars[StringUtils.replace(fieldValue, "$newNs.", "$oldNs.")] = fieldValue
                     }
                 } catch (e: IllegalAccessException) {
-                    // forget this one..
+                    // forget this one...
                 }
             }
 
@@ -50,12 +50,12 @@ class SystemVarListing {
     }
 
     fun collectVars(): String {
-        val systemVars = addSpecialCases(TreeMap<String, String>())
+        val systemVars = addSpecialCases(TreeMap())
 
         targets.forEach { target -> systemVars.putAll(collectVars(target)) }
 
         val output = StringBuilder()
-        systemVars.forEach { oldVar, newVar -> output.append("$oldVar=$newVar$pairSep") }
+        systemVars.forEach { (oldVar, newVar) -> output.append("$oldVar=$newVar$pairSep") }
 
         return output.toString()
     }

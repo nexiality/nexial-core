@@ -22,6 +22,8 @@ import org.apache.commons.lang3.math.NumberUtils
 import org.nexial.commons.utils.RegexUtils
 import org.nexial.commons.utils.TextUtils
 import org.nexial.core.NexialConst.PolyMatcher.*
+import org.nexial.core.plugins.mobile.MobileType.ANDROID
+import org.nexial.core.plugins.mobile.MobileType.IOS
 import org.nexial.core.plugins.web.LocatorHelper.normalizeXpathText
 import org.nexial.core.utils.CheckUtils.requiresInteger
 import org.nexial.core.utils.CheckUtils.requiresPositiveNumber
@@ -110,7 +112,8 @@ class MobileLocatorHelper(private val mobileService: MobileService) {
         return alt
     }
 
-    private fun resolveTextLocator(text: String) = By.xpath("//*[${resolveTextFilter(text)}]")
+    private fun resolveTextLocator(text: String) =
+        By.xpath("//*[${resolveTextFilter(mobileService.profile.mobileType, text)}]")
 
     internal fun resolve(locator: String) = resolve(locator, false)
 
@@ -135,8 +138,15 @@ class MobileLocatorHelper(private val mobileService: MobileService) {
         private const val scrollContainer = "scroll-container"
 
         private const val regexNearbyNameValueSpec = "\\s*.+\\s*[=:]\\s*.+\\s*"
-        private const val regexSurrounding =
-            "^\\s*($leftOf|$rightOf|$above|$below|$container|$scrollContainer|$item)\\s*:\\s*.+$"
+        private const val regexSurrounding = "^\\s*" +
+                                             "($leftOf|$rightOf|$above|$below|$container|$scrollContainer|$item)" +
+                                             "\\s*:\\s*.+$"
+
+        internal val clearAllNotificationsLocators = listOf(
+            ConditionalLocator(ANDROID, "text=Clear all"),
+            ConditionalLocator(ANDROID, "id=com.android.systemui:id/dismiss_text"),
+            ConditionalLocator(ANDROID, "id=com.android.systemui:id/clear_all_button"),
+        )
 
         /**
          * Expected format: `nearby={left-of|right-of|below|above:text}{attribute_with_value_as_true,attribute=value,...}`
@@ -168,7 +178,7 @@ class MobileLocatorHelper(private val mobileService: MobileService) {
                         val useNearByHint = RegexUtils.match(part, regexSurrounding)
                         val name = part.substringBefore(if (useNearByHint) ":" else "=").trim()
                         val value = part.substringAfter(if (useNearByHint) ":" else "=").trim()
-                        val textFilter = resolveTextFilter(value)
+                        val textFilter = resolveTextFilter(mobileType, value)
                         val siblingTextFilter = "[$textFilter or .//*[$textFilter]]"
                         when (name) {
                             leftOf, above   -> {
@@ -183,12 +193,12 @@ class MobileLocatorHelper(private val mobileService: MobileService) {
 
                             container       -> {
                                 parts.add(textFilter)
-                                ancestorBuilder.append("/ancestor::*[contains(lower-case(@class),'group')]")
+                                ancestorBuilder.append("/ancestor::*[contains(${lower("class", "group")},'group')]")
                             }
 
                             scrollContainer -> {
                                 parts.add(textFilter)
-                                ancestorBuilder.append("/ancestor::*[contains(lower-case(@class),'scroll')]")
+                                ancestorBuilder.append("/ancestor::*[contains(${lower("class", "scroll")},'scroll')]")
                             }
 
                             item            -> {
@@ -215,7 +225,11 @@ class MobileLocatorHelper(private val mobileService: MobileService) {
             return By.xpath(xpath)
         }
 
-        internal fun resolveTextFilter(text: String) = resolveFilter("text", text)
+        internal fun resolveTextFilter(mobileType: MobileType, text: String) = when (mobileType) {
+            ANDROID -> resolveFilter("text", text)
+            IOS     -> resolveFilter("label", text) +
+                       " or (contains(${lower("type", "text")},'text') and ${resolveFilter("value", text)})"
+        }
 
         internal fun resolveFilter(attribute: String, value: String) = when {
             StringUtils.startsWith(value, REGEX)            ->
@@ -225,37 +239,44 @@ class MobileLocatorHelper(private val mobileService: MobileService) {
                 throw IllegalArgumentException("PolyMatcher NUMERIC not supported for this locator: $attribute=$value")
 
             StringUtils.startsWith(value, CONTAIN)          ->
-                "contains(@$attribute,${normalizeText(value, after = CONTAIN, lowercase = false)})"
+                "contains(@$attribute,${normalizeText(value, after = CONTAIN)})"
 
-            StringUtils.startsWith(value, CONTAIN_ANY_CASE) ->
-                "contains(lower-case(@$attribute),${normalizeText(value, after = CONTAIN_ANY_CASE, lowercase = true)})"
+            StringUtils.startsWith(value, CONTAIN_ANY_CASE) -> {
+                // Android and iOS compatible approach
+                val valueLower = value.substringAfter(CONTAIN_ANY_CASE).toLowerCase()
+                "contains(${lower(attribute, valueLower)},'$valueLower')"
+            }
 
             StringUtils.startsWith(value, START)            ->
-                "starts-with(@$attribute,${normalizeText(value, after = START, lowercase = false)})"
+                "starts-with(@$attribute,${normalizeText(value, after = START)})"
 
-            StringUtils.startsWith(value, START_ANY_CASE)   ->
-                "starts-with(lower-case(@$attribute),${normalizeText(value, after = START_ANY_CASE, lowercase = true)})"
+            StringUtils.startsWith(value, START_ANY_CASE)   -> {
+                // Android and iOS compatible approach
+                val valueLower = value.substringAfter(CONTAIN_ANY_CASE).toLowerCase()
+                "starts-with(${lower(attribute, valueLower)},'$valueLower')"
+            }
 
             StringUtils.startsWith(value, END)              ->
-                "ends-with(@$attribute,${normalizeText(value, after = END, lowercase = false)})"
+                "ends-with(@$attribute,${normalizeText(value, after = END)})"
 
-            StringUtils.startsWith(value, END_ANY_CASE)     ->
-                "ends-with(lower-case(@$attribute),${normalizeText(value, after = END_ANY_CASE, lowercase = true)})"
+            StringUtils.startsWith(value, END_ANY_CASE)     -> {
+                // Android and iOS compatible approach
+                val valueLower = value.substringAfter(CONTAIN_ANY_CASE).toLowerCase()
+                "ends-with(${lower(attribute, valueLower)},'$valueLower')"
+            }
 
             StringUtils.startsWith(value, LENGTH)           ->
-                "string-length(@$attribute)=${normalizeText(value, after = LENGTH, lowercase = false)}"
+                "string-length(@$attribute)=${normalizeText(value, after = LENGTH)}"
 
-            StringUtils.startsWith(value, EXACT)            ->
-                "@$attribute=${normalizeText(value, after = EXACT, lowercase = false)}"
+            StringUtils.startsWith(value, EXACT)            -> "@$attribute=${normalizeText(value, after = EXACT)}"
 
             else                                            ->
                 "@$attribute=${normalizeXpathText(value)}"
         }
 
-        private fun normalizeText(text: String, after: String, lowercase: Boolean): String {
+        private fun normalizeText(text: String, after: String): String {
             var matchBy = text.substringAfter(after)
 
-            if (lowercase) matchBy = matchBy.toLowerCase()
             if (after == LENGTH) {
                 matchBy = matchBy.trim()
                 requiresPositiveNumber(matchBy, "invalid number specified as length", matchBy)
@@ -263,5 +284,14 @@ class MobileLocatorHelper(private val mobileService: MobileService) {
 
             return normalizeXpathText(matchBy)
         }
+
+        private fun lower(attribute: String, text: String) =
+            "translate(@$attribute,\"${text.toUpperCase()}\",\"${text.toLowerCase()}\")"
     }
 }
+
+data class ConditionalLocator(val condition: String, val locator: String) {
+    constructor(type: MobileType, locator: String) : this(type.toString(), locator)
+}
+
+data class ConditionalLocators(val locators: List<ConditionalLocator>)

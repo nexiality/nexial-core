@@ -22,7 +22,7 @@ import com.jcraft.jsch.ChannelSftp.LsEntry
 import org.apache.commons.collections4.CollectionUtils
 import org.apache.commons.io.FileUtils
 import org.apache.commons.io.filefilter.DirectoryFileFilter.DIRECTORY
-import org.apache.commons.io.filefilter.FileFileFilter.FILE
+import org.apache.commons.io.filefilter.FileFileFilter
 import org.apache.commons.io.filefilter.RegexFileFilter
 import org.apache.commons.lang3.StringUtils
 import org.nexial.commons.utils.FileUtil
@@ -88,9 +88,10 @@ open class SshWorker(internal val action: TransferAction, val remote: String, va
 
     internal fun listLocal(local: String) =
             when {
-                FileUtil.isDirectoryReadable(local) -> FileUtils.listFiles(File(local), FILE, DIRECTORY).toList()
-                FileUtil.isFileReadable(local)      -> listOf(File(local))
-
+                FileUtil.isDirectoryReadable(local) ->
+                    FileUtils.listFiles(File(local), FileFileFilter.INSTANCE, DIRECTORY).toList()
+                FileUtil.isFileReadable(local)      ->
+                    listOf(File(local))
                 else                                -> {
                     val localPath = StringUtils.replace(local, "\\", "/")
                     val dir = StringUtils.substringBeforeLast(localPath, "/")

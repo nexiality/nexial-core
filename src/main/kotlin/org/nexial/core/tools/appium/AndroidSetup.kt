@@ -212,7 +212,8 @@ object AndroidSetup {
     }
 
     private fun downloadAndUnzip(downloadUrl: String, unzipLocation: File): MutableList<File>? {
-        val saveTo = JAVA_IO_TMPDIR + StringUtils.substringAfterLast(downloadUrl, "/")
+        val saveTo = StringUtils.appendIfMissing(JAVA_IO_TMPDIR, separator) +
+                     StringUtils.substringAfterLast(downloadUrl, "/")
         verbose("downloading from $downloadUrl...")
         val downloadResp = WebServiceClient(null)
             .configureAsQuiet()

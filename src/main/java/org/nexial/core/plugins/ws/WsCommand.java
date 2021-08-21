@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2018 the original author or authors.
+ * Copyright 2012-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import io.jsonwebtoken.*;
 import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -38,6 +39,7 @@ import org.nexial.core.utils.CheckUtils;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.OutputResolver;
 
+import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
 import java.io.BufferedReader;
 import java.io.File;
@@ -49,6 +51,7 @@ import java.net.URLEncoder;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import static io.jsonwebtoken.SignatureAlgorithm.HS256;
 import static io.jsonwebtoken.impl.TextCodec.BASE64URL;
@@ -60,8 +63,7 @@ import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.NexialConst.Ws.*;
 import static org.nexial.core.SystemVariables.getDefaultBool;
 import static org.nexial.core.plugins.ws.WebServiceClient.hideAuthDetails;
-import static org.nexial.core.utils.CheckUtils.requires;
-import static org.nexial.core.utils.CheckUtils.requiresNotBlank;
+import static org.nexial.core.utils.CheckUtils.*;
 
 public class WsCommand extends BaseCommand {
     protected boolean verbose;
@@ -125,26 +127,64 @@ public class WsCommand extends BaseCommand {
                requestNoBody(url, "", var, "delete");
     }
 
-    public StepResult graphql(String url, String body, String var) { return requestWithBody(url, body, var, "graphql");}
+    public StepResult graphql(String url,
+                              String body,
+                              String var) { return requestWithBody(url, body, var, "graphql"); }
 
+    /**
+     * as of v4.2, `returnCode` now supports range or list
+     */
     public StepResult assertReturnCode(String var, String returnCode) {
-        requires(StringUtils.isNotBlank(var), "invalid variable", var);
+        requiresValidVariableName(var);
+        requiresNotBlank(returnCode, "invalid return code", returnCode);
 
-        int statusCode = NumberUtils.toInt(returnCode);
-        requires(statusCode > 99 && statusCode < 999, "Invalid value for expected return code: '" + returnCode + "'");
+        Response response;
         try {
-            Response response = resolveResponseObject(var);
+            response = resolveResponseObject(var);
             if (response == null) { return StepResult.fail("No response variable found using '" + var + "'"); }
-
-            if (statusCode == response.getReturnCode()) {
-                return StepResult.success("EXPECTED return code found");
-            } else {
-                return StepResult.fail("return code (" + response.getReturnCode() + ") DID NOT match expected (" +
-                                       returnCode + ")");
-            }
         } catch (ClassCastException e) {
             return StepResult.fail("Error: " + e.getMessage());
         }
+
+        List<Integer> returnCodes = expandReturnCodes(returnCode);
+        requiresNotEmpty(returnCodes, "unable to derive any useful return code for validation", returnCode);
+
+        if (returnCodes != null && returnCodes.contains(response.getReturnCode())) {
+            return StepResult.success("EXPECTED return code found");
+        } else {
+            return StepResult.fail("return code (" + response.getReturnCode() + ") DID NOT match expected (" +
+                                   returnCode + ")");
+        }
+    }
+
+    @Nullable
+    protected List<Integer> expandReturnCodes(String returnCode) {
+        if (NumberUtils.isDigits(returnCode)) { return Collections.singletonList(NumberUtils.toInt(returnCode)); }
+
+        return TextUtils
+            .toList(returnCode, ",", true).stream().map(code -> {
+                // single digits
+                if (NumberUtils.isDigits(code)) { return Collections.singletonList(NumberUtils.toInt(code)); }
+
+                // range specified. e.g. 200-300
+                if (StringUtils.contains(code, "-") && !StringUtils.startsWith(code, "-")) {
+                    int startCode = NumberUtils.toInt(StringUtils.trim(StringUtils.substringBefore(code, "-")), -1);
+                    int endCode = NumberUtils.toInt(StringUtils.trim(StringUtils.substringAfter(code, "-")), -1);
+                    if (startCode == -1 || endCode == -1 || endCode < startCode) {
+                        ConsoleUtils.error("Ignoring invalid return code range: " + code);
+                        return null;
+                    }
+
+                    return IntStream.rangeClosed(startCode, endCode).boxed().collect(Collectors.toList());
+                }
+
+                ConsoleUtils.error("Ignoring invalid return code: " + code);
+                return null;
+            })
+            .filter(CollectionUtils::isNotEmpty)
+            .flatMap(Collection::stream)
+            .filter(code -> code > 99 && code < 999)
+            .collect(Collectors.toList());
     }
 
     public StepResult header(String name, String value) {
@@ -471,7 +511,8 @@ public class WsCommand extends BaseCommand {
         con.setRequestMethod("POST");
 
         if (StringUtils.isNotEmpty(basicAuthUsername) && StringUtils.isNotEmpty(basicAuthPassword)) {
-            String encoding = getEncoder().encodeToString((basicAuthUsername + ":" + basicAuthPassword).getBytes("UTF-8"));
+            String encoding =
+                getEncoder().encodeToString((basicAuthUsername + ":" + basicAuthPassword).getBytes("UTF-8"));
             con.setRequestProperty("Authorization", StringUtils.join(OAUTH_TOKEN_TYPE_BASIC, SPACE, encoding));
         }
         con.getOutputStream().write(postDataBytes);

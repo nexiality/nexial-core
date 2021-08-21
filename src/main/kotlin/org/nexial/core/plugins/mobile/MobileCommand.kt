@@ -31,6 +31,8 @@ import org.nexial.core.plugins.base.BaseCommand
 import org.nexial.core.plugins.base.NumberCommand
 import org.nexial.core.plugins.base.ScreenshotUtils
 import org.nexial.core.plugins.mobile.Direction.*
+import org.nexial.core.plugins.mobile.MobileType.ANDROID
+import org.nexial.core.plugins.mobile.MobileType.IOS
 import org.nexial.core.plugins.web.WebDriverExceptionHelper.resolveErrorMessage
 import org.nexial.core.utils.CheckUtils.*
 import org.nexial.core.utils.ConsoleUtils
@@ -56,6 +58,7 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
     private var mobileService: MobileService? = null
     private val scrollableLocator = "//*[@scrollable='true' and @displayed='true' and @enabled='true']"
     private val scrollableLocator2 = "//android.widget.ScrollView[@displayed='true' and @enabled='true']"
+    private val iosAlertLocator = "//*[@type='XCUIElementTypeAlert' and @visible='true']"
 
     override fun init(context: ExecutionContext) {
         super.init(context)
@@ -237,6 +240,20 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
         return StepResult.success("stored content of '$locator' as '$`var`'")
     }
 
+    fun saveAttributes(`var`: String, locator: String, attribute: String): StepResult {
+        requiresValidAndNotReadOnlyVariableName(`var`)
+        requiresNotBlank(attribute, "invalid attribute", attribute)
+
+        val values = collectAttributeValues(locator, attribute)
+        if (CollectionUtils.isNotEmpty(values)) {
+            context.setData(`var`, values)
+        } else {
+            context.removeData(`var`)
+        }
+
+        return StepResult.success("The value of '$attribute' from '$locator' are saved to '$`var`'")
+    }
+
     fun waitForElementPresent(locator: String, waitMs: String): StepResult {
         requiresNotBlank(locator, "invalid locator", locator)
         val maxWaitMs = deriveMaxWaitMs(waitMs)
@@ -245,6 +262,122 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
             StepResult.success("Element by locator '$locator' is present")
         } else {
             StepResult.fail("Element by locator '" + locator + "' is NOT present within " + maxWaitMs + "ms")
+        }
+    }
+
+    /**
+     * assert presence of an alert, optionally also asserting the text on the alert. PolyMatcher supported
+     */
+    fun assertAlertPresent(text: String): StepResult {
+        val assertText = !context.isNullOrEmptyOrBlankValue(text)
+        val msgSuffix = if (assertText) "with text $text" else ""
+        return if (isAlertPresent(text))
+            StepResult.success("EXPECTED alert dialog $msgSuffix found on current window")
+        else
+            StepResult.fail("EXPECTED alert dialog $msgSuffix NOT found")
+    }
+
+    internal fun isAlertPresent(text: String): Boolean {
+        val assertText = !context.isNullOrEmptyOrBlankValue(text)
+        val mobileService = getMobileService()
+        return when (mobileService.profile.mobileType) {
+            ANDROID -> {
+                throw IllegalArgumentException("This command is not supported on Android device")
+                // val driver = mobileService.driver
+                // val switchTo = driver.switchTo()
+                // try {
+                //     val alert = switchTo.alert()
+                //     if (alert == null)
+                //         false
+                //     else {
+                //         if (!assertText)
+                //             true
+                //         else TextUtils.polyMatch(alert.text, text)
+                //     }
+                // } catch (e: NoAlertPresentException) {
+                //     false
+                // }
+            }
+
+            IOS     -> {
+                isElementPresent(
+                    "$iosAlertLocator//*[@type='XCUIElementTypeStaticText'" +
+                    if (assertText) " and ${MobileLocatorHelper.resolveFilter("value", text)}]" else "]"
+                )
+            }
+        }
+    }
+
+    fun clearAlert(option: String): StepResult {
+        requiresNotBlank(option, "invalid option/button name", option)
+        if (!isAlertPresent("")) return StepResult.fail("No alert dialog found")
+
+        val mobileService = getMobileService()
+        return when (mobileService.profile.mobileType) {
+            ANDROID -> {
+                StepResult.fail("This command is not supported on Android device")
+            }
+            IOS     -> {
+                val alertOption = "$iosAlertLocator//*[@type='XCUIElementTypeButton' and " +
+                                  "${MobileLocatorHelper.resolveFilter("label", option)}]"
+                if (isElementPresent(alertOption)) {
+                    findElement(alertOption).click()
+                    StepResult.success("Alert dialog dismissed via '$option'")
+                } else
+                    StepResult.fail("No alert dialog with option '$option' found")
+            }
+        }
+    }
+
+    fun saveAlertText(`var`: String): StepResult {
+        requiresValidVariableName(`var`)
+        if (!isAlertPresent("")) {
+            context.removeData(`var`)
+            return StepResult.success("No alert dialog found, no data will be saved to $`var`")
+        }
+
+        val mobileService = getMobileService()
+        return when (mobileService.profile.mobileType) {
+            ANDROID -> {
+                StepResult.fail("This command is not supported on Android device")
+            }
+            IOS     -> {
+                val alertMessages = findElements("$iosAlertLocator//*[@type='XCUIElementTypeStaticText']")
+                if (CollectionUtils.isEmpty(alertMessages)) StepResult.fail("No alert dialog found")
+
+                context.setData(`var`, alertMessages.joinToString(separator = "\n") { it.getAttribute("value") })
+                StepResult.success("Text from current alert dialog saved to $`var`")
+            }
+        }
+    }
+
+    fun clearNotification(): StepResult {
+        val mobileService = getMobileService()
+        return when (mobileService.profile.mobileType) {
+            ANDROID -> {
+                val driver = mobileService.driver
+                (driver as AndroidDriver).openNotifications()
+
+                // if there aren't any notification, then the `clear all` buttons are likely to exist
+                try {
+                    val clearAll = findElement(MobileLocatorHelper.clearAllNotificationsLocators)
+                    clearAll.click()
+                } catch (e: NoSuchElementException) {
+                    ConsoleUtils.log("The 'clear all' button does not exists; likely there's no notification to " +
+                                     "clear at this time")
+                }
+
+                try {
+                    driver.runAppInBackground(Duration.ofSeconds(1))
+                } catch (e: Exception) {
+                }
+
+                StepResult.success("All notifications cleared")
+            }
+            IOS     -> {
+                // probably doesn't work...
+                StepResult.fail("This command is not supported on iOS device")
+            }
         }
     }
 
@@ -257,7 +390,11 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
     /** partially supports polymatcher */
     fun clickByDisplayText(text: String): StepResult {
         requiresNotBlank(text, "invalid display text", text)
-        val xpath = StringBuilder("//*[@displayed='true' and ${MobileLocatorHelper.resolveTextFilter(text)}]")
+        val xpath = StringBuilder(buildString {
+            append("//*[@displayed='true' and ")
+            append(MobileLocatorHelper.resolveTextFilter(getMobileService().profile.mobileType, text))
+            append("]")
+        })
         return click(xpath.toString())
     }
 
@@ -340,6 +477,8 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
             else
                 StepResult.fail("Element '${locator}' not cleared; current text is '${currentText}'")
         } else {
+            element.click()
+            element.clear()
             element.sendKeys(text)
             val postWaitMs = mobileService.profile.postActionWaitMs
             if (postWaitMs > MIN_WAIT_MS) waitFor(postWaitMs.toInt())
@@ -675,71 +814,75 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
         val driver = mobileService.driver
         val profileName = mobileService.profile.profile
 
-        return if (mobileService.profile.mobileType.isAndroid()) {
-            // 1. click on the dropdown to display the options
-            val select = findElement(locator)
-            withPostActionWait(Actions(mobileService.driver).click(select), mobileService)
-            waitFor(800)
+        return when (mobileService.profile.mobileType) {
+            ANDROID -> {
+                // 1. click on the dropdown to display the options
+                val select = findElement(locator)
+                withPostActionWait(Actions(mobileService.driver).click(select), mobileService)
+                waitFor(800)
 
-            // 2. find all scrollable containers
-            var scrollables = driver.findElements(By.xpath(scrollableLocator))
-            if (CollectionUtils.isEmpty(scrollables)) {
-                scrollables = driver.findElements(By.xpath(scrollableLocator2))
-                if (CollectionUtils.isEmpty(scrollables)) return StepResult.fail("Unable to locate a usable dropdown")
-            }
-
-            // 3. find the most likely scrollable container
-            val scrollTarget = if (scrollables.size == 1)
-                scrollables[0]
-            else {
-                // lastResort is usually the top level scrollable container (x or y < 10)
-                val lastResort = scrollables.find { elem -> elem.rect.x < 10 || elem.rect.y < 10 }
-                if (lastResort != null) scrollables.remove(lastResort)
-
-                if (scrollables.size > 1) {
-                    // find the closest one with the most similar width
-                    val matchWidth = select.rect.width
-                    val matchY = select.rect.y
-                    scrollables.sortBy { elem ->
-                        (elem.rect.y - matchY).absoluteValue *
-                        (elem.rect.width - matchWidth).absoluteValue / matchWidth
-                    }
+                // 2. find all scrollable containers
+                var scrollables = driver.findElements(By.xpath(scrollableLocator))
+                if (CollectionUtils.isEmpty(scrollables)) {
+                    scrollables = driver.findElements(By.xpath(scrollableLocator2))
+                    if (CollectionUtils.isEmpty(scrollables))
+                        return StepResult.fail("Unable to locate a usable dropdown")
                 }
-                scrollables[0]
+
+                // 3. find the most likely scrollable container
+                val scrollTarget = if (scrollables.size == 1)
+                    scrollables[0]
+                else {
+                    // lastResort is usually the top level scrollable container (x or y < 10)
+                    val lastResort = scrollables.find { elem -> elem.rect.x < 10 || elem.rect.y < 10 }
+                    if (lastResort != null) scrollables.remove(lastResort)
+
+                    if (scrollables.size > 1) {
+                        // find the closest one with the most similar width
+                        val matchWidth = select.rect.width
+                        val matchY = select.rect.y
+                        scrollables.sortBy { elem ->
+                            (elem.rect.y - matchY).absoluteValue *
+                            (elem.rect.width - matchWidth).absoluteValue / matchWidth
+                        }
+                    }
+                    scrollables[0]
+                }
+
+                // 4. determine how many lines to scroll (if needed)
+                val maxScrolls = context.getIntConfig(target, profileName, DROPDOWN_MAX_SCROLL)
+                // val scrollAmount = context.getIntConfig(target, profileName, DROPDOWN_TEXT_LINE_HEIGHT) *
+                //                    context.getIntConfig(target, profileName, DROPDOWN_LINES_TO_SCROLL) * -1
+                val scrollAmount = scrollTarget.rect.height / 2
+                val startFrom = Point(0, scrollAmount - 5)
+                val scrollTo = Point(0, (scrollAmount / 2) * -1)
+
+                // 5. scroll downwards until specified item is found
+                val waiter = newWaiter(1000, "identifying option '${item}'")
+                var scrollCount = 0
+                val findByOption = By.xpath(".//*[${MobileLocatorHelper.resolveTextFilter(ANDROID, item)}]")
+                var itemElement = waiter.until { scrollTarget.findElements(findByOption) }
+                while (CollectionUtils.isEmpty(itemElement)) {
+                    if (scrollCount++ >= maxScrolls) break
+                    Actions(driver)
+                        .moveToElement(scrollTarget, startFrom.x, startFrom.y)
+                        .clickAndHold()
+                        .moveByOffset(scrollTo.x, scrollTo.y)
+                        .release()
+                        .pause(500L)
+                        .perform()
+                    itemElement = waiter.until { scrollTarget.findElements(findByOption) }
+                }
+
+                if (CollectionUtils.isNotEmpty(itemElement)) {
+                    itemElement[0].click()
+                    StepResult.success("dropdown option '${item}' selected")
+                } else
+                    StepResult.fail("Unable to find dropdown option '${item}'")
             }
-
-            // 4. determine how many lines to scroll (if needed)
-            val maxScrolls = context.getIntConfig(target, profileName, DROPDOWN_MAX_SCROLL)
-            // val scrollAmount = context.getIntConfig(target, profileName, DROPDOWN_TEXT_LINE_HEIGHT) *
-            //                    context.getIntConfig(target, profileName, DROPDOWN_LINES_TO_SCROLL) * -1
-            val scrollAmount = scrollTarget.rect.height / 2
-            val startFrom = Point(0, scrollAmount - 5)
-            val scrollTo = Point(0, (scrollAmount / 2) * -1)
-
-            // 5. scroll downwards until specified item is found
-            val waiter = newWaiter(1000, "identifying option '${item}'")
-            var scrollCount = 0
-            val findByOption = By.xpath(".//*[${MobileLocatorHelper.resolveTextFilter(item)}]")
-            var itemElement = waiter.until { scrollTarget.findElements(findByOption) }
-            while (CollectionUtils.isEmpty(itemElement)) {
-                if (scrollCount++ >= maxScrolls) break
-                Actions(driver)
-                    .moveToElement(scrollTarget, startFrom.x, startFrom.y)
-                    .clickAndHold()
-                    .moveByOffset(scrollTo.x, scrollTo.y)
-                    .release()
-                    .pause(500L)
-                    .perform()
-                itemElement = waiter.until { scrollTarget.findElements(findByOption) }
-            }
-
-            if (CollectionUtils.isNotEmpty(itemElement)) {
-                itemElement[0].click()
-                StepResult.success("dropdown option '${item}' selected")
-            } else
-                StepResult.fail("Unable to find dropdown option '${item}'")
-        } else
-            StepResult.fail("This command does not support iOS device at this time (#patience_is_a_virtue)")
+            IOS     ->
+                StepResult.fail("This command does not support iOS device at this time (#patience_is_a_virtue)")
+        }
     }
 
     // todo: need to figure out permission issue
@@ -787,7 +930,11 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
             .withMessage(message)
     }
 
-    internal fun resolveFindBy(locator: String) = getMobileService().locatorHelper.resolve(locator)
+    internal fun resolveFindBy(locator: String): By {
+        val findBy = getMobileService().locatorHelper.resolve(locator)
+        // ConsoleUtils.log("resolve locator as $findBy")
+        return findBy
+    }
 
     @Throws(NoSuchElementException::class)
     internal fun findElement(locator: String): MobileElement {
@@ -806,6 +953,23 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
             getMobileService().driver.findElement(findBy)
     }
 
+    @Throws(NoSuchElementException::class)
+    internal fun findElement(locators: List<ConditionalLocator>): MobileElement {
+        val mobileType = getMobileService().profile.mobileType.toString()
+        val filteredLocators = locators.filter { it.condition == mobileType }
+        for (qualified in filteredLocators) {
+            try {
+                val matched = findElement(qualified.locator)
+                ConsoleUtils.log("[conditional-locators]: A match found via locator ${qualified.locator}")
+                return matched
+            } catch (e: NoSuchElementException) {
+                continue
+            }
+        }
+
+        throw NoSuchElementException("No element matched to any of these locators: $filteredLocators")
+    }
+
     internal fun isElementPresent(locator: String) =
         try {
             !Objects.isNull(findElement(locator))
@@ -822,8 +986,10 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
                 val mobileType = getMobileService().profile.mobileType
                 when {
                     mobileType.isIOS()     -> {
+                        // special case for image: check either itself or parent for visibility
                         if (StringUtils.equals(element.getAttribute("type"), "XCUIElementTypeImage"))
-                            BooleanUtils.toBoolean(element.findElementByXPath("./..").getAttribute("visible"))
+                            BooleanUtils.toBoolean(element.getAttribute("visible")) ||
+                            BooleanUtils.toBoolean(findElement("$locator/..").getAttribute("visible"))
                         else
                             BooleanUtils.toBoolean(element.getAttribute("visible"))
                     }
@@ -873,6 +1039,9 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
 
     internal fun collectTextList(matches: List<MobileElement>): List<String> =
         if (CollectionUtils.isEmpty(matches)) listOf() else matches.map { it.text }.toList()
+
+    internal fun collectAttributeValues(locator: String, attribute: String) =
+        findElements(locator).map { it.getAttribute(attribute) }.toList()
 
     @Throws(IOException::class)
     internal fun postScreenshot(target: File, locator: String?): StepResult {

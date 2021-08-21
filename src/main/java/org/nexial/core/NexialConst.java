@@ -2073,9 +2073,10 @@ public final class NexialConst {
         protected static final String SCRIPT_EXT = (IS_OS_WINDOWS ? "bat" : "sh");
 
         public static final class Android {
-            public static final String RESOURCE_BASE = "https://nexiality.github.io/documentation" +
-                                                       "/commands/mobile/resources";
-            public static final String CMDLINE_TOOLS_REDIRECT_URL = RESOURCE_BASE + "/android_cmdtools.url";
+            public static final String RESOURCE_BASE =
+                "https://nexiality.github.io/documentation/commands/mobile/resources";
+            public static final String CMDLINE_TOOLS_REDIRECT_URL =
+                RESOURCE_BASE + "/android_cmdtools." + (IS_OS_MAC ? "mac" : IS_OS_LINUX ? "linux" : "win") + ".url";
             public static final String ANDROID_SDK_LICENSE_ZIP_URL = RESOURCE_BASE + "/android_sdk_licenses.zip";
             public static final String ANDROID_SDK_SKINS_ZIP_URL = RESOURCE_BASE + "/android_sdk_skins.zip";
             public static final String ANDROID_EMULATORS_URL = RESOURCE_BASE + "/android_emulators.json";

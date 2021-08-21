@@ -179,6 +179,7 @@ object CommandConst {
 
         "mobile.clickUntilNotFound",
         "mobile.waitForElementPresent",
+        "mobile.assertAlertPresent",
 
         "tn.5250.saveTableAsCSV",
 
