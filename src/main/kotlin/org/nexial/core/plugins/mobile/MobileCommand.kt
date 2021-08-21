@@ -932,7 +932,7 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
 
     internal fun resolveFindBy(locator: String): By {
         val findBy = getMobileService().locatorHelper.resolve(locator)
-        // ConsoleUtils.log("resolve locator as $findBy")
+        if (context.isVerbose) ConsoleUtils.log("resolve locator as $findBy")
         return findBy
     }
 

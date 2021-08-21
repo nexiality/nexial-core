@@ -37,13 +37,21 @@ class MobileLocatorHelperTest {
                      handleNearbyLocator(ANDROID, "{left-of=None of these}{clickable}").toString())
 
         assertEquals(xpathPrefix + "(" + prefixIOS +
-                     "and preceding-sibling::*[1][@text='All of the above' or .//*[@text='All of the above']] " +
+                     "and preceding-sibling::*[1]" +
+                     "[@label='All of the above' or " +
+                     "(contains(translate(@type,\"TEXT\",\"text\"),'text') and @value='All of the above') or " +
+                     ".//*[@label='All of the above' or " +
+                     "(contains(translate(@type,\"TEXT\",\"text\"),'text') and @value='All of the above')]] " +
                      "and @clickable='true' and @class='UIRadioButton'])[1]",
                      handleNearbyLocator(IOS, "{right-of=All of the above}{clickable,class=UIRadioButton}").toString())
 
         // spaces, tabs and NL are welcomed
         assertEquals(xpathPrefix + "(" + prefixIOS +
-                     "and preceding-sibling::*[1][@text='A = B' or .//*[@text='A = B']] " +
+                     "and preceding-sibling::*[1][" +
+                     "@label='A = B' or " +
+                     "(contains(translate(@type,\"TEXT\",\"text\"),'text') and @value='A = B') or " +
+                     ".//*[@label='A = B' or " +
+                     "(contains(translate(@type,\"TEXT\",\"text\"),'text') and @value='A = B')]] " +
                      "and @clickable='true' and @class='android.widget.TextView'])[1]",
                      handleNearbyLocator(IOS,
                                          " { right-of = A = B } \n" +
@@ -51,8 +59,11 @@ class MobileLocatorHelperTest {
 
         // special case: text with single and double quotes
         assertEquals(xpathPrefix + "(" + prefixIOS +
-                     "and preceding-sibling::*[1][@text=concat('My ','\"','special','\"',' event',\"'\",'s date') or" +
-                     " .//*[@text=concat('My ','\"','special','\"',' event',\"'\",'s date')]] " +
+                     "and preceding-sibling::*[1][" +
+                     "@label=concat('My ','\"','special','\"',' event',\"'\",'s date') or " +
+                     "(contains(translate(@type,\"TEXT\",\"text\"),'text') and @value=concat('My ','\"','special','\"',' event',\"'\",'s date')) or " +
+                     ".//*[@label=concat('My ','\"','special','\"',' event',\"'\",'s date') or " +
+                     "(contains(translate(@type,\"TEXT\",\"text\"),'text') and @value=concat('My ','\"','special','\"',' event',\"'\",'s date'))]] " +
                      "and @clickable='true'])[1]",
                      handleNearbyLocator(IOS, " { right-of = My \"special\" event's date }  { clickable }").toString())
     }
@@ -70,7 +81,11 @@ class MobileLocatorHelperTest {
                      handleNearbyLocator(ANDROID, "{above:User's preferences}{clickable}").toString())
 
         assertEquals(xpathPrefix + "(" + prefixIOS +
-                     "and preceding-sibling::*[1][@text='All of the above' or .//*[@text='All of the above']] " +
+                     "and preceding-sibling::*[1][" +
+                     "@label='All of the above' or " +
+                     "(contains(translate(@type,\"TEXT\",\"text\"),'text') and @value='All of the above') or " +
+                     ".//*[@label='All of the above' or " +
+                     "(contains(translate(@type,\"TEXT\",\"text\"),'text') and @value='All of the above')]] " +
                      "and @clickable='true' and @class='Radio'])[1]",
                      handleNearbyLocator(IOS, "{right-of : All of the above}{clickable,class=Radio}").toString())
     }
@@ -110,7 +125,8 @@ class MobileLocatorHelperTest {
     fun test_nearby_with_polymatcher() {
         assertEquals(
             xpathPrefix + "($prefixAndroid" +
-            "and preceding-sibling::*[1][@text='chicken' or .//*[@text='chicken']] and contains(lower-case(@class),'image')])[2]",
+            "and preceding-sibling::*[1][@text='chicken' or .//*[@text='chicken']] " +
+            "and contains(translate(@class,\"IMAGE\",\"image\"),'image')])[2]",
             handleNearbyLocator(ANDROID, "{right-of:chicken}{item:2}{class=CONTAIN_ANY_CASE:Image}").toString()
         )
 
@@ -123,22 +139,22 @@ class MobileLocatorHelperTest {
 
     @Test
     fun test_nearby_with_ancestor() {
-        assertEquals(
-            xpathPrefix + "(" + prefixAndroid + "and @text='chicken' and contains(lower-case(@class),'image')]" +
-            "/ancestor::*[contains(lower-case(@class),'group')])[last()]",
-            handleNearbyLocator(ANDROID, "{container:chicken}{class=CONTAIN_ANY_CASE:Image}").toString()
+        assertEquals(xpathPrefix + "(" + prefixAndroid +
+                     "and @text='chicken' and contains(translate(@class,\"IMAGE\",\"image\"),'image')]" +
+                     "/ancestor::*[contains(translate(@class,\"GROUP\",\"group\"),'group')])[last()]",
+                     handleNearbyLocator(ANDROID, "{container:chicken}{class=CONTAIN_ANY_CASE:Image}").toString()
         )
 
         assertEquals(
             xpathPrefix + "(" + prefixAndroid + "and @text='Primary Physician']" +
-            "/ancestor::*[contains(lower-case(@class),'scroll')])[last()]",
+            "/ancestor::*[contains(translate(@class,\"SCROLL\",\"scroll\"),'scroll')])[last()]",
             handleNearbyLocator(ANDROID, "{scroll-container:Primary Physician}").toString()
         )
 
 
         assertEquals(
             xpathPrefix + "(" + prefixAndroid + "and @text=concat('Patron',\"'\",'s Preference')]" +
-            "/ancestor::*[contains(lower-case(@class),'scroll')])[last()-2]",
+            "/ancestor::*[contains(translate(@class,\"SCROLL\",\"scroll\"),'scroll')])[last()-2]",
             handleNearbyLocator(ANDROID, "{scroll-container:Patron's Preference}{item:2}").toString()
         )
 
