@@ -58,7 +58,7 @@ object AndroidSetup {
                "extras;google;webdriver", "extras;intel;Hardware_Accelerated_Execution_Manager"
         ).plus(
             if (IS_OS_WINDOWS)
-                listOf("emulator", "extras;google;usb_driver", "extras;google;Android_Emulator_Hypervisor_Driver")
+                listOf("extras;google;usb_driver", "extras;google;Android_Emulator_Hypervisor_Driver")
             else
                 listOf()
         ).map { if (IS_OS_WINDOWS) "\"$it\"" else it })
