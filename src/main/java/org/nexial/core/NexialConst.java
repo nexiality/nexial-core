@@ -2070,7 +2070,7 @@ public final class NexialConst {
         // log level to use when configuring appium to send log to external file
         public static final String FILE_CONSOLE_LOG_LEVEL = "warn:debug";
 
-        protected static final String SCRIPT_EXT = (IS_OS_WINDOWS ? "bat" : "sh");
+        protected static final String SCRIPT_EXT = (IS_OS_WINDOWS ? ".bat" : "");
 
         public static final class Android {
             public static final String RESOURCE_BASE =
@@ -2081,8 +2081,8 @@ public final class NexialConst {
             public static final String ANDROID_SDK_SKINS_ZIP_URL = RESOURCE_BASE + "/android_sdk_skins.zip";
             public static final String ANDROID_EMULATORS_URL = RESOURCE_BASE + "/android_emulators.json";
 
-            public static final String AVD_MANAGER_REL_PATH = "bin" + separator + "avdmanager." + SCRIPT_EXT;
-            public static final String SDK_MANAGER_REL_PATH = "bin" + separator + "sdkmanager." + SCRIPT_EXT;
+            public static final String AVD_MANAGER_REL_PATH = "bin" + separator + "avdmanager" + SCRIPT_EXT;
+            public static final String SDK_MANAGER_REL_PATH = "bin" + separator + "sdkmanager" + SCRIPT_EXT;
             public static final String SDK_REL_PATH = "android" + separator + "sdk";
 
             public static final String ANDROID_AVD_HOME =

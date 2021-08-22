@@ -4,6 +4,8 @@ import org.apache.commons.cli.CommandLine
 import org.apache.commons.cli.Options
 import org.apache.commons.collections4.CollectionUtils
 import org.apache.commons.io.FileUtils
+import org.apache.commons.io.filefilter.DirectoryFileFilter.DIRECTORY
+import org.apache.commons.io.filefilter.TrueFileFilter
 import org.apache.commons.lang3.BooleanUtils
 import org.apache.commons.lang3.StringUtils
 import org.apache.commons.lang3.SystemUtils.IS_OS_WINDOWS
@@ -49,15 +51,18 @@ object AndroidSetup {
     private val optionListSysImg = listOf("--sdk_root=$ANDROID_SDK_HOME", "--list")
     private val optionListInstalledSysImg = listOf("--sdk_root=$ANDROID_SDK_HOME", "--list_installed")
     private val optionInstall = listOf("--sdk_root=$ANDROID_SDK_HOME", "--install")
-    private val optionInstallCommPkg = optionInstall.plus(listOf("\"extras;google;usb_driver\"",
-                                                                 "\"extras;google;webdriver\"",
-                                                                 "\"platform-tools\"",
-                                                                 "\"emulator\"",
-                                                                 "\"cmdline-tools;latest\"",
-                                                                 "\"extras;intel;Hardware_Accelerated_Execution_Manager\"",
-                                                                 "\"extras;google;Android_Emulator_Hypervisor_Driver\"",
-                                                                 "\"platforms;android-30\"",
-                                                                 "\"build-tools;30.0.3\""))
+    private val optionInstallCommPkg = optionInstall.plus(
+        listOf("build-tools;30.0.3",
+               "cmdline-tools;latest",
+               "platform-tools", "platforms;android-30",
+               "extras;google;webdriver", "extras;intel;Hardware_Accelerated_Execution_Manager"
+        ).plus(
+            if (IS_OS_WINDOWS)
+                listOf("emulator", "extras;google;usb_driver", "extras;google;Android_Emulator_Hypervisor_Driver")
+            else
+                listOf()
+        ).map { if (IS_OS_WINDOWS) "\"$it\"" else it })
+
 
     private var defAvd = "Pixel_04a"
     private var defSysImg = if (arch == 64) DEF_SYS_IMG_64 else DEF_SYS_IMG_32
@@ -96,6 +101,10 @@ object AndroidSetup {
 
         log("\ninstalling pre-packaged Android emulator skins...")
         downloadAndUnzip(ANDROID_SDK_SKINS_ZIP_URL, File(SKIN_PATH))
+
+        // before executing batch/shell scripts, let's make sure they are executable
+        FileUtils.listFiles(File(CMDLINE_TOOLS_PATH + separator + "bin"), TrueFileFilter.TRUE, DIRECTORY)
+            .forEach { file: File -> file.setExecutable(true, false) }
 
         // step 5: install command packages
         //  sdkmanager --sdk_root=~/.nexial/android/sdk --install "extras;google;usb_driver" "extras;google;webdriver"
@@ -233,7 +242,12 @@ object AndroidSetup {
         }
         verbose("downloaded to $downloaded")
 
-        FileUtils.deleteDirectory(unzipLocation)
+        if (FileUtil.isDirectoryReadWritable(unzipLocation))
+            try {
+                FileUtils.deleteDirectory(unzipLocation)
+            } catch (e: Exception) {
+                // ignore
+            }
         unzipLocation.mkdirs()
         val unzipped = FileUtil.unzip(File(downloaded), unzipLocation, verbose)
         verbose("unzipped $downloaded to $unzipLocation")
@@ -463,10 +477,12 @@ object AndroidSetup {
         )
         val cmd = StringUtils.appendIfMissing(projectHome, separator) + "$runEmuPrefix${userAvd}.cmd"
         FileUtils.write(File(cmd), TextUtils.replace(runEmuTemplateCmd, batchTemplateReplacements), DEF_CHARSET)
+        File(cmd).setExecutable(true, false)
         verbose("created emulator batch file: $cmd")
 
         val sh = StringUtils.appendIfMissing(projectHome, separator) + "$runEmuPrefix${userAvd}.sh"
         FileUtils.write(File(sh), TextUtils.replace(runEmuTemplateSh, batchTemplateReplacements), DEF_CHARSET)
+        File(sh).setExecutable(true, false)
         verbose("created emulator batch file: $sh")
     }
 
