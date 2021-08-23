@@ -74,6 +74,38 @@ function checkJava() {
             fi
         fi
     fi
+
+		java_version=$("$JAVA" -version 2>&1 | awk -F '"' '/version/ {print $2}' | sed -r s/^\([0-9]+\.[0-9]+\)\.*$/\\1/g)
+		JAVA_SUPPORTS_MODULE="true"
+		if [[ "$java_version" = "16.0" ]] ; then JAVA_VERSION=16 ; fi
+		if [[ "$java_version" = "15.0" ]] ; then JAVA_VERSION=15 ; fi
+		if [[ "$java_version" = "14.0" ]] ; then JAVA_VERSION=14 ; fi
+		if [[ "$java_version" = "13.0" ]] ; then JAVA_VERSION=13 ; fi
+		if [[ "$java_version" = "12.0" ]] ; then JAVA_VERSION=12 ; fi
+		if [[ "$java_version" = "11.0" ]] ; then JAVA_VERSION=11 ; fi
+		if [[ "$java_version" = "10.0" ]] ; then JAVA_VERSION=10 ; fi
+		if [[ "$java_version" = "1.9" ]] ; then
+			JAVA_VERSION=1.9
+			JAVA_SUPPORTS_MODULE="false"
+		fi
+		if [[ "$java_version" = "1.8" ]] ; then
+			JAVA_VERSION=1.8
+			JAVA_SUPPORTS_MODULE="false"
+		fi
+
+		if [[ "$JAVA_VERSION" = "" ]] ; then
+			echo "ERROR!!!"
+			echo "Unknown or unsupported Java found:"
+			$JAVA -version
+			exit 254
+		fi
+
+		if [[ "$JAVA_SUPPORTS_MODULE" = "true" ]] ; then
+			JAVA_OPT="${JAVA_OPT} --add-opens=java.base/java.lang=ALL-UNNAMED"
+			JAVA_OPT="${JAVA_OPT} --add-opens=java.base/java.util=ALL-UNNAMED"
+			JAVA_OPT="${JAVA_OPT} --add-opens=java.base/java.text=ALL-UNNAMED"
+			JAVA_OPT="${JAVA_OPT} --add-opens=java.base/java.desktop=ALL-UNNAMED"
+		fi
 }
 
 
@@ -106,7 +138,7 @@ function resolveEnv() {
         *)          export NEXIAL_OS="UNKNOWN:${unameOut}"
     esac
 
-    JAVA_VERSION=`echo "$(${JAVA} -version 2>&1)" | grep " version" | awk '{ print substr($3, 2, length($3)-2); }'`
+		# JAVA_VERSION=`echo "$(${JAVA} -version 2>&1)" | grep " version" | awk '{ print substr($3, 2, length($3)-2); }'`
 
     echo "» ENVIRONMENT: "
     echo "  CURRENT TIME:   `date \"+%Y-%m-%d %H:%M%:%S\"`"
@@ -190,10 +222,6 @@ fi
 mkdir $HOME/tmp > /dev/null 2>&1
 
 JAVA_OPT="${JAVA_OPT} -ea"
-JAVA_OPT="${JAVA_OPT} --add-opens=java.base/java.lang=ALL-UNNAMED"
-JAVA_OPT="${JAVA_OPT} --add-opens=java.base/java.util=ALL-UNNAMED"
-JAVA_OPT="${JAVA_OPT} --add-opens=java.base/java.text=ALL-UNNAMED"
-JAVA_OPT="${JAVA_OPT} --add-opens=java.base/java.desktop=ALL-UNNAMED"
 JAVA_OPT="${JAVA_OPT} -Xss24m"
 JAVA_OPT="${JAVA_OPT} -Djava.io.tmpdir=$HOME/tmp"
 JAVA_OPT="${JAVA_OPT} -Dfile.encoding=UTF-8"
