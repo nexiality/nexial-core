@@ -75,20 +75,21 @@ function checkJava() {
         fi
     fi
 
-		java_version=$("$JAVA" -version 2>&1 | awk -F '"' '/version/ {print $2}' | sed -r s/^\([0-9]+\.[0-9]+\)\.*$/\\1/g)
+		java_version=$("$JAVA" -version 2>&1 | awk -F '"' '/version/ {print $2}')
 		JAVA_SUPPORTS_MODULE="true"
-		if [[ "$java_version" = "16.0" ]] ; then JAVA_VERSION=16 ; fi
-		if [[ "$java_version" = "15.0" ]] ; then JAVA_VERSION=15 ; fi
-		if [[ "$java_version" = "14.0" ]] ; then JAVA_VERSION=14 ; fi
-		if [[ "$java_version" = "13.0" ]] ; then JAVA_VERSION=13 ; fi
-		if [[ "$java_version" = "12.0" ]] ; then JAVA_VERSION=12 ; fi
-		if [[ "$java_version" = "11.0" ]] ; then JAVA_VERSION=11 ; fi
-		if [[ "$java_version" = "10.0" ]] ; then JAVA_VERSION=10 ; fi
-		if [[ "$java_version" = "1.9" ]] ; then
+		if [[ "$java_version" = 16* ]] ; then JAVA_VERSION=16 ; fi
+		if [[ "$java_version" = 15* ]] ; then JAVA_VERSION=15 ; fi
+		if [[ "$java_version" = 14* ]] ; then JAVA_VERSION=14 ; fi
+		if [[ "$java_version" = 13* ]] ; then JAVA_VERSION=13 ; fi
+		if [[ "$java_version" = 12* ]] ; then JAVA_VERSION=12 ; fi
+		if [[ "$java_version" = 11* ]] ; then JAVA_VERSION=11 ; fi
+		if [[ "$java_version" = 10* ]] ; then JAVA_VERSION=10 ; fi
+		if [[ "$java_version" = 1.9* ]] ; then
 			JAVA_VERSION=1.9
 			JAVA_SUPPORTS_MODULE="false"
 		fi
-		if [[ "$java_version" = "1.8" ]] ; then
+
+		if [[ "$java_version" = 1.8* ]] ; then
 			JAVA_VERSION=1.8
 			JAVA_SUPPORTS_MODULE="false"
 		fi

@@ -66,8 +66,8 @@ class MobileLocatorHelper(private val mobileService: MobileService) {
         val strategy = StringUtils.trim(StringUtils.lowerCase(StringUtils.substringBefore(locator, "=")))
         val loc = StringUtils.trim(StringUtils.substringAfter(locator, "="))
         val normalized = normalizeXpathText(loc)
-        val isIOS = mobileService.profile.mobileType.isIOS()
-        val isAndroid = mobileService.profile.mobileType.isAndroid()
+        val isIOS = mobileService.isIOS()
+        val isAndroid = mobileService.isAndroid()
 
         return when (strategy) {
             // standard ones
@@ -229,6 +229,11 @@ class MobileLocatorHelper(private val mobileService: MobileService) {
             ANDROID -> resolveFilter("text", text)
             IOS     -> resolveFilter("label", text) +
                        " or (contains(${lower("type", "text")},'text') and ${resolveFilter("value", text)})"
+        }
+
+        internal fun resolveLinkTextFilter(mobileType: MobileType, text: String) = when (mobileType) {
+            ANDROID -> resolveFilter("text", text)
+            IOS     -> resolveFilter("label", text)
         }
 
         internal fun resolveFilter(attribute: String, value: String) = when {

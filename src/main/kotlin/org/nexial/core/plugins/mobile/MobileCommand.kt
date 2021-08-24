@@ -254,6 +254,17 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
         return StepResult.success("The value of '$attribute' from '$locator' are saved to '$`var`'")
     }
 
+    fun assertAttribute(locator: String, attribute: String, text: String): StepResult {
+        requiresNotBlank(attribute, "invalid attribute", attribute)
+
+        val values = collectAttributeValues(locator, attribute)
+        if (CollectionUtils.isNotEmpty(values)) return assertEqual(text, values[0])
+        return if (StringUtils.isEmpty(text))
+            StepResult.success("No attribute value found, and none was expected")
+        else
+            StepResult.fail("Either no element matches '$locator' or none contains the attribute '$attribute'")
+    }
+
     fun waitForElementPresent(locator: String, waitMs: String): StepResult {
         requiresNotBlank(locator, "invalid locator", locator)
         val maxWaitMs = deriveMaxWaitMs(waitMs)
@@ -390,9 +401,10 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
     /** partially supports polymatcher */
     fun clickByDisplayText(text: String): StepResult {
         requiresNotBlank(text, "invalid display text", text)
+        val mobileService = getMobileService()
         val xpath = StringBuilder(buildString {
-            append("//*[@displayed='true' and ")
-            append(MobileLocatorHelper.resolveTextFilter(getMobileService().profile.mobileType, text))
+            append("//*[").append(if (mobileService.isAndroid()) "@displayed" else "@visible").append("='true' and ")
+            append(MobileLocatorHelper.resolveLinkTextFilter(mobileService.profile.mobileType, text))
             append("]")
         })
         return click(xpath.toString())
@@ -805,7 +817,35 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
     fun home(): StepResult = keyPress(if (getMobileService().profile.mobileType.isAndroid()) HOME.code else MENU.code)
     fun back() = keyPress(BACK.code)
     fun forward() = executeCommand("forward")
-    fun recentApps() = keyPress(APP_SWITCH.code)
+    fun recentApps() = when (getMobileService().profile.mobileType) {
+        ANDROID -> {
+            keyPress(APP_SWITCH.code)
+        }
+        IOS     -> {
+            val pressHome = mapOf("name" to "home")
+            val driver = getMobileService().driver
+            driver.executeScript("mobile: pressButton", pressHome)
+            driver.executeScript("mobile: pressButton", pressHome)
+            StepResult.success()
+        }
+    }
+
+    fun launchApp(app: String): StepResult {
+        requiresNotBlank(app, "invalid app/bundle id", app)
+        val mobileService = getMobileService()
+        val driver = mobileService.driver
+
+        // in case app's destroy or terminated...
+        try {
+            driver.sessionId
+        } catch (e: NoSuchSessionException) {
+            // re-launch
+            driver.launchApp()
+        }
+
+        driver.activateApp(app)
+        return StepResult.success("activated app '$app")
+    }
 
     fun select(locator: String, item: String): StepResult {
         requiresNotBlank(item, "invalid item specified", item)
