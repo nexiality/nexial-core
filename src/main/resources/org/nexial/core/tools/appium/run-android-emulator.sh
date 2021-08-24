@@ -17,4 +17,4 @@
 # EMULATOR_PHONE=
 
 if [[ -z ${NEXIAL_HOME} ]] ; then NEXIAL_HOME=~/projects/nexial-core ; fi
-${NEXIAL_HOME}/bin/mobile/run-android-emulator.cmd ${avd.id}
+${NEXIAL_HOME}/bin/mobile/run-android-emulator.sh ${avd.id}

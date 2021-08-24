@@ -59,6 +59,7 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
     private val scrollableLocator = "//*[@scrollable='true' and @displayed='true' and @enabled='true']"
     private val scrollableLocator2 = "//android.widget.ScrollView[@displayed='true' and @enabled='true']"
     private val iosAlertLocator = "//*[@type='XCUIElementTypeAlert' and @visible='true']"
+    private val scriptPressButton = "mobile: pressButton"
 
     override fun init(context: ExecutionContext) {
         super.init(context)
@@ -258,11 +259,17 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
         requiresNotBlank(attribute, "invalid attribute", attribute)
 
         val values = collectAttributeValues(locator, attribute)
-        if (CollectionUtils.isNotEmpty(values)) return assertEqual(text, values[0])
-        return if (StringUtils.isEmpty(text))
-            StepResult.success("No attribute value found, and none was expected")
-        else
-            StepResult.fail("Either no element matches '$locator' or none contains the attribute '$attribute'")
+        return if (CollectionUtils.isNotEmpty(values)) {
+            val actual = values[0]
+            if (TextUtils.polyMatch(actual, text))
+                StepResult.success("The attribute '$attribute' value '$actual' matches '$text' as EXPECTED")
+            else
+                StepResult.fail("The attribute '$attribute' value '$actual' DOES NOT match '$text'")
+        } else
+            if (StringUtils.isEmpty(text))
+                StepResult.success("No attribute value found, and none was expected")
+            else
+                StepResult.fail("Either no element matches '$locator' or none contains the attribute '$attribute'")
     }
 
     fun waitForElementPresent(locator: String, waitMs: String): StepResult {
@@ -817,6 +824,7 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
     fun home(): StepResult = keyPress(if (getMobileService().profile.mobileType.isAndroid()) HOME.code else MENU.code)
     fun back() = keyPress(BACK.code)
     fun forward() = executeCommand("forward")
+
     fun recentApps() = when (getMobileService().profile.mobileType) {
         ANDROID -> {
             keyPress(APP_SWITCH.code)
@@ -824,8 +832,8 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
         IOS     -> {
             val pressHome = mapOf("name" to "home")
             val driver = getMobileService().driver
-            driver.executeScript("mobile: pressButton", pressHome)
-            driver.executeScript("mobile: pressButton", pressHome)
+            driver.executeScript(scriptPressButton, pressHome)
+            driver.executeScript(scriptPressButton, pressHome)
             StepResult.success()
         }
     }
