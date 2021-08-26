@@ -11,8 +11,8 @@
 
 export ANDROID_SDK_ROOT=~/.nexial/android/sdk
 cd $ANDROID_SDK_ROOT/platform-tools || exit
-adb kill-server
-adb start-server
-adb devices -l
+./adb kill-server
+./adb start-server
+./adb devices -l
 
 read -p "Press [Enter] key to end this script..."

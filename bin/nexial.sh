@@ -34,7 +34,7 @@ if [[ -n "${NEXIAL_MAX_MEM}" ]]; then export MAX_MEM=-Xmx${NEXIAL_MAX_MEM}; fi
 
 
 # support environment default for output base directory
-if [[ ! -z "${NEXIAL_OUTPUT}" ]]; then
+if [[ -n "${NEXIAL_OUTPUT}" ]]; then
   mkdir -p "${NEXIAL_OUTPUT}"
   export JAVA_OPT="${JAVA_OPT} -Dnexial.defaultOutBase=${NEXIAL_OUTPUT}"
 fi

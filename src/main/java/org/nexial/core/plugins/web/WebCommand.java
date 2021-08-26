@@ -681,12 +681,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         requiresNotBlank(locator, "invalid locator", locator);
 
         long maxWait = deriveMaxWaitMs(waitMs);
-        By by = locatorHelper.findBy(locator);
-        boolean outcome = waitForCondition(maxWait, object -> {
-            WebElement elem = driver.findElement(by);
-            if (elem == null || !elem.isDisplayed()) { return false; }
-            return isTrue(jsExecutor.executeScript(JsLib.isVisible(), elem));
-        });
+        boolean outcome = isElementVisible(locator, maxWait);
 
         if (outcome) {
             return StepResult.success("Element by locator '" + locator + "' is visible");
@@ -3000,6 +2995,9 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     protected StepResult clickInternal(String locator) {
         try {
             WebElement element = findElement(locator);
+            if (!isElementVisible(locator, context.getPollWaitMs())) {
+                ConsoleUtils.log("Target element not visible; clicking on such element might not work...");
+            }
             ConsoleUtils.log("clicking '" + locator + "'...");
             return clickInternal(element);
         } catch (IllegalArgumentException e) {
@@ -3750,6 +3748,16 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
             return context.getBooleanConfig("web", profile, WEB_ALWAYS_WAIT);
         }
         return getDefaultBool(WEB_EXPLICIT_WAIT);
+    }
+
+    private boolean isElementVisible(String locator, long maxWait) {
+        By by = locatorHelper.findBy(locator);
+        boolean outcome = waitForCondition(maxWait, object -> {
+            WebElement elem = driver.findElement(by);
+            if (elem == null || !elem.isDisplayed()) { return false; }
+            return isTrue(jsExecutor.executeScript(JsLib.isVisible(), elem));
+        });
+        return outcome;
     }
 
     protected StepResult saveTextSubstring(String var, String locator, String delimStart, String delimEnd) {

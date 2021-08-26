@@ -178,7 +178,7 @@ class MobileLocatorHelper(private val mobileService: MobileService) {
                         val useNearByHint = RegexUtils.match(part, regexSurrounding)
                         val name = part.substringBefore(if (useNearByHint) ":" else "=").trim()
                         val value = part.substringAfter(if (useNearByHint) ":" else "=").trim()
-                        val textFilter = resolveTextFilter(mobileType, value)
+                        val textFilter = resolveLinkTextFilter(mobileType, value)
                         val siblingTextFilter = "[$textFilter or .//*[$textFilter]]"
                         when (name) {
                             leftOf, above   -> {

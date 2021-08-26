@@ -56,13 +56,13 @@ ANDROID_SDK_ROOT=~/.nexial/android/sdk
 EMULATOR_PHONE_NUMBER=2136394251
 
 EMU_OPTIONS=
-if [[ -z ${EMULATOR_TIMEZONE}  ]] ; then EMU_OPTIONS="${EMU_OPTIONS} -timezone ${EMULATOR_TIMEZONE}" ; fi
-if [[ -z ${EMULATOR_MEMORY}    ]] ; then EMU_OPTIONS="${EMU_OPTIONS} -memory ${EMULATOR_MEMORY}" ; fi
-if [[ -z ${EMULATOR_HEADLESS}  ]] ; then EMU_OPTIONS="${EMU_OPTIONS} -no-window" ; fi
-if [[ -z ${EMULATOR_FRONT_CAM} ]] ; then EMU_OPTIONS="${EMU_OPTIONS} -camera-front ${EMULATOR_FRONT_CAM}" ; fi
-if [[ -z ${EMULATOR_BACK_CAM}  ]] ; then EMU_OPTIONS="${EMU_OPTIONS} -camera-back ${EMULATOR_BACK_CAM}" ; fi
-if [[ -z ${EMULATOR_PHONE}     ]] ; then EMULATOR_PHONE_NUMBER=${EMULATOR_PHONE} ; fi
+if [[ -n ${EMULATOR_TIMEZONE}  ]] ; then EMU_OPTIONS="${EMU_OPTIONS} -timezone ${EMULATOR_TIMEZONE}" ; fi
+if [[ -n ${EMULATOR_MEMORY}    ]] ; then EMU_OPTIONS="${EMU_OPTIONS} -memory ${EMULATOR_MEMORY}" ; fi
+if [[ -n ${EMULATOR_HEADLESS}  ]] ; then EMU_OPTIONS="${EMU_OPTIONS} -no-window" ; fi
+if [[ -n ${EMULATOR_FRONT_CAM} ]] ; then EMU_OPTIONS="${EMU_OPTIONS} -camera-front ${EMULATOR_FRONT_CAM}" ; fi
+if [[ -n ${EMULATOR_BACK_CAM}  ]] ; then EMU_OPTIONS="${EMU_OPTIONS} -camera-back ${EMULATOR_BACK_CAM}" ; fi
+if [[ -n ${EMULATOR_PHONE}     ]] ; then EMULATOR_PHONE_NUMBER=${EMULATOR_PHONE} ; fi
 EMU_OPTIONS="$EMU_OPTIONS -phone-number ${EMULATOR_PHONE_NUMBER}"
 
 cd ${ANDROID_SDK_ROOT}/emulator || exit
-emulator -avd $1 -ranchu -allow-host-audio ${EMU_OPTIONS}
+./emulator -avd $1 -ranchu -allow-host-audio ${EMU_OPTIONS}
