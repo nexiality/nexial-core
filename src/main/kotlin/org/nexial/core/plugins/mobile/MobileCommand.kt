@@ -38,6 +38,7 @@ import org.nexial.core.utils.CheckUtils.*
 import org.nexial.core.utils.ConsoleUtils
 import org.nexial.core.utils.OutputFileUtils
 import org.openqa.selenium.*
+import org.openqa.selenium.Keys.BACK_SPACE
 import org.openqa.selenium.NoSuchElementException
 import org.openqa.selenium.ScreenOrientation.LANDSCAPE
 import org.openqa.selenium.ScreenOrientation.PORTRAIT
@@ -481,28 +482,45 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
     }
 
     fun type(locator: String, text: String): StepResult {
-        val element = findElement(locator)
         val mobileService = getMobileService()
 
         // too fast?
         // Actions(mobileService.driver).sendKeys(element, text).pause(mobileService.profile.postActionWaitMs).perform()
 
         return if (StringUtils.isEmpty(text)) {
-            element.click()
-            element.clear()
-            val currentText = element.text
+            clearText(locator)
+            val currentText = findElement(locator).text
             if (StringUtils.isEmpty(currentText))
-                StepResult.success("Element '${locator}' cleared")
+                StepResult.success("Element '$locator' cleared")
             else
-                StepResult.fail("Element '${locator}' not cleared; current text is '${currentText}'")
+                StepResult.fail("Element '$locator' not cleared; current text is '$currentText'")
         } else {
-            element.click()
-            element.clear()
-            element.sendKeys(text)
-            val postWaitMs = mobileService.profile.postActionWaitMs
-            if (postWaitMs > MIN_WAIT_MS) waitFor(postWaitMs.toInt())
-            StepResult.success("Text '$text' typed on '$locator'")
+            val element = findElement(locator)
+            val elementText = element.text
+            if (StringUtils.equals(elementText, text))
+                StepResult.success("Element '$locator' already contain text '$text")
+            else {
+                clearText(locator)
+                findElement(locator).sendKeys(text)
+                val postWaitMs = mobileService.profile.postActionWaitMs
+                if (postWaitMs > MIN_WAIT_MS) waitFor(postWaitMs.toInt())
+
+                // close keyboard if possible
+                if (mobileService.isIOS() && isElementPresent("name=Done")) click("name=Done")
+
+                StepResult.success("Text '$text' typed on '$locator'")
+            }
         }
+    }
+
+    private fun clearText(locator: String) {
+        val element = findElement(locator)
+        val elementText = element.text
+        element.click()
+        if (StringUtils.isBlank(elementText))
+            for (i in (0..elementText.length)) findElement(locator).sendKeys(BACK_SPACE)
+        else
+            findElement(locator).clear()
     }
 
     /**
@@ -899,8 +917,6 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
 
                 // 4. determine how many lines to scroll (if needed)
                 val maxScrolls = context.getIntConfig(target, profileName, DROPDOWN_MAX_SCROLL)
-                // val scrollAmount = context.getIntConfig(target, profileName, DROPDOWN_TEXT_LINE_HEIGHT) *
-                //                    context.getIntConfig(target, profileName, DROPDOWN_LINES_TO_SCROLL) * -1
                 val scrollAmount = scrollTarget.rect.height / 2
                 val startFrom = Point(0, scrollAmount - 5)
                 val scrollTo = Point(0, (scrollAmount / 2) * -1)
@@ -928,8 +944,55 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
                 } else
                     StepResult.fail("Unable to find dropdown option '${item}'")
             }
-            IOS     ->
-                StepResult.fail("This command does not support iOS device at this time (#patience_is_a_virtue)")
+            IOS     -> {
+                // 1. find the select element / check if intended value is already selected
+                val select = findElement(locator)
+                val currentSelection = select.getAttribute("value")
+                if (StringUtils.equals(currentSelection, item))
+                    StepResult.success("Current selection matched to $item")
+                else {
+                    // 2. click on the select element (allow time for dropdown options to display)
+                    withPostActionWait(Actions(mobileService.driver).click(select), mobileService)
+                    waitFor(800)
+
+                    // 3. 1 or more pickers?
+                    val pickers = findElements("//XCUIElementTypePickerWheel")
+                    if (pickers.size > 1 && StringUtils.contains(item, "|")) {
+                        val parts = StringUtils.split(item, "|")
+                        // if the picker wheels do not match the text splits
+                        if (parts == null || parts.size != pickers.size)
+                            StepResult.fail("Unable to automate '$item' against ${pickers.size} pick lists")
+                        else {
+                            // 4. designated value to which picker
+                            parts.forEachIndexed { index, part ->
+                                if (StringUtils.isNotEmpty(part)) {
+                                    val picker = pickers[index]
+                                    picker.sendKeys(part)
+                                }
+                            }
+
+                            // 5. close keyboard if possible
+                            if (isElementPresent("name=Done")) click("name=Done")
+                            StepResult.success("Selected '$item' against the ${pickers.size} pick lists")
+                        }
+                    } else {
+                        val picker = pickers[0]
+
+                        // 4. check if corresponding Picker Wheel already has the intended value
+                        val currentPickedValue = picker.getAttribute("value")
+                        if (StringUtils.equals(currentSelection, item))
+                            StepResult.success("Current selected item matched to $item")
+                        else {
+                            // 5. do it!
+                            picker.sendKeys(item)
+
+                            // 5. close keyboard if possible
+                            if (isElementPresent("name=Done")) click("name=Done")
+                            StepResult.success("Selected item '$item'")
+                        }
+                    }
+                }
+            }
         }
     }
 

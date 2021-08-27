@@ -64,20 +64,21 @@ class MobileLocatorHelper(private val mobileService: MobileService) {
         if (StringUtils.containsNone(locator, "=")) return By.id(locator)
 
         val strategy = StringUtils.trim(StringUtils.lowerCase(StringUtils.substringBefore(locator, "=")))
-        val loc = StringUtils.trim(StringUtils.substringAfter(locator, "="))
-        val normalized = normalizeXpathText(loc)
+        val loc = StringUtils.substringAfter(locator, "=")
+        val locTrimmed = StringUtils.trim(loc)
+        val normalized = normalizeXpathText(locTrimmed)
         val isIOS = mobileService.isIOS()
         val isAndroid = mobileService.isAndroid()
 
         return when (strategy) {
             // standard ones
-            prefixId, prefixName -> By.id(loc)
+            prefixId, prefixName -> By.id(locTrimmed)
             prefixResourceId     -> By.xpath("//*[@resource-id=$normalized]")
-            prefixAccessibility  -> MobileBy.AccessibilityId(loc)
-            prefixClass          -> By.className(loc)
-            prefixXPath          -> By.xpath(if (allowRelative) loc else fixBadXpath(loc))
+            prefixAccessibility  -> MobileBy.AccessibilityId(locTrimmed)
+            prefixClass          -> By.className(locTrimmed)
+            prefixXPath          -> By.xpath(if (allowRelative) locTrimmed else fixBadXpath(locTrimmed))
             prefixText           -> resolveTextLocator(loc)
-            prefixNearby         -> handleNearbyLocator(mobileService.profile.mobileType, loc)
+            prefixNearby         -> handleNearbyLocator(mobileService.profile.mobileType, locTrimmed)
 
             // ios specific
             prefixPredicate      ->
@@ -93,7 +94,7 @@ class MobileLocatorHelper(private val mobileService: MobileService) {
                 else throw IllegalArgumentException("This locator is only support on Android device: $locator")
 
             // catch all
-            else                 -> return By.id(loc)
+            else                 -> return By.id(locTrimmed)
         }
     }
 
