@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2018 the original author or authors.
+ * Copyright 2012-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,15 +17,7 @@
 
 package org.nexial.core.plugins.io;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.StringReader;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-
+import com.univocity.parsers.csv.CsvParser;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.BooleanUtils;
@@ -39,7 +31,11 @@ import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.OutputFileUtils;
 import org.nexial.core.utils.OutputResolver;
 
-import com.univocity.parsers.csv.CsvParser;
+import javax.validation.constraints.NotNull;
+import java.io.File;
+import java.io.IOException;
+import java.io.StringReader;
+import java.util.*;
 
 import static org.nexial.core.NexialConst.CSV_MAX_COLUMNS;
 import static org.nexial.core.NexialConst.CSV_MAX_COLUMN_WIDTH;
@@ -55,7 +51,7 @@ public class CsvCommand extends IoCommand {
     public String getTarget() { return "csv"; }
 
     @Override
-    public void init(ExecutionContext context) {
+    public void init(@NotNull ExecutionContext context) {
         super.init(context);
         if (excelHelper == null) { excelHelper = new ExcelHelper(context); }
     }

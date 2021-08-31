@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2018 the original author or authors.
+ * Copyright 2012-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +16,7 @@
 
 package org.nexial.core.plugins.sound;
 
-import java.io.IOException;
-import javax.sound.sampled.AudioFormat;
-import javax.sound.sampled.AudioSystem;
-import javax.sound.sampled.LineUnavailableException;
-import javax.sound.sampled.SourceDataLine;
-import javax.sound.sampled.UnsupportedAudioFileException;
-
+import javazoom.jl.decoder.JavaLayerException;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.nexial.core.IntegrationConfigException;
 import org.nexial.core.model.ExecutionContext;
@@ -30,7 +24,9 @@ import org.nexial.core.model.StepResult;
 import org.nexial.core.plugins.base.BaseCommand;
 import org.nexial.core.utils.ExecUtils;
 
-import javazoom.jl.decoder.JavaLayerException;
+import javax.sound.sampled.*;
+import javax.validation.constraints.NotNull;
+import java.io.IOException;
 
 import static org.nexial.core.utils.CheckUtils.*;
 
@@ -44,7 +40,7 @@ public class SoundCommand extends BaseCommand {
     public String getTarget() { return "sound"; }
 
     @Override
-    public void init(ExecutionContext context) {
+    public void init(@NotNull ExecutionContext context) {
         super.init(context);
 
         try {

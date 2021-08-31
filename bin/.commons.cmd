@@ -34,6 +34,9 @@
     if not exist "%ANDROID_HOME%\nul" ( set ANDROID_HOME=%USERPROFILE%\.nexial\android\sdk)
     if not exist "%ANDROID_SDK_ROOT%\nul" ( set ANDROID_SDK_ROOT=%USERPROFILE%\.nexial\android\sdk)
 
+	REM javaui/jubula
+    if not exist "%JUBULA_HOME%\nul" ( set JUBULA_HOME="%ProgramFiles%\jubula_8.8.0.034")
+
 	REM # setting Java runtime options and classpath
 	set JAVA_OPT=%JAVA_OPT% -ea
 	set JAVA_OPT=%JAVA_OPT% -Xss24m
@@ -135,7 +138,8 @@ REM # Make sure prerequisite environment variables are set
 
     del %TEMP%\java_version
 
-    if "%JAVA_SUPPORTS_MODULE%"=="true" ( set JAVA_OPT=%JAVA_OPT% --add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.util=ALL-UNNAMED)
+    if "%JAVA_SUPPORTS_MODULE%"=="true" ( set JAVA_OPT=%JAVA_OPT% --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.lang.reflect=ALL-UNNAMED --add-opens java.base/java.io=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED --add-opens java.base/java.text=ALL-UNNAMED --add-opens java.desktop/java.awt.font=ALL-UNNAMED)
+
 	goto :eof
 
 

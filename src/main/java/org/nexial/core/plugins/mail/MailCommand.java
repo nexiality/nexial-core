@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2018 the original author or authors.
+ * Copyright 2012-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.validator.routines.EmailValidator;
 import org.nexial.commons.javamail.MailObjectSupport;
 import org.nexial.commons.javamail.MailSender;
-import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.model.ExecutionDefinition;
 import org.nexial.core.model.StepResult;
 import org.nexial.core.plugins.base.BaseCommand;
@@ -65,11 +64,6 @@ public class MailCommand extends BaseCommand {
 
     @Override
     public String getTarget() { return "mail"; }
-
-    @Override
-    public void init(ExecutionContext context) {
-        super.init(context);
-    }
 
     /**
      * Sends an email based on the properties set.

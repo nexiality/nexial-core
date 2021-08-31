@@ -26,6 +26,7 @@ import org.openqa.selenium.WebDriver.Options
 import java.text.DateFormat
 import java.text.ParseException
 import java.text.SimpleDateFormat
+import javax.validation.constraints.NotNull
 
 class CookieCommandTest {
     private val dateFormat: DateFormat = SimpleDateFormat("yyyy/MM/dd")
@@ -68,7 +69,7 @@ class CookieCommandTest {
         val cookieCommand = object : CookieCommand() {
             override fun getContext() = context
             override fun deriveCookieStore() = fakeStore
-            override fun init(context: ExecutionContext?) {
+            override fun init(@NotNull context: ExecutionContext?) {
                 this.context = context
             }
         }

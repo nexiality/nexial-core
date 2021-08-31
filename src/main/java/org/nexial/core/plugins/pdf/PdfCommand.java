@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2018 the original author or authors.
+ * Copyright 2012-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,21 +17,9 @@
 
 package org.nexial.core.plugins.pdf;
 
-import java.io.*;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 import com.itextpdf.text.Document;
 import com.itextpdf.text.DocumentException;
-import com.itextpdf.text.pdf.BadPdfFormatException;
-import com.itextpdf.text.pdf.PdfCopy;
-import com.itextpdf.text.pdf.PdfReader;
-import com.itextpdf.text.pdf.PdfSmartCopy;
-import com.itextpdf.text.pdf.PdfWriter;
+import com.itextpdf.text.pdf.*;
 import com.itextpdf.tool.xml.XMLWorkerHelper;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
@@ -71,6 +59,16 @@ import org.nexial.core.utils.OutputFileUtils;
 import org.thymeleaf.util.ArrayUtils;
 import org.thymeleaf.util.ListUtils;
 
+import javax.validation.constraints.NotNull;
+import java.io.*;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+
 import static java.io.File.separator;
 import static java.io.File.separatorChar;
 import static java.util.regex.Pattern.DOTALL;
@@ -85,7 +83,7 @@ public class PdfCommand extends BaseCommand {
     protected ImageCommand image;
 
     @Override
-    public void init(ExecutionContext context) {
+    public void init(@NotNull ExecutionContext context) {
         super.init(context);
         io = (IoCommand) context.findPlugin("io");
         image = (ImageCommand) context.findPlugin("image");

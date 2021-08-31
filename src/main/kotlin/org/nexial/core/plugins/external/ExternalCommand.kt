@@ -128,18 +128,17 @@ class ExternalCommand : BaseCommand() {
 
         try {
             val programAndParams = RuntimeUtils.formatCommandLine(programPathAndParams)
-            if (programAndParams.isEmpty()) {
+            if (programAndParams.isEmpty())
                 throw IllegalArgumentException("Unable to parse programPathAndParams: $programAndParams")
-            }
 
             val currentRow = context.currentTestStep.row[0].reference
             val outputFileName = "runProgramNoWait_$currentRow.log"
             context.setData(OPT_RUN_PROGRAM_OUTPUT, outputFileName)
             val fileName = Syspath().out("fullpath") + separator + outputFileName
 
-            val env = prepEnv(fileName, currentRow)
-
-            invokeNoWait(programAndParams[0], programAndParams.filterIndexed { index, _ -> index > 0 }, env)
+            invokeNoWait(programAndParams[0],
+                         programAndParams.filterIndexed { index, _ -> index > 0 },
+                         prepEnv(fileName, currentRow))
 
             //attach link to results
             addLinkRef("Follow the link to view the output", "output", fileName)

@@ -102,10 +102,12 @@ function checkJava() {
 		fi
 
 		if [[ "$JAVA_SUPPORTS_MODULE" = "true" ]] ; then
-			JAVA_OPT="${JAVA_OPT} --add-opens=java.base/java.lang=ALL-UNNAMED"
-			JAVA_OPT="${JAVA_OPT} --add-opens=java.base/java.util=ALL-UNNAMED"
-			JAVA_OPT="${JAVA_OPT} --add-opens=java.base/java.text=ALL-UNNAMED"
-			JAVA_OPT="${JAVA_OPT} --add-opens=java.base/java.desktop=ALL-UNNAMED"
+			JAVA_OPT="${JAVA_OPT} --add-opens java.base/java.lang=ALL-UNNAMED"
+			JAVA_OPT="${JAVA_OPT} --add-opens java.base/java.lang.reflect=ALL-UNNAMED"
+			JAVA_OPT="${JAVA_OPT} --add-opens java.base/java.io=ALL-UNNAMED"
+			JAVA_OPT="${JAVA_OPT} --add-opens java.base/java.util=ALL-UNNAMED"
+			JAVA_OPT="${JAVA_OPT} --add-opens java.base/java.text=ALL-UNNAMED"
+			JAVA_OPT="${JAVA_OPT} --add-opens java.desktop/java.awt.font=ALL-UNNAMED"
 		fi
 }
 
@@ -206,6 +208,10 @@ fi
 # android sdk
 if [[ ! -f "${ANDROID_HOME}" ]] ; then ANDROID_HOME=~/.nexial/android/sdk ; fi
 if [[ ! -f "${ANDROID_SDK_ROOT}" ]] ; then ANDROID_SDK_ROOT=~/.nexial/android/sdk ; fi
+
+# javaui/jubula
+if [[ ! -f "${JUBULA_HOME}" ]] ; then JUBULA_HOME=/Application/jubula_8.8.0.034 ; fi
+
 
 FIREFOX_KEY=firefox-bin
 export DEFAULT_FIREFOX_BIN="`resolveAppPath "${FIREFOX_KEY}"`"

@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2018 the original author or authors.
+ * Copyright 2012-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,10 +17,6 @@
 
 package org.nexial.core.plugins.web;
 
-import java.util.*;
-import java.util.stream.Collectors;
-import javax.validation.constraints.NotNull;
-
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.nexial.commons.utils.RegexUtils;
@@ -31,6 +27,10 @@ import org.nexial.core.plugins.RequireBrowser;
 import org.nexial.core.plugins.base.BaseCommand;
 import org.openqa.selenium.Cookie;
 import org.openqa.selenium.WebDriver;
+
+import javax.validation.constraints.NotNull;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import static org.nexial.core.utils.CheckUtils.*;
 
@@ -45,7 +45,7 @@ public class CookieCommand extends BaseCommand implements RequireBrowser {
     public void setBrowser(Browser browser) { this.browser = browser; }
 
     @Override
-    public void init(ExecutionContext context) {
+    public void init(@NotNull ExecutionContext context) {
         super.init(context);
         driver = null;
         if (!context.isDelayBrowser()) { ensureWebDriver(); }

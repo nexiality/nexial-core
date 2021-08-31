@@ -1,11 +1,11 @@
 /*
- * Copyright 2012-2018 the original author or authors.
+ * Copyright 2012-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *       http://www.apache.org/licenses/LICENSE-2.0
+ * 	http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,11 +17,6 @@
 
 package org.nexial.commons.proc;
 
-import java.io.*;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.BooleanUtils;
@@ -29,6 +24,11 @@ import org.apache.commons.lang3.StringUtils;
 import org.nexial.commons.utils.FileUtil;
 import org.nexial.core.ShutdownAdvisor;
 import org.nexial.core.utils.ConsoleUtils;
+
+import java.io.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 import static org.nexial.core.NexialConst.DEF_FILE_ENCODING;
 
@@ -109,7 +109,7 @@ public class ProcessInvoker {
         public String getOutput() { return output; }
     }
 
-    private ProcessInvoker() {}
+    private ProcessInvoker() { }
 
     /**
      * the main method to invoke the external process.
@@ -150,13 +150,13 @@ public class ProcessInvoker {
         ShutdownAdvisor.addAdvisor(new ExternalProcessTerminator(process));
 
         StreamGobbler stderr = new StreamGobbler(process.getErrorStream())
-                                   .setEnableConsole(enableConsole)
-                                   .setConsoleId(consoleId);
+            .setEnableConsole(enableConsole)
+            .setConsoleId(consoleId);
         stderr.start();
 
         StreamGobbler stdout = new StreamGobbler(process.getInputStream())
-                                   .setEnableConsole(enableConsole)
-                                   .setConsoleId(consoleId);
+            .setEnableConsole(enableConsole)
+            .setConsoleId(consoleId);
         stdout.start();
 
         int exitValue = 0;
@@ -166,6 +166,7 @@ public class ProcessInvoker {
 
             exitValue = process.waitFor();
         } finally {
+
             // collect result
             outcome.setStderr(stderr.getOutput());
             outcome.setStdout(stdout.getOutput());
@@ -201,8 +202,18 @@ public class ProcessInvoker {
 
         // create processbuilder and mod. environment, if need be
         ProcessBuilder pb = new ProcessBuilder(processArg).inheritIO();
-
         prepareEnv(pb, env, outcome);
+
+        if (env.containsKey(PROC_REDIRECT_OUT)) {
+            String outFile = env.get(PROC_REDIRECT_OUT);
+            if (StringUtils.isNotBlank(outFile)) {
+                File out = new File(outFile);
+                out.getParentFile().mkdirs();
+                ConsoleUtils.log("redirect process output and error to " + out);
+                pb.redirectOutput(out);
+                pb.redirectError(out);
+            }
+        }
 
         // here we go...
         // jdk5-specific...

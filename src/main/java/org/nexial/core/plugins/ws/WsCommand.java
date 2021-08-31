@@ -70,7 +70,7 @@ public class WsCommand extends BaseCommand {
     protected Map<String, Map<String, String>> oauthProviderDetails;
 
     @Override
-    public void init(ExecutionContext context) { super.init(context); }
+    public void init(@NotNull ExecutionContext context) { super.init(context); }
 
     @Override
     public String getTarget() { return "ws"; }
@@ -317,9 +317,9 @@ public class WsCommand extends BaseCommand {
      * </ul>
      * <p>
      * Each of the above details are to be specified in name=value form, and each pair in separate lines.
-     * However in some cases, the value could be expressed as JSON array or JSON object.
+     * However, in some cases, the value could be expressed as JSON array or JSON object.
      * <p>
-     * With all proper parameters properly specified, the target {@code url} would return back, among other things, a
+     * With all proper parameters properly specified, the target {@code url} would return, among other things, a
      * one-use, time-bound access_token.  This token can be subsequently used as a header parameter
      * ({@literal Authorization}) to access protected resources.
      */
@@ -407,7 +407,7 @@ public class WsCommand extends BaseCommand {
         }
 
         // bearer support
-        // some proxy generator or oauth app generates "BearerToken" instead of "Bearer". However we must use
+        // some proxy generator or oauth app generates "BearerToken" instead of "Bearer". However, we must use
         // "Bearer" in the header for subsequent WS request
         if (StringUtils.equalsIgnoreCase(tokenType, OAUTH_TOKEN_TYPE_BEARER) ||
             StringUtils.equalsIgnoreCase(tokenType, OAUTH_TOKEN_TYPE_BEARER2)) {
@@ -430,7 +430,7 @@ public class WsCommand extends BaseCommand {
      * Request to grant OAuth token(s) after reading the properties specified against the profile.
      *
      * @param var     the variable to store the result of the OAuth call.
-     * @param profile the profle contatining the details related to the OAuth like client_id, client_secret, username,
+     * @param profile the profile containing the details related to the OAuth like client_id, client_secret, username,
      *                password et.
      * @return {@link StepResult#success(String)} or {@link StepResult#fail(String)} based on the success or failure.
      */

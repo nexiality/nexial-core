@@ -90,7 +90,7 @@ public class BaseCommand implements NexialCommand {
     }
 
     @Override
-    public void init(ExecutionContext context) {
+    public void init(@NotNull ExecutionContext context) {
         this.context = context;
         pauseMs = context.getDelayBetweenStep();
     }

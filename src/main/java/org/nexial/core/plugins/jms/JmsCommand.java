@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2018 the original author or authors.
+ * Copyright 2012-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,6 @@
 
 package org.nexial.core.plugins.jms;
 
-import java.util.Map;
-
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
@@ -28,8 +26,12 @@ import org.nexial.core.model.StepResult;
 import org.nexial.core.plugins.ThirdPartyDriverInfo;
 import org.nexial.core.plugins.base.BaseCommand;
 
+import javax.validation.constraints.NotNull;
+import java.util.Map;
+
 import static org.nexial.core.NexialConst.MS_UNDEFINED;
-import static org.nexial.core.utils.CheckUtils.*;
+import static org.nexial.core.utils.CheckUtils.fail;
+import static org.nexial.core.utils.CheckUtils.requiresNotBlank;
 
 public class JmsCommand extends BaseCommand {
     private JmsClient jmsClient;
@@ -37,7 +39,7 @@ public class JmsCommand extends BaseCommand {
     private Map<String, ThirdPartyDriverInfo> jmsJarInfo;
 
     @Override
-    public void init(ExecutionContext context) {
+    public void init(@NotNull ExecutionContext context) {
         super.init(context);
         jmsClient.setContext(context);
     }

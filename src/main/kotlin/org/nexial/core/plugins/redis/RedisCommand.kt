@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2018 the original author or authors.
+ * Copyright 2012-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,11 +35,10 @@ class RedisCommand : BaseCommand(), ForcefulTerminate {
     override fun mustForcefullyTerminate() = MapUtils.isNotEmpty(context.getObjectByPrefix(prefix))
 
     override fun forcefulTerminate() {
-        context.getObjectByPrefix(prefix)
-            .forEach({ name, redisClient ->
-                         ConsoleUtils.log("closing redis connection for ${StringUtils.substringAfter(name, prefix)}: " +
-                                          "${(redisClient as JedisPool).destroy()}")
-                     })
+        context.getObjectByPrefix(prefix).forEach { (name, redisClient) ->
+            ConsoleUtils.log("closing redis connection for ${StringUtils.substringAfter(name, prefix)}: " +
+                             "${(redisClient as JedisPool).destroy()}")
+        }
     }
 
     fun assertKeyExists(profile: String, key: String): StepResult {

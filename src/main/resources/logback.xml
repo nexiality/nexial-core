@@ -323,6 +323,20 @@
         <appender-ref ref="file-testexecution"/>
     </logger>
 
+    <!-- javaui/jubula -->
+    <logger name="CAP" additivity="false" level="ERROR">
+        <appender-ref ref="console-catchall"/>
+        <appender-ref ref="file-3rdparty"/>
+    </logger>
+    <logger name="aut_agent" additivity="false" level="ERROR">
+        <appender-ref ref="console-catchall"/>
+        <appender-ref ref="file-3rdparty"/>
+    </logger>
+    <logger name="org.eclipse.jubula" additivity="false" level="ERROR">
+        <appender-ref ref="console-catchall"/>
+        <appender-ref ref="file-3rdparty"/>
+    </logger>
+
     <!-- ============================= -->
     <!-- nexial categories  -->
     <!-- ============================= -->

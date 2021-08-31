@@ -261,6 +261,9 @@
         <entry key="io">
             <bean class="org.nexial.core.plugins.io.IoCommand"/>
         </entry>
+        <entry key="javaui">
+            <bean class="org.nexial.core.plugins.javaui.JavaUICommand"/>
+        </entry>
         <entry key="jms">
             <bean class="org.nexial.core.plugins.jms.JmsCommand">
                 <property name="jmsClient">

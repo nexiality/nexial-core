@@ -84,7 +84,7 @@ class WebMailCommand : BaseCommand() {
     /**
      * Extracts the value of the [EmailDetails] matching the search criteria associated with a specific
      * mail id passed in against the profile
-     * value passed. The value of the [EmailDetails] will be assigned to the id passed in. However if the id
+     * value passed. The value of the [EmailDetails] will be assigned to the id passed in. However, if the id
      * does not exist in the profile then the method returns a [StepResult.fail] with the appropriate
      * failure message.
      *

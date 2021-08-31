@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2018 the original author or authors.
+ * Copyright 2012-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,17 +17,15 @@
 
 package org.nexial.core.plugins.json;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
-import javax.validation.constraints.NotNull;
-
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.*;
+import com.networknt.schema.JsonSchema;
+import com.networknt.schema.JsonSchemaFactory;
+import com.networknt.schema.SpecVersion.VersionFlag;
+import com.networknt.schema.SpecVersionDetector;
+import com.networknt.schema.ValidationMessage;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.IterableUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -41,19 +39,12 @@ import org.nexial.core.plugins.base.BaseCommand;
 import org.nexial.core.utils.*;
 import org.nexial.core.utils.JsonEditor.JsonEditorConfig;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
-import com.google.gson.JsonSyntaxException;
-import com.networknt.schema.JsonSchema;
-import com.networknt.schema.JsonSchemaFactory;
-import com.networknt.schema.SpecVersion.VersionFlag;
-import com.networknt.schema.SpecVersionDetector;
-import com.networknt.schema.ValidationMessage;
+import javax.validation.constraints.NotNull;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import static org.nexial.core.NexialConst.DEF_CHARSET;
 import static org.nexial.core.NexialConst.Data.*;
@@ -94,7 +85,7 @@ public class JsonCommand extends BaseCommand {
             (TextUtils.isBetween(actualJson, "{", "}") || TextUtils.isBetween(actualJson, "[", "]"))) {
             return assertEqual(JsonParser.parseString(expectedJson), JsonParser.parseString(actualJson));
         } else {
-            // one or both of expected and actual is not json.. unlikely equal
+            // one or both of expected and actual is not json... unlikely equal
             return super.assertEqual(expectedJson, actualJson);
         }
     }
@@ -224,7 +215,7 @@ public class JsonCommand extends BaseCommand {
             return StepResult.fail("JsonPath '" + jsonpath + "' derived invalid JSON: '" + actual + "'");
         }
 
-        // by this point both `expected` and `actual` are array
+        // by this point both `expected` and `actual` are arrays
         if (expectedArray.size() == 0 && actualArray.size() == 0) { return StepResult.success("Both array are empty"); }
 
         if (!isExactOrder) {
@@ -516,7 +507,7 @@ public class JsonCommand extends BaseCommand {
             // case 1: expected is good/parsable JSON
             expectedJson = JsonParser.parseString(TextUtils.wrapIfMissing(array, "[", "]"));
         } catch (JsonSyntaxException e) {
-            // nope, not valid json.. move on to next evaluation...
+            // nope, not valid json... move on to next evaluation...
             // case 2: delimiter string with spaces (string with no spaces should be parsed in case 1)
             String fixed = TextUtils.toString(
                 Arrays.asList(StringUtils.splitByWholeSeparator(array, delimiter)), ",", "\"", "\"");
@@ -603,52 +594,4 @@ public class JsonCommand extends BaseCommand {
         if (CollectionUtils.size(report) < 1) { return "No schema validation error found"; }
         return report.stream().map(ValidationMessage::toString).collect(Collectors.joining("\n")).trim();
     }
-
-    // private static final JsonSchemaFactory JSON_SCHEMA_FACTORY = JsonSchemaFactory.byDefault();
-    // protected StepResult assertCorrectness_fge(String json, String schema) {
-    //     JsonNode jsonNode = deriveWellformedJson(json);
-    //     if (jsonNode == null) { return StepResult.fail("invalid json: " + json); }
-    //
-    //     requires(StringUtils.isNotBlank(schema) && !context.isNullValue(schema), "empty schema", schema);
-    //
-    //     JsonSchema jsonSchema;
-    //     try {
-    //         if (OutputFileUtils.isContentReferencedAsFile(schema, context)) {
-    //             String schemaLocation = new File(schema).toURI().toURL().toString();
-    //             jsonSchema = JSON_SCHEMA_FACTORY.getJsonSchema(schemaLocation);
-    //         } else if (OutputFileUtils.isContentReferencedAsClasspathResource(schema, context)) {
-    //             String schemaLocation = (StringUtils.startsWith(schema, "/") ? "" : "/") + schema;
-    //             jsonSchema = JSON_SCHEMA_FACTORY.getJsonSchema("resource:" + schemaLocation);
-    //         } else {
-    //             // support path-based content specification
-    //             schema = OutputFileUtils.resolveContent(schema, context, false);
-    //             if (StringUtils.isBlank(schema)) { return StepResult.fail("invalid schema: " + schema); }
-    //
-    //             JsonNode schemaNode = JsonLoader.fromString(schema);
-    //             if (schemaNode == null) { return StepResult.fail("invalid schema: " + schema); }
-    //
-    //             jsonSchema = JSON_SCHEMA_FACTORY.getJsonSchema(schemaNode);
-    //         }
-    //
-    //         ProcessingReport report = jsonSchema.validate(jsonNode, true);
-    //         return report.isSuccess() ?
-    //                StepResult.success("json validated successfully against schema") :
-    //                StepResult.fail(parseSchemaValidationError(report));
-    //     } catch (IOException e) {
-    //         ConsoleUtils.log("Error reading as file '" + schema + "': " + e.getMessage());
-    //         return StepResult.fail("Unable to retrieve JSON schema: " + e.getMessage());
-    //     } catch (ProcessingException e) {
-    //         ConsoleUtils.log("Error processing schema '" + schema + "': " + e.getMessage());
-    //         return StepResult.fail("Unable to process JSON schema: " + e.getMessage());
-    //     }
-    // }
-    //
-    // private String parseSchemaValidationError(ProcessingReport report) {
-    //     if (report == null) { return "Unknown error - null report object"; }
-    //
-    //     String reportText = report.toString();
-    //     reportText = StringUtils.substringAfter(reportText, "--- BEGIN MESSAGES ---");
-    //     reportText = StringUtils.substringBefore(reportText, "---  END MESSAGES  ---");
-    //     return StringUtils.trim(reportText);
-    // }
 }

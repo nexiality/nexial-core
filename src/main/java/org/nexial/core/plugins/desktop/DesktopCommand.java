@@ -91,7 +91,7 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
     protected transient NumberCommand numberCommand;
 
     @Override
-    public void init(ExecutionContext context) {
+    public void init(@NotNull ExecutionContext context) {
         super.init(context);
         ShutdownAdvisor.addAdvisor(this);
         numberCommand = (NumberCommand) context.findPlugin("number");

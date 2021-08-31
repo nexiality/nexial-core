@@ -172,6 +172,8 @@ object CommandConst {
 
         "io.saveMatches",
 
+        "javaui.startAgent",
+
         "localdb.exportEXCEL",
         "localdb.exportXML",
 

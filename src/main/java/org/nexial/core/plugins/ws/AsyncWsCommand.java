@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2018 the original author or authors.
+ * Copyright 2012-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,15 +16,15 @@
 
 package org.nexial.core.plugins.ws;
 
-import java.io.File;
-import java.io.IOException;
-import javax.validation.constraints.NotNull;
-
 import org.apache.commons.lang3.StringUtils;
 import org.nexial.commons.utils.web.URLEncodingUtils;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.model.StepResult;
 import org.nexial.core.utils.OutputResolver;
+
+import javax.validation.constraints.NotNull;
+import java.io.File;
+import java.io.IOException;
 
 import static org.nexial.core.plugins.ws.WebServiceClient.hideAuthDetails;
 import static org.nexial.core.utils.CheckUtils.requiresNotBlank;
@@ -33,7 +33,7 @@ public class AsyncWsCommand extends WsCommand {
     private AsyncWebServiceClient client;
 
     @Override
-    public void init(ExecutionContext context) {
+    public void init(@NotNull ExecutionContext context) {
         super.init(context);
         client = new AsyncWebServiceClient(context);
         client.setVerbose(verbose);

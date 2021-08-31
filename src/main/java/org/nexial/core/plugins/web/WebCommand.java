@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2018 the original author or authors.
+ * Copyright 2012-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -128,7 +128,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     public void setUserstack(UserStackAPI userstack) { this.userstack = userstack; }
 
     @Override
-    public void init(ExecutionContext context) {
+    public void init(@NotNull ExecutionContext context) {
         super.init(context);
 
         // todo: revisit to handle proxy
@@ -142,7 +142,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         if (!context.isDelayBrowser()) { initWebDriver(); }
 
         // after the first initialization of the webdriver, we don't need to proactively (re)init it again...
-        // setting this avoid the too-eager re-init of browser already closed.
+        // setting this avoids the too-eager re-init of browser already closed.
         // webdriver readiness is already set in place to many of the web commands.
         context.setData(OPT_DELAY_BROWSER, false);
 
@@ -198,7 +198,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         try {
             String actual = findActiveElementId();
             if (StringUtils.isBlank(actual)) {
-                // since our asserted element has id, this must not be our element..
+                // since our asserted element has id, this must not be our element...
                 return StepResult.fail("active element does not contain ID attribute");
             }
 
@@ -454,7 +454,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         try {
             return new StepResult(isElementNotPresent(locator, waitMs));
         } catch (NoSuchElementException | TimeoutException e) {
-            // that's fine.  we expected that..
+            // that's fine.  we expected that...
             return StepResult.success("Element '%s' is not available", locator);
         }
     }
@@ -552,7 +552,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         String message = logs.toString();
         String errorsFound = errors.toString();
 
-        // at least print errors.. unless verbose is true
+        // at least print errors... unless verbose is true
         if (context.isVerbose()) {
             log(message);
             ConsoleUtils.log(message);
@@ -654,7 +654,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         long oldImplicitWaitMs = getPollWaitMs();
         Timeouts timeouts = driver.manage().timeouts();
         boolean timeoutChangesEnabled = browser.browserType.isTimeoutChangesEnabled();
-        // if browser supports implicit wait and we are not using explicit wait (`WEB_ALWAYS_WAIT`), then
+        // if browser supports implicit wait, and we are not using explicit wait (`WEB_ALWAYS_WAIT`), then
         // we'll change timeout's implicit wait time
         if (timeoutChangesEnabled) { timeouts.implicitlyWait(maxWait, MILLISECONDS); }
 
@@ -1348,7 +1348,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
         Timeouts timeouts = driver.manage().timeouts();
         boolean timeoutChangesEnabled = browser.browserType.isTimeoutChangesEnabled();
-        // if browser supports implicit wait and we are not using explicit wait (`WEB_ALWAYS_WAIT`), then
+        // if browser supports implicit wait, and we are not using explicit wait (`WEB_ALWAYS_WAIT`), then
         // we'll change timeout's implicit wait time
         if (timeoutChangesEnabled) { timeouts.pageLoadTimeout(waitMs1, MILLISECONDS); }
 
@@ -1421,7 +1421,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         Timeouts timeouts = driver.manage().timeouts();
         boolean timeoutChangesEnabled = browser.browserType.isTimeoutChangesEnabled();
 
-        // if browser supports implicit wait and we are not using explicit wait (`WEB_ALWAYS_WAIT`), then
+        // if browser supports implicit wait, and we are not using explicit wait (`WEB_ALWAYS_WAIT`), then
         // we'll change timeout's implicit wait time
         if (timeoutChangesEnabled) { timeouts.pageLoadTimeout(waitMs1, MILLISECONDS); }
 

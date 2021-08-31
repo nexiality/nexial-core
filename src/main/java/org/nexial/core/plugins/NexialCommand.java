@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2018 the original author or authors.
+ * Copyright 2012-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,10 +17,11 @@
 
 package org.nexial.core.plugins;
 
-import java.lang.reflect.InvocationTargetException;
-
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.model.StepResult;
+
+import javax.validation.constraints.NotNull;
+import java.lang.reflect.InvocationTargetException;
 
 /**
  * base definition of every Nexial plugin.  This interface deinfes the basic lifecycle method of a plugin.
@@ -28,7 +29,7 @@ import org.nexial.core.model.StepResult;
 public interface NexialCommand {
 
     /** called by Nexial when plugin is initialized to provide context */
-    void init(ExecutionContext context);
+    void init(@NotNull ExecutionContext context);
 
     ExecutionContext getContext();
 

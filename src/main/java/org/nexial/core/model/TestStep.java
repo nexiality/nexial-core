@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2018 the original author or authors.
+ * Copyright 2012-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,6 +39,8 @@ import org.nexial.core.logs.ExecutionLogger;
 import org.nexial.core.logs.TrackTimeLogs;
 import org.nexial.core.plugins.CanTakeScreenshot;
 import org.nexial.core.plugins.NexialCommand;
+import org.nexial.core.plugins.javaui.JavaUICommand;
+import org.nexial.core.plugins.javaui.JavaUIProfile;
 import org.nexial.core.plugins.web.WebDriverExceptionHelper;
 import org.nexial.core.utils.*;
 import org.nexial.core.variable.Syspath;
@@ -204,9 +206,6 @@ public class TestStep extends TestStepManifest {
         tickTock.start();
 
         context.setCurrentTestStep(this);
-
-        // delay is carried out here so that timespan is captured as part of execution
-        waitFor(context.getDelayBetweenStep());
 
         StepResult result = null;
         try {
@@ -383,6 +382,18 @@ public class TestStep extends TestStepManifest {
             NexialCommand plugin = context.findPlugin(target);
             if (plugin == null) { return StepResult.fail("Unknown/unsupported command target " + target); }
             if (plugin instanceof CanTakeScreenshot) { context.registerScreenshotAgent((CanTakeScreenshot) plugin); }
+
+            // delay is carried out here so that timespan is captured as part of execution
+            if (plugin instanceof JavaUICommand) {
+                if (StringUtils.isNotBlank(plugin.getProfile()) &&
+                    !StringUtils.equals(plugin.getProfile(), CMD_PROFILE_DEFAULT)) {
+                    JavaUIProfile config = ((JavaUICommand) plugin).resolveConfig(plugin.getProfile());
+                    waitFor(config.getDelayBetweenStepsMs());
+                }
+            } else {
+                waitFor(context.getDelayBetweenStep());
+            }
+
             try {
                 result = plugin.execute(command, args);
             } finally {
