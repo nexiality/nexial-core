@@ -35,7 +35,7 @@
     if not exist "%ANDROID_SDK_ROOT%\nul" ( set ANDROID_SDK_ROOT=%USERPROFILE%\.nexial\android\sdk)
 
 	REM javaui/jubula
-    if not exist "%JUBULA_HOME%\nul" ( set JUBULA_HOME="%ProgramFiles%\jubula_8.8.0.034")
+    if not exist %JUBULA_HOME%\nul ( set JUBULA_HOME="%ProgramFiles%\jubula_8.8.0.034")
 
 	REM # setting Java runtime options and classpath
 	set JAVA_OPT=%JAVA_OPT% -ea
