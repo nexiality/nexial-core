@@ -1,0 +1,35 @@
+ #!/bin/bash
+
+# -----------------------------------------------------------------------------
+# Nexial Automation Platform (https://nexiality.github.io/documentation/)
+# This is a starter shell script to simplify the task of automating Nexial
+# script. To use it, simply supply your script filename, like this:
+#
+# cd {0}/bin
+# run-{1}.sh
+#
+# -----------------------------------------------------------------------------
+
+if [[ "$'{NEXIAL_HOME}'" = "" ]] ; then
+    NEXIAL_HOME=~/projects/nexial-core
+fi
+
+echo "setting NEXIAL_HOME as '''${NEXIAL_HOME}'''"
+
+if [[ "$'{PROJECT_HOME}'" =  "" ]] ; then
+    PROJECT_HOME={0}
+fi
+
+echo "setting PROJECT_HOME as '''${PROJECT_HOME}'''"
+
+CURRENT_SCRIPT="$'{PROJECT_HOME}'/artifact/script/{1}.xlsx"
+echo "setting CURRENT_SCRIPT as '''${CURRENT_SCRIPT}'''"
+
+echo
+cd "$'{NEXIAL_HOME}'/bin"
+
+./nexial.sh -script '''${CURRENT_SCRIPT}''' -override nexial.env={1}
+# In case you want to run specific scenario(s), comment the line above and uncomment below line and replace the scenario(s) of your choice.
+# ./nexial.sh -script $'{CURRENT_SCRIPT}' -override nexial.env={1} -scenario scenario1,scenario2,...
+
+read -n1;
