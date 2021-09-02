@@ -56,8 +56,6 @@ import org.nexial.core.plugins.javaui.JavaUIConst.SystemVariable
 import org.nexial.core.plugins.javaui.JavaUIConst.embedded
 import org.nexial.core.plugins.javaui.JavaUIConst.postAutAgentDelayMs
 import org.nexial.core.plugins.javaui.JavaUIConst.screenshotExtension
-import org.nexial.core.plugins.javaui.JubulaHelper.Companion.rcp
-import org.nexial.core.plugins.javaui.JubulaHelper.Companion.swt
 import org.nexial.core.utils.CheckUtils.requiresNotBlank
 import org.nexial.core.utils.ConsoleUtils
 import java.io.File
@@ -411,37 +409,5 @@ class AutBinder {
     fun stop() {
         aut = null
         id = null
-    }
-}
-
-class ObjectMapping {
-
-    companion object {
-        @Throws(Throwable::class)
-        @JvmStatic
-        fun main(args: Array<String>) {
-            // System.setProperty(JavaUIConst.SystemVariable.agent, "embedded");
-            System.setProperty(SystemVariable.agent, "localhost:60000")
-
-            /* This class can be used to start the AUT Agent and the AUT. This is needed */
-            // inspectSimpleAdder()
-            inspectEclipse()
-        }
-
-        private fun inspectSimpleAdder() {
-            val helper = swt()
-            helper.registerAut("SimpleAdder",
-                               "C:\\tools\\jubula_8.8.0.034\\examples\\AUTs\\SimpleAdder\\swt",
-                               "SimpleAdderSWT.bat")
-            helper.startAut("SimpleAdder")
-            // helper.disconnect()
-        }
-
-        private fun inspectEclipse() {
-            val helper = rcp()
-            helper.registerAut("eclipse", "C:\\tools\\eclipse-2021-06\\eclipse", "eclipsec.exe", "-noSplash")
-            helper.startAut("eclipse")
-            // helper.disconnect()
-        }
     }
 }

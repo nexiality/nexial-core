@@ -98,54 +98,40 @@ class ExternalCommand : BaseCommand() {
     fun runProgram(programPathAndParams: String): StepResult {
         requires(StringUtils.isNotBlank(programPathAndParams), "empty/null programPathAndParams")
 
-        try {
-            val programAndParams = RuntimeUtils.formatCommandLine(programPathAndParams)
-            if (programAndParams.isEmpty()) {
-                throw IllegalArgumentException("Unable to parse programPathAndParams: $programAndParams")
-            }
+        val currentRow = context.currentTestStep.row[0].reference
+        val outputFileName = "runProgram_$currentRow.log"
+        context.setData(OPT_RUN_PROGRAM_OUTPUT, outputFileName)
+        val fileName = Syspath().out("fullpath") + separator + outputFileName
+        val env = prepEnv(fileName, currentRow)
 
-            //attach link to results
-            val currentRow = context.currentTestStep.row[0].reference
-            val outputFileName = "runProgram_$currentRow.log"
-            context.setData(OPT_RUN_PROGRAM_OUTPUT, outputFileName)
-            val fileName = Syspath().out("fullpath") + separator + outputFileName
-
-            val env = prepEnv(fileName, currentRow)
-
-            invoke(programAndParams[0], programAndParams.filterIndexed { index, _ -> index > 0 }, env)
-
-            //attach link to results
-            addLinkRef(null, "output", fileName)
-
-            return StepResult.success()
+        return try {
+            runProgram(programPathAndParams, env, true)
+            StepResult.success()
         } catch (e: Exception) {
-            return StepResult.fail(e.message)
+            StepResult.fail(e.message)
+        } finally {
+            //attach link to results
+            addLinkRef("Follow the link to view the output", "output", fileName)
         }
     }
 
     fun runProgramNoWait(programPathAndParams: String): StepResult {
         requires(StringUtils.isNotBlank(programPathAndParams), "empty/null programPathAndParams")
 
-        try {
-            val programAndParams = RuntimeUtils.formatCommandLine(programPathAndParams)
-            if (programAndParams.isEmpty())
-                throw IllegalArgumentException("Unable to parse programPathAndParams: $programAndParams")
+        val currentRow = context.currentTestStep.row[0].reference
+        val outputFileName = "runProgramNoWait_$currentRow.log"
+        context.setData(OPT_RUN_PROGRAM_OUTPUT, outputFileName)
+        val fileName = Syspath().out("fullpath") + separator + outputFileName
+        val env = prepEnv(fileName, currentRow)
 
-            val currentRow = context.currentTestStep.row[0].reference
-            val outputFileName = "runProgramNoWait_$currentRow.log"
-            context.setData(OPT_RUN_PROGRAM_OUTPUT, outputFileName)
-            val fileName = Syspath().out("fullpath") + separator + outputFileName
-
-            invokeNoWait(programAndParams[0],
-                         programAndParams.filterIndexed { index, _ -> index > 0 },
-                         prepEnv(fileName, currentRow))
-
+        return try {
+            runProgram(programPathAndParams, env, false)
+            StepResult.success()
+        } catch (e: Exception) {
+            StepResult.fail(e.message)
+        } finally {
             //attach link to results
             addLinkRef("Follow the link to view the output", "output", fileName)
-
-            return StepResult.success()
-        } catch (e: Exception) {
-            return StepResult.fail(e.message)
         }
     }
 
@@ -211,7 +197,6 @@ class ExternalCommand : BaseCommand() {
     }
 
     companion object {
-
         @JvmStatic
         @Throws(IOException::class)
         fun exec(programPathAndParams: String): String {
@@ -219,6 +204,19 @@ class ExternalCommand : BaseCommand() {
             // could be "weird batch file with spaces.bat" "blah blah blah" 1 2 3
             val proc = Runtime.getRuntime().exec(RuntimeUtils.formatCommandLine(programPathAndParams))
             return TextUtils.toString(IOUtils.readLines(proc.inputStream, DEF_CHARSET), lineSeparator())
+        }
+
+        @JvmStatic
+        @Throws(IOException::class, InterruptedException::class)
+        fun runProgram(programPathAndParams: String, env: MutableMap<String, String>, wait:Boolean) {
+            val programAndParams = RuntimeUtils.formatCommandLine(programPathAndParams)
+            if (programAndParams.isEmpty())
+                throw IllegalArgumentException("Unable to parse program and parameters: $programAndParams")
+
+            if (wait)
+                invoke(programAndParams[0], programAndParams.filterIndexed { index, _ -> index > 0 }, env)
+            else
+                invokeNoWait(programAndParams[0], programAndParams.filterIndexed { index, _ -> index > 0 }, env)
         }
     }
 }

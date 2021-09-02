@@ -21,13 +21,14 @@ import com.google.gson.GsonBuilder
 import java.nio.charset.Charset
 import java.text.DateFormat
 import java.text.SimpleDateFormat
+import kotlin.system.exitProcess
 
 object InspectorConst {
     val GSON: Gson = GsonBuilder().setLenient().setPrettyPrinting().excludeFieldsWithoutExposeAnnotation().create()
     val UTF8: Charset = Charset.forName("UTF-8")
     val LOG_DATE_FORMAT: DateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S")
 
-//    const val PROJECT_ID = ".meta/project.id"
+    //    const val PROJECT_ID = ".meta/project.id"
     const val LOCAL_HTML_RESOURCE = "/org/nexial/core/reports/project-inspector-local.html"
 
     object ReturnCode {
@@ -39,5 +40,7 @@ object InspectorConst {
         const val READ_JSON = -7
     }
 
-    fun exit(returnCode: Int) = System.exit(returnCode)
+    fun exit(returnCode: Int) {
+        exitProcess(returnCode)
+    }
 }

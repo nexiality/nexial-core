@@ -22,7 +22,7 @@ data class JavaUIProfile(
     val agent: String,
     val appLocation: String,
     val appFileName: String,
-    val appArgs: MutableList<String> = mutableListOf(),
+    val appArgs: Array<String>,
     val mappings: MutableMap<String, String> = mutableMapOf(),
     val type: JavaUIType,
     val appStartupWaitMs: Long,

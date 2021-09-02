@@ -18,28 +18,24 @@
 package org.nexial.core.plugins.javaui
 
 import org.apache.commons.lang3.StringUtils
-import org.apache.commons.lang3.SystemUtils.IS_OS_WINDOWS
 import org.apache.commons.lang3.math.NumberUtils
-import org.nexial.commons.utils.FileUtil
+import org.nexial.commons.proc.RuntimeUtils
 import org.nexial.core.model.ExecutionContext
 import org.nexial.core.model.StepResult
 import org.nexial.core.model.TestStep
 import org.nexial.core.plugins.CanTakeScreenshot
 import org.nexial.core.plugins.base.BaseCommand
 import org.nexial.core.plugins.external.ExternalCommand
-import org.nexial.core.plugins.javaui.JavaUIConst.Message.noJubulaHome
 import org.nexial.core.plugins.javaui.JavaUIConst.Message.startAppNotExecuted
 import org.nexial.core.plugins.javaui.JavaUIConst.Message.tooLowAppStartupWaitMs
+import org.nexial.core.plugins.javaui.JavaUIConst.SystemVariable
 import org.nexial.core.plugins.javaui.JavaUIConst.SystemVariable.appStartupWaitMs
 import org.nexial.core.plugins.javaui.JavaUIConst.SystemVariable.delayBetweenStepsMs
 import org.nexial.core.plugins.javaui.JavaUIConst.SystemVariable.profileVarPrefix
 import org.nexial.core.plugins.javaui.JavaUIConst.defaultAutAgentPort
 import org.nexial.core.plugins.javaui.JavaUIConst.embedded
-import org.nexial.core.plugins.javaui.JavaUIConst.envJubulaHome
 import org.nexial.core.plugins.javaui.JavaUIConst.mappingConfigurationPrefix
 import org.nexial.core.plugins.javaui.JavaUIConst.minAppStartupWaitMs
-import org.nexial.core.plugins.javaui.JavaUIConst.postAutAgentDelayMs
-import org.nexial.core.plugins.javaui.JavaUIConst.postStopAutAgentDelayMs
 import org.nexial.core.plugins.javaui.JavaUIConst.requiredConfigs
 import org.nexial.core.plugins.javaui.JavaUIType.*
 import org.nexial.core.utils.CheckUtils.*
@@ -80,48 +76,9 @@ class JavaUICommand : BaseCommand(), CanTakeScreenshot {
         return postScreenshot(testStep, screenshotFile)
     }
 
-    fun startLocalAgent(port: String): StepResult {
-        val portNumber = toPortNumber(port)
-        val autAgentLocation = resolveAutAgentBinary(resolveJubulaHome())
-        val result = externalCommand.runProgramNoWait("$autAgentLocation -l -q -p $portNumber")
-        return if (result.failed())
-            result
-        else {
-            try {
-                Thread.interrupted()
-                Thread.sleep(postAutAgentDelayMs.toLong())
-            } catch (e: InterruptedException) {
-            }
+    fun startLocalAgent(port: String) = startLocalAgent(toPortNumber(port))
 
-            StepResult.success("AUT Agent successfully started on port $port")
-        }
-    }
-
-    fun stopLocalAgent(port: String): StepResult {
-        val portNumber = toPortNumber(port)
-        val stopautagent = resolveStopAutAgentBinary(resolveJubulaHome())
-        val result = externalCommand.runProgramNoWait("$stopautagent -p $portNumber")
-        return if (result.failed())
-            result
-        else {
-            val waitUntil = System.currentTimeMillis() + postStopAutAgentDelayMs
-            while (System.currentTimeMillis() < waitUntil) {
-                Thread.yield()
-                if (Thread.interrupted()) {
-                    Thread.currentThread().interrupt()
-                    try {
-                        Thread.sleep(500L)
-                    } catch (e: Exception) {
-                    }
-                }
-            }
-
-            if (Thread.interrupted())
-                ConsoleUtils.error("Unable to stop local agent on port $port within $postStopAutAgentDelayMs ms")
-            Thread.interrupted()
-            StepResult.success("AUT Agent on port $port successfully stopped")
-        }
-    }
+    fun stopLocalAgent(port: String) = stopLocalAgent(toPortNumber(port))
 
     fun startApp(profile: String): StepResult {
         requiresNotBlank(profile, "invalid profile", profile)
@@ -137,6 +94,7 @@ class JavaUICommand : BaseCommand(), CanTakeScreenshot {
             agent = profileData["agent"] ?: "",
             appLocation = profileData["location"]!!,
             appFileName = profileData["app"]!!,
+            appArgs = RuntimeUtils.formatCommandLine(profileData["args"] ?: ""),
             type = JavaUIType.valueOf(
                 StringUtils.upperCase(profileData["type"]
                                       ?: throw IllegalArgumentException("Invalid type for profile '$profile'"))),
@@ -160,17 +118,20 @@ class JavaUICommand : BaseCommand(), CanTakeScreenshot {
 
         jubula.appStartupWaitMs = config.appStartupWaitMs
         jubula.delayBetweenStepsMs = config.delayBetweenStepsMs
-        jubula.addMappings(*config.mappings.map { Pair(it.key, it.value) }.toTypedArray())
-        jubula.registerAut(name = config.name, appLocation = config.appLocation, exe = config.appFileName)
+        jubula.registerAut(name = config.name,
+                           appLocation = config.appLocation,
+                           exe = config.appFileName,
+                           args = config.appArgs)
+        System.setProperty(SystemVariable.agent, config.agent ?: embedded)
         when (config.agent) {
-            ""       -> jubula.startAgent()
-            embedded -> jubula.startEmbeddedAgent()
-            else     -> {
+            "", embedded -> jubula.startEmbeddedAgent()
+            else         -> {
                 val agentConfig = StringUtils.split(config.agent, ":")
                 jubula.startAgent(agentConfig[0], NumberUtils.toInt(agentConfig[1]))
             }
         }
         jubula.startAut(config.name)
+        jubula.addMappings(*config.mappings.map { Pair(it.key, it.value) }.toTypedArray())
 
         config.jubula = jubula
         context.setData(profileVarPrefix + profile, config)
@@ -278,23 +239,26 @@ class JavaUICommand : BaseCommand(), CanTakeScreenshot {
         resolveConfig(profile).jubula
         ?: throw IllegalArgumentException("Unable to reference AUT for profile '$profile'; $startAppNotExecuted")
 
-    private fun resolveAutAgentBinary(jubulaHome: String): String {
-        val autagent = "$jubulaHome${separator}ite${separator}autagent${if (IS_OS_WINDOWS) ".exe" else ""}"
-        if (!FileUtil.isFileExecutable(autagent))
-            throw RuntimeException("Unable to resolve to an executable binary for AUT Agent at $autagent")
-        return if (IS_OS_WINDOWS) StringUtils.wrapIfMissing(autagent, "\"") else autagent
+    internal fun startLocalAgent(portNumber: Int): StepResult {
+        val autAgentLocation = JubulaUtils.resolveAutAgentBinary(JubulaUtils.resolveJubulaHome())
+        val result = externalCommand.runProgramNoWait("$autAgentLocation -l -q -p $portNumber")
+        return if (result.failed())
+            result
+        else {
+            JubulaUtils.postStartLocalAgent()
+            StepResult.success("AUT Agent successfully started on port $portNumber")
+        }
     }
 
-    private fun resolveStopAutAgentBinary(jubulaHome: String): String {
-        val stopAutAgent = "$jubulaHome${separator}ite${separator}stopautagent${if (IS_OS_WINDOWS) ".exe" else ""}"
-        if (!FileUtil.isFileExecutable(stopAutAgent))
-            throw RuntimeException("Unable to resolve to an executable binary for 'Stop AUT Agent' at $stopAutAgent")
-        return if (IS_OS_WINDOWS) StringUtils.wrapIfMissing(stopAutAgent, "\"") else stopAutAgent
-    }
-
-    private fun resolveJubulaHome(): String {
-        val jubulaHome = System.getenv(envJubulaHome) ?: throw IllegalArgumentException(noJubulaHome)
-        return StringUtils.unwrap(jubulaHome, "\"")
+    internal fun stopLocalAgent(portNumber: Int): StepResult {
+        val stopautagent = JubulaUtils.resolveStopAutAgentBinary(JubulaUtils.resolveJubulaHome())
+        val result = externalCommand.runProgramNoWait("$stopautagent -p $portNumber")
+        return if (result.failed())
+            result
+        else {
+            JubulaUtils.postStopLocalAgent(portNumber)
+            StepResult.success("AUT Agent on port $portNumber successfully stopped")
+        }
     }
 
     private fun toPortNumber(port: String): Int {

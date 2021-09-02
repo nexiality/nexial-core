@@ -17,13 +17,6 @@ package org.nexial.core.tools;
  *
  */
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.util.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.DefaultParser;
@@ -31,13 +24,17 @@ import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
 import org.json.JSONArray;
 import org.json.JSONObject;
-import org.nexial.core.tools.swagger.NexialContents;
-import org.nexial.core.tools.swagger.SwaggerActivity;
-import org.nexial.core.tools.swagger.SwaggerDataVariables;
-import org.nexial.core.tools.swagger.SwaggerScenario;
-import org.nexial.core.tools.swagger.SwaggerStep;
+import org.nexial.core.tools.swagger.*;
 import org.nexial.core.utils.JsonUtils;
 import org.yaml.snakeyaml.Yaml;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.*;
 
 import static org.apache.commons.lang3.StringUtils.*;
 import static org.nexial.core.NexialConst.ExitStatus.RC_BAD_CLI_ARGS;
@@ -121,7 +118,7 @@ public class SwaggerTestScriptGenerator {
             System.exit(RC_FAILURE_FOUND);
         }
 
-        System.out.println("File path is " + swaggerFile);
+        // System.out.println("File path is " + swaggerFile);
         if (dataMap != null) {
             if (dataMap.containsKey("swagger")) {
                 System.err.println("Older Swagger versions are not supported. Open API 3 or higher only supported.");
@@ -132,6 +129,7 @@ public class SwaggerTestScriptGenerator {
                     generateFiles(json, projectDirPath);
                 } catch (IOException e) {
                     System.err.println("Error is " + e.getMessage());
+                    System.exit(RC_FAILURE_FOUND);
                 }
             }
         }
@@ -266,8 +264,7 @@ public class SwaggerTestScriptGenerator {
 
                     JSONArray parameters = methodAttributes.optJSONArray("parameters");
                     JSONObject params = extractParameters(path, method, response, parameters, parentParams,
-                                                          Objects.requireNonNull(components)
-                                                                 .optJSONObject("parameters"),
+                                                          Objects.requireNonNull(components).optJSONObject("parameters"),
                                                           dataVariables, varName);
 
                     JSONObject responseParameters = getResponseParameters(components, responses, response);

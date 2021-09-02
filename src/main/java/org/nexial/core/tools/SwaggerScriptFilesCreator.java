@@ -18,6 +18,14 @@ package org.nexial.core.tools;
  */
 
 
+import org.apache.commons.io.FileUtils;
+import org.apache.poi.xssf.usermodel.XSSFCell;
+import org.apache.poi.xssf.usermodel.XSSFRow;
+import org.apache.poi.xssf.usermodel.XSSFSheet;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.nexial.core.tools.swagger.*;
+import org.springframework.util.ResourceUtils;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -26,24 +34,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.MessageFormat;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
-import org.apache.commons.io.FileUtils;
-import org.apache.poi.xssf.usermodel.XSSFCell;
-import org.apache.poi.xssf.usermodel.XSSFRow;
-import org.apache.poi.xssf.usermodel.XSSFSheet;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.nexial.core.tools.swagger.NexialContents;
-import org.nexial.core.tools.swagger.SwaggerActivity;
-import org.nexial.core.tools.swagger.SwaggerDataVariables;
-import org.nexial.core.tools.swagger.SwaggerScenario;
-import org.nexial.core.tools.swagger.SwaggerStep;
-import org.springframework.util.ResourceUtils;
 
+import static java.io.File.separator;
 import static org.apache.commons.lang3.StringUtils.*;
 import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.NexialConst.Project.NEXIAL_HOME;
@@ -59,6 +53,8 @@ public class SwaggerScriptFilesCreator {
     private static final String BATCH_FILE_SH_EXTENSION = ".sh";
     private static final String EXCEL_EXTENSION = ".xlsx";
     private static final String TIMESTAMP_FORMAT = "yyyy/MMM/dd hh:mm:ss.SSS a";
+    private static final String BATCH_FILE_CMD_TEMPLATE = "nexial-swagger.cmd.txt";
+    private static final String BATCH_FILE_SH_TEMPLATE = "nexial-swagger.sh.txt";
 
     /**
      * Generates various files related to the creation of the Swagger scripts for the
@@ -72,8 +68,8 @@ public class SwaggerScriptFilesCreator {
             throws IOException {
         createPropertiesFile(projectDirPath, contents.getDataVariables(), swaggerPrefix);
         createScriptAndDataFiles(contents, projectDirPath, swaggerPrefix);
-        createBatchFile(projectDirPath, "nexial-swagger.cmd.txt", BATCH_FILE_CMD_EXTENSION, swaggerPrefix);
-        createBatchFile(projectDirPath, "nexial-swagger.sh.txt", BATCH_FILE_SH_EXTENSION, swaggerPrefix);
+        createBatchFile(projectDirPath, BATCH_FILE_CMD_TEMPLATE, BATCH_FILE_CMD_EXTENSION, swaggerPrefix);
+        createBatchFile(projectDirPath, BATCH_FILE_SH_TEMPLATE, BATCH_FILE_SH_EXTENSION, swaggerPrefix);
     }
 
     /**
@@ -86,8 +82,8 @@ public class SwaggerScriptFilesCreator {
     private void createPropertiesFile(String projectDirPath, SwaggerDataVariables dataVariables,
                                       String swaggerPrefix)
             throws IOException {
-        File propertiesFile = new File(joinWith(File.separator,
-                                                removeEnd(projectDirPath, File.separator), "artifact",
+        File propertiesFile = new File(joinWith(separator,
+                                                removeEnd(projectDirPath, separator), "artifact",
                                                 joinWith(".", "project", swaggerPrefix, "properties")));
         String timestamp = new SimpleDateFormat(TIMESTAMP_FORMAT).format(Calendar.getInstance().getTime());
 
@@ -122,19 +118,19 @@ public class SwaggerScriptFilesCreator {
         addLinesToPropertyFile(lines, dataVariables.getCookieParams(), "# Cookie Variables");
 
         dataVariables.setPathParams(getNonEmptyVars(dataVariables.getPathParams()));
-        addLinesToPropertyFile(lines, dataVariables.getPathParams(), "#Path Variables");
+        addLinesToPropertyFile(lines, dataVariables.getPathParams(), "# Path Variables");
 
         dataVariables.setHeaderParams(getNonEmptyVars(dataVariables.getHeaderParams()));
-        addLinesToPropertyFile(lines, dataVariables.getHeaderParams(), "#Header Variables");
+        addLinesToPropertyFile(lines, dataVariables.getHeaderParams(), "# Header Variables");
 
         dataVariables.setQueryParams(getNonEmptyVars(dataVariables.getQueryParams()));
-        addLinesToPropertyFile(lines, dataVariables.getQueryParams(), "#Query Parameter Variables");
+        addLinesToPropertyFile(lines, dataVariables.getQueryParams(), "# Query Parameter Variables");
 
         dataVariables.setSecurityVars(getNonEmptyVars(dataVariables.getSecurityVars()));
-        addLinesToPropertyFile(lines, dataVariables.getSecurityVars(), "#Authentication Variables");
+        addLinesToPropertyFile(lines, dataVariables.getSecurityVars(), "# Authentication Variables");
 
         dataVariables.setStatusTextVars(getNonEmptyVars(dataVariables.getStatusTextVars()));
-        addLinesToPropertyFile(lines, dataVariables.getStatusTextVars(), "#Status Text Variables");
+        addLinesToPropertyFile(lines, dataVariables.getStatusTextVars(), "# Status Text Variables");
 
         StringBuilder fileContent = new StringBuilder(EMPTY);
         lines.forEach(line -> fileContent.append(line).append(NL));
@@ -156,9 +152,11 @@ public class SwaggerScriptFilesCreator {
         Path templateFilePath = ResourceUtils.getFile("classpath:swagger/" + templateFileName).toPath();
         String fileContent = MessageFormat.format(new String(Files.readAllBytes(templateFilePath)), projectDirPath,
                                                   swaggerPrefix);
-        String filePath = joinWith(File.separator, projectDirPath, "artifact", "bin",
+        String filePath = joinWith(separator, projectDirPath, "artifact", "bin",
                                    join("run-", swaggerPrefix, fileExtension));
-        Files.write(new File(filePath).toPath(), fileContent.getBytes());
+        File batchFile = new File(filePath);
+        Files.write(batchFile.toPath(), fileContent.getBytes());
+        batchFile.setExecutable(true, false);
     }
 
     private Map<String, List<String>> getNonEmptyVars(Map<String, List<String>> vars) {
@@ -192,15 +190,15 @@ public class SwaggerScriptFilesCreator {
      */
     private void createScriptAndDataFiles(NexialContents nexialContents, String projectDirPath,
                                           String swaggerPrefix) throws IOException {
-        String scriptFileName = joinWith(File.separator, projectDirPath, "artifact", "script",
+        String scriptFileName = joinWith(separator, projectDirPath, "artifact", "script",
                                          join(swaggerPrefix, EXCEL_EXTENSION));
 
-        String dataFileName = joinWith(File.separator, projectDirPath, "artifact", "data",
+        String dataFileName = joinWith(separator, projectDirPath, "artifact", "data",
                                        join(swaggerPrefix, ".data", EXCEL_EXTENSION));
 
         String nexialHome = System.getProperty(NEXIAL_HOME);
-        String nexialScriptTemplateFile = joinWith(File.separator, nexialHome, "template", "nexial-script.xlsx");
-        String nexialDataTemplateFile = joinWith(File.separator, nexialHome, "template", "nexial-data.xlsx");
+        String nexialScriptTemplateFile = joinWith(separator, nexialHome, "template", "nexial-script.xlsx");
+        String nexialDataTemplateFile = joinWith(separator, nexialHome, "template", "nexial-data.xlsx");
 
         FileUtils.copyFile(new File(nexialScriptTemplateFile), new File(scriptFileName));
         FileUtils.copyFile(new File(nexialDataTemplateFile), new File(dataFileName));

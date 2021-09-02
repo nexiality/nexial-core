@@ -17,11 +17,11 @@
 
 package org.nexial.core.tools;
 
-import javax.validation.constraints.NotNull;
-
 import org.apache.commons.cli.*;
 import org.apache.commons.cli.Option.Builder;
 import org.apache.commons.lang3.StringUtils;
+
+import javax.validation.constraints.NotNull;
 
 /**
  * Various utilities classes used all across tools package.
@@ -61,18 +61,24 @@ final public class CliUtils {
      * @param cmdOptions {@link Options} passed in.
      * @return {@link CommandLine} created.
      */
-    public static CommandLine getCommandLine(String name, String[] args, @NotNull Options cmdOptions) {
+    public static CommandLine getCommandLine(String name,
+                                             String[] args,
+                                             @NotNull Options cmdOptions,
+                                             HelpFormatter formatter) {
         try {
             return new DefaultParser().parse(cmdOptions, args);
         } catch (ParseException e) {
-            System.err.println("Unable to parse commandline options: " + e.getMessage());
-
-            HelpFormatter formatter = new HelpFormatter();
+            System.err.println("Error parsing commandline options: " + e.getMessage());
             System.out.println();
             formatter.printHelp(name, cmdOptions, true);
             System.out.println();
-
             return null;
         }
+    }
+
+    public static CommandLine getCommandLine(String name, String[] args, @NotNull Options cmdOptions) {
+        HelpFormatter formatter = new HelpFormatter();
+        formatter.setWidth(100);
+        return getCommandLine(name, args, cmdOptions, formatter);
     }
 }

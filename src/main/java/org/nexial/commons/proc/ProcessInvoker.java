@@ -204,7 +204,7 @@ public class ProcessInvoker {
         ProcessBuilder pb = new ProcessBuilder(processArg).inheritIO();
         prepareEnv(pb, env, outcome);
 
-        if (env.containsKey(PROC_REDIRECT_OUT)) {
+        if (MapUtils.isNotEmpty(env) && env.containsKey(PROC_REDIRECT_OUT)) {
             String outFile = env.get(PROC_REDIRECT_OUT);
             if (StringUtils.isNotBlank(outFile)) {
                 File out = new File(outFile);
