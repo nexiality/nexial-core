@@ -118,7 +118,6 @@ public class SwaggerTestScriptGenerator {
             System.exit(RC_FAILURE_FOUND);
         }
 
-        // System.out.println("File path is " + swaggerFile);
         if (dataMap != null) {
             if (dataMap.containsKey("swagger")) {
                 System.err.println("Older Swagger versions are not supported. Open API 3 or higher only supported.");
@@ -936,7 +935,6 @@ public class SwaggerTestScriptGenerator {
         for (String name : headers.keySet()) {
             steps.add(createStep(EMPTY, EMPTY, CMD_TYPE_WS, HEADER_COMMAND, name, NEXIAL_EMPTY_STRING));
         }
-        steps.add(createStep(EMPTY, EMPTY, CMD_TYPE_WS, HEADER_COMMAND, "Cookie", NEXIAL_EMPTY_STRING));
         steps.add(createStep(EMPTY, EMPTY, CMD_TYPE_BASE, CLEAR_VARS_CMD, responseVariable));
     }
 
