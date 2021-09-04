@@ -23,8 +23,8 @@ import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.nexial.commons.utils.ResourceUtils;
 import org.nexial.core.tools.swagger.*;
-import org.springframework.util.ResourceUtils;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -32,6 +32,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.text.MessageFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -149,9 +150,9 @@ public class SwaggerScriptFilesCreator {
     private void createBatchFile(String projectDirPath, String templateFileName, String fileExtension,
                                  String swaggerPrefix)
             throws IOException {
-        Path templateFilePath = ResourceUtils.getFile("classpath:swagger/" + templateFileName).toPath();
-        String fileContent = MessageFormat.format(new String(Files.readAllBytes(templateFilePath)), projectDirPath,
-                                                  swaggerPrefix);
+
+        String content = ResourceUtils.loadResource("/swagger/" + templateFileName);
+        String fileContent = MessageFormat.format(content, projectDirPath, swaggerPrefix);
         String filePath = joinWith(separator, projectDirPath, "artifact", "bin",
                                    join("run-", swaggerPrefix, fileExtension));
         File batchFile = new File(filePath);
