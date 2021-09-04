@@ -285,6 +285,9 @@ dependencies {
 	// compile("org.mp4parser:isoparser:1.9.+")
 	compile("com.googlecode.mp4parser:isoparser:1.1.22")
 
+	// https://mvnrepository.com/artifact/net.dongliu/apk-parser
+	compile("net.dongliu:apk-parser:2.6.10")
+
 	//	non-distributable libs
 	compile fileTree(dir: 'lib', include: '*.jar')
 

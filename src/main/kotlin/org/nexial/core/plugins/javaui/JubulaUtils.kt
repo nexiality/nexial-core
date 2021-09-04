@@ -36,7 +36,7 @@ object JubulaUtils {
     private val logPath = StringUtils.appendIfMissing(JAVA_IO_TMPDIR, separator)
 
     private fun prepExecEnv(procName: String, log: File, workingDirectory: File): MutableMap<String, String> {
-        return mutableMapOf<String, String>(
+        return mutableMapOf(
             PROC_CONSOLE_ID to procName,
             WORKING_DIRECTORY to workingDirectory.absolutePath,
             PROC_CONSOLE_OUT to "true",

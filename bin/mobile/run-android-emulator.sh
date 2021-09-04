@@ -48,7 +48,7 @@ if [[ "$1" = "" ]]; then
 		echo "EMULATOR_BACK_CAM   - emulated|webcam0|webcam1|..."
 		echo "                      instruct Android emulator to use either emulated image or host camera"
 		echo "EMULATOR_PHONE      - 10-digit phone number; instruct Android emulator to use specified phone number"
-    echo.
+    echo
     exit 254
 fi
 
