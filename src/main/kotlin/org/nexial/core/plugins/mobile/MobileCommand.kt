@@ -1,12 +1,32 @@
+/*
+ * Copyright 2012-2021 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * 	http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
+
 package org.nexial.core.plugins.mobile
 
 import io.appium.java_client.AppiumDriver
+import io.appium.java_client.MobileCommand.PRESS_KEY_CODE
 import io.appium.java_client.MobileElement
 import io.appium.java_client.MultiTouchAction
 import io.appium.java_client.TouchAction
 import io.appium.java_client.android.AndroidDriver
 import io.appium.java_client.android.AndroidTouchAction
 import io.appium.java_client.android.nativekey.AndroidKey.*
+import io.appium.java_client.appmanagement.ApplicationState.NOT_INSTALLED
+import io.appium.java_client.appmanagement.ApplicationState.RUNNING_IN_FOREGROUND
 import io.appium.java_client.ios.IOSDriver
 import io.appium.java_client.ios.IOSTouchAction
 import io.appium.java_client.remote.HideKeyboardStrategy.TAP_OUTSIDE
@@ -17,9 +37,13 @@ import org.apache.commons.collections4.MapUtils
 import org.apache.commons.lang3.BooleanUtils
 import org.apache.commons.lang3.StringUtils
 import org.apache.commons.lang3.math.NumberUtils
+import org.nexial.commons.utils.RegexUtils
 import org.nexial.commons.utils.TextUtils
 import org.nexial.core.NexialConst.*
 import org.nexial.core.NexialConst.Mobile.*
+import org.nexial.core.NexialConst.Mobile.Message.APP_NOT_INSTALLED
+import org.nexial.core.NexialConst.Mobile.Message.ERR_NO_SERVICE
+import org.nexial.core.NexialConst.Mobile.iOS.MULTI_PICKER_DELIM
 import org.nexial.core.NexialConst.Web.GROUP_LOCATOR_SUFFIX
 import org.nexial.core.ShutdownAdvisor
 import org.nexial.core.model.ExecutionContext
@@ -31,6 +55,12 @@ import org.nexial.core.plugins.base.BaseCommand
 import org.nexial.core.plugins.base.NumberCommand
 import org.nexial.core.plugins.base.ScreenshotUtils
 import org.nexial.core.plugins.mobile.Direction.*
+import org.nexial.core.plugins.mobile.MobileLocatorHelper.Companion.doneLocator
+import org.nexial.core.plugins.mobile.MobileLocatorHelper.Companion.iosAlertLocator
+import org.nexial.core.plugins.mobile.MobileLocatorHelper.Companion.pickerWheelLocator
+import org.nexial.core.plugins.mobile.MobileLocatorHelper.Companion.scriptPressButton
+import org.nexial.core.plugins.mobile.MobileLocatorHelper.Companion.scrollableLocator
+import org.nexial.core.plugins.mobile.MobileLocatorHelper.Companion.scrollableLocator2
 import org.nexial.core.plugins.mobile.MobileType.ANDROID
 import org.nexial.core.plugins.mobile.MobileType.IOS
 import org.nexial.core.plugins.web.WebDriverExceptionHelper.resolveErrorMessage
@@ -57,10 +87,6 @@ import kotlin.math.max
 class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
     private lateinit var numberCommand: NumberCommand
     private var mobileService: MobileService? = null
-    private val scrollableLocator = "//*[@scrollable='true' and @displayed='true' and @enabled='true']"
-    private val scrollableLocator2 = "//android.widget.ScrollView[@displayed='true' and @enabled='true']"
-    private val iosAlertLocator = "//*[@type='XCUIElementTypeAlert' and @visible='true']"
-    private val scriptPressButton = "mobile: pressButton"
 
     override fun init(context: ExecutionContext) {
         super.init(context)
@@ -68,7 +94,7 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
         ShutdownAdvisor.addAdvisor(this)
     }
 
-    override fun getTarget() = "mobile"
+    override fun getTarget() = COMMAND
 
     override fun takeScreenshot(testStep: TestStep): String? {
         if (!isScreenshotEnabled) return null
@@ -106,7 +132,17 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
 
     fun use(profile: String): StepResult {
         requiresNotBlank(profile, "Invalid profile", profile)
+
         mobileService = context.getMobileService(profile)
+
+        val appId = mobileService!!.profile.appId
+        if (StringUtils.isNotBlank(appId)) {
+            val driver = mobileService!!.driver
+            val appState = driver.queryAppState(appId)
+            if (appState == NOT_INSTALLED) throw IllegalArgumentException("$APP_NOT_INSTALLED $appId")
+            if (appState != RUNNING_IN_FOREGROUND) launchApp(appId)
+        }
+
         return StepResult.success()
     }
 
@@ -495,13 +531,14 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
             else
                 StepResult.fail("Element '$locator' not cleared; current text is '$currentText'")
         } else {
-            val element = findElement(locator)
+            val findBy = resolveFindBy(locator)
+            val element = findElement(findBy)
             val elementText = element.text
             if (StringUtils.equals(elementText, text))
                 StepResult.success("Element '$locator' already contain text '$text")
             else {
-                clearText(locator)
-                findElement(locator).sendKeys(text)
+                clearText(findBy)
+                findElement(findBy).sendKeys(text)
                 val postWaitMs = mobileService.profile.postActionWaitMs
                 if (postWaitMs > MIN_WAIT_MS) waitFor(postWaitMs.toInt())
 
@@ -521,6 +558,16 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
             for (i in (0..elementText.length)) findElement(locator).sendKeys(BACK_SPACE)
         else
             findElement(locator).clear()
+    }
+
+    private fun clearText(findBy: By) {
+        val element = findElement(findBy)
+        val elementText = element.text
+        element.click()
+        if (StringUtils.isBlank(elementText))
+            for (i in (0..elementText.length)) findElement(findBy).sendKeys(BACK_SPACE)
+        else
+            findElement(findBy).clear()
     }
 
     /**
@@ -887,62 +934,40 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
                 withPostActionWait(Actions(mobileService.driver).click(select), mobileService)
                 waitFor(800)
 
-                // 2. find all scrollable containers
-                var scrollables = driver.findElements(By.xpath(scrollableLocator))
-                if (CollectionUtils.isEmpty(scrollables)) {
-                    scrollables = driver.findElements(By.xpath(scrollableLocator2))
-                    if (CollectionUtils.isEmpty(scrollables))
-                        return StepResult.fail("Unable to locate a usable dropdown")
-                }
-
-                // 3. find the most likely scrollable container
-                val scrollTarget = if (scrollables.size == 1)
-                    scrollables[0]
+                // 2. find the most likely scrollable container
+                val scrollTarget = findAndroidScrollTarget(driver, select)
+                if (scrollTarget == null)
+                    StepResult.fail("Unable to locate a usable dropdown")
                 else {
-                    // lastResort is usually the top level scrollable container (x or y < 10)
-                    val lastResort = scrollables.find { elem -> elem.rect.x < 10 || elem.rect.y < 10 }
-                    if (lastResort != null) scrollables.remove(lastResort)
+                    // 3. determine how many lines to scroll (if needed)
+                    val maxScrolls = context.getIntConfig(target, profileName, DROPDOWN_MAX_SCROLL)
+                    val scrollAmount = scrollTarget.rect.height / 2
+                    val startFrom = Point(0, scrollAmount - 5)
+                    val scrollTo = Point(0, (scrollAmount / 2) * -1)
 
-                    if (scrollables.size > 1) {
-                        // find the closest one with the most similar width
-                        val matchWidth = select.rect.width
-                        val matchY = select.rect.y
-                        scrollables.sortBy { elem ->
-                            (elem.rect.y - matchY).absoluteValue *
-                            (elem.rect.width - matchWidth).absoluteValue / matchWidth
-                        }
+                    // 4. scroll downwards until specified item is found
+                    val waiter = newWaiter(1000, "identifying option '${item}'")
+                    var scrollCount = 0
+                    val findByOption = By.xpath(MobileLocatorHelper.resolveAndroidDropdownItemLocator(item))
+                    var itemElement = waiter.until { scrollTarget.findElements(findByOption) }
+                    while (CollectionUtils.isEmpty(itemElement)) {
+                        if (scrollCount++ >= maxScrolls) break
+                        Actions(driver)
+                            .moveToElement(scrollTarget, startFrom.x, startFrom.y)
+                            .clickAndHold()
+                            .moveByOffset(scrollTo.x, scrollTo.y)
+                            .release()
+                            .pause(500L)
+                            .perform()
+                        itemElement = waiter.until { scrollTarget.findElements(findByOption) }
                     }
-                    scrollables[0]
+
+                    if (CollectionUtils.isNotEmpty(itemElement)) {
+                        itemElement[0].click()
+                        StepResult.success("dropdown option '${item}' selected")
+                    } else
+                        StepResult.fail("Unable to find dropdown option '${item}'")
                 }
-
-                // 4. determine how many lines to scroll (if needed)
-                val maxScrolls = context.getIntConfig(target, profileName, DROPDOWN_MAX_SCROLL)
-                val scrollAmount = scrollTarget.rect.height / 2
-                val startFrom = Point(0, scrollAmount - 5)
-                val scrollTo = Point(0, (scrollAmount / 2) * -1)
-
-                // 5. scroll downwards until specified item is found
-                val waiter = newWaiter(1000, "identifying option '${item}'")
-                var scrollCount = 0
-                val findByOption = By.xpath(".//*[${MobileLocatorHelper.resolveTextFilter(ANDROID, item)}]")
-                var itemElement = waiter.until { scrollTarget.findElements(findByOption) }
-                while (CollectionUtils.isEmpty(itemElement)) {
-                    if (scrollCount++ >= maxScrolls) break
-                    Actions(driver)
-                        .moveToElement(scrollTarget, startFrom.x, startFrom.y)
-                        .clickAndHold()
-                        .moveByOffset(scrollTo.x, scrollTo.y)
-                        .release()
-                        .pause(500L)
-                        .perform()
-                    itemElement = waiter.until { scrollTarget.findElements(findByOption) }
-                }
-
-                if (CollectionUtils.isNotEmpty(itemElement)) {
-                    itemElement[0].click()
-                    StepResult.success("dropdown option '${item}' selected")
-                } else
-                    StepResult.fail("Unable to find dropdown option '${item}'")
             }
             IOS     -> {
                 // 1. find the select element / check if intended value is already selected
@@ -956,43 +981,61 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
                     waitFor(800)
 
                     // 3. 1 or more pickers?
-                    val pickers = findElements("//XCUIElementTypePickerWheel")
-                    if (pickers.size > 1 && StringUtils.contains(item, "|")) {
-                        val parts = StringUtils.split(item, "|")
+                    val pickers = findElements(pickerWheelLocator)
+                    if (pickers.size > 1 && StringUtils.contains(item, MULTI_PICKER_DELIM)) {
+                        val parts = StringUtils.split(item, MULTI_PICKER_DELIM)
                         // if the picker wheels do not match the text splits
                         if (parts == null || parts.size != pickers.size)
                             StepResult.fail("Unable to automate '$item' against ${pickers.size} pick lists")
                         else {
                             // 4. designated value to which picker
                             parts.forEachIndexed { index, part ->
-                                if (StringUtils.isNotEmpty(part)) {
-                                    val picker = pickers[index]
-                                    picker.sendKeys(part)
-                                }
+                                if (StringUtils.isNotEmpty(part)) pickers[index].sendKeys(part)
                             }
 
                             // 5. close keyboard if possible
-                            if (isElementPresent("name=Done")) click("name=Done")
-                            StepResult.success("Selected '$item' against the ${pickers.size} pick lists")
+                            if (isElementPresent(doneLocator)) click(doneLocator)
+                            StepResult.success("Selected '$item' on ${pickers.size} pick lists")
                         }
                     } else {
-                        val picker = pickers[0]
-
                         // 4. check if corresponding Picker Wheel already has the intended value
-                        val currentPickedValue = picker.getAttribute("value")
-                        if (StringUtils.equals(currentSelection, item))
-                            StepResult.success("Current selected item matched to $item")
-                        else {
-                            // 5. do it!
-                            picker.sendKeys(item)
+                        MobileLocatorHelper.selectIOSDropdown(driver, pickers[0], item)
 
-                            // 5. close keyboard if possible
-                            if (isElementPresent("name=Done")) click("name=Done")
-                            StepResult.success("Selected item '$item'")
-                        }
+                        // 5. close keyboard if possible
+                        if (isElementPresent(doneLocator)) click(doneLocator)
+
+                        StepResult.success("Selected item $item")
                     }
                 }
             }
+        }
+    }
+
+    internal fun findAndroidScrollTarget(driver: AppiumDriver<MobileElement>, closest: MobileElement): MobileElement? {
+        // find all scrollable containers
+        val elements = driver.findElements(By.xpath(scrollableLocator))
+        val scrollables = if (CollectionUtils.isNotEmpty(elements))
+            elements
+        else
+            driver.findElements(By.xpath(scrollableLocator2))
+
+        // find the most likely scrollable container
+        return if (CollectionUtils.isEmpty(scrollables))
+            null
+        else if (scrollables.size == 1)
+            scrollables[0]
+        else {
+            // lastResort is usually the top level scrollable container (x or y < 10)
+            val lastResort = scrollables.find { elem -> elem.rect.x < 10 || elem.rect.y < 10 }
+            if (lastResort != null) scrollables.remove(lastResort)
+
+            // find the closest one with the most similar width
+            val matchWidth = closest.rect.width
+            val matchY = closest.rect.y
+            scrollables.sortBy { elem ->
+                (elem.rect.y - matchY).absoluteValue * (elem.rect.width - matchWidth).absoluteValue / matchWidth
+            }
+            scrollables[0]
         }
     }
 
@@ -1004,18 +1047,23 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
 
     // fun rotate(start: String, end: String): StepResult
 
-    fun closeApp(): StepResult =
-        when (val driver = getMobileService().driver) {
+    fun closeApp(): StepResult {
+        val mobileService = getMobileService()
+        return when (val driver = mobileService.driver) {
             is AndroidDriver -> {
+                driver.resetApp()
                 driver.closeApp()
                 StepResult.success()
             }
             is IOSDriver     -> {
+                // no need to reset for XCUITest driver
+                // driver.resetApp()
                 driver.closeApp()
                 StepResult.success()
             }
             else             -> executeCommand("closeApp")
         }
+    }
 
     fun shutdown(profile: String): StepResult {
         val mobileService = getMobileService()
@@ -1048,15 +1096,16 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
     }
 
     @Throws(NoSuchElementException::class)
-    internal fun findElement(locator: String): MobileElement {
-        requiresNotBlank(locator, "Invalid locator", locator)
-        val findBy = resolveFindBy(locator)
+    internal fun findElement(locator: String) = findElement(resolveFindBy(locator))
+
+    private fun findElement(findBy: By): MobileElement {
         val profile = getMobileService().profile
+        val locator = RegexUtils.removeMatches(findBy.toString(), "^By\\..+\\:\\s*")
         return if (profile.explicitWaitEnabled)
             try {
-                newWaiter("find element via locator '$locator'").until { it.findElement(findBy) }
+                newWaiter("find element via locator '${locator}'").until { it.findElement(findBy) }
             } catch (e: TimeoutException) {
-                val err = "Timed out after ${profile.explicitWaitMs}ms looking for element that matches '$locator'"
+                val err = "Timed out after ${profile.explicitWaitMs}ms looking for element that matches '${locator}'"
                 log(err)
                 throw NoSuchElementException(err)
             }
@@ -1156,7 +1205,7 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
 
     @Throws(IOException::class)
     internal fun postScreenshot(target: File, locator: String?): StepResult {
-        val captured = if (locator == null) "FullPage" else "'$locator'"
+        val captured = if (locator == null) "full screen" else "'$locator'"
         return if (context.isOutputToCloud) {
             val cloudUrl = context.otc.importMedia(target, true)
             context.setData(OPT_LAST_OUTPUT_LINK, cloudUrl)
@@ -1172,7 +1221,7 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
         }
     }
 
-    private fun keyPress(code: Int): StepResult = executeCommand("pressKeyCode", mutableMapOf("keycode" to code))
+    private fun keyPress(code: Int): StepResult = executeCommand(PRESS_KEY_CODE, mutableMapOf("keycode" to code))
 
     private fun executeCommand(action: String, params: MutableMap<String, *>? = null): StepResult {
         val mobileService = getMobileService()

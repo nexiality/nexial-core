@@ -152,6 +152,14 @@ class RegexUtilsTest {
     }
 
     @Test
+    fun removeMatches_noMatches() {
+        assertEquals("//a/b/c", RegexUtils.removeMatches("By.xpath: //a/b/c", "^By\\..+\\:\\s*"))
+        assertEquals("//a/b/c", RegexUtils.removeMatches("//a/b/c", "^By\\..+\\:\\s*"))
+        assertEquals("//a/b/c", RegexUtils.removeMatches("By.cssSelector://a/b/c", "^By\\..+\\:\\s*"))
+        assertEquals("By.link=//a/b/c", RegexUtils.removeMatches("By.link=//a/b/c", "^By\\..+\\:\\s*"))
+    }
+
+    @Test
     fun removeMatchedLines() {
         val fixture =
             """3036 Propofol 20 mLs Ampule     37.67 -1     11.462     -11.46     11.240     11.240 F< 11 02-02-09

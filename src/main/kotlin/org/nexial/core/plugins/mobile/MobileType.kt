@@ -18,10 +18,12 @@
 package org.nexial.core.plugins.mobile
 
 import io.appium.java_client.remote.MobileCapabilityType.*
+import org.nexial.core.NexialConst.Mobile.CONF_APP_ACTIVITY
+import org.nexial.core.NexialConst.Mobile.CONF_APP_PACKAGE
 
 enum class MobileType(val platformName: String, val automationName: String, val requiredConfig: List<String>) {
     IOS("iOS", "XCUITest", listOf(DEVICE_NAME, PLATFORM_VERSION, UDID)),
-    ANDROID("Android", "UiAutomator2", listOf(DEVICE_NAME, PLATFORM_VERSION, UDID, "appPackage", "appActivity"));
+    ANDROID("Android", "UiAutomator2", listOf(DEVICE_NAME, PLATFORM_VERSION, UDID, CONF_APP_PACKAGE, CONF_APP_ACTIVITY));
 
     fun isAndroid() = platformName == "Android"
     fun isIOS() = platformName == "iOS"

@@ -272,7 +272,7 @@ public final class NexialConst {
         public static final String NUMERIC = register("NUMERIC:");
         public static final String REGEX_NUMERIC_COMPARE = "^\\s*([><=!]+)\\s*([\\d\\-\\.]+)\\s*$";
 
-        private PolyMatcher() {}
+        private PolyMatcher() { }
 
         private static String register(String keyword) {
             MATCHES.add(keyword);
@@ -673,20 +673,22 @@ public final class NexialConst {
             }
 
             // reference by enclosing class to force initialization (possibly prior to any reference at runtime)
-            static void init() {}
+            static void init() { }
         }
 
         private Data() { }
 
         public static String withProfile(String profile, String key) {
             if (StringUtils.isBlank(profile) || StringUtils.equals(profile, CMD_PROFILE_DEFAULT)) { return key; }
-            if (StringUtils.startsWith(key, NS_BROWSER)) {return TextUtils.insertAfter(key, NS_BROWSER, "." + profile);}
+            if (StringUtils.startsWith(key, NS_BROWSER)) {
+                return TextUtils.insertAfter(key, NS_BROWSER, "." + profile);
+            }
             if (StringUtils.startsWith(key, NS_WEB)) { return TextUtils.insertAfter(key, NS_WEB, "." + profile); }
             return key + CMD_PROFILE_SEP + profile;
         }
 
         // reference by enclosing class to force initialization (possibly prior to any reference at runtime)
-        static void init() {}
+        static void init() { }
     }
 
     public static final class LogMessage {
@@ -738,10 +740,10 @@ public final class NexialConst {
         public static final String ITERATION_SEP = ",";
         public static final String ITERATION_RANGE_SEP = "-";
 
-        private Iteration() {}
+        private Iteration() { }
 
         // reference by enclosing class to force initialization (possibly prior to any reference at runtime)
-        static void init() {}
+        static void init() { }
     }
 
     // directives on notes column
@@ -767,10 +769,10 @@ public final class NexialConst {
         public static final String REGEX_IS_UNARY_FILTER =
             "(true|false|\\$\\{[^\\}]+\\}|\\!\\$\\{[^\\}]+\\}|not\\s+\\$\\{[^\\}]+\\})";
 
-        private FlowControls() {}
+        private FlowControls() { }
 
         // reference by enclosing class to force initialization (possibly prior to any reference at runtime)
-        static void init() {}
+        static void init() { }
     }
 
     public static final class Integration {
@@ -780,17 +782,17 @@ public final class NexialConst {
         public static final String SMS_PREFIX = NAMESPACE + "sms.";
         public static final String VISION_PREFIX = NAMESPACE + "vision.";
 
-        private Integration() {}
+        private Integration() { }
 
         // reference by enclosing class to force initialization (possibly prior to any reference at runtime)
-        static void init() {}
+        static void init() { }
     }
 
     public static final class CommonColor {
         static final Map<String, Color> COLOR_NAMES = new HashMap<>();
         static final Map<Color, Color> BACKGROUND_COLOR_NAMES = new HashMap<>();
 
-        private CommonColor() {}
+        private CommonColor() { }
 
         public static Map<String, Color> getColorNames() { return COLOR_NAMES; }
 
@@ -840,7 +842,7 @@ public final class NexialConst {
     }
 
     public static final class ImageDiffColor {
-        private ImageDiffColor() {}
+        private ImageDiffColor() { }
 
         /** default to red */
         public static Color toColor(String colorName) {
@@ -871,10 +873,10 @@ public final class NexialConst {
             public int getImageType() { return imageType; }
         }
 
-        private Image() {}
+        private Image() { }
 
         // reference by enclosing class to force initialization (possibly prior to any reference at runtime)
-        static void init() {}
+        static void init() { }
     }
 
     public static final class ImageCaption {
@@ -949,10 +951,10 @@ public final class NexialConst {
             }
         }
 
-        private ImageCaption() {}
+        private ImageCaption() { }
 
         // reference by enclosing class to force initialization (possibly prior to any reference at runtime)
-        static void init() {}
+        static void init() { }
     }
 
     public static final class AwsSettings {
@@ -979,10 +981,10 @@ public final class NexialConst {
         public static final String AWS_SQS_WAIT_TIME_MS = "waitTimeMs";
         public static final String AWS_SQS_VISIBILITY_TIMEOUT_MS = "visibilityTimeoutMs";
 
-        private AwsSettings() {}
+        private AwsSettings() { }
 
         // reference by enclosing class to force initialization (possibly prior to any reference at runtime)
-        static void init() {}
+        static void init() { }
     }
 
     public static final class TMSSettings {
@@ -994,10 +996,10 @@ public final class NexialConst {
         public static final String TMS_PASSWORD = NEXIAL_TMS + "password";
         public static final String TMS_ORG = NEXIAL_TMS + "organization";
 
-        private TMSSettings() {}
+        private TMSSettings() { }
 
         // reference by enclosing class to force initialization (possibly prior to any reference at runtime)
-        static void init() {}
+        static void init() { }
     }
 
     public static final class Project {
@@ -1121,7 +1123,7 @@ public final class NexialConst {
         }
 
         // reference by enclosing class to force initialization (possibly prior to any reference at runtime)
-        static void init() {}
+        static void init() { }
 
         private static String appendSep(String dir) {
             return StringUtils.appendIfMissing(StringUtils.defaultString(dir), separator);
@@ -1144,7 +1146,7 @@ public final class NexialConst {
         private CLI() { }
 
         // reference by enclosing class to force initialization (possibly prior to any reference at runtime)
-        static void init() {}
+        static void init() { }
 
         private static Options initCmdOptions() {
             Options cmdOptions = new Options();
@@ -1219,10 +1221,10 @@ public final class NexialConst {
         public static final String SPREADSHEET_PROGRAM_WPS = "wps";
         public static final String WPS_EXE_LOCATION = "nexialInternal.wpsLocation";
 
-        private Exec() {}
+        private Exec() { }
 
         // reference by enclosing class to force initialization (possibly prior to any reference at runtime)
-        static void init() {}
+        static void init() { }
     }
 
     public static final class Mailer {
@@ -1299,10 +1301,10 @@ public final class NexialConst {
                                                       "unable to resolve any valid mailer configurations." +
                                                       DOC_REF_SUFFIX;
 
-        private Mailer() {}
+        private Mailer() { }
 
         // reference by enclosing class to force initialization (possibly prior to any reference at runtime)
-        static void init() {}
+        static void init() { }
     }
 
     public static final class Desktop {
@@ -1326,10 +1328,10 @@ public final class NexialConst {
         // additional console logging during autoscanning
         public static final String OPT_AUTOSCAN_VERBOSE = registerSysVar(NS + "autoscan.verbose", false);
 
-        private Desktop() {}
+        private Desktop() { }
 
         // reference by enclosing class to force initialization (possibly prior to any reference at runtime)
-        static void init() {}
+        static void init() { }
     }
 
     public static final class Compare {
@@ -1364,10 +1366,10 @@ public final class NexialConst {
         public static final String COMPARE_INCLUDE_MOVED = registerSysVar(NS_IO + "compareIncludeMoved");
         public static final String OPT_IO_COPY_CONFIG = registerSysVar(NS_IO + "copyConfig", COPY_CONFIG_DEF);
 
-        private Compare() {}
+        private Compare() { }
 
         // reference by enclosing class to force initialization (possibly prior to any reference at runtime)
-        static void init() {}
+        static void init() { }
     }
 
     public static final class SoapUI {
@@ -1400,10 +1402,10 @@ public final class NexialConst {
 
         public static final String OPT_SOAPUI_STORE_RESP = NAMESPACE + "soapui.storeResponse";
 
-        private SoapUI() {}
+        private SoapUI() { }
 
         // reference by enclosing class to force initialization (possibly prior to any reference at runtime)
-        static void init() {}
+        static void init() { }
     }
 
     // set by jenkins
@@ -1420,7 +1422,7 @@ public final class NexialConst {
         private Jenkins() { }
 
         // reference by enclosing class to force initialization (possibly prior to any reference at runtime)
-        static void init() {}
+        static void init() { }
     }
 
     // nexial main exit status
@@ -1447,7 +1449,7 @@ public final class NexialConst {
         private ExitStatus() { }
 
         // reference by enclosing class to force initialization (possibly prior to any reference at runtime)
-        static void init() {}
+        static void init() { }
     }
 
     public static final class OS {
@@ -1506,10 +1508,10 @@ public final class NexialConst {
         public static final String ON_WEB_OPEN = registerSysVar(NAMESPACE + "notifyOnWebOpen");
         public static final String ON_BROWSER_COMPLETE = registerSysVar(NAMESPACE + "notifyOnBrowserComplete");
 
-        private Notification() {}
+        private Notification() { }
 
         // reference by enclosing class to force initialization (possibly prior to any reference at runtime)
-        static void init() {}
+        static void init() { }
     }
 
     public static final class TimeTrack {
@@ -1537,10 +1539,10 @@ public final class NexialConst {
                                                                            "LABEL",
                                                                            "REMARK"};
 
-        private TimeTrack() {}
+        private TimeTrack() { }
 
         // reference by enclosing class to force initialization (possibly prior to any reference at runtime)
-        static void init() {}
+        static void init() { }
     }
 
     public static final class Ssh {
@@ -1554,10 +1556,10 @@ public final class NexialConst {
         public static final String SSH_KNOWN_HOSTS = "knownHosts";
         public static final String DEF_SSH_PORT = "22";
 
-        private Ssh() {}
+        private Ssh() { }
 
         // reference by enclosing class to force initialization (possibly prior to any reference at runtime)
-        static void init() {}
+        static void init() { }
     }
 
     public static final class Rdbms {
@@ -1591,10 +1593,10 @@ public final class NexialConst {
         public static final String DEF_DOCUMENTDB_JKS_RELPATH = "bin" + separator + "rds-truststore.jks";
         public static final String DEF_DOCUMENTDB_JKS_PWD = "nexial_mongo";
 
-        private Rdbms() {}
+        private Rdbms() { }
 
         // reference by enclosing class to force initialization (possibly prior to any reference at runtime)
-        static void init() {}
+        static void init() { }
     }
 
     public static final class Ws {
@@ -1670,10 +1672,10 @@ public final class NexialConst {
         // mime types
         public static final List<String> TEXT_MIME_TYPES = Arrays.asList("text", "json", "xml", "csv", "html");
 
-        private Ws() {}
+        private Ws() { }
 
         // reference by enclosing class to force initialization (possibly prior to any reference at runtime)
-        static void init() {}
+        static void init() { }
     }
 
     private static Map<String, RoundingMode> initValidRoundingModes() {
@@ -1699,7 +1701,7 @@ public final class NexialConst {
         // Temporary Mail Constants.
         public static final String WEBMAIL_TEMPORARYMAIL = "temporary-mail";
         public static final String WEBMAIL_TEMPORARYMAIL_DOWNLOAD_URL_BASE =
-                "http://temporary-mail.net/mailbox/vattach";
+            "http://temporary-mail.net/mailbox/vattach";
 
         private WebMail() { }
 
@@ -1752,10 +1754,10 @@ public final class NexialConst {
         // status report
         public static final String KEY_STATUS_SCOPE = registerSysVar(NS + "reportStatus");
 
-        private BrowserStack() {}
+        private BrowserStack() { }
 
         // reference by enclosing class to force initialization (possibly prior to any reference at runtime)
-        static void init() {}
+        static void init() { }
     }
 
     public static final class CrossBrowserTesting extends CloudWebTesting {
@@ -1813,10 +1815,10 @@ public final class NexialConst {
         // status report
         public static final String KEY_STATUS_SCOPE = NS + "reportStatus";
 
-        private CrossBrowserTesting() {}
+        private CrossBrowserTesting() { }
 
         // reference by enclosing class to force initialization (possibly prior to any reference at runtime)
-        static void init() {}
+        static void init() { }
     }
 
     public static final class Pdf {
@@ -1862,10 +1864,10 @@ public final class NexialConst {
         public static final String DC_DATES = "Dates";
         public static final String DESCRIPTION = "Description";
 
-        private Pdf() {}
+        private Pdf() { }
 
         // reference by enclosing class to force initialization (possibly prior to any reference at runtime)
-        static void init() {}
+        static void init() { }
     }
 
     public static final class Web {
@@ -2026,14 +2028,15 @@ public final class NexialConst {
         public static final String OPT_IS_REACT = registerSysVar(NS_WEB + "useReact", false);
         public static final String OPT_IS_ANGULAR = registerSysVar(NS_WEB + "useAngular", false);
 
-        private Web() {}
+        private Web() { }
 
         // reference by enclosing class to force initialization (possibly prior to any reference at runtime)
-        static void init() {}
+        static void init() { }
     }
 
     public static final class Mobile {
-        public static final String NS_MOBILE = NAMESPACE + "mobile";
+        public static final String COMMAND = "mobile";
+        public static final String NS_MOBILE = NAMESPACE + COMMAND;
 
         public static final String TYPE = "type";
         public static final String URL = "url";
@@ -2055,10 +2058,6 @@ public final class NexialConst {
 
         public static final int MIN_WAIT_MS = 200;
 
-        public static final String ERR_NO_SERVICE =
-            "No mobile driver available at this time. Please be sure to invoke use(profile) command prior to other " +
-            "mobile commands. See https://nexiality.github.io/documentation/commands/mobile/use(profile) for details";
-
         // avoid pinching, zooming or dragging from screen edges
         public static final int EDGE_WIDTH = 10;
 
@@ -2066,11 +2065,61 @@ public final class NexialConst {
         public static final String DROPDOWN_LINES_TO_SCROLL = registerSysVar(NS_MOBILE + ".dropdown.linesPerScroll", 8);
         public static final String DROPDOWN_MAX_SCROLL = registerSysVar(NS_MOBILE + ".dropdown.maxScrolls", 5);
 
-
         // log level to use when configuring appium to send log to external file
         public static final String FILE_CONSOLE_LOG_LEVEL = "warn:debug";
 
+        public static final String CONF_TYPE = "type";
+        public static final String CONF_ORIENTATION = "orientation";
+        public static final String CONF_GEO_LOC = "geoLocation";
+        public static final String CONF_AUTO_GRANT_PERM = "autoGrantPermissions";
+        public static final String CONF_APP_ID = "appId";
+        public static final String CONF_APP_PACKAGE = "appPackage";
+        public static final String CONF_APP_ACTIVITY = "appActivity";
+        public static final String CONF_BUNDLE_ID = "bundleId";
+        public static final String CONF_INTENT_ARGS = "optionalIntentArguments";
+        public static final String CONF_SERVER = "server";
+        public static final String CONF_SERVER_LOGGING = "logging";
+        public static final String CONF_SERVER_URL = "url";
+
+        public static final String APPIUM_LOG = "appium.log";
+
         protected static final String SCRIPT_EXT = (IS_OS_WINDOWS ? ".bat" : "");
+
+        public static final class Message {
+            public static final String ERR_NO_SERVICE =
+                "No mobile driver available at this time. Please be sure to invoke use(profile) command prior to " +
+                "other mobile commands. See https://nexiality.github.io/documentation/commands/mobile/use(profile) " +
+                "for details";
+
+            public static final String MISSING_PROFILE = "No configuration found for profile";
+            public static final String MISSING_TYPE_CONFIG = "Missing configuration '" + CONF_TYPE + "' in profile";
+            public static final String MISSING_CONFIG = "Missing configuration:";
+
+            public static final String INVALID_LOCATOR = "Invalid locator:";
+            public static final String INVALID_LOCATOR_FOR_IOS = "This locator is only supported on iOS device:";
+            public static final String INVALID_LOCATOR_FOR_ANDROID = "This locator is only support on Android device:";
+            public static final String INVALID_NEARBY_SYNTAX = "Invalid nearby locator";
+            public static final String INVALID_INDEX = "Invalid index:";
+            public static final String INVALID_INDEX2 = "Option index must be greater than zero:";
+            public static final String INVALID_LENGTH = "Invalid number specified as length";
+            public static final String NO_REGEX_POLYMATCHER = "PolyMatcher REGEX not supported for this locator:";
+            public static final String NO_NUMERIC_POLYMATCHER = "PolyMatcher NUMERIC not supported for this locator:";
+
+            public static final String FAIL_CLOSE_APP = "Unable to close app:";
+            public static final String FAIL_QUIT_DRIVER = "Unable to shutdown mobile driver:";
+            public static final String APPIUM_SERVER_STARTED = "Appium server started on";
+            public static final String MISSING_APPIUM_PATH_ENV = "Unable to resolve an appropriate path for Appium " +
+                                                                 "server (main.js) because required environment " +
+                                                                 "variable is not defined:";
+            public static final String INVALID_APPIUM_PATH = "Appium path did not resolve to a valid executable for " +
+                                                             "Appium server (main.js):";
+            public static final String MISSING_NODE_PATH_ENV = "Unable to resolve an appropriate path for NodeJS " +
+                                                               "(to run Appium server) because required environment " +
+                                                               "variable is not defined:";
+            public static final String INVALID_NODE_PATH = "Node path did not resolve to a valid executable NodeJS " +
+                                                           "executable:";
+            public static final String APP_NOT_INSTALLED = "Configured app is currently not installed on device:";
+        }
 
         public static final class Android {
             public static final String RESOURCE_BASE =
@@ -2095,7 +2144,7 @@ public final class NexialConst {
             public static final String EMULATOR_PATH = ANDROID_SDK_HOME + separator + "emulator";
             public static final String BUILD_TOOLS_PATH = ANDROID_SDK_HOME + separator + "build-tools";
             public static final String AVD_MANAGER = ANDROID_SDK_HOME + separator +
-                                                     "cmdline-tools" +  separator + "latest" + separator +
+                                                     "cmdline-tools" + separator + "latest" + separator +
                                                      AVD_MANAGER_REL_PATH;
             public static final String APK_SIGNER_FILE = "apksigner.jar";
             public static final String APK_SIGNER_DEST = ANDROID_SDK_HOME + separator + "tools" + separator + "lib" +
@@ -2105,10 +2154,13 @@ public final class NexialConst {
             public static final String DEF_SYS_IMG_32 = SYSTEM_IMAGES_PREFIX + "android-30;google_apis;x86";
 
             public static final String CMDLINE_TOOLS_PATH = StringUtils.appendIfMissing(JAVA_IO_TMPDIR, separator) +
-                                                            "nexial" + separator + "android" + separator + "cmdline-tools";
+                                                            "nexial" + separator + "android" + separator +
+                                                            "cmdline-tools";
             public static final String SDK_MANAGER = CMDLINE_TOOLS_PATH + separator + SDK_MANAGER_REL_PATH;
+        }
 
-
+        public static final class iOS {
+            public static final String MULTI_PICKER_DELIM = "|";
         }
     }
 
@@ -2194,7 +2246,7 @@ public final class NexialConst {
                "for more details.";
     }
 
-    public class Doc {
+    public static class Doc {
         private Doc() { }
 
         // default values

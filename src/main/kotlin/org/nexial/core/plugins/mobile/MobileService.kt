@@ -35,8 +35,8 @@ import org.apache.tika.utils.SystemUtils.IS_OS_WINDOWS
 import org.nexial.commons.proc.ProcessInvoker
 import org.nexial.commons.utils.FileUtil
 import org.nexial.core.NexialConst.Data.WIN32_CMD
-import org.nexial.core.NexialConst.Mobile.FILE_CONSOLE_LOG_LEVEL
-import org.nexial.core.NexialConst.Mobile.MIN_WAIT_MS
+import org.nexial.core.NexialConst.Mobile.*
+import org.nexial.core.NexialConst.Mobile.Message.*
 import org.nexial.core.plugins.mobile.MobileType.ANDROID
 import org.nexial.core.plugins.mobile.MobileType.IOS
 import org.nexial.core.utils.ConsoleUtils
@@ -108,7 +108,7 @@ class MobileService(val profile: MobileProfile, val remoteUrl: String?) {
                                          "nativeWebTap", "safariAllowPopups", "safariIgnoreFraudWarning",
                                          "safariOpenLinksInBackground", "keepKeyChains", "showIOSLog",
                                          "enableAsyncExecuteFromHttps", "skipLogCapture", "skipLogCapture",
-                                         "noReset","restart", "useNewWDA"
+                                         "noReset", "restart", "useNewWDA"
     )
 
     private var appiumUrl: URL
@@ -142,10 +142,18 @@ class MobileService(val profile: MobileProfile, val remoteUrl: String?) {
     fun isIOS() = profile.mobileType == IOS
 
     fun shutdown() {
+        if (driver.sessionId != null) {
+            try {
+                driver.closeApp()
+            } catch (e: Exception) {
+                ConsoleUtils.error("$FAIL_CLOSE_APP ${e.message}")
+            }
+        }
+
         try {
-            driver.closeApp()
+            driver.quit()
         } catch (e: Exception) {
-            ConsoleUtils.error("Unable to shutdown mobile driver: ${e.message}")
+            ConsoleUtils.error("$FAIL_QUIT_DRIVER ${e.message}")
         }
 
         if (appiumService != null) appiumService!!.stop()
@@ -201,7 +209,7 @@ class MobileService(val profile: MobileProfile, val remoteUrl: String?) {
         val service = AppiumDriverLocalService.buildService(builder)
         service.start()
         val url = service.url
-        ConsoleUtils.log("appium server started on $url")
+        ConsoleUtils.log("$APPIUM_SERVER_STARTED $url")
 
         appiumService = service
         return url
@@ -213,28 +221,22 @@ class MobileService(val profile: MobileProfile, val remoteUrl: String?) {
                                                           System.getProperty(envAppiumBinaryPath))
         if (StringUtils.isBlank(appiumBinaryPath)) {
             val binary = possibleAppiumBinaryPaths.firstOrNull { path -> FileUtil.isFileExecutable(path.toFile()) }
-                         ?: throw RuntimeException("Environment variable $envAppiumBinaryPath is not defined; unable " +
-                                                   "to resolve an appropriate path for Appium server (main.js")
+                         ?: throw RuntimeException("$MISSING_APPIUM_PATH_ENV $envAppiumBinaryPath")
             appiumBinaryPath = binary.toFile().absolutePath
-        } else if (!FileUtil.isFileExecutable(appiumBinaryPath)) {
-            throw RuntimeException("Environment variable $envAppiumBinaryPath does not resolve to a valid " +
-                                   "executable for Appium server (main.js): $appiumBinaryPath")
-        }
+        } else if (!FileUtil.isFileExecutable(appiumBinaryPath))
+            throw RuntimeException("$INVALID_APPIUM_PATH $appiumBinaryPath")
 
         System.setProperty(envAppiumBinaryPath, appiumBinaryPath)
 
         // check/resolve NODE_BINARY_PATH
-        var nodeBinaryPath = StringUtils.defaultIfEmpty(System.getenv(envNodeBinaryPath),
+        var nodeBinaryPath = StringUtils.defaultIfBlank(System.getenv(envNodeBinaryPath),
                                                         System.getProperty(envNodeBinaryPath))
         if (StringUtils.isBlank(nodeBinaryPath)) {
             val binary = possibleNodeBinaryPaths.firstOrNull { path -> FileUtil.isFileExecutable(path.toFile()) }
-                         ?: throw RuntimeException("Environment variable $envNodeBinaryPath is not defined; unable " +
-                                                   "to resolve an appropriate path for NodeJS (to run Appium server)")
+                         ?: throw RuntimeException("$MISSING_NODE_PATH_ENV $envNodeBinaryPath")
             nodeBinaryPath = binary.toFile().absolutePath
-        } else if (!FileUtil.isFileExecutable(nodeBinaryPath)) {
-            throw RuntimeException("Environment variable $envNodeBinaryPath does not resolve to a valid executable " +
-                                   "NodeJS file: $nodeBinaryPath")
-        }
+        } else if (!FileUtil.isFileExecutable(nodeBinaryPath))
+            throw RuntimeException("$INVALID_NODE_PATH $nodeBinaryPath")
 
         System.setProperty(envNodeBinaryPath, nodeBinaryPath)
     }
@@ -242,15 +244,18 @@ class MobileService(val profile: MobileProfile, val remoteUrl: String?) {
     private fun newCapabilities(): DesiredCapabilities {
         val caps = DesiredCapabilities()
 
-        safeSetCap(caps, NEW_COMMAND_TIMEOUT,
+        safeSetCap(caps,
+                   NEW_COMMAND_TIMEOUT,
                    if (profile.config.containsKey(NEW_COMMAND_TIMEOUT)) profile.config[NEW_COMMAND_TIMEOUT]
                    else profile.sessionTimeoutMs / 1000)
 
-        safeSetCap(caps, AUTOMATION_NAME,
+        safeSetCap(caps,
+                   AUTOMATION_NAME,
                    if (profile.config.containsKey(AUTOMATION_NAME)) profile.config[AUTOMATION_NAME]
                    else profile.mobileType.automationName)
 
-        safeSetCap(caps, PRINT_PAGE_SOURCE_ON_FIND_FAILURE,
+        safeSetCap(caps,
+                   PRINT_PAGE_SOURCE_ON_FIND_FAILURE,
                    if (profile.config.containsKey(PRINT_PAGE_SOURCE_ON_FIND_FAILURE))
                        BooleanUtils.toBoolean(profile.config[PRINT_PAGE_SOURCE_ON_FIND_FAILURE])
                    else false)
@@ -269,15 +274,12 @@ class MobileService(val profile: MobileProfile, val remoteUrl: String?) {
     /** "optionalIntentArguments": Additional intent arguments that will be used to start activity */
     private fun handleOptionalIntentArguments(caps: DesiredCapabilities) {
         val buffer = StringBuilder()
-
         if (profile.geoLocation != null) buffer.append("-d geo:${profile.geoLocation} ")
-        buffer.append(
-            StringUtils.trim(StringUtils.defaultIfBlank(profile.config.remove("optionalIntentArguments"), ""))
-        ).append(" ")
+        buffer.append(StringUtils.trim(StringUtils.defaultIfBlank(profile.config.remove(CONF_INTENT_ARGS), "")))
+            .append(" ")
 
-        val optionalIntentArguments = StringUtils.trim(buffer.toString())
-        if (StringUtils.isNotEmpty(optionalIntentArguments))
-            caps.setCapability("optionalIntentArguments", optionalIntentArguments)
+        val optIntentArgs = StringUtils.trim(buffer.toString())
+        if (StringUtils.isNotEmpty(optIntentArgs)) caps.setCapability(CONF_INTENT_ARGS, optIntentArgs)
     }
 
     private fun safeSetCap(caps: DesiredCapabilities, cap: String, value: Any?): DesiredCapabilities {

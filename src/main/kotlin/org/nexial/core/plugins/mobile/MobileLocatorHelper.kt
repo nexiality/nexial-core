@@ -16,11 +16,14 @@
  */
 package org.nexial.core.plugins.mobile
 
+import io.appium.java_client.AppiumDriver
 import io.appium.java_client.MobileBy
+import io.appium.java_client.MobileElement
 import org.apache.commons.lang3.StringUtils
 import org.apache.commons.lang3.math.NumberUtils
 import org.nexial.commons.utils.RegexUtils
 import org.nexial.commons.utils.TextUtils
+import org.nexial.core.NexialConst.Mobile.Message.*
 import org.nexial.core.NexialConst.PolyMatcher.*
 import org.nexial.core.plugins.mobile.MobileType.ANDROID
 import org.nexial.core.plugins.mobile.MobileType.IOS
@@ -55,7 +58,7 @@ class MobileLocatorHelper(private val mobileService: MobileService) {
     private val xpathStartsWith = listOf("/", "./", "(/", "( /", "(./", "( ./")
 
     internal fun resolve(locator: String, allowRelative: Boolean): By {
-        if (StringUtils.isBlank(locator)) throw IllegalArgumentException("Invalid locator: $locator")
+        if (StringUtils.isBlank(locator)) throw IllegalArgumentException("$INVALID_LOCATOR $locator")
 
         // default
         for (startsWith in xpathStartsWith)
@@ -83,15 +86,15 @@ class MobileLocatorHelper(private val mobileService: MobileService) {
             // ios specific
             prefixPredicate      ->
                 if (isIOS) MobileBy.iOSNsPredicateString(loc)
-                else throw IllegalArgumentException("This locator is only supported on iOS device: $locator")
+                else throw IllegalArgumentException("$INVALID_LOCATOR_FOR_IOS $locator")
             prefixClassChain     ->
                 if (isIOS) MobileBy.iOSClassChain(loc)
-                else throw IllegalArgumentException("This locator is only supported on iOS device: $locator")
+                else throw IllegalArgumentException("$INVALID_LOCATOR_FOR_IOS $locator")
 
             // android specific
             prefixDescription    ->
                 if (isAndroid) By.xpath("//*[@content-desc=$normalized]")
-                else throw IllegalArgumentException("This locator is only support on Android device: $locator")
+                else throw IllegalArgumentException("$INVALID_LOCATOR_FOR_ANDROID $locator")
 
             // catch all
             else                 -> return By.id(locTrimmed)
@@ -99,7 +102,7 @@ class MobileLocatorHelper(private val mobileService: MobileService) {
     }
 
     internal fun resolveAlt(locator: String): List<By> {
-        if (StringUtils.isBlank(locator)) throw IllegalArgumentException("Invalid locator: $locator")
+        if (StringUtils.isBlank(locator)) throw IllegalArgumentException("$INVALID_LOCATOR $locator")
 
         val strategy = StringUtils.trim(StringUtils.lowerCase(StringUtils.substringBefore(locator, "=")))
         val loc = StringUtils.trim(StringUtils.substringAfter(locator, "="))
@@ -139,9 +142,18 @@ class MobileLocatorHelper(private val mobileService: MobileService) {
         private const val scrollContainer = "scroll-container"
 
         private const val regexNearbyNameValueSpec = "\\s*.+\\s*[=:]\\s*.+\\s*"
-        private const val regexSurrounding = "^\\s*" +
-                                             "($leftOf|$rightOf|$above|$below|$container|$scrollContainer|$item)" +
-                                             "\\s*:\\s*.+$"
+        private const val regexSurrounding =
+            "^\\s*($leftOf|$rightOf|$above|$below|$container|$scrollContainer|$item)\\s*:\\s*.+$"
+        private const val prefixIndex = "index:"
+
+        const val scrollableLocator = "//*[@scrollable='true' and @displayed='true' and @enabled='true']"
+        const val scrollableLocator2 = "//android.widget.ScrollView[@displayed='true' and @enabled='true']"
+        const val iosAlertLocator = "//*[@type='XCUIElementTypeAlert' and @visible='true']"
+        const val scriptPressButton = "mobile: pressButton"
+        private const val scriptScript = "mobile: swipe"
+        private const val scriptSelectPickerValue = "mobile: selectPickerWheelValue"
+        const val doneLocator = "name=Done"
+        const val pickerWheelLocator = "//XCUIElementTypePickerWheel"
 
         internal val clearAllNotificationsLocators = listOf(
             ConditionalLocator(ANDROID, "text=Clear all"),
@@ -161,7 +173,7 @@ class MobileLocatorHelper(private val mobileService: MobileService) {
          *  `nearby={right-of=Yes}{clickable,class=android.widget.GroupView}`
          */
         internal fun handleNearbyLocator(mobileType: MobileType, specs: String): By {
-            val errorPrefix = "Invalid NEARBY locator '$specs'"
+            val errorPrefix = "$INVALID_NEARBY_SYNTAX '$specs'"
             if (StringUtils.isBlank(specs)) throw IllegalArgumentException(errorPrefix)
             if (!TextUtils.isBetween(specs.trim(), "{", "}"))
                 throw IllegalArgumentException("$errorPrefix - Invalid format")
@@ -226,6 +238,40 @@ class MobileLocatorHelper(private val mobileService: MobileService) {
             return By.xpath(xpath)
         }
 
+        internal fun resolveAndroidDropdownItemLocator(item: String) =
+            if (StringUtils.startsWith(item, prefixIndex))
+                "(.//*[@text != ''])[${toIndexValue(item)}]"
+            else
+                ".//*[${resolveTextFilter(ANDROID, item)}]"
+
+        internal fun selectIOSDropdown(driver: AppiumDriver<MobileElement>, picker: MobileElement, item: String) {
+            val currentPickedValue = picker.getAttribute("value")
+            if (StringUtils.equals(currentPickedValue, item)) return
+
+            if (!StringUtils.startsWith(item, prefixIndex)) {
+                picker.sendKeys(item)
+                return
+            }
+
+            // since item is specified as `index:...`, let's make sure we've got a good index
+            val index = toIndexValue(item)
+
+            val pickerId = picker.id
+
+            // if picker already has selection, we'll swipe to top of the dropdown first
+            if (StringUtils.isNotBlank(currentPickedValue))
+                driver.executeScript(
+                    scriptScript,
+                    mapOf<String, Any>("element" to pickerId, "direction" to "down", "velocity" to 250))
+
+            val scrollAmount = 25.0 / picker.size.height
+
+            for (i in 0 until index)
+                driver.executeScript(
+                    scriptSelectPickerValue,
+                    mapOf<String, Any>("element" to pickerId, "order" to "next", "offset" to scrollAmount))
+        }
+
         internal fun resolveTextFilter(mobileType: MobileType, text: String) = when (mobileType) {
             ANDROID -> resolveFilter("text", text)
             IOS     -> resolveFilter("label", text) +
@@ -239,10 +285,10 @@ class MobileLocatorHelper(private val mobileService: MobileService) {
 
         internal fun resolveFilter(attribute: String, value: String) = when {
             StringUtils.startsWith(value, REGEX)            ->
-                throw IllegalArgumentException("PolyMatcher REGEX not supported for this locator: $attribute=$value")
+                throw IllegalArgumentException("$NO_REGEX_POLYMATCHER $attribute=$value")
 
             StringUtils.startsWith(value, NUMERIC)          ->
-                throw IllegalArgumentException("PolyMatcher NUMERIC not supported for this locator: $attribute=$value")
+                throw IllegalArgumentException("$NO_NUMERIC_POLYMATCHER $attribute=$value")
 
             StringUtils.startsWith(value, CONTAIN)          ->
                 "contains(@$attribute,${normalizeText(value, after = CONTAIN)})"
@@ -280,12 +326,22 @@ class MobileLocatorHelper(private val mobileService: MobileService) {
                 "@$attribute=${normalizeXpathText(value)}"
         }
 
+        private fun toIndexValue(item: String): Int {
+            val indexString = StringUtils.trim(StringUtils.substringAfter(item, prefixIndex))
+            if (!NumberUtils.isDigits(indexString)) throw IllegalArgumentException("$INVALID_INDEX $indexString")
+
+            val index = NumberUtils.toInt(indexString)
+            if (index < 1) throw IllegalArgumentException("$INVALID_INDEX2 $indexString")
+
+            return index
+        }
+
         private fun normalizeText(text: String, after: String): String {
             var matchBy = text.substringAfter(after)
 
             if (after == LENGTH) {
                 matchBy = matchBy.trim()
-                requiresPositiveNumber(matchBy, "invalid number specified as length", matchBy)
+                requiresPositiveNumber(matchBy, INVALID_LENGTH, matchBy)
             }
 
             return normalizeXpathText(matchBy)

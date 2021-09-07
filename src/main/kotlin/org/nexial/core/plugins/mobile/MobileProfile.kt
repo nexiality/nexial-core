@@ -22,13 +22,13 @@ import org.apache.commons.collections4.MapUtils
 import org.apache.commons.lang3.BooleanUtils
 import org.apache.commons.lang3.StringUtils
 import org.nexial.core.NexialConst.Mobile.*
+import org.nexial.core.NexialConst.Mobile.Message.*
 import org.nexial.core.model.ExecutionContext
+import org.nexial.core.plugins.mobile.MobileType.ANDROID
+import org.nexial.core.plugins.mobile.MobileType.IOS
 import java.io.File.separator
 
 class MobileProfile(context: ExecutionContext, val profile: String) {
-
-    private val commandName = "mobile"
-
     internal val mobileType: MobileType
     internal val config = mutableMapOf<String, String>()
     internal val serverConfig = mutableMapOf<String, String>()
@@ -42,6 +42,8 @@ class MobileProfile(context: ExecutionContext, val profile: String) {
     internal val hideKeyboard: Boolean
     internal val explicitWaitEnabled: Boolean
 
+    internal lateinit var appId: String
+
     /*
     todo: investigate
         caps.setCapability("intentAction", "android.intent.action.VIEW");
@@ -53,42 +55,47 @@ class MobileProfile(context: ExecutionContext, val profile: String) {
         val config = context.getDataByPrefix(StringUtils.appendIfMissing(profile, "."))
 
         // check required config
-        if (MapUtils.isEmpty(config)) throw IllegalArgumentException("No configuration found for profile $profile")
-        if (!config.containsKey("type")) throw IllegalArgumentException("Missing configuration: ${profile}.type")
+        if (MapUtils.isEmpty(config)) throw IllegalArgumentException("$MISSING_PROFILE $profile")
+        if (!config.containsKey(CONF_TYPE)) throw IllegalArgumentException("$MISSING_TYPE_CONFIG $profile")
 
-        context.updateProfileConfig(commandName, profile, config)
+        context.updateProfileConfig(COMMAND, profile, config)
 
-        mobileType = MobileType.valueOf(config.remove("type")!!.toUpperCase())
+        mobileType = MobileType.valueOf(config.remove(CONF_TYPE)!!.toUpperCase())
         for (key in mobileType.requiredConfig) {
-            if (!config.containsKey(key)) throw IllegalArgumentException("Missing configuration: $profile.$key")
+            if (!config.containsKey(key)) throw IllegalArgumentException("$MISSING_CONFIG $profile.$key")
+        }
+
+        appId = when (mobileType) {
+            ANDROID -> config[CONF_APP_ID] ?: config[CONF_APP_PACKAGE] ?: ""
+            IOS -> config[CONF_BUNDLE_ID] ?: ""
         }
 
         // appium driver only accepts orientation as UPPERCASE
-        if (config.containsKey("orientation")) {
-            config["orientation"] = StringUtils.upperCase(config["orientation"])
+        if (config.containsKey(CONF_ORIENTATION)) {
+            config[CONF_ORIENTATION] = StringUtils.upperCase(config[CONF_ORIENTATION])
             // if (mobileType.isAndroid()) config["androidNaturalOrientation"] = "true"
         }
 
-        val serverConfig = context.getDataByPrefix(StringUtils.appendIfMissing(profile, ".") + "server.")
+        val serverConfig = context.getDataByPrefix(StringUtils.appendIfMissing(profile, ".") + "${CONF_SERVER}.")
         serverConfig.forEach {
-            config.remove("server." + it.key)
+            config.remove("${CONF_SERVER}.${it.key}")
             this.serverConfig[it.key] = it.value
         }
 
-        logFile = if (BooleanUtils.toBoolean(this.serverConfig.remove("logging")))
-            StringUtils.appendIfMissing(context.project.logsDir, separator) + "appium.log"
+        logFile = if (BooleanUtils.toBoolean(this.serverConfig.remove(CONF_SERVER_LOGGING)))
+            StringUtils.appendIfMissing(context.project.logsDir, separator) + APPIUM_LOG
         else null
 
         // in case user set profile-specific url for appium service
-        serverUrl = this.serverConfig.remove("url")
+        serverUrl = this.serverConfig.remove(CONF_SERVER_URL)
 
         // find profile-specific Nexial behavior (such as wait time)
-        implicitWaitMs = context.getIntConfig(commandName, profile, IMPLICIT_WAIT_MS).toLong()
-        explicitWaitMs = context.getIntConfig(commandName, profile, EXPLICIT_WAIT_MS).toLong()
+        implicitWaitMs = context.getIntConfig(COMMAND, profile, IMPLICIT_WAIT_MS).toLong()
+        explicitWaitMs = context.getIntConfig(COMMAND, profile, EXPLICIT_WAIT_MS).toLong()
         explicitWaitEnabled = explicitWaitMs > MIN_WAIT_MS
-        sessionTimeoutMs = context.getIntConfig(commandName, profile, SESSION_TIMEOUT_MS).toLong()
-        postActionWaitMs = context.getIntConfig(commandName, profile, POST_ACTION_WAIT_MS).toLong()
-        hideKeyboard = context.getBooleanConfig(commandName, profile, HIDE_KEYBOARD)
+        sessionTimeoutMs = context.getIntConfig(COMMAND, profile, SESSION_TIMEOUT_MS).toLong()
+        postActionWaitMs = context.getIntConfig(COMMAND, profile, POST_ACTION_WAIT_MS).toLong()
+        hideKeyboard = context.getBooleanConfig(COMMAND, profile, HIDE_KEYBOARD)
 
         // TODO: auto-detect deviceName, appVersion
         /*
@@ -117,10 +124,10 @@ $ adb shell getprop ro.build.version.release
     return deviceName;
 }
         */
-        this.geoLocation = config.remove("geoLocation")
+        this.geoLocation = config.remove(CONF_GEO_LOC)
 
         this.config[PLATFORM_NAME] = mobileType.platformName
-        this.config["autoGrantPermissions"] = "true"
+        this.config[CONF_AUTO_GRANT_PERM] = "true"
         // all config without `nexial.mobile.` will be used by appium's DesiredCapability
         this.config.putAll(config.filterKeys { !StringUtils.contains(it, NS_MOBILE) })
     }
