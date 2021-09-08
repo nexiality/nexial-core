@@ -32,11 +32,7 @@ import org.apache.commons.cli.Options;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.nexial.core.excel.Excel;
-import org.nexial.core.tools.swagger.NexialContents;
-import org.nexial.core.tools.swagger.SwaggerActivity;
-import org.nexial.core.tools.swagger.SwaggerDataVariables;
-import org.nexial.core.tools.swagger.SwaggerScenario;
-import org.nexial.core.tools.swagger.SwaggerStep;
+import org.nexial.core.tools.swagger.*;
 import org.nexial.core.utils.JsonUtils;
 import org.yaml.snakeyaml.Yaml;
 
@@ -319,7 +315,7 @@ public class SwaggerTestScriptGenerator {
                     activities.add(activity);
                 }
 
-                if (isNotEmpty(headerName)) {activities.add(generateCleanupActivity(headerName));}
+                if (isNotEmpty(headerName)) {activities.add(generateCleanupActivity());}
                 scenarios.add(scenario);
             }
         }
@@ -348,16 +344,15 @@ public class SwaggerTestScriptGenerator {
     }
 
     /**
-     * Resets the security header as part of cleanup activity in the scenario.
+     * Resets the security header(s) as part of cleanup activity in the scenario.
      *
-     * @param headerName the header to be reset.
      * @return {@link SwaggerActivity} which does the cleanup activity.
      */
-    private static SwaggerActivity generateCleanupActivity(String headerName) {
+    private static SwaggerActivity generateCleanupActivity() {
         SwaggerActivity cleanupActivity = new SwaggerActivity();
         cleanupActivity.setName("tear down");
         SwaggerStep cleanAuthHeader = createStep("tear down", "clear http headers.", CMD_TYPE_WS, CLEAR_HEADER_COMMAND,
-                                                 Ws.WS_ALL_HEADERS, NEXIAL_EMPTY_STRING);
+                                                 Ws.WS_ALL_HEADERS);
         cleanupActivity.setSteps(new ArrayList<SwaggerStep>() {{add(cleanAuthHeader);}});
         return cleanupActivity;
     }
@@ -1000,8 +995,7 @@ public class SwaggerTestScriptGenerator {
     private static void clearHeadersAndResponseVariable(List<SwaggerStep> steps, JSONObject headers,
                                                         String responseVariable) {
         Optional<String> headerOpt = headers.keySet().stream().reduce((x, y) -> join(x, ",", y));
-        headerOpt.ifPresent(
-                s -> steps.add(createStep(EMPTY, EMPTY, CMD_TYPE_WS, CLEAR_HEADER_COMMAND, s, NEXIAL_EMPTY_STRING)));
+        headerOpt.ifPresent(s -> steps.add(createStep(EMPTY, EMPTY, CMD_TYPE_WS, CLEAR_HEADER_COMMAND, s)));
         steps.add(createStep(EMPTY, EMPTY, CMD_TYPE_BASE, CLEAR_VARS_CMD, responseVariable));
     }
 
