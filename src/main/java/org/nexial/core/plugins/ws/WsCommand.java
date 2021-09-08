@@ -55,6 +55,7 @@ import java.util.stream.IntStream;
 
 import static io.jsonwebtoken.SignatureAlgorithm.HS256;
 import static io.jsonwebtoken.impl.TextCodec.BASE64URL;
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Base64.getEncoder;
 import static org.apache.commons.lang3.StringUtils.SPACE;
 import static org.apache.http.HttpHeaders.AUTHORIZATION;
@@ -127,9 +128,9 @@ public class WsCommand extends BaseCommand {
                requestNoBody(url, "", var, "delete");
     }
 
-    public StepResult graphql(String url,
-                              String body,
-                              String var) { return requestWithBody(url, body, var, "graphql"); }
+    public StepResult graphql(String url, String body, String var) {
+        return requestWithBody(url, body, var, "graphql");
+    }
 
     /**
      * as of v4.2, `returnCode` now supports range or list
@@ -161,18 +162,19 @@ public class WsCommand extends BaseCommand {
     protected List<Integer> expandReturnCodes(String returnCode) {
         if (NumberUtils.isDigits(returnCode)) { return Collections.singletonList(NumberUtils.toInt(returnCode)); }
 
+        String delim = context.getTextDelim();
         return TextUtils
-                .toList(returnCode, WS_COMMA_SEPARATOR, true).stream().map(code -> {
-                    // single digits
-                    if (NumberUtils.isDigits(code)) {return Collections.singletonList(NumberUtils.toInt(code));}
+            .toList(returnCode, delim, true).stream().map(code -> {
+                // single digits
+                if (NumberUtils.isDigits(code)) { return Collections.singletonList(NumberUtils.toInt(code)); }
 
-                    // range specified. e.g. 200-300
-                    if (StringUtils.contains(code, "-") && !StringUtils.startsWith(code, "-")) {
-                        int startCode = NumberUtils.toInt(StringUtils.trim(StringUtils.substringBefore(code, "-")), -1);
-                        int endCode = NumberUtils.toInt(StringUtils.trim(StringUtils.substringAfter(code, "-")), -1);
-                        if (startCode == -1 || endCode == -1 || endCode < startCode) {
-                            ConsoleUtils.error("Ignoring invalid return code range: " + code);
-                            return null;
+                // range specified. e.g. 200-300
+                if (StringUtils.contains(code, "-") && !StringUtils.startsWith(code, "-")) {
+                    int startCode = NumberUtils.toInt(StringUtils.trim(StringUtils.substringBefore(code, "-")), -1);
+                    int endCode = NumberUtils.toInt(StringUtils.trim(StringUtils.substringAfter(code, "-")), -1);
+                    if (startCode == -1 || endCode == -1 || endCode < startCode) {
+                        ConsoleUtils.error("Ignoring invalid return code range: " + code);
+                        return null;
                     }
 
                     return IntStream.rangeClosed(startCode, endCode).boxed().collect(Collectors.toList());
@@ -193,12 +195,12 @@ public class WsCommand extends BaseCommand {
         String key = WS_REQ_HEADER_PREFIX + name;
         if (context.isNullOrEmptyOrBlankValue(value)) {
             String previousValue = context.removeData(key);
-            ConsoleUtils.log("removed " + name + " as HTTP header; previous value=" + previousValue);
+            ConsoleUtils.log("removed " + name + " as HTTP Header; previous value=" + previousValue);
         } else {
             context.setData(key, value);
         }
 
-        return StepResult.success("set HTTP header " + name + "=" + value);
+        return StepResult.success("set HTTP Header " + name + "=" + value);
     }
 
     /**
@@ -216,13 +218,14 @@ public class WsCommand extends BaseCommand {
         if (headers.equals(WS_ALL_HEADERS)) {
             context.removeDataByPrefix(WS_REQ_HEADER_PREFIX);
         } else {
-            Arrays.stream(StringUtils.split(headers, WS_COMMA_SEPARATOR)).forEach(x -> {
+            String delim = context.getTextDelim();
+            Arrays.stream(StringUtils.split(headers, delim)).forEach(x -> {
                 String key = WS_REQ_HEADER_PREFIX + x;
                 String previousValue = context.removeData(key);
-                ConsoleUtils.log("removed " + key + " header; previous value=" + previousValue);
+                ConsoleUtils.log("removed " + key + " as HTTP Header; previous value=" + previousValue);
             });
         }
-        return StepResult.success("Http Request Header(s) removed.");
+        return StepResult.success("HTTP Header(s) removed.");
     }
 
     public StepResult headerByVar(String name, String var) {
@@ -233,7 +236,7 @@ public class WsCommand extends BaseCommand {
         Object value = context.getObjectData(var);
         if (value == null) {
             String previousValue = context.removeData(key);
-            ConsoleUtils.log("removed " + name + " as HTTP header; previous value=" + previousValue);
+            ConsoleUtils.log("removed " + name + " as HTTP Header; previous value=" + previousValue);
         } else {
             if (value instanceof String) {
                 context.setData(key, (String) value);
@@ -242,7 +245,7 @@ public class WsCommand extends BaseCommand {
             }
         }
 
-        return StepResult.success("set HTTP header " + name + "=" + value);
+        return StepResult.success("set HTTP Header " + name + "=" + value);
     }
 
     public StepResult saveResponsePayload(String var, String file, String append) {
@@ -536,7 +539,7 @@ public class WsCommand extends BaseCommand {
 
         if (StringUtils.isNotEmpty(basicAuthUsername) && StringUtils.isNotEmpty(basicAuthPassword)) {
             String encoding =
-                getEncoder().encodeToString((basicAuthUsername + ":" + basicAuthPassword).getBytes("UTF-8"));
+                getEncoder().encodeToString((basicAuthUsername + ":" + basicAuthPassword).getBytes(UTF_8));
             con.setRequestProperty("Authorization", StringUtils.join(OAUTH_TOKEN_TYPE_BASIC, SPACE, encoding));
         }
         con.getOutputStream().write(postDataBytes);
@@ -619,9 +622,9 @@ public class WsCommand extends BaseCommand {
         }
 
         bearerCode = authPrefix + " " + bearerCode;
-        ConsoleUtils.log("setting HTTP header " + AUTHORIZATION + " as " + bearerCode);
+        ConsoleUtils.log("setting HTTP Header " + AUTHORIZATION + " as " + bearerCode);
         header(AUTHORIZATION, bearerCode);
-        return StepResult.success("OAuth exchange completed and access token added to header");
+        return StepResult.success("OAuth exchange completed and access token added to HTTP Header");
     }
 
     protected StepResult requestNoBody(String url, String queryString, String var, String method) {
@@ -736,7 +739,7 @@ public class WsCommand extends BaseCommand {
     }
 
     /**
-     * priority given to `nexial.ws.requestPayloadAsRaw` then predefined HTTP header Content-Type
+     * priority given to `nexial.ws.requestPayloadAsRaw` then predefined HTTP Header Content-Type
      */
     @NotNull
     protected OutputResolver newOutputResolver(String body) {
