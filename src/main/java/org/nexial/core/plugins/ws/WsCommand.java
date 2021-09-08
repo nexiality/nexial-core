@@ -162,17 +162,17 @@ public class WsCommand extends BaseCommand {
         if (NumberUtils.isDigits(returnCode)) { return Collections.singletonList(NumberUtils.toInt(returnCode)); }
 
         return TextUtils
-            .toList(returnCode, ",", true).stream().map(code -> {
-                // single digits
-                if (NumberUtils.isDigits(code)) { return Collections.singletonList(NumberUtils.toInt(code)); }
+                .toList(returnCode, WS_COMMA_SEPARATOR, true).stream().map(code -> {
+                    // single digits
+                    if (NumberUtils.isDigits(code)) {return Collections.singletonList(NumberUtils.toInt(code));}
 
-                // range specified. e.g. 200-300
-                if (StringUtils.contains(code, "-") && !StringUtils.startsWith(code, "-")) {
-                    int startCode = NumberUtils.toInt(StringUtils.trim(StringUtils.substringBefore(code, "-")), -1);
-                    int endCode = NumberUtils.toInt(StringUtils.trim(StringUtils.substringAfter(code, "-")), -1);
-                    if (startCode == -1 || endCode == -1 || endCode < startCode) {
-                        ConsoleUtils.error("Ignoring invalid return code range: " + code);
-                        return null;
+                    // range specified. e.g. 200-300
+                    if (StringUtils.contains(code, "-") && !StringUtils.startsWith(code, "-")) {
+                        int startCode = NumberUtils.toInt(StringUtils.trim(StringUtils.substringBefore(code, "-")), -1);
+                        int endCode = NumberUtils.toInt(StringUtils.trim(StringUtils.substringAfter(code, "-")), -1);
+                        if (startCode == -1 || endCode == -1 || endCode < startCode) {
+                            ConsoleUtils.error("Ignoring invalid return code range: " + code);
+                            return null;
                     }
 
                     return IntStream.rangeClosed(startCode, endCode).boxed().collect(Collectors.toList());
@@ -199,6 +199,30 @@ public class WsCommand extends BaseCommand {
         }
 
         return StepResult.success("set HTTP header " + name + "=" + value);
+    }
+
+    /**
+     * Clears the HTTP headers passed as comma(,) separated values. If the parameter passed in is <b>ALL</b>,
+     * then it clears all the HTTP headers set so far.
+     * <p>
+     * For example <b>clearHeaders("x1,x2,x3")</b> clears the headers x1, x2 and x3, while
+     * <b>clearHeaders("ALL")</b> clears all the headers set earlier.
+     *
+     * @param headers the headers to be cleared. This is a comma separated headers string or <b>ALL</b>.
+     * @return {@link StepResult#success(String)} on clearing the headers.
+     */
+    public StepResult clearHeaders(String headers) {
+        requiresNotBlank(headers, "Invalid Header(s)", headers);
+        if (headers.equals(WS_ALL_HEADERS)) {
+            context.removeDataByPrefix(WS_REQ_HEADER_PREFIX);
+        } else {
+            Arrays.stream(StringUtils.split(headers, WS_COMMA_SEPARATOR)).forEach(x -> {
+                String key = WS_REQ_HEADER_PREFIX + x;
+                String previousValue = context.removeData(key);
+                ConsoleUtils.log("removed " + key + " header; previous value=" + previousValue);
+            });
+        }
+        return StepResult.success("Http Request Header(s) removed.");
     }
 
     public StepResult headerByVar(String name, String var) {
