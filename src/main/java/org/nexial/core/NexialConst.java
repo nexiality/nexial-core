@@ -1651,6 +1651,8 @@ public final class NexialConst {
         // possible choices: "standard", "strict", "browser"
         public static final String WS_MULTIPART_MODE = registerSysVar(NS_WS + "multipart.spec", "standard");
         public static final String WS_MULTIPART_CHARSET = registerSysVar(NS_WS + "multipart.charset");
+        public static final String WS_ALL_HEADERS = "ALL";
+        public static final String WS_COMMA_SEPARATOR = ",";
 
         // oauth
         public static final String OAUTH_CLIENT_ID = "client_id";

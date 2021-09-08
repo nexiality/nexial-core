@@ -18,6 +18,15 @@ package org.nexial.core.tools;
  */
 
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.text.MessageFormat;
+import java.text.SimpleDateFormat;
+import java.util.*;
+import java.util.stream.Collectors;
 import org.apache.commons.io.FileUtils;
 import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.apache.poi.xssf.usermodel.XSSFRow;
@@ -25,18 +34,6 @@ import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.nexial.commons.utils.ResourceUtils;
 import org.nexial.core.tools.swagger.*;
-
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.text.MessageFormat;
-import java.text.SimpleDateFormat;
-import java.util.*;
-import java.util.stream.Collectors;
 
 import static java.io.File.separator;
 import static org.apache.commons.lang3.StringUtils.*;
@@ -152,14 +149,23 @@ public class SwaggerScriptFilesCreator {
             throws IOException {
 
         String content = ResourceUtils.loadResource("/swagger/" + templateFileName);
-        String fileContent = MessageFormat.format(content, projectDirPath, swaggerPrefix);
+        String fileContent = MessageFormat.format(Objects.requireNonNull(content), projectDirPath, swaggerPrefix);
         String filePath = joinWith(separator, projectDirPath, "artifact", "bin",
                                    join("run-", swaggerPrefix, fileExtension));
         File batchFile = new File(filePath);
         Files.write(batchFile.toPath(), fileContent.getBytes());
-        batchFile.setExecutable(true, false);
+        boolean fileExecutable = batchFile.setExecutable(true, false);
+        if (!fileExecutable) {
+            System.err.println("Failed to make file as executable.");
+        }
     }
 
+    /**
+     * Extract the non-empty variables in the map.
+     *
+     * @param vars variables passed in.
+     * @return non empty variables.
+     */
     private Map<String, List<String>> getNonEmptyVars(Map<String, List<String>> vars) {
         return vars.entrySet().stream().filter(e -> !e.getValue().isEmpty())
                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
