@@ -283,6 +283,7 @@ public class WsCommandTest {
     @Test
     public void test_expandReturnCodes_simple() throws Exception {
         WsCommand subject = new WsCommand();
+        subject.init(context);
 
         List<Integer> returnCodes;
 
@@ -311,6 +312,7 @@ public class WsCommandTest {
     @Test
     public void test_expandReturnCodes_range() throws Exception {
         WsCommand subject = new WsCommand();
+        subject.init(context);
 
         List<Integer> returnCodes;
 
@@ -338,6 +340,7 @@ public class WsCommandTest {
     @Test
     public void test_expandReturnCodes_errors() throws Exception {
         WsCommand subject = new WsCommand();
+        subject.init(context);
 
         List<Integer> returnCodes;
 
