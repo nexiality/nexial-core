@@ -47,9 +47,6 @@ import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.OutputFileUtils;
 import org.nexial.core.utils.OutputResolver;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-import javax.validation.constraints.NotNull;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
@@ -63,6 +60,9 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import javax.validation.constraints.NotNull;
 
 import static java.io.File.separator;
 import static java.io.File.separatorChar;
@@ -785,8 +785,8 @@ public class IoCommand extends BaseCommand {
             }
         }
 
-        String prologDetail = (StringUtils.isBlank(source) ? "source '" + source + "', " : "") +
-                              (StringUtils.isBlank(target) ? "target '" + target + "'" : "");
+        String prologDetail = (StringUtils.isNotBlank(source) ? "source '" + source + "', " : "") +
+                              (StringUtils.isNotBlank(target) ? "target '" + target + "'" : "");
         String prolog = action + " done [" + prologDetail + "]";
         String errorProlog = action + " failed [" + prologDetail + "]: ";
 

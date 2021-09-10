@@ -197,18 +197,23 @@ open class InteractiveConsole {
             printConsoleSectionSeparator(out, FILLER)
 
             val activitySummaries = scenarioSummary.nestedExecutions
-            activitySummaries.forEach { activity ->
-                val endTime = activity.endTime
-                val startTime = activity.startTime
-                val duration = DateUtility.formatStopWatchTime(endTime - startTime)
+            if (activitySummaries.isNotEmpty()) {
+                activitySummaries.forEach { activity ->
+                    val endTime = activity.endTime
+                    val startTime = activity.startTime
+                    val duration = DateUtility.formatStopWatchTime(endTime - startTime)
 
-                printHeaderLine(out, if (activity.executionLevel == STEP) HDR_STEPS else HDR_ACTIVITY, activity.name)
-                printHeaderLine(out, HDR_TIMESPAN, "${formatLongDate(startTime)} - ${formatLongDate(endTime)} ($duration)")
-                // printHeaderLine(out, HDR_DURATION, duration)
-                printStats(activity, null)
+                    printHeaderLine(out,
+                                    if (activity.executionLevel == STEP) HDR_STEPS else HDR_ACTIVITY,
+                                    activity.name)
+                    printHeaderLine(out,
+                                    HDR_TIMESPAN,
+                                    "${formatLongDate(startTime)} - ${formatLongDate(endTime)} ($duration)")
+                    printStats(activity, null)
+                }
+
+                printConsoleSectionSeparator(out, FILLER)
             }
-
-            printConsoleSectionSeparator(out, FILLER)
 
             val endTime = scenarioSummary.endTime
             val startTime = scenarioSummary.startTime

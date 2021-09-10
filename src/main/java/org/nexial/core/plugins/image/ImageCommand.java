@@ -30,7 +30,6 @@ import org.nexial.core.plugins.base.BaseCommand;
 import org.nexial.core.services.external.ImageOcrApi;
 import org.nexial.core.utils.ConsoleUtils;
 
-import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -38,6 +37,7 @@ import java.io.IOException;
 import java.text.DecimalFormat;
 import java.util.List;
 import java.util.stream.Collectors;
+import javax.imageio.ImageIO;
 
 import static org.nexial.core.NexialConst.Image.*;
 import static org.nexial.core.NexialConst.Image.ImageType.png;
@@ -178,7 +178,6 @@ public class ImageCommand extends BaseCommand implements ForcefulTerminate {
             log("Image comparison meta is saved to variable '" + var + "'");
 
             if ((matchPercent + imageTol) < 100) {
-                // BufferedImage outImage = imageComparison.compareImages(color);
                 String msg = "Difference between baseline and actual BEYOND tolerance " + stats;
                 addOutputAsLink(msg, imageComparison.getDiffImage(), png.toString());
                 return StepResult.fail(msg);

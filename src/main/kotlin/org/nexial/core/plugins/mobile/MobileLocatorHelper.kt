@@ -144,14 +144,14 @@ class MobileLocatorHelper(private val mobileService: MobileService) {
         private const val regexNearbyNameValueSpec = "\\s*.+\\s*[=:]\\s*.+\\s*"
         private const val regexSurrounding =
             "^\\s*($leftOf|$rightOf|$above|$below|$container|$scrollContainer|$item)\\s*:\\s*.+$"
-        private const val prefixIndex = "index:"
 
+        const val prefixIndex = "index:"
         const val scrollableLocator = "//*[@scrollable='true' and @displayed='true' and @enabled='true']"
         const val scrollableLocator2 = "//android.widget.ScrollView[@displayed='true' and @enabled='true']"
         const val iosAlertLocator = "//*[@type='XCUIElementTypeAlert' and @visible='true']"
         const val scriptPressButton = "mobile: pressButton"
-        private const val scriptScript = "mobile: swipe"
-        private const val scriptSelectPickerValue = "mobile: selectPickerWheelValue"
+        const val scriptScript = "mobile: swipe"
+        const val scriptSelectPickerValue = "mobile: selectPickerWheelValue"
         const val doneLocator = "name=Done"
         const val pickerWheelLocator = "//XCUIElementTypePickerWheel"
 
@@ -215,10 +215,15 @@ class MobileLocatorHelper(private val mobileService: MobileService) {
                             }
 
                             item            -> {
-                                requiresInteger(value, "item value must be a number", part)
-                                val itemIndex = NumberUtils.toInt(value)
-                                if (itemIndex < 1) throw IllegalArgumentException("item value must be greater than 0")
-                                index = itemIndex
+                                index = if (value == "last")
+                                    MAX_VALUE
+                                else {
+                                    requiresInteger(value, "item value must be a number", part)
+                                    val itemIndex = NumberUtils.toInt(value)
+                                    if (itemIndex < 1)
+                                        throw IllegalArgumentException("item value must be greater than 0")
+                                    itemIndex
+                                }
                             }
 
                             else            -> parts.add(resolveFilter(name, value))
@@ -331,9 +336,10 @@ class MobileLocatorHelper(private val mobileService: MobileService) {
             if (!NumberUtils.isDigits(indexString)) throw IllegalArgumentException("$INVALID_INDEX $indexString")
 
             val index = NumberUtils.toInt(indexString)
-            if (index < 1) throw IllegalArgumentException("$INVALID_INDEX2 $indexString")
+            if (index < 0) throw IllegalArgumentException("$INVALID_INDEX2 $indexString")
 
-            return index
+            // 0-based
+            return index + 1
         }
 
         private fun normalizeText(text: String, after: String): String {

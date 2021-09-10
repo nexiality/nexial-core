@@ -38,7 +38,7 @@ if [[ "$APPIUM_LOG" == "" ]]; then
 fi
 
 APPIUM_OPT="--allow-cors --session-override --log $APPIUM_LOG --log-level info:info --log-timestamp\
- --no-perms-check --debug-log-spacing --relaxed-security -a $APPIUM_IP $APPIUM_OPT"
+ --local-timezone --no-perms-check --debug-log-spacing --relaxed-security -a $APPIUM_IP $APPIUM_OPT"
 
 echo
 echo "export APPIUM_LOG=[location of log file]"

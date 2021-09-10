@@ -10,7 +10,7 @@ REM runtime options
 REM https://appium.io/docs/en/writing-running-appium/server-args/
 if not "%1"=="" ( set APPIUM_IP=%1) else ( set APPIUM_IP=127.0.0.1)
 if "%APPIUM_LOG%"=="" ( set APPIUM_LOG=%TEMP%\appium.log)
-set APPIUM_OPT=--allow-cors --session-override --log %APPIUM_LOG% --log-level info:info --log-timestamp --no-perms-check --debug-log-spacing --relaxed-security -a %APPIUM_IP% %APPIUM_OPT%
+set APPIUM_OPT=--allow-cors --session-override --log %APPIUM_LOG% --log-level info:info --log-timestamp --local-timezone --no-perms-check --debug-log-spacing --relaxed-security -a %APPIUM_IP% %APPIUM_OPT%
 
 echo.
 echo Usage: %0 [optional:listening IP]
