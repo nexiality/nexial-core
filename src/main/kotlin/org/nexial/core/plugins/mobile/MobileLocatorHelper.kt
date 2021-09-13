@@ -19,6 +19,7 @@ package org.nexial.core.plugins.mobile
 import io.appium.java_client.AppiumDriver
 import io.appium.java_client.MobileBy
 import io.appium.java_client.MobileElement
+import org.apache.commons.collections4.CollectionUtils
 import org.apache.commons.lang3.StringUtils
 import org.apache.commons.lang3.math.NumberUtils
 import org.nexial.commons.utils.RegexUtils
@@ -101,20 +102,20 @@ class MobileLocatorHelper(private val mobileService: MobileService) {
         }
     }
 
-    internal fun resolveAlt(locator: String): List<By> {
-        if (StringUtils.isBlank(locator)) throw IllegalArgumentException("$INVALID_LOCATOR $locator")
-
-        val strategy = StringUtils.trim(StringUtils.lowerCase(StringUtils.substringBefore(locator, "=")))
-        val loc = StringUtils.trim(StringUtils.substringAfter(locator, "="))
-        val normalized = normalizeXpathText(loc)
-
-        val alt = mutableListOf<By>()
-        when (strategy) {
-            prefixResourceId  -> alt.add(By.xpath("//*[@resource-id=${normalized}]"))
-            prefixDescription -> alt.add(By.xpath("//*[@name=${normalized}]"))
-        }
-        return alt
-    }
+    // internal fun resolveAlt(locator: String): List<By> {
+    //     if (StringUtils.isBlank(locator)) throw IllegalArgumentException("$INVALID_LOCATOR $locator")
+    //
+    //     val strategy = StringUtils.trim(StringUtils.lowerCase(StringUtils.substringBefore(locator, "=")))
+    //     val loc = StringUtils.trim(StringUtils.substringAfter(locator, "="))
+    //     val normalized = normalizeXpathText(loc)
+    //
+    //     val alt = mutableListOf<By>()
+    //     when (strategy) {
+    //         prefixResourceId  -> alt.add(By.xpath("//*[@resource-id=${normalized}]"))
+    //         prefixDescription -> alt.add(By.xpath("//*[@name=${normalized}]"))
+    //     }
+    //     return alt
+    // }
 
     private fun resolveTextLocator(text: String) =
         By.xpath("//*[${resolveTextFilter(mobileService.profile.mobileType, text)}]")
@@ -132,6 +133,26 @@ class MobileLocatorHelper(private val mobileService: MobileService) {
         }
     }
 
+    internal fun resolveCompoundLocators(mobileType: MobileType, compoundLocator: String): List<By> {
+        if (!RegexUtils.isExact(StringUtils.trim(compoundLocator), regexOneOfLocator))
+            throw IllegalArgumentException(INVALID_COMPOUND_LOCATOR + compoundLocator)
+
+        val regexPlatform = "^${mobileType.platformName.toLowerCase()};.+"
+
+        // filter out those that are platform-specific but not fitting to target platform
+        val locators =
+            TextUtils.groups(compoundLocator.substringAfter(prefixOneOfLocator), "{", "}", false).filter { locator ->
+                StringUtils.isNotBlank(locator) &&
+                (!RegexUtils.isExact(StringUtils.trim(locator), regexOneOfPlatformSpecific) ||
+                 RegexUtils.isExact(StringUtils.trim(locator), regexPlatform))
+            }
+
+        if (CollectionUtils.isEmpty(locators))
+            throw IllegalArgumentException(INVALID_COMPOUND_LOCATOR2 + compoundLocator)
+
+        return locators.map { locator -> resolve(locator.trim()) }
+    }
+
     companion object {
         private const val leftOf = "left-of"
         private const val rightOf = "right-of"
@@ -141,6 +162,9 @@ class MobileLocatorHelper(private val mobileService: MobileService) {
         private const val container = "container"
         private const val scrollContainer = "scroll-container"
 
+        private const val prefixOneOfLocator = "one-of="
+        internal const val regexOneOfLocator = "${prefixOneOfLocator}(\\s*\\{.+\\}\\s*)+"
+        private const val regexOneOfPlatformSpecific = "^(android|ios);\\s*.+"
         private const val regexNearbyNameValueSpec = "\\s*.+\\s*[=:]\\s*.+\\s*"
         private const val regexSurrounding =
             "^\\s*($leftOf|$rightOf|$above|$below|$container|$scrollContainer|$item)\\s*:\\s*.+$"
@@ -155,11 +179,17 @@ class MobileLocatorHelper(private val mobileService: MobileService) {
         const val doneLocator = "name=Done"
         const val pickerWheelLocator = "//XCUIElementTypePickerWheel"
 
-        internal val clearAllNotificationsLocators = listOf(
-            ConditionalLocator(ANDROID, "text=Clear all"),
-            ConditionalLocator(ANDROID, "id=com.android.systemui:id/dismiss_text"),
-            ConditionalLocator(ANDROID, "id=com.android.systemui:id/clear_all_button"),
-        )
+        internal const val clearAllNotificationsLocators = prefixOneOfLocator +
+                                                           "{text=Clear all}" +
+                                                           "{android;id=com.android.systemui:id/dismiss_text}" +
+                                                           "{android;id=com.android.systemui:id/clear_all_button}"
+        // internal val clearAllNotificationsLocators = listOf(
+        //     ConditionalLocator(ANDROID, "text=Clear all"),
+        //     ConditionalLocator(ANDROID, "id=com.android.systemui:id/dismiss_text"),
+        //     ConditionalLocator(ANDROID, "id=com.android.systemui:id/clear_all_button"),
+        // )
+
+        internal fun toLocatorString(findBy: By) = RegexUtils.removeMatches(findBy.toString(), "^By\\..+\\:\\s*")
 
         /**
          * Expected format: `nearby={left-of|right-of|below|above:text}{attribute_with_value_as_true,attribute=value,...}`
@@ -358,8 +388,8 @@ class MobileLocatorHelper(private val mobileService: MobileService) {
     }
 }
 
-data class ConditionalLocator(val condition: String, val locator: String) {
-    constructor(type: MobileType, locator: String) : this(type.toString(), locator)
-}
-
-data class ConditionalLocators(val locators: List<ConditionalLocator>)
+// data class ConditionalLocator(val condition: String, val locator: String) {
+//     constructor(type: MobileType, locator: String) : this(type.toString(), locator)
+// }
+//
+// data class ConditionalLocators(val locators: List<ConditionalLocator>)

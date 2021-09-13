@@ -2105,6 +2105,12 @@ public final class NexialConst {
             public static final String INVALID_LENGTH = "Invalid number specified as length";
             public static final String NO_REGEX_POLYMATCHER = "PolyMatcher REGEX not supported for this locator:";
             public static final String NO_NUMERIC_POLYMATCHER = "PolyMatcher NUMERIC not supported for this locator:";
+            public static final String INVALID_COMPOUND_LOCATOR =
+                "Invalid locator specified. The one-of locator must be in the form of one-of={...}{...}. Found:";
+            public static final String INVALID_COMPOUND_LOCATOR2 =
+                "Invalid locator specified. Either no locators found or none was fitting the target mobile platform:";
+            public static final String NO_MATCH_COMPOUND_LOCATOR =
+                "Unable to find an element matching to any of the locators specified in";
 
             public static final String FAIL_CLOSE_APP = "Unable to close app:";
             public static final String FAIL_QUIT_DRIVER = "Unable to shutdown mobile driver:";

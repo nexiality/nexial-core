@@ -44,8 +44,7 @@ import org.nexial.commons.utils.RegexUtils
 import org.nexial.commons.utils.TextUtils
 import org.nexial.core.NexialConst.*
 import org.nexial.core.NexialConst.Mobile.*
-import org.nexial.core.NexialConst.Mobile.Message.APP_NOT_INSTALLED
-import org.nexial.core.NexialConst.Mobile.Message.ERR_NO_SERVICE
+import org.nexial.core.NexialConst.Mobile.Message.*
 import org.nexial.core.NexialConst.Mobile.iOS.MULTI_PICKER_DELIM
 import org.nexial.core.NexialConst.Web.GROUP_LOCATOR_SUFFIX
 import org.nexial.core.ShutdownAdvisor
@@ -58,13 +57,16 @@ import org.nexial.core.plugins.base.BaseCommand
 import org.nexial.core.plugins.base.NumberCommand
 import org.nexial.core.plugins.base.ScreenshotUtils
 import org.nexial.core.plugins.mobile.Direction.*
+import org.nexial.core.plugins.mobile.MobileLocatorHelper.Companion.clearAllNotificationsLocators
 import org.nexial.core.plugins.mobile.MobileLocatorHelper.Companion.doneLocator
 import org.nexial.core.plugins.mobile.MobileLocatorHelper.Companion.iosAlertLocator
 import org.nexial.core.plugins.mobile.MobileLocatorHelper.Companion.pickerWheelLocator
 import org.nexial.core.plugins.mobile.MobileLocatorHelper.Companion.prefixIndex
+import org.nexial.core.plugins.mobile.MobileLocatorHelper.Companion.regexOneOfLocator
 import org.nexial.core.plugins.mobile.MobileLocatorHelper.Companion.scriptPressButton
 import org.nexial.core.plugins.mobile.MobileLocatorHelper.Companion.scrollableLocator
 import org.nexial.core.plugins.mobile.MobileLocatorHelper.Companion.scrollableLocator2
+import org.nexial.core.plugins.mobile.MobileLocatorHelper.Companion.toLocatorString
 import org.nexial.core.plugins.mobile.MobileType.ANDROID
 import org.nexial.core.plugins.mobile.MobileType.IOS
 import org.nexial.core.plugins.web.WebDriverExceptionHelper.resolveErrorMessage
@@ -165,7 +167,7 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
 
     fun assertElementEnabled(locator: String): StepResult {
         return try {
-            val element = findElement(locator)
+            val (element, _) = findElement(locator)
             if (Objects.isNull(element)) StepResult.fail("No element found via locator '${locator}'")
 
             if (BooleanUtils.toBoolean(element.getAttribute("enabled")))
@@ -179,7 +181,7 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
 
     fun assertElementDisabled(locator: String): StepResult {
         return try {
-            val element = findElement(locator)
+            val (element, _) = findElement(locator)
             if (Objects.isNull(element)) StepResult.fail("No element found via locator '${locator}'")
 
             if (BooleanUtils.toBoolean(element.getAttribute("enabled")))
@@ -261,7 +263,8 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
     fun saveText(`var`: String, locator: String): StepResult {
         requiresValidAndNotReadOnlyVariableName(`var`)
 
-        val elementText = findElement(locator).text
+        val (element, _) = findElement(locator)
+        val elementText = element.text
         if (StringUtils.isEmpty(elementText))
             context.removeData(`var`)
         else
@@ -367,7 +370,8 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
                 val alertOption = "$iosAlertLocator//*[@type='XCUIElementTypeButton' and " +
                                   "${MobileLocatorHelper.resolveFilter("label", option)}]"
                 if (isElementPresent(alertOption)) {
-                    findElement(alertOption).click()
+                    val (element, _) = findElement(alertOption)
+                    element.click()
                     StepResult.success("Alert dialog dismissed via '$option'")
                 } else
                     StepResult.fail("No alert dialog with option '$option' found")
@@ -404,7 +408,7 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
 
                 // if there aren't any notification, then the `clear all` buttons are likely to exist
                 try {
-                    val clearAll = findElement(MobileLocatorHelper.clearAllNotificationsLocators)
+                    val (clearAll, _) = findElement(clearAllNotificationsLocators)
                     clearAll.click()
                 } catch (e: NoSuchElementException) {
                     ConsoleUtils.log("The 'clear all' button does not exists; likely there's no notification to " +
@@ -428,23 +432,16 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
         return StepResult.success("Clicked on '$locator'")
     }
 
-    private fun tap(locator: String, postTaWaitMs: String) {
-        val fallbackWaitMs = getMobileService().profile.postActionWaitMs
-        var waitMillis = if (StringUtils.isBlank(postTaWaitMs)) fallbackWaitMs else NumberUtils.toLong(postTaWaitMs)
-        if (waitMillis < MIN_WAIT_MS) {
-            ConsoleUtils.log("Invalid 'waitMs' ($postTaWaitMs); default to $fallbackWaitMs")
-            waitMillis = fallbackWaitMs
-        }
-        tap(findElement(locator), waitMillis)
-    }
+    private fun tap(locator: String, postTaWaitMs: String) =
+        tap(findElement(locator).first, resolveWaitMs(postTaWaitMs))
 
-    private fun tap(locator: String) = tap(findElement(locator))
+    private fun tap(locator: String) = tap(findElement(locator).first)
 
     private fun tap(target: MobileElement) = tap(target, getMobileService().profile.postActionWaitMs)
 
     private fun tap(target: MobileElement, postTabWaitMs: Long) {
         val mobileService = getMobileService()
-        val action = toTouchAction(mobileService)
+        toTouchAction(mobileService)
             .tap(TapOptions.tapOptions().withElement(ElementOption.element(target)))
             .perform()
         if (postTabWaitMs > MIN_WAIT_MS) waitFor(postTabWaitMs.toInt())
@@ -452,7 +449,7 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
 
     private fun longTap(target: MobileElement, holdTime: Long) {
         val mobileService = getMobileService()
-        val action = toTouchAction(mobileService)
+        toTouchAction(mobileService)
             .longPress(LongPressOptions.longPressOptions()
                            .withElement(ElementOption.element(target))
                            .withPosition(PointOption.point(EDGE_WIDTH, EDGE_WIDTH))
@@ -481,12 +478,7 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
     }
 
     fun clickUntilNotFound(locator: String, waitMs: String, max: String): StepResult {
-        val fallbackWaitMs = getMobileService().profile.postActionWaitMs
-        var waitMillis = if (StringUtils.isBlank(waitMs)) fallbackWaitMs else NumberUtils.toLong(waitMs)
-        if (waitMillis < MIN_WAIT_MS) {
-            ConsoleUtils.log("Invalid 'waitMs' ($waitMs); default to $fallbackWaitMs")
-            waitMillis = fallbackWaitMs
-        }
+        val waitMillis = resolveWaitMs(waitMs)
 
         if (StringUtils.isNotEmpty(max)) requiresPositiveNumber(max, "Invalid max try number", max)
         val maxTries = if (StringUtils.isEmpty(max)) -1 else NumberUtils.toInt(max)
@@ -515,7 +507,7 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
         requiresPositiveNumber(waitMs, "invalid hold time", waitMs)
 
         val holdTime = max(NumberUtils.toLong(waitMs), 1500L)
-        val element = findElement(locator)
+        val (element, _) = findElement(locator)
         longTap(element, holdTime)
 
         // val mobileService = getMobileService()
@@ -533,7 +525,7 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
         requiresInteger(xOffset, "invalid x-offset", xOffset)
         requiresInteger(yOffset, "invalid y-offset", yOffset)
 
-        val element = findElement(locator)
+        val (element, _) = findElement(locator)
         val mobileService = getMobileService()
         withPostActionWait(
             Actions(mobileService.driver)
@@ -550,15 +542,16 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
         // Actions(mobileService.driver).sendKeys(element, text).pause(mobileService.profile.postActionWaitMs).perform()
 
         return if (StringUtils.isEmpty(text)) {
-            clearText(locator)
-            val currentText = findElement(locator).text
+            val (_, findBy) = findElement(locator)
+            clearText(findBy)
+            val currentText = findElement(findBy).text
             if (StringUtils.isEmpty(currentText))
                 StepResult.success("Element '$locator' cleared")
             else
                 StepResult.fail("Element '$locator' not cleared; current text is '$currentText'")
         } else {
-            val findBy = resolveFindBy(locator)
-            val element = findElement(findBy)
+            // val findBy = resolveFindBy(locator)
+            val (element, findBy) = findElement(locator)
             val elementText = element.text
             if (StringUtils.equals(elementText, text))
                 StepResult.success("Element '$locator' already contain text '$text")
@@ -630,7 +623,7 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
         val timeoutBy =
             if (StringUtils.isBlank(maxWaitMs) || maxWaitMs.trim() == "-1") -1
             else System.currentTimeMillis() + NumberUtils.toLong(maxWaitMs)
-        val scrollArea = findElement(scrollTarget)
+        val (scrollArea, _) = findElement(scrollTarget)
         val scrollAreaHeight = scrollArea.rect.height
         val scrollAreaWidth = scrollArea.rect.width
         val afterHoldWaitMs = 10L
@@ -652,11 +645,10 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
         }
 
         // 3. getting ready to scroll and search
-        val targetLocator = resolveFindBy(searchFor)
-        val waiter = newWaiter(forcedWaitMs, "scrolling ${dir.name} to find $searchFor")
         val driver = getMobileService().driver
-
-        var matches = waiter.until<List<MobileElement>> { scrollArea.findElements(targetLocator) }
+        val waiter = newWaiter(scrollArea, forcedWaitMs, "scrolling ${dir.name} to find $searchFor")
+        val findBys = resolveFindBy(searchFor)
+        var matches = waiter.until { findElements(it, findBys) }
         while (matches.isEmpty()) {
             if (timeoutBy != (-1).toLong() && System.currentTimeMillis() >= timeoutBy)
                 return StepResult.fail("time out while scrolling ${dir.detail} to find $searchFor")
@@ -667,7 +659,7 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
                 .moveByOffset(offsets.second.x, offsets.second.y).pause(afterMoveWaitMs)
                 .release().pause(afterReleaseWaitMs)
                 .perform()
-            matches = waiter.until<List<MobileElement>> { scrollArea.findElements(targetLocator) }
+            matches = waiter.until { findElements(scrollArea, findBys) }
         }
 
         // 4. all done
@@ -682,7 +674,7 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
         val dir = Direction.values().find { it.detail.equals(direction, true) }
                   ?: throw IllegalArgumentException("Invalid direction $direction")
 
-        val elem = findElement(locator)
+        val (element, _) = findElement(locator)
         val driver = getMobileService().driver
         val screenDimension = driver.manage().window().size
 
@@ -733,7 +725,7 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
         }
 
         withPostActionWait(Actions(driver)
-                               .moveToElement(elem)
+                               .moveToElement(element)
                                .clickAndHold()
                                .moveByOffset(offsets.first, offsets.second)
                                .release()
@@ -857,7 +849,7 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
     fun screenshot(file: String, locator: String): StepResult {
         if (!isScreenshotEnabled) return StepResult.skipped("screen capturing disabled")
         requiresNotBlank(file, "invalid file", file)
-        val screenshot = ScreenshotUtils.saveScreenshot(findElement(locator), file)
+        val screenshot = ScreenshotUtils.saveScreenshot(findElement(locator).first, file)
         return postScreenshot(screenshot, locator)
     }
 
@@ -936,7 +928,7 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
         return when (mobileService.profile.mobileType) {
             ANDROID -> {
                 // 1. click on the dropdown to display the options
-                val select = findElement(locator)
+                val (select, _) = findElement(locator)
                 val currentSelectValue = select.text
                 if (StringUtils.equals(currentSelectValue, item))
                     StepResult.success("item $item already selected")
@@ -997,7 +989,7 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
             }
             IOS     -> {
                 // 1. find the select element / check if intended value is already selected
-                val select = findElement(locator)
+                val (select, _) = findElement(locator)
                 val currentSelection = select.getAttribute("value")
                 if (StringUtils.equals(currentSelection, item))
                     StepResult.success("Current selection matched to $item")
@@ -1042,17 +1034,19 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
         requiresNotBlank(device, "Invalid device name specified", device)
         requiresNotBlank(filename, "Invalid file name specified", filename)
 
-        val rootMenu = "//*[@resource-id='com.google.android.documentsui:id/toolbar']" +
-                       "/android.widget.ImageButton[@content-desc='Show roots']"
-        val rootFolder = "//*[@resource-id='android:id/title' and @text='${device}']"
-        val targetFolder = "//*[@resource-id='android:id/title' and @text='$folder']"
-        val files = "//*[@resource-id='com.google.android.documentsui:id/container_directory']" +
-                    "//*[@resource-id='com.google.android.documentsui:id/dir_list']" +
-                    "/*[@resource-id='com.google.android.documentsui:id/item_root']"
-        val targetFile = "$files//*[@resource-id='android:id/title' and @text='$filename']"
-        val acceptButton = "id=com.telemed2u:id/menu_crop"
-
         val dir = if (StringUtils.isBlank(folder)) "Documents" else folder
+
+        val baseResId = "com.google.android.documentsui:id"
+        val resIdTitle = "@resource-id='android:id/title'"
+
+        val rootMenu = "//*[@resource-id='$baseResId/toolbar']/android.widget.ImageButton[@content-desc='Show roots']"
+        val rootFolder = "//*[$resIdTitle and @text='${device}']"
+        val targetFolder = "//*[$resIdTitle and @text='$dir']"
+        val files = "//*[@resource-id='$baseResId/container_directory']" +
+                    "//*[@resource-id='$baseResId/dir_list']" +
+                    "/*[@resource-id='$baseResId/item_root']"
+        val targetFile = "$files//*[$resIdTitle and @text='$filename']"
+        val acceptButton = "id=menu_crop"
 
         // step 1: make sure we are on the right screen
         if (!waitForElementPresent(rootMenu, 5000)) return StepResult.fail("Fail to verify UI - root menu NOT FOUND")
@@ -1065,17 +1059,17 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
         tap(rootFolder)
 
         // step 3. click on the specified folder
-        if (!waitForElementPresent(targetFolder, 2000)) return StepResult.fail("Fail to find a folder name '$folder'")
+        if (!waitForElementPresent(targetFolder, 2000)) return StepResult.fail("Fail to find a folder name '$dir'")
 
         tap(targetFolder)
 
         // step 4. make sure we have at least 1 file in the target folder
         if (!waitForElementPresent(files, 2000))
-            return StepResult.fail("Fail to find any files under the '$folder' folder")
+            return StepResult.fail("Fail to find any files under the '$dir' folder")
 
         // step 5. click on target file to select
         if (!waitForElementPresent(targetFile, 2000))
-            return StepResult.fail("Unable to find the specified file '$filename' under the '$folder' folder")
+            return StepResult.fail("Unable to find the specified file '$filename' under the '$dir' folder")
 
         tap(targetFile)
 
@@ -1130,7 +1124,7 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
                 StepResult.success()
             }
             is IOSDriver     -> {
-                // no need to reset for XCUITest driver
+                // no need to reset for XCUITestDriver
                 // driver.resetApp()
                 driver.closeApp()
                 StepResult.success()
@@ -1154,28 +1148,64 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
 
     internal fun newWaiter(message: String) = newWaiter(getMobileService().profile.explicitWaitMs, message)
 
-    internal fun newWaiter(waitMs: Long, message: String): FluentWait<AppiumDriver<MobileElement>> {
-        val mobileService = getMobileService()
-        return FluentWait(mobileService.driver)
+    internal fun newWaiter(waitMs: Long, message: String) = newWaiter(getMobileService().driver, waitMs, message)
+
+    private fun <T> newWaiter(input: T, waitMs: Long, message: String): FluentWait<T> {
+        return FluentWait(input)
             .withTimeout(Duration.ofMillis(waitMs))
             .pollingEvery(Duration.ofMillis(10))
             .ignoring(WebDriverException::class.java)
             .withMessage(message)
     }
 
-    internal fun resolveFindBy(locator: String): By {
-        val findBy = getMobileService().locatorHelper.resolve(locator)
-        if (context.isVerbose) ConsoleUtils.log("resolve locator as $findBy")
-        return findBy
+    /**
+     * transform either a single locator into a single-item list of By, or a compound locator (i.e. one-of=...) into
+     * a list of By instances
+     */
+    internal fun resolveFindBy(locator: String): List<By> {
+        requiresNotBlank(locator, "Invalid locator", locator)
+        val mobileService = getMobileService()
+        val locatorHelper = mobileService.locatorHelper
+
+        return if (RegexUtils.isExact(StringUtils.trim(locator), regexOneOfLocator))
+            locatorHelper.resolveCompoundLocators(mobileService.profile.mobileType, locator)
+        else {
+            val findBy = locatorHelper.resolve(locator)
+            if (context.isVerbose) ConsoleUtils.log("resolve locator as $findBy")
+            listOf(findBy)
+        }
     }
 
     @Throws(NoSuchElementException::class)
-    internal fun findElement(locator: String) = findElement(resolveFindBy(locator))
+    internal fun findElement(locator: String): Pair<MobileElement, By> {
+        requiresNotBlank(locator, "Invalid locator", locator)
 
+        val findBys = resolveFindBy(locator)
+        if (findBys.isEmpty()) throw NoSuchElementException("Unable to resolve any locator via $locator")
+
+        if (findBys.size == 1) {
+            val findBy = findBys[0]
+            return findElement(findBy) to findBy
+        }
+
+        for (findBy in findBys) {
+            try {
+                val matched = findElement(findBy)
+                ConsoleUtils.log("[one-of]: A match found via locator ${toLocatorString(findBy)}")
+                return (matched to findBy)
+            } catch (e: NoSuchElementException) {
+                continue
+            }
+        }
+
+        throw NoSuchElementException("$NO_MATCH_COMPOUND_LOCATOR $locator")
+    }
+
+    @Throws(NoSuchElementException::class)
     internal fun findElement(findBy: By): MobileElement {
         val mobileService = getMobileService()
         val profile = mobileService.profile
-        val locator = RegexUtils.removeMatches(findBy.toString(), "^By\\..+\\:\\s*")
+        val locator = toLocatorString(findBy)
         return if (profile.explicitWaitEnabled)
             try {
                 newWaiter("find element via locator '${locator}'").until { it.findElement(findBy) }
@@ -1188,21 +1218,105 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
             mobileService.driver.findElement(findBy)
     }
 
-    @Throws(NoSuchElementException::class)
-    internal fun findElement(locators: List<ConditionalLocator>): MobileElement {
-        val mobileType = getMobileService().profile.mobileType.toString()
-        val filteredLocators = locators.filter { it.condition == mobileType }
-        for (qualified in filteredLocators) {
+    // @Throws(NoSuchElementException::class)
+    // internal fun findElement(locators: List<ConditionalLocator>): MobileElement {
+    //     val mobileType = getMobileService().profile.mobileType.toString()
+    //     val filteredLocators = locators.filter { it.condition == mobileType }
+    //     for (qualified in filteredLocators) {
+    //         try {
+    //             val matched = findElement(qualified.locator)
+    //             ConsoleUtils.log("[conditional-locators]: A match found via locator ${qualified.locator}")
+    //             return matched
+    //         } catch (e: NoSuchElementException) {
+    //             continue
+    //         }
+    //     }
+    //
+    //     throw NoSuchElementException("No element matched to any of these locators: $filteredLocators")
+    // }
+
+    internal fun findElements(locator: String): List<MobileElement> {
+        requiresNotBlank(locator, "Invalid locator", locator)
+
+        val mobileService = getMobileService()
+        val profile = mobileService.profile
+
+        val findBys = resolveFindBy(locator)
+        if (findBys.isEmpty()) throw NoSuchElementException("Unable to resolve any locator via $locator")
+
+        if (profile.explicitWaitEnabled) {
             try {
-                val matched = findElement(qualified.locator)
-                ConsoleUtils.log("[conditional-locators]: A match found via locator ${qualified.locator}")
-                return matched
+                newWaiter("find elements via locator '$locator'").until { findElements(it, findBys) }
+            } catch (e: TimeoutException) {
+                log("Timed out after ${profile.explicitWaitMs}ms looking for any element that matches '$locator'")
+                listOf()
+            }
+        }
+
+        return findElements(mobileService.driver, findBys)
+    }
+
+    internal fun findElements(driver: AppiumDriver<MobileElement>, findBys: List<By>): List<MobileElement> {
+        if (findBys.size == 1) return driver.findElements(findBys[0])
+
+        for (findBy in findBys) {
+            try {
+                val matched = driver.findElements(findBy)
+                if (CollectionUtils.isNotEmpty(matched)) {
+                    ConsoleUtils.log("[one-of]: A match found via locator ${toLocatorString(findBy)}")
+                    return matched
+                }
             } catch (e: NoSuchElementException) {
                 continue
             }
         }
 
-        throw NoSuchElementException("No element matched to any of these locators: $filteredLocators")
+        return emptyList()
+    }
+
+    internal fun findElements(searchFrom: MobileElement, locator: String): List<MobileElement> {
+        requiresNotBlank(locator, "Invalid locator", locator)
+
+        val mobileService = getMobileService()
+        val profile = mobileService.profile
+
+        val findBys = resolveFindBy(locator)
+        if (findBys.isEmpty()) throw NoSuchElementException("Unable to resolve any locator via $locator")
+
+        if (profile.explicitWaitEnabled) {
+            try {
+                newWaiter(searchFrom, profile.explicitWaitMs, "find elements via locator '$locator'")
+                    .until { findElements(it, findBys) }
+            } catch (e: TimeoutException) {
+                log("Timed out after ${profile.explicitWaitMs}ms looking for any element that matches '$locator'")
+                listOf()
+            }
+        }
+
+        return findElements(searchFrom, findBys)
+    }
+
+    internal fun findElements(searchFrom: MobileElement, findBys: List<By>): List<MobileElement> {
+        if (findBys.size == 1) return searchFrom.findElements(findBys[0])
+
+        for (findBy in findBys) {
+            try {
+                val matched = searchFrom.findElements(findBy)
+                if (CollectionUtils.isNotEmpty(matched)) {
+                    ConsoleUtils.log("[one-of]: A match found via locator ${toLocatorString(findBy)}")
+                    return matched
+                }
+            } catch (e: NoSuchElementException) {
+                continue
+            }
+        }
+
+        return emptyList()
+    }
+
+    internal fun findFirstMatch(locator: String): MobileElement? {
+        val matches = findElements(locator)
+        return if (CollectionUtils.isEmpty(matches)) null else matches[0]
     }
 
     internal fun isElementPresent(locator: String) =
@@ -1214,7 +1328,7 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
 
     internal fun isElementVisible(locator: String) =
         try {
-            val element = findElement(locator)
+            val (element, _) = findElement(locator)
             if (Objects.isNull(element))
                 false
             else {
@@ -1224,11 +1338,10 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
                         // special case for image: check either itself or parent for visibility
                         if (StringUtils.equals(element.getAttribute("type"), "XCUIElementTypeImage"))
                             BooleanUtils.toBoolean(element.getAttribute("visible")) ||
-                            BooleanUtils.toBoolean(findElement("$locator/..").getAttribute("visible"))
+                            BooleanUtils.toBoolean(element.findElementByXPath("./parent::*").getAttribute("visible"))
                         else
                             BooleanUtils.toBoolean(element.getAttribute("visible"))
                     }
-                    else    -> true
                 }
             }
         } catch (e: NoSuchElementException) {
@@ -1248,26 +1361,6 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
             log("Error while waiting for a condition to be met: ${e.message}")
             false
         }
-
-    internal fun findElements(locator: String): List<MobileElement> {
-        requiresNotBlank(locator, "Invalid locator", locator)
-        val findBy = resolveFindBy(locator)
-        val profile = getMobileService().profile
-        return if (profile.explicitWaitEnabled)
-            try {
-                newWaiter("find elements via locator '$locator'").until { it.findElements(findBy) }
-            } catch (e: TimeoutException) {
-                log("Timed out after ${profile.explicitWaitMs}ms looking for any element that matches '$locator'")
-                listOf()
-            }
-        else
-            getMobileService().driver.findElements(findBy)
-    }
-
-    internal fun findFirstMatch(locator: String): MobileElement? {
-        val matches = findElements(locator)
-        return if (CollectionUtils.isEmpty(matches)) null else matches[0]
-    }
 
     internal fun collectTextList(locator: String) = collectTextList(findElements(locator))
 
@@ -1296,14 +1389,14 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
     }
 
     private fun clearText(locator: String) {
-        val element = findElement(locator)
+        val (element, findBy) = findElement(locator)
         val elementText = element.text
         element.click()
         // blank/spaces must be treated different, at least for android
         if (StringUtils.isBlank(elementText))
-            for (i in (0..elementText.length)) findElement(locator).sendKeys(BACK_SPACE)
+            for (i in (0..elementText.length)) findElement(findBy).sendKeys(BACK_SPACE)
         else
-            findElement(locator).clear()
+            findElement(findBy).clear()
     }
 
     private fun clearText(findBy: By) {
@@ -1386,4 +1479,14 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
 
     private fun withinLimit(least: Int, most: Int, number: Int) =
         if (number < least) least else if (number > most) most else number
+
+    private fun resolveWaitMs(postTaWaitMs: String): Long {
+        val fallbackWaitMs = getMobileService().profile.postActionWaitMs
+        val waitMillis = if (StringUtils.isBlank(postTaWaitMs)) fallbackWaitMs else NumberUtils.toLong(postTaWaitMs)
+        return if (waitMillis < MIN_WAIT_MS) {
+            ConsoleUtils.log("Invalid 'waitMs' ($postTaWaitMs); default to $fallbackWaitMs")
+            fallbackWaitMs
+        } else
+            waitMillis
+    }
 }
