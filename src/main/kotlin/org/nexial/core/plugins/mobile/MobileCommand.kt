@@ -39,13 +39,21 @@ import org.apache.commons.collections4.CollectionUtils
 import org.apache.commons.collections4.MapUtils
 import org.apache.commons.lang3.BooleanUtils
 import org.apache.commons.lang3.StringUtils
+import org.apache.commons.lang3.SystemUtils.IS_OS_WINDOWS
 import org.apache.commons.lang3.math.NumberUtils
+import org.nexial.commons.proc.ProcessInvoker
+import org.nexial.commons.proc.ProcessInvoker.WORKING_DIRECTORY
+import org.nexial.commons.utils.FileUtil
 import org.nexial.commons.utils.RegexUtils
 import org.nexial.commons.utils.TextUtils
 import org.nexial.core.NexialConst.*
+import org.nexial.core.NexialConst.Data.WIN32_CMD
 import org.nexial.core.NexialConst.Mobile.*
+import org.nexial.core.NexialConst.Mobile.Android.SCRIPT_COPY_TO_ANDROID
 import org.nexial.core.NexialConst.Mobile.Message.*
-import org.nexial.core.NexialConst.Mobile.iOS.MULTI_PICKER_DELIM
+import org.nexial.core.NexialConst.Mobile.iOS.*
+import org.nexial.core.NexialConst.Project.NEXIAL_HOME
+import org.nexial.core.NexialConst.Project.NEXIAL_MOBILE_BIN_REL_PATH
 import org.nexial.core.NexialConst.Web.GROUP_LOCATOR_SUFFIX
 import org.nexial.core.ShutdownAdvisor
 import org.nexial.core.model.ExecutionContext
@@ -821,7 +829,7 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
 
     fun orientation(mode: String): StepResult {
         val orient = StringUtils.lowerCase(mode)
-        requireOneOf(orient, "landscape", "portrait")
+        requiresOneOf(orient, "landscape", "portrait")
 
         val mobileService = getMobileService()
         val driver = mobileService.driver
@@ -1079,34 +1087,6 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
         return StepResult.success("selected '$filename' from '$folder' folder")
     }
 
-    internal fun findAndroidScrollTarget(driver: AppiumDriver<MobileElement>, closest: MobileElement): MobileElement? {
-        // find all scrollable containers
-        val elements = driver.findElements(By.xpath(scrollableLocator))
-        val scrollables = if (CollectionUtils.isNotEmpty(elements))
-            elements
-        else
-            driver.findElements(By.xpath(scrollableLocator2))
-
-        // find the most likely scrollable container
-        return if (CollectionUtils.isEmpty(scrollables))
-            null
-        else if (scrollables.size == 1)
-            scrollables[0]
-        else {
-            // lastResort is usually the top level scrollable container (x or y < 10)
-            val lastResort = scrollables.find { elem -> elem.rect.x < 10 || elem.rect.y < 10 }
-            if (lastResort != null) scrollables.remove(lastResort)
-
-            // find the closest one with the most similar width
-            val matchWidth = closest.rect.width
-            val matchY = closest.rect.y
-            scrollables.sortBy { elem ->
-                (elem.rect.y - matchY).absoluteValue * (elem.rect.width - matchWidth).absoluteValue / matchWidth
-            }
-            scrollables[0]
-        }
-    }
-
     // todo: need to figure out permission issue
     // Original error: Error executing adbExec. Original error: 'Command '... ... \\platform-tools\\adb.exe -P 5037
     //  -s emulator-5554 shell am broadcast -a android.intent.action.AIRPLANE_MODE --ez state true' exited with code
@@ -1139,6 +1119,78 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
         context.mobileServices.remove(profile)
         this.mobileService = null
         return StepResult.success()
+    }
+
+    fun copyToLocal(file: String, folder: String): StepResult {
+        requiresReadableFile(file)
+        requiresNotBlank(folder, "Invalid device folder", folder)
+
+        val mobileType = getMobileService().profile.mobileType
+
+        // check that env NEXIAL_HOME is set
+        requiresNexialHome()
+
+        val mobileScriptPath =
+            StringUtils.appendIfMissing(File(System.getProperty(NEXIAL_HOME)).absolutePath, separator) +
+            NEXIAL_MOBILE_BIN_REL_PATH
+        val extProcEnv = mapOf(WORKING_DIRECTORY to mobileScriptPath)
+
+        val script = mobileScriptPath + when (mobileType) {
+            ANDROID -> "${SCRIPT_COPY_TO_ANDROID}${if (IS_OS_WINDOWS) "cmd" else "sh"}"
+            IOS     -> SCRIPT_COPY_TO_IOS
+        }
+        if (!FileUtil.isFileExecutable(script)) throw RuntimeException("$script $SCRIPT_NOT_EXECUTABLE")
+
+        val outcome = when (mobileType) {
+            ANDROID -> {
+                // adb push *file* /storage/emulated/0/Download/
+                if (IS_OS_WINDOWS)
+                    ProcessInvoker.invoke(WIN32_CMD, listOf("/C", script, file, folder.removePrefix("/")), extProcEnv)
+                else
+                    ProcessInvoker.invoke(script, listOf(file, folder.removePrefix("/")), extProcEnv)
+            }
+            IOS     -> {
+                // check file extension (only .png, .jpg, .mp4, .gif, .wbem
+                if (!SUPPORTED_COPY_FILE_EXT.contains(StringUtils.lowerCase(StringUtils.substringAfterLast(file, "."))))
+                    throw IllegalArgumentException("$NOT_SUPPORT_FILE_EXT $file")
+                ProcessInvoker.invoke(script, listOf(file), extProcEnv)
+            }
+        }
+
+        return if (outcome.exitStatus != 0) {
+            ConsoleUtils.log(outcome.stdout)
+            ConsoleUtils.log(outcome.stderr)
+            StepResult.fail("FAIL to copy '$file' to the mobile device: ${outcome.stdout}")
+        } else
+            StepResult.success("File '$file' copied to the mobile device")
+    }
+
+    internal fun findAndroidScrollTarget(driver: AppiumDriver<MobileElement>, closest: MobileElement): MobileElement? {
+        // find all scrollable containers
+        val elements = driver.findElements(By.xpath(scrollableLocator))
+        val scrollables = if (CollectionUtils.isNotEmpty(elements))
+            elements
+        else
+            driver.findElements(By.xpath(scrollableLocator2))
+
+        // find the most likely scrollable container
+        return if (CollectionUtils.isEmpty(scrollables))
+            null
+        else if (scrollables.size == 1)
+            scrollables[0]
+        else {
+            // lastResort is usually the top level scrollable container (x or y < 10)
+            val lastResort = scrollables.find { elem -> elem.rect.x < 10 || elem.rect.y < 10 }
+            if (lastResort != null) scrollables.remove(lastResort)
+
+            // find the closest one with the most similar width
+            val matchWidth = closest.rect.width
+            val matchY = closest.rect.y
+            scrollables.sortBy { elem ->
+                (elem.rect.y - matchY).absoluteValue * (elem.rect.width - matchWidth).absoluteValue / matchWidth
+            }
+            scrollables[0]
+        }
     }
 
     internal fun getMobileService(): MobileService {

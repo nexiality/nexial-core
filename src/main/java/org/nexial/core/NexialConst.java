@@ -39,7 +39,6 @@ import org.nexial.core.model.TestProject;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.ExecUtils;
 
-import javax.validation.constraints.NotNull;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
@@ -48,6 +47,7 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.*;
+import javax.validation.constraints.NotNull;
 
 import static java.awt.Color.*;
 import static java.awt.image.BufferedImage.TYPE_INT_ARGB;
@@ -1021,6 +1021,7 @@ public final class NexialConst {
         public static final String NEXIAL_BIN_REL_PATH = "bin" + separator;
         public static final String NEXIAL_MACOSX_BIN_REL_PATH = NEXIAL_BIN_REL_PATH + "macosx" + separator;
         public static final String NEXIAL_WINDOWS_BIN_REL_PATH = NEXIAL_BIN_REL_PATH + "windows" + separator;
+        public static final String NEXIAL_MOBILE_BIN_REL_PATH = NEXIAL_BIN_REL_PATH + "mobile" + separator;
         public static final String NEXIAL_LINUX_BIN_REL_PATH = NEXIAL_BIN_REL_PATH + "linux" + separator;
         public static final String NEXIAL_EXECUTION_TYPE = NAMESPACE + "executionType";
         public static final String NEXIAL_EXECUTION_TYPE_SCRIPT = "script";
@@ -2126,6 +2127,8 @@ public final class NexialConst {
             public static final String INVALID_NODE_PATH = "Node path did not resolve to a valid executable NodeJS " +
                                                            "executable:";
             public static final String APP_NOT_INSTALLED = "Configured app is currently not installed on device:";
+            public static final String SCRIPT_NOT_EXECUTABLE = "cannot be found or is not executable. Unable to proceed";
+            public static final String NOT_SUPPORT_FILE_EXT = "File extension not supported for iOS file transfer:";
         }
 
         public static final class Android {
@@ -2164,10 +2167,13 @@ public final class NexialConst {
                                                             "nexial" + separator + "android" + separator +
                                                             "cmdline-tools";
             public static final String SDK_MANAGER = CMDLINE_TOOLS_PATH + separator + SDK_MANAGER_REL_PATH;
+            public static final String SCRIPT_COPY_TO_ANDROID = "copy-to-android.";
         }
 
         public static final class iOS {
             public static final String MULTI_PICKER_DELIM = "|";
+            public static final String SCRIPT_COPY_TO_IOS = "copy-to-ios.sh";
+            public static final List<String> SUPPORTED_COPY_FILE_EXT = Arrays.asList("png", "jpg", "mp4", "gif", "wbem");
         }
     }
 

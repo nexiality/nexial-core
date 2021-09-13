@@ -67,10 +67,6 @@ import ru.yandex.qatools.ashot.Screenshot;
 import ru.yandex.qatools.ashot.coordinates.WebDriverCoordsProvider;
 import ru.yandex.qatools.ashot.shooting.ShootingStrategies;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-import javax.imageio.ImageIO;
-import javax.validation.constraints.NotNull;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -81,6 +77,10 @@ import java.util.List;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import javax.imageio.ImageIO;
+import javax.validation.constraints.NotNull;
 
 import static java.awt.Image.SCALE_DEFAULT;
 import static java.io.File.separator;
@@ -3036,7 +3036,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         } catch (WebDriverException e) {
             return StepResult.fail(WebDriverExceptionHelper.resolveErrorMessage(e));
         } catch (Exception e) {
-            // try again..
+            // try again...
             if (forceJSClick) {
                 jsClick(element);
                 return StepResult.success("second attempt click via JS event");
@@ -3752,12 +3752,11 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
     private boolean isElementVisible(String locator, long maxWait) {
         By by = locatorHelper.findBy(locator);
-        boolean outcome = waitForCondition(maxWait, object -> {
+        return waitForCondition(maxWait, object -> {
             WebElement elem = driver.findElement(by);
             if (elem == null || !elem.isDisplayed()) { return false; }
             return isTrue(jsExecutor.executeScript(JsLib.isVisible(), elem));
         });
-        return outcome;
     }
 
     protected StepResult saveTextSubstring(String var, String locator, String delimStart, String delimEnd) {

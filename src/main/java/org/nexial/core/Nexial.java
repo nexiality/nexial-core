@@ -43,19 +43,20 @@ import org.nexial.core.reports.ExecutionReporter;
 import org.nexial.core.spi.NexialExecutionEvent;
 import org.nexial.core.spi.NexialListenerFactory;
 import org.nexial.core.tools.TempCleanUpHelper;
+import org.nexial.core.utils.CheckUtils;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.ExecUtils;
 import org.nexial.core.utils.InputFileUtils;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
-import javax.annotation.Nullable;
-import javax.validation.constraints.NotNull;
 import java.io.File;
 import java.io.IOException;
 import java.security.Security;
 import java.text.MessageFormat;
 import java.util.*;
 import java.util.stream.Collectors;
+import javax.annotation.Nullable;
+import javax.validation.constraints.NotNull;
 
 import static java.io.File.separator;
 import static java.lang.System.lineSeparator;
@@ -275,13 +276,7 @@ public class Nexial {
         ExecUtils.collectCliProps(args);
 
         // first things first -- do we have all the required system properties?
-        String errPrefix = "System property " + NEXIAL_HOME;
-        String nexialHome = System.getProperty(NEXIAL_HOME);
-        if (StringUtils.isBlank(nexialHome)) { throw new RuntimeException(errPrefix + " missing; unable to proceed"); }
-        if (!FileUtil.isDirectoryReadable(nexialHome)) {
-            throw new RuntimeException(errPrefix + " does not refer to a valid directory (" + nexialHome + "); " +
-                                       "unable to proceed");
-        }
+        CheckUtils.requiresNexialHome();
 
         NexialUpdate.checkAndRun();
 

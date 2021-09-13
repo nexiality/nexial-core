@@ -17,13 +17,6 @@
 
 package org.nexial.core.utils;
 
-import java.io.File;
-import java.io.IOException;
-import java.lang.reflect.Array;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
-
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.ArrayUtils;
@@ -33,8 +26,16 @@ import org.nexial.commons.utils.FileUtil;
 import org.nexial.commons.utils.ResourceUtils;
 import org.nexial.commons.utils.TextUtils;
 
+import java.io.File;
+import java.io.IOException;
+import java.lang.reflect.Array;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
+
 import static java.lang.Integer.MIN_VALUE;
 import static org.apache.commons.lang3.BooleanUtils.toBooleanObject;
+import static org.nexial.core.NexialConst.Project.NEXIAL_HOME;
 import static org.nexial.core.NexialConst.TOKEN_END;
 import static org.nexial.core.NexialConst.TOKEN_START;
 
@@ -160,7 +161,7 @@ public class CheckUtils {
         return true;
     }
 
-    public static boolean requireOneOf(String option, String... options) {
+    public static boolean requiresOneOf(String option, String... options) {
         if (requiresNotEmpty(option, "Invalid value", option)) {
             List<String> optionList = Arrays.asList(options);
             if (!optionList.contains(option)) { fail("Invalid value: " + option + ". Must be one of " + optionList); }
@@ -176,5 +177,15 @@ public class CheckUtils {
             throw new AssertionError("Invalid input, expected boolean but found " + str);
         }
         return retVal == Boolean.TRUE;
+    }
+
+    public static void requiresNexialHome() {
+        String errPrefix = "System property " + NEXIAL_HOME;
+        String nexialHome = System.getProperty(NEXIAL_HOME);
+        if (StringUtils.isBlank(nexialHome)) { throw new RuntimeException(errPrefix + " missing; unable to proceed"); }
+        if (!FileUtil.isDirectoryReadable(nexialHome)) {
+            throw new RuntimeException(errPrefix + " does not refer to a valid directory (" + nexialHome + "); " +
+                                       "unable to proceed");
+        }
     }
 }
