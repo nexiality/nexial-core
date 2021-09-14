@@ -1050,6 +1050,9 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
         val rootMenu = "//*[@resource-id='$baseResId/toolbar']/android.widget.ImageButton[@content-desc='Show roots']"
         val rootFolder = "//*[$resIdTitle and @text='${device}']"
         val targetFolder = "//*[$resIdTitle and @text='$dir']"
+        val subMenu = "//*[resource-id='$baseResId/sub_menu']"
+        val gridView = "$subMenu/*[@content-desc='Grid view']"
+        val listView = "$subMenu/*[@content-desc='List view']"
         val files = "//*[@resource-id='$baseResId/container_directory']" +
                     "//*[@resource-id='$baseResId/dir_list']" +
                     "/*[@resource-id='$baseResId/item_root']"
@@ -1071,7 +1074,13 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
 
         tap(targetFolder)
 
-        // step 4. make sure we have at least 1 file in the target folder
+        // step 4. check if current file view is in grid or list
+        if (findElements(gridView).isEmpty()) {
+            val (listViewIcon, findBy) = findElement(listView)
+            listViewIcon.click()
+        }
+
+        // step 5. make sure we have at least 1 file in the target folder
         if (!waitForElementPresent(files, 2000))
             return StepResult.fail("Fail to find any files under the '$dir' folder")
 
