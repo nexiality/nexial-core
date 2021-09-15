@@ -18,6 +18,11 @@ package org.nexial.core.tools;
  */
 
 
+import static java.io.File.separator;
+import static org.apache.commons.lang3.StringUtils.*;
+import static org.nexial.core.NexialConst.*;
+import static org.nexial.core.NexialConst.Project.NEXIAL_HOME;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -27,18 +32,16 @@ import java.text.MessageFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.stream.Collectors;
+
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.SystemUtils;
 import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.nexial.commons.utils.ResourceUtils;
 import org.nexial.core.tools.swagger.*;
-
-import static java.io.File.separator;
-import static org.apache.commons.lang3.StringUtils.*;
-import static org.nexial.core.NexialConst.*;
-import static org.nexial.core.NexialConst.Project.NEXIAL_HOME;
+import org.nexial.core.utils.ConsoleUtils;
 
 /**
  * This class is used to generate the files related to the Swagger script generation like the script, data and binary
@@ -62,12 +65,183 @@ public class SwaggerScriptFilesCreator {
      * @param swaggerPrefix  the swagger prefix
      * @throws IOException when the file operation fails.
      */
-    public void generateFiles(String projectDirPath, NexialContents contents, String swaggerPrefix)
+    public void generateFiles(String projectDirPath, NexialContents contents, String swaggerPrefix, String swaggerFile)
             throws IOException {
+        String scriptFile = joinWith(separator, projectDirPath, "artifact", "script",
+                                     join(swaggerPrefix, EXCEL_EXTENSION));
+
+        createScriptFile(contents, new File(scriptFile));
         createPropertiesFile(projectDirPath, contents.getDataVariables(), swaggerPrefix);
-        createScriptAndDataFiles(contents, projectDirPath, swaggerPrefix);
+
         createBatchFile(projectDirPath, BATCH_FILE_CMD_TEMPLATE, BATCH_FILE_CMD_EXTENSION, swaggerPrefix);
         createBatchFile(projectDirPath, BATCH_FILE_SH_TEMPLATE, BATCH_FILE_SH_EXTENSION, swaggerPrefix);
+
+        copySwaggerFileToProjectDir(swaggerPrefix, swaggerFile, projectDirPath);
+        displayCreatedFileInfo(projectDirPath, swaggerPrefix);
+    }
+
+    /**
+     * Display the logs on the console, stating the files that got created and the further actions he/she needs
+     * to perform.
+     *
+     * @param projectDirPath the Nexial project Directory path.
+     * @param prefix         the Swagger prefix.
+     */
+    private void displayCreatedFileInfo(String projectDirPath, String prefix) {
+        ConsoleUtils.log("Generation completed.");
+        ConsoleUtils.log("Nexial artifact generated in " + join(projectDirPath, separator, "artifact", separator));
+
+        ConsoleUtils.log("\tbin\\");
+        ConsoleUtils.log("\t\trun-" + prefix + ".cmd");
+        ConsoleUtils.log("\t\trun-" + prefix + ".sh");
+
+        ConsoleUtils.log("\tdata\\");
+        ConsoleUtils.log(join("\t\t", prefix, ".data", EXCEL_EXTENSION));
+
+        ConsoleUtils.log("\tscript\\");
+        ConsoleUtils.log(join("\t\t", prefix, EXCEL_EXTENSION));
+
+        ConsoleUtils.log("\t" + join("project.", prefix, ".properties") + "\n");
+
+        ConsoleUtils.log("Before running the script,");
+        ConsoleUtils.log("\tupdate your test data in " + joinWith(separator, projectDirPath, "artifact", "data",
+                                                                  join(prefix, ".data", EXCEL_EXTENSION)));
+
+        ConsoleUtils.log("\tupdate your data variables in " + joinWith(separator, projectDirPath, "artifact",
+                                                                       join("project.", prefix, ".properties")));
+
+        ConsoleUtils.log("\tadjust the generated script as needed - "
+                         + joinWith(separator, projectDirPath, "artifact", "script", join(prefix, EXCEL_EXTENSION)) +
+                         "\n");
+
+        ConsoleUtils.log("To run the generated tests, use ");
+        ConsoleUtils.log("\t" + joinWith(separator, projectDirPath, "artifact", "bin",
+                                         join("run-", prefix,
+                                              SystemUtils.OS_NAME.toLowerCase().startsWith("windows") ? ".cmd" :
+                                              ".sh")));
+    }
+
+    /**
+     * Validates the following:-
+     * <ul>
+     *     <li>The {prefix}.script file is open.</li>
+     *     <li>The {prefix}.data file is open.</li>
+     * </ul>
+     * <p>
+     * If any of the above validations failed, it aborts the program displaying the appropriate message.
+     * <p>
+     * In case the conditions are met, it adds necessary files from the templates.
+     *
+     * @param projectDirPath the Nexial project directory.
+     * @param swaggerPrefix  the swagger prefix passed in.
+     * @return true in case the validations conditions are met and false otherwise.
+     * @throws IOException in case of File operation failures.
+     */
+    public boolean validateAndGenerateFiles(String projectDirPath, String swaggerPrefix) throws IOException {
+        String dataFile = joinWith(separator, projectDirPath, "artifact", "data",
+                                   join(swaggerPrefix, ".data", EXCEL_EXTENSION));
+        boolean fileCopied = copyTemplateFile(dataFile, "nexial-data.xlsx");
+        if (!fileCopied) {return false;}
+
+        String scriptFile = joinWith(separator, projectDirPath, "artifact", "script",
+                                     join(swaggerPrefix, EXCEL_EXTENSION));
+        fileCopied = copyTemplateFile(scriptFile, "nexial-script.xlsx");
+        if (!fileCopied) {return false;}
+
+        File projectDir = new File(projectDirPath);
+        addMissingProjectFiles(projectDir);
+        return true;
+    }
+
+    /**
+     * Creates the missing files/directories in the Nexial project directory.
+     *
+     * @param dir the Nexial project directory.
+     * @throws IOException In case of File operation failures.
+     */
+    private void addMissingProjectFiles(File dir) throws IOException {
+        File artifact = new File(joinWith(separator, dir.getAbsolutePath(), "artifact"));
+        File propertiesFile = new File(joinWith(separator, artifact.getAbsolutePath(), "project.properties"));
+        if (!propertiesFile.exists()) {
+            boolean propertiesFileCreated = propertiesFile.createNewFile();
+            if (!propertiesFileCreated) {
+                System.err.println("Properties file" + propertiesFile.getAbsolutePath() + " failed to created.");
+            }
+        }
+
+        Arrays.stream(new String[]{"plan", "bin"})
+              .forEach(folder -> {
+                  File file = new File(joinWith(separator, artifact, folder));
+                  if (!file.exists()) {
+                      boolean fileCreated = file.mkdir();
+                      if (!fileCreated) {
+                          System.err.println("Failed to create directory " + file.getAbsolutePath());
+                      }
+                  }
+              });
+
+        createNexialProjectFile(artifact, "script", EXCEL_EXTENSION, "nexial-script.xlsx");
+        createNexialProjectFile(artifact, "script", ".macro.xlsx", "nexial-macro.xlsx");
+        createNexialProjectFile(artifact, "data", ".data.xlsx", "nexial-data.xlsx");
+        createNexialProjectFile(artifact, "plan", "-plan.xlsx", "nexial-testplan.xlsx");
+    }
+
+    /**
+     * Creates the missing Nexial project files.
+     *
+     * @param artifact         the artifact directory of the Nexial project.
+     * @param directory        the target directory in the artifact folder.
+     * @param extension        the extension of the file name.
+     * @param templateFileName the template file name.
+     * @throws IOException in case of File operation failures.
+     */
+    private void createNexialProjectFile(File artifact, String directory, String extension,
+                                         String templateFileName) throws IOException {
+        String templateDir = joinWith(separator, System.getProperty(NEXIAL_HOME), "template");
+        String projectName = substringAfterLast(substringBeforeLast(artifact.getAbsolutePath(), separator), separator);
+
+        File file = new File(joinWith(separator, artifact.getAbsolutePath(), directory, join(projectName, extension)));
+        if (!file.exists()) {FileUtils.copyFile(new File(join(templateDir, separator, templateFileName)), file);}
+    }
+
+    /**
+     * Replaces the current file with the template file passed in.
+     *
+     * @param file         the file to be replaced.
+     * @param templateFile the template file which has to replace the actual file.
+     * @return true/false based on the copy operation is successful or not.
+     * @throws IOException in case the source file is open.
+     */
+    private boolean copyTemplateFile(String file, String templateFile) throws IOException {
+        String nexialDataTemplateFile = joinWith(separator, System.getProperty(NEXIAL_HOME),
+                                                 "template", templateFile);
+        try {
+            FileUtils.copyFile(new File(nexialDataTemplateFile), new File(file));
+        } catch (IOException e) {
+            if (e.getMessage()
+                 .contains("The process cannot access the file because it is being used by another process")) {
+                System.err.println(file + " is open. Please close it and run the command again.");
+                return false;
+            }
+            throw e;
+        }
+        return true;
+    }
+
+    /**
+     * Copy the Swagger file to the <b>Swagger</b> directory inside the <b>data</b> folder with the name in the format
+     * <b>{swaggerPrefix}</b>.<b>{fileName}</b>
+     *
+     * @param swaggerPrefix  the Swagger prefix passed in.
+     * @param swaggerFile    the Swagger file containing the definitions of the Rest API passed in.
+     * @param projectDirPath the Nexial project directory passed in.
+     * @throws IOException In case of File operations failure.
+     */
+    private void copySwaggerFileToProjectDir(String swaggerPrefix, String swaggerFile, String projectDirPath)
+            throws IOException {
+        File swaggerDefinitionsFile = new File(joinWith(separator, projectDirPath, "artifact", "data", "Swagger"),
+                                               join(swaggerPrefix, ".", substringAfterLast(swaggerFile, separator)));
+        FileUtils.copyFile(new File(swaggerFile), swaggerDefinitionsFile);
     }
 
     /**
@@ -189,33 +363,18 @@ public class SwaggerScriptFilesCreator {
     }
 
     /**
-     * Creates the script in the artifact folder and also the corresponding data files.
+     * Creates the script in the artifact folder.
      *
      * @param nexialContents the swagger swaggerContents content.
-     * @param projectDirPath the Nexial project directory path.
+     * @param scriptFile     the script file path.
      * @throws IOException in case of File operations failure.
      */
-    private void createScriptAndDataFiles(NexialContents nexialContents, String projectDirPath,
-                                          String swaggerPrefix) throws IOException {
-        String scriptFileName = joinWith(separator, projectDirPath, "artifact", "script",
-                                         join(swaggerPrefix, EXCEL_EXTENSION));
-
-        String dataFileName = joinWith(separator, projectDirPath, "artifact", "data",
-                                       join(swaggerPrefix, ".data", EXCEL_EXTENSION));
-
-        String nexialHome = System.getProperty(NEXIAL_HOME);
-        String nexialScriptTemplateFile = joinWith(separator, nexialHome, "template", "nexial-script.xlsx");
-        String nexialDataTemplateFile = joinWith(separator, nexialHome, "template", "nexial-data.xlsx");
-
-        FileUtils.copyFile(new File(nexialScriptTemplateFile), new File(scriptFileName));
-        FileUtils.copyFile(new File(nexialDataTemplateFile), new File(dataFileName));
-
+    private void createScriptFile(NexialContents nexialContents, File scriptFile) throws IOException {
         // Logic for Script File creation.
-        FileInputStream file = new FileInputStream(scriptFileName);
+        FileInputStream file = new FileInputStream(scriptFile);
         XSSFWorkbook scriptWorkBook = new XSSFWorkbook(file);
 
-        XSSFSheet sheet = scriptWorkBook.getSheet("Scenario");
-        sheet.removeRow(sheet.getRow(4));
+        XSSFSheet sheet;
         int index = scriptWorkBook.getSheetIndex("Scenario");
 
         List<SwaggerScenario> scenarios = nexialContents.getScenarios();
@@ -239,7 +398,7 @@ public class SwaggerScriptFilesCreator {
             for (SwaggerActivity activity : activities) {
                 List<SwaggerStep> steps = activity.getSteps();
                 for (SwaggerStep swaggerStep : steps) {
-                    XSSFRow row = sheet.createRow(++rowCount);
+                    XSSFRow row = sheet.getRow(++rowCount);
                     int columnCount = 0;
 
                     String[] columns = {swaggerStep.getActivityName(), swaggerStep.getDescription(),
@@ -249,7 +408,7 @@ public class SwaggerScriptFilesCreator {
                                         swaggerStep.getFlowControl()};
 
                     for (String s : columns) {
-                        XSSFCell cell = row.createCell(columnCount++);
+                        XSSFCell cell = row.getCell(columnCount++);
                         if (isNotEmpty(s)) {cell.setCellValue(s);}
                     }
                 }
@@ -258,7 +417,7 @@ public class SwaggerScriptFilesCreator {
         scriptWorkBook.removeSheetAt(index);
 
         file.close();
-        FileOutputStream os = new FileOutputStream(scriptFileName);
+        FileOutputStream os = new FileOutputStream(scriptFile);
         scriptWorkBook.write(os);
         scriptWorkBook.close();
         os.close();

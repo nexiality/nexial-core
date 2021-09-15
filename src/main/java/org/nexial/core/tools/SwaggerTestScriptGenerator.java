@@ -17,6 +17,13 @@ package org.nexial.core.tools;
  *
  */
 
+import static org.apache.commons.lang3.StringUtils.*;
+import static org.nexial.core.NexialConst.ExitStatus.RC_BAD_CLI_ARGS;
+import static org.nexial.core.NexialConst.ExitStatus.RC_FAILURE_FOUND;
+import static org.nexial.core.NexialConst.*;
+import static org.nexial.core.excel.ExcelConfig.HEADER_TEST_STEP_DESCRIPTION;
+import static org.nexial.core.tools.CliUtils.newArgOption;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -24,6 +31,7 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.DefaultParser;
@@ -31,17 +39,9 @@ import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
 import org.json.JSONArray;
 import org.json.JSONObject;
-import org.nexial.core.excel.Excel;
 import org.nexial.core.tools.swagger.*;
 import org.nexial.core.utils.JsonUtils;
 import org.yaml.snakeyaml.Yaml;
-
-import static org.apache.commons.lang3.StringUtils.*;
-import static org.nexial.core.NexialConst.ExitStatus.RC_BAD_CLI_ARGS;
-import static org.nexial.core.NexialConst.ExitStatus.RC_FAILURE_FOUND;
-import static org.nexial.core.NexialConst.*;
-import static org.nexial.core.excel.ExcelConfig.HEADER_TEST_STEP_DESCRIPTION;
-import static org.nexial.core.tools.CliUtils.newArgOption;
 
 /**
  * This class takes a Swagger file which contains the REST API operation definitions and generates the Nexial script
@@ -129,8 +129,6 @@ public class SwaggerTestScriptGenerator {
                 JSONObject json = new JSONObject(dataMap);
                 try {
                     generateFiles(json, projectDirPath);
-                    Excel.openExcel(new File(joinWith(File.separator, removeEnd(projectDirPath, File.separator),
-                                                      "artifact", "script", swaggerPrefix.concat(".xlsx"))));
                 } catch (IOException e) {
                     System.err.println("Error is " + e.getMessage());
                     System.exit(RC_FAILURE_FOUND);
@@ -175,8 +173,12 @@ public class SwaggerTestScriptGenerator {
      * @throws IOException in case of File operation failures.
      */
     private static void generateFiles(JSONObject json, String projectDirPath) throws IOException {
+        SwaggerScriptFilesCreator filesCreator = new SwaggerScriptFilesCreator();
+        boolean filesValid = filesCreator.validateAndGenerateFiles(projectDirPath, swaggerPrefix);
+        if (!filesValid) {System.exit(RC_FAILURE_FOUND);}
+
         NexialContents contents = generateNexialContent(json, projectDirPath);
-        new SwaggerScriptFilesCreator().generateFiles(projectDirPath, contents, swaggerPrefix);
+        filesCreator.generateFiles(projectDirPath, contents, swaggerPrefix, swaggerFile);
     }
 
     /**
@@ -209,7 +211,6 @@ public class SwaggerTestScriptGenerator {
         Map<String, List<String>> requestBodyVariables = dataVariables.getRequestBodyVars();
         // Iterate over the various paths in the Swagger json.
         for (String path : paths.keySet()) {
-            String scenarioName = getScenarioName(path);
             JSONArray parentParams = new JSONArray();
             JSONObject methods = paths.optJSONObject(path);
 
@@ -221,6 +222,11 @@ public class SwaggerTestScriptGenerator {
 
             // Iterate over various methods like get, put, post etc.
             for (String method : methods.keySet()) {
+                String title = json.optJSONObject("info").optString("title");
+                String scenarioName =
+                        getScenarioName(
+                                path.equals(SWAGGER_PATH_SEPARATOR) ? joinWith(STRING_SEPARATOR, title, method) : path);
+
                 SwaggerScenario scenario = new SwaggerScenario();
                 List<SwaggerActivity> activities = new ArrayList<>();
                 boolean authenticationAdded = false;
@@ -633,7 +639,6 @@ public class SwaggerTestScriptGenerator {
                                             .replace("{", EMPTY).replace("}", EMPTY),
                                         MAX_TAB_NAME_LENGTH_EXCEL * -1);
         if (scenarioName.startsWith(STRING_SEPARATOR)) {scenarioName = scenarioName.substring(1);}
-        if (isEmpty(scenarioName)) {scenarioName = UUID.randomUUID().toString().substring(1);}
         return scenarioName;
     }
 
@@ -1089,8 +1094,6 @@ public class SwaggerTestScriptGenerator {
             throw new RuntimeException("[file] is of invalid type.Only json and yaml files are supported.");
         }
         if (!new File(swaggerFile).exists()) {throw new RuntimeException("[file] does not exist.");}
-
-        if (!new File(projectDirPath).exists()) {throw new RuntimeException("[dir] does not exist.");}
     }
 
     /**
