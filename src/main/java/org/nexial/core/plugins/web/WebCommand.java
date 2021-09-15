@@ -99,8 +99,8 @@ import static org.nexial.core.plugins.base.ComparisonFormatter.displayForCompare
 import static org.nexial.core.plugins.web.JsLib.isTrue;
 import static org.nexial.core.plugins.ws.WebServiceClient.hideAuthDetails;
 import static org.nexial.core.utils.CheckUtils.*;
-import static org.openqa.selenium.Keys.BACK_SPACE;
 import static org.openqa.selenium.Keys.TAB;
+import static org.openqa.selenium.Keys.*;
 
 public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLogExternally, RequireBrowser {
     protected Browser browser;
@@ -2037,9 +2037,9 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         ensureReady();
         String url = driver.getCurrentUrl();
         if (TextUtils.polyMatch(url, search)) {
-            return StepResult.success("Current URL matched the specifie search '%s'", search);
+            return StepResult.success("Current URL matched the specified search '%s'", search);
         } else {
-            return StepResult.fail("Current URL DID NOT matched the specifie search '%s'", search);
+            return StepResult.fail("Current URL DID NOT matched the specified search '%s'", search);
         }
     }
 
@@ -2093,7 +2093,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
             // javascript = OutputFileUtils.resolveContent(script, context, false, true);
             javascript = new OutputResolver(script, context, false, true).getContent();
         } catch (Throwable e) {
-            // can't resolve content.. then we'll leave it be
+            // can't resolve content... then we'll leave it be
             ConsoleUtils.log("Unable to resolve JavaScript '" + script + "': " + e.getMessage() + ". Use as is...");
             javascript = script;
         }
@@ -2105,7 +2105,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
             retVal = jsExecutor.executeScript(javascript);
         } catch (UnhandledAlertException e) {
             if (browser.isRunSafari()) {
-                // it's ok.. safari's been known to barf at JS... let's try to move on...
+                // it's ok... safari's been known to barf at JS... let's try to move on...
                 ConsoleUtils.error("UnhandledAlertException when executing JavaScript with Safari, might be ok...");
             } else {
                 throw e;
@@ -2131,7 +2131,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     /**
      * save the screenshot of the entire web page with scroll time out by {@code timeout} to {@code file}.
      * <p>
-     * This method capture entire web page with scrolling timeout and it will forcefully overwrite existing {@code file}.
+     * This method capture entire web page with scrolling timeout, and it will forcefully overwrite existing {@code file}.
      */
     public StepResult screenshotInFull(String file, String timeout, String removeFixed) {
         return screenshot(file, null, timeout, removeFixed);
@@ -2604,21 +2604,26 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
         // prior to clearing
         String before = element.getAttribute("value");
+        if (StringUtils.isEmpty(before)) { return; }
 
         boolean useBackspace = browser.isRunElectron() ||
-                    context.getBooleanData(WEB_CLEAR_WITH_BACKSPACE, getDefaultBool(WEB_CLEAR_WITH_BACKSPACE)) ||
-                    context.getBooleanConfig(getTarget(), profile, OPT_IS_REACT);
+                               context.getBooleanData(WEB_CLEAR_WITH_BACKSPACE, getDefaultBool(WEB_CLEAR_WITH_BACKSPACE)) ||
+                               context.getBooleanConfig(getTarget(), profile, OPT_IS_REACT);
         if (useBackspace) {
-            if (StringUtils.isNotEmpty(before)) {
-                // persistently delete character... but if app insist on "autocompleting" then we'll give up
-                String beforeBackspace;
-                String afterBackspace;
+            new Actions(driver).keyDown(SHIFT).keyDown(CONTROL)
+                               .sendKeys(HOME)
+                               .keyUp(CONTROL).keyUp(SHIFT)
+                               .sendKeys(DELETE)
+                               .perform();
+
+            // FAIL-SAFE: persistently delete character... but if app insist on "autocompleting" then we'll give up
+            String remainingValue = element.getAttribute("value");
+            if (StringUtils.isNotEmpty(remainingValue)) {
                 do {
-                    beforeBackspace = element.getAttribute("value");
-                    element.sendKeys(Keys.END);
-                    before.chars().forEach(value -> element.sendKeys(BACK_SPACE));
-                    afterBackspace = element.getAttribute("value");
-                } while (!StringUtils.equals(afterBackspace, beforeBackspace));
+                    element.sendKeys(END);
+                    remainingValue.chars().forEach(value -> element.sendKeys(BACK_SPACE));
+                    remainingValue = element.getAttribute("value");
+                } while (StringUtils.isNotEmpty(remainingValue));
             }
         } else {
             // try multiple ways to cover all bases
@@ -2941,7 +2946,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
                 if (!StringUtils.equals(lastWinHandles.peek(), windowHandle)) { lastWinHandles.push(windowHandle); }
             }
         } catch (NotFoundException e) {
-            // failsafe.. in case we can't select window by selenium api
+            // failsafe... in case we can't select window by selenium api
             driver = driver.switchTo().defaultContent();
         }
 
@@ -3011,7 +3016,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
         scrollIntoView(element);
 
-        // Nexial configure "preference" for each browser to use JS click on not. However, we need to honor user's
+        // Nexial configure "preference" for each browser to use JSClick on not. However, we need to honor user's
         // wish NOT to use JS click if they had configured their test as such
         boolean forceJSClick = context.hasConfig(getTarget(), getProfile(), FORCE_JS_CLICK) ?
                                context.getBooleanConfig(getTarget(), getProfile(), FORCE_JS_CLICK) :
@@ -3387,12 +3392,12 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
                     if (successCount >= checkSourceCount) { return true; }
                 } else {
                     successCount = 0;
-                    // compare didn't work.. but let's wait until maxWait is reached before declaring failure
+                    // compare didn't work... but let's wait until maxWait is reached before declaring failure
                     oldSource = newSource;
                 }
             } while (System.currentTimeMillis() < endTime);
         } catch (Throwable e) {
-            // exception thrown because a JS alert is "blocking" the browser.. in this case we consider the page as "loaded"
+            // exception thrown because a JS alert is "blocking" the browser... in this case we consider the page as "loaded"
             if (StringUtils.containsAny(e.getMessage(), "Modal", "modal dialog") ||
                 e instanceof UnhandledAlertException) {
                 return true;
@@ -3608,7 +3613,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
             if (!StringUtils.contains(xpath, elementText)) { continue; }
 
             if (matched == null) {
-                // found one, and this is the only one so far..
+                // found one, and this is the only one so far...
                 matched = element;
             } else {
                 // found another one, hence failure is in order
@@ -3654,7 +3659,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         } catch (WebDriverException e) {
             // ideally we should be able to scroll and perform highlighting... but some (misbehaving) apps
             // might prevent either the scrolling (webdriver internally uses `scrollIntoView()` JS function) or
-            // highlighting to work properly.. might even through exception
+            // highlighting to work properly... might even through exception
             // if we run into error here... just silently ignore it for now. We must proceed on with the execution!
             if (context.isVerbose()) { ConsoleUtils.log("unable to highlight element; ignoring..."); }
         }
@@ -3676,7 +3681,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
                 try {
                     highlight(teststep.getParams().get(i));
                 } catch (Throwable e) {
-                    // don't complain... this is debugging freebie..
+                    // don't complain... this is debugging freebie...
                 }
                 break;
             }
