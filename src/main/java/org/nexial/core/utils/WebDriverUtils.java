@@ -42,9 +42,6 @@ public final class WebDriverUtils {
         if (driver == null) { return null; }
         if (StringUtils.isEmpty(keystrokes)) { return null; }
 
-        Map<String, CharSequence> controlKeyMapping = CONTROL_KEY_MAPPING;
-        Map<String, CharSequence> keyMapping = KEY_MAPPING;
-
         Actions actions = new Actions(driver);
         Stack<CharSequence> controlKeys = new Stack<>();
         if (elem != null) { actions = actions.moveToElement(elem); }
@@ -61,7 +58,7 @@ public final class WebDriverUtils {
 
             String keystrokeId = CTRL_KEY_START + nextKeyStroke + CTRL_KEY_END;
 
-            // 3. if {..} found, let's push all the keystrokes before the found {..} to action
+            // 3. if {..} found, let's push all the keystrokes before the found {...} to action
             String text = StringUtils.substringBefore(keystrokes, keystrokeId);
             if (StringUtils.isNotEmpty(text)) {
                 actions = addReleaseControlKeys(actions, null, controlKeys);
@@ -69,22 +66,22 @@ public final class WebDriverUtils {
                 actions = actions.sendKeys(TextUtils.toOneCharArray(text));
             }
 
-            // 4. keystrokes now contain the rest of the key strokes after the found {..}
+            // 4. keystrokes now contain the rest of the keystrokes after the found {...}
             keystrokes = StringUtils.substringAfter(keystrokes, keystrokeId);
 
-            // 5. if the found {..} is a single key, just add it as such (i.e. {CONTROL}{C})
+            // 5. if the found {...} is a single key, just add it as such (i.e. {CONTROL}{C})
             if (StringUtils.length(nextKeyStroke) == 1 && StringUtils.isAlphanumeric(nextKeyStroke)) {
                 actions = actions.sendKeys(nextKeyStroke);
                 actions = addReleaseControlKeys(actions, null, controlKeys);
             } else {
-                if (controlKeyMapping.containsKey(keystrokeId)) {
-                    // 6. is the found {..} one of the control keys (CTRL, SHIFT, ALT)?
-                    CharSequence control = controlKeyMapping.get(keystrokeId);
+                if (CONTROL_KEY_MAPPING.containsKey(keystrokeId)) {
+                    // 6. is the found {...} one of the control keys (CTRL, SHIFT, ALT)?
+                    CharSequence control = CONTROL_KEY_MAPPING.get(keystrokeId);
                     controlKeys.push(control);
                     actions = actions.keyDown(control);
                 } else {
-                    // 7. if not, then it must one of the non-printable character
-                    CharSequence keystroke = keyMapping.get(keystrokeId);
+                    // 7. if not, then it must be one of the non-printable character
+                    CharSequence keystroke = KEY_MAPPING.get(keystrokeId);
                     if (keystroke == null) { throw new RuntimeException("Unsupported/unknown key " + keystrokeId); }
 
                     actions = actions.sendKeys(keystroke);

@@ -1050,7 +1050,7 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
         val rootMenu = "//*[@resource-id='$baseResId/toolbar']/android.widget.ImageButton[@content-desc='Show roots']"
         val rootFolder = "//*[$resIdTitle and @text='${device}']"
         val targetFolder = "//*[$resIdTitle and @text='$dir']"
-        val subMenu = "//*[resource-id='$baseResId/sub_menu']"
+        val subMenu = "//*[@resource-id='$baseResId/sub_menu']"
         val gridView = "$subMenu/*[@content-desc='Grid view']"
         val listView = "$subMenu/*[@content-desc='List view']"
         val files = "//*[@resource-id='$baseResId/container_directory']" +
@@ -1305,16 +1305,15 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
         val findBys = resolveFindBy(locator)
         if (findBys.isEmpty()) throw NoSuchElementException("Unable to resolve any locator via $locator")
 
-        if (profile.explicitWaitEnabled) {
+        return if (profile.explicitWaitEnabled) {
             try {
                 newWaiter("find elements via locator '$locator'").until { findElements(it, findBys) }
             } catch (e: TimeoutException) {
                 log("Timed out after ${profile.explicitWaitMs}ms looking for any element that matches '$locator'")
                 listOf()
             }
-        }
-
-        return findElements(mobileService.driver, findBys)
+        } else
+            findElements(mobileService.driver, findBys)
     }
 
     internal fun findElements(driver: AppiumDriver<MobileElement>, findBys: List<By>): List<MobileElement> {
