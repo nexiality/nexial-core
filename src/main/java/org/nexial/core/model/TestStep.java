@@ -46,7 +46,6 @@ import org.nexial.core.utils.*;
 import org.nexial.core.variable.Syspath;
 import org.openqa.selenium.WebDriverException;
 
-import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
@@ -55,6 +54,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 
 import static java.io.File.separator;
 import static java.lang.System.lineSeparator;
@@ -531,7 +531,7 @@ public class TestStep extends TestStepManifest {
 
     protected void postExecCommand(StepResult result, long elapsedMs) {
         // also include screenshot-on-error handling
-        updateResult(result, elapsedMs);
+        if (!context.isInteractiveMode()) { updateResult(result, elapsedMs); }
 
         ExecutionSummary summary = testCase.getTestScenario().getExecutionSummary();
         if (result.isSkipped()) {
