@@ -95,6 +95,9 @@ REM # Make sure prerequisite environment variables are set
     set JAVA_SUPPORTS_MODULE=true
 
     %JAVA% -version > %TEMP%\java_version 2>&1
+    findstr /C:"\ \"17" %TEMP%\java_version
+    if %ERRORLEVEL% EQU 0 ( set JAVA_VERSION=17)
+
     findstr /C:"\ \"16" %TEMP%\java_version
     if %ERRORLEVEL% EQU 0 ( set JAVA_VERSION=16)
 
