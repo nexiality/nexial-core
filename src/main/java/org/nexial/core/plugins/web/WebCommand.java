@@ -2610,7 +2610,8 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
                                context.getBooleanData(WEB_CLEAR_WITH_BACKSPACE, getDefaultBool(WEB_CLEAR_WITH_BACKSPACE)) ||
                                context.getBooleanConfig(getTarget(), profile, OPT_IS_REACT);
         if (useBackspace) {
-            new Actions(driver).keyDown(SHIFT).keyDown(CONTROL)
+            new Actions(driver).click(element)
+                               .keyDown(SHIFT).keyDown(CONTROL)
                                .sendKeys(HOME)
                                .keyUp(CONTROL).keyUp(SHIFT)
                                .sendKeys(DELETE)
