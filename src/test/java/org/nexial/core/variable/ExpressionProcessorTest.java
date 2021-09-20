@@ -341,7 +341,7 @@ public class ExpressionProcessorTest {
                   "removeRegex(^Date:.+Page:\\s+[0-9]+\n,true) " +
                   "removeRegex(^[A-Z \\\\/\\,]+(\\s+[0-9\\.]+\\)?\\s*\n,true)]";
         assertEquals("4827 Bene-Bac Pet Gel Ea       9.16 0      4.582       0.00      4.582      4.582 F< 11 12-12-01\n" +
-                     "WEFA Wysong EFA without Fish Oil Bottle      23.05     1.75     13.163      23.04     17.460     17.460 FTZ< 11 07-16-05\n",
+                                 "WEFA Wysong EFA without Fish Oil Bottle      23.05     1.75     13.163      23.04     17.460     17.460 FTZ< 11 07-16-05\n",
                      subject.process(fixture));
     }
 
@@ -742,6 +742,27 @@ public class ExpressionProcessorTest {
         assertEquals("[LIST(a,b,c,d,e,f,g) => index(k)]", subject.process("[LIST(a,b,c,d,e,f,g) => index(k)]"));
         assertEquals("0", subject.process("[LIST(banana,apple,panara) => index(REGEX:ana)]"));
         assertEquals("2", subject.process("[LIST(banana,apple,panara) => index(CONTAIN:anar)]"));
+    }
+
+    @Test
+    public void processList_findFirst() throws Exception {
+        ExpressionProcessor subject = new ExpressionProcessor(context);
+        assertNull(subject.process("[LIST(a,b,c,d,e,f,g) => find-first(k)]"));
+        assertEquals("c", subject.process("[LIST(a,b,c,d,e,f,g) => find-first(c)]"));
+        assertEquals("a1", subject.process("[LIST(a1,a2,a3,b,c,d,e,f,g) => find-first(START:a)]"));
+        assertEquals("blackberry", subject.process("[LIST(blueberry,strawberry,drewberry,blackberry) => " +
+                                                   "ascending find-first(CONTAIN:berry)]"));
+    }
+
+    @Test
+    public void processList_retain() throws Exception {
+        ExpressionProcessor subject = new ExpressionProcessor(context);
+        assertEquals("0", subject.process("[LIST(a,b,c,d,e,f,g) => retain(k) size]"));
+        assertEquals("c", subject.process("[LIST(a,b,c,d,e,f,g) => retain(c)]"));
+        assertEquals("a1,a2,a3", subject.process("[LIST(a1,a2,a3,b,c,d,e,f,g) => retain(START:a)]"));
+        assertEquals("blackberry,blueberry,drewberry,strawberry",
+                     subject.process("[LIST(blueberry,strawberry,drewberry,blackberry) => " +
+                                     "ascending retain(CONTAIN:berry)]"));
     }
 
     @Test
@@ -4324,8 +4345,8 @@ public class ExpressionProcessorTest {
         assertEquals("strawberry", subject.process(expressionPrefix + "item(2)]"));
         assertEquals("", subject.process(expressionPrefix + "item(17)]"));
         assertEquals("apple,brownie", subject.process(expressionPrefix + "item(0,5)]"));
-        assertTrue(StringUtils.contains(expressionPrefix,subject.process(expressionPrefix + "item(random)]")));
-        assertTrue(StringUtils.contains(expressionPrefix,subject.process(expressionPrefix + "item(RANDOM)]")));
+        assertTrue(StringUtils.contains(expressionPrefix, subject.process(expressionPrefix + "item(random)]")));
+        assertTrue(StringUtils.contains(expressionPrefix, subject.process(expressionPrefix + "item(RANDOM)]")));
 
     }
 

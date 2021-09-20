@@ -1,11 +1,11 @@
 /*
- * Copyright 2012-2018 the original author or authors.
+ * Copyright 2012-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *       http://www.apache.org/licenses/LICENSE-2.0
+ * 	http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,15 +16,6 @@
  */
 
 package org.nexial.core.variable;
-
-import java.lang.reflect.Method;
-import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.IntStream;
-import java.util.stream.Stream;
 
 import org.apache.commons.collections4.ListUtils;
 import org.apache.commons.collections4.SetUtils;
@@ -39,6 +30,12 @@ import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.ExecutionThread;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.utils.ConsoleUtils;
+
+import java.lang.reflect.Method;
+import java.math.BigDecimal;
+import java.util.*;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import static org.nexial.core.NexialConst.Data.TEXT_DELIM;
 import static org.nexial.core.NexialConst.treatCommonValueShorthand;
@@ -258,6 +255,14 @@ public class ListTransformer<T extends ListDataType> extends Transformer {
         return updateValue(data, ArrayUtils.remove(data.getValue(), idx));
     }
 
+    public T removeItems(T data, String... items) {
+        if (data == null || data.getValue() == null || ArrayUtils.isEmpty(items)) { return data; }
+
+        String[] array = data.getValue();
+        for (String item : items) { array = ArrayUtils.removeAllOccurrences(array, fixControlChars(item)); }
+        return updateValue(data, array);
+    }
+
     public T removeMatch(T data, String match) {
         if (data == null || data.getValue() == null || StringUtils.isEmpty(match)) { return data; }
 
@@ -270,12 +275,37 @@ public class ListTransformer<T extends ListDataType> extends Transformer {
         return updateValue(data, replaced.toArray(new String[0]));
     }
 
-    public T removeItems(T data, String... items) {
-        if (data == null || data.getValue() == null || ArrayUtils.isEmpty(items)) { return data; }
+    /**
+     * opposite of `removeMatch`; this method keeps all the items that match the specified polymatcher `match`
+     */
+    public T retain(T data, String match) {
+        if (data == null || data.getValue() == null || StringUtils.isEmpty(match)) { return data; }
 
-        String[] array = data.getValue();
-        for (String item : items) { array = ArrayUtils.removeAllOccurrences(array, fixControlChars(item)); }
-        return updateValue(data, array);
+        String match2 = treatCommonValueShorthand(fixControlChars(match));
+        List<String> replaced = new ArrayList<>();
+        Arrays.stream(data.getValue()).forEach(item -> {
+            if (TextUtils.polyMatch(item, match2)) { replaced.add(item); }
+        });
+
+        return updateValue(data, replaced.toArray(new String[0]));
+    }
+
+    public TextDataType findFirst(T data, String match) {
+        if (data == null || data.getValue() == null || StringUtils.isEmpty(match)) { return null; }
+
+        String match2 = treatCommonValueShorthand(fixControlChars(match));
+        try {
+            Optional<String> firstMatch = Arrays.stream(data.getValue())
+                                                .filter(item -> TextUtils.polyMatch(item, match2))
+                                                .findFirst();
+            if (firstMatch.isPresent()) {
+                return new TextDataType(firstMatch.get());
+            } else {
+                return new TextDataType(null);
+            }
+        } catch (TypeConversionException e) {
+            throw new IllegalArgumentException("Unable to find first match: " + e.getMessage(), e);
+        }
     }
 
     public T insert(T data, String index, String item) {
