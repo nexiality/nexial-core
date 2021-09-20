@@ -313,7 +313,7 @@ jar {
 
 tasks.withType(Test) {
 	mkdir "${System.properties['user.home']}/tmp"
-	maxParallelForks = 10
+	maxParallelForks = 8
 	systemProperty 'nexial.home', projectDir
 	systemProperty 'user.country', 'US'
 	systemProperty 'user.language', 'en'
