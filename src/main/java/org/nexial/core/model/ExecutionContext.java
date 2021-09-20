@@ -68,15 +68,15 @@ import org.slf4j.MDC;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 import org.thymeleaf.TemplateEngine;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-import javax.validation.constraints.NotNull;
 import java.io.IOException;
 import java.lang.reflect.Array;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.TypeVariable;
 import java.util.*;
 import java.util.stream.Collectors;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import javax.validation.constraints.NotNull;
 
 import static java.io.File.separator;
 import static java.lang.System.lineSeparator;
@@ -684,20 +684,40 @@ public class ExecutionContext {
     public Map<String, String> getDataByPrefix(String prefix) {
         Map<String, String> props = new LinkedHashMap<>();
 
-        String prefix1 = macroAwarePrefix(prefix);
-        data.forEach((key, value) -> {
-            if (StringUtils.startsWith(key, prefix1)) {
-                props.put(StringUtils.substringAfter(key, prefix1), replaceTokens(Objects.toString(value)));
-            }
-        });
+        if (isInMacro()) {
+            // if we are in macro, then the preference is to find macro-aware data variables
+            String prefix1 = macroAwarePrefix(prefix);
+            data.forEach((key, value) -> {
+                if (StringUtils.startsWith(key, prefix1)) {
+                    props.put(StringUtils.substringAfter(key, prefix1), replaceTokens(Objects.toString(value)));
+                }
+            });
 
-        // scan system properties _later_ so that they can override those also found in `data`
-        System.getProperties().forEach((key, value) -> {
-            String sKey = key.toString();
-            if (StringUtils.startsWith(sKey, prefix1)) {
-                props.put(StringUtils.substringAfter(sKey, prefix1), replaceTokens(Objects.toString(value)));
-            }
-        });
+            // scan system properties _later_ so that they can override those also found in `data`
+            System.getProperties().forEach((key, value) -> {
+                String sKey = key.toString();
+                if (StringUtils.startsWith(sKey, prefix1)) {
+                    props.put(StringUtils.substringAfter(sKey, prefix1), replaceTokens(Objects.toString(value)));
+                }
+            });
+        }
+
+        if (MapUtils.isEmpty(props)) {
+            // if no macro-aware variable is found, or if we are nto currently in macro...
+            data.forEach((key, value) -> {
+                if (StringUtils.startsWith(key, prefix)) {
+                    props.put(StringUtils.substringAfter(key, prefix), replaceTokens(Objects.toString(value)));
+                }
+            });
+
+            // scan system properties _later_ so that they can override those also found in `data`
+            System.getProperties().forEach((key, value) -> {
+                String sKey = key.toString();
+                if (StringUtils.startsWith(sKey, prefix)) {
+                    props.put(StringUtils.substringAfter(sKey, prefix), replaceTokens(Objects.toString(value)));
+                }
+            });
+        }
 
         return props;
     }
@@ -790,10 +810,23 @@ public class ExecutionContext {
     }
 
     public void removeDataByPrefix(String prefix) {
-        String prefix1 = macroAwarePrefix(prefix);
-        data.keySet().stream()
-            .filter(key -> StringUtils.startsWith(key, prefix1))
-            .collect(Collectors.toList()).forEach(this::removeData);
+        List<String> matches = null;
+        if (isInMacro()) {
+            // for macro, we would prefer macro-aware data variable names first
+            String prefix1 = macroAwarePrefix(prefix);
+            matches = data.keySet().stream()
+                          .filter(key -> StringUtils.startsWith(key, prefix1))
+                          .collect(Collectors.toList());
+        }
+
+        if (CollectionUtils.isEmpty(matches)) {
+            // if we can't find matching macro-aware data variables or if we are not using macro...
+            matches = data.keySet().stream()
+                          .filter(key -> StringUtils.startsWith(key, prefix))
+                          .collect(Collectors.toList());
+        }
+
+        matches.forEach(this::removeData);
     }
 
     public void setData(String name, String value) {

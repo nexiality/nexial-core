@@ -1,11 +1,11 @@
 /*
- * Copyright 2012-2018 the original author or authors.
+ * Copyright 2012-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *       http://www.apache.org/licenses/LICENSE-2.0
+ * 	http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -37,8 +37,10 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
+import static org.nexial.core.NexialConst.Data.POLL_WAIT_MS;
 import static org.nexial.core.NexialConst.MSG_FAIL;
 import static org.nexial.core.NexialConst.MSG_PASS;
+import static org.nexial.core.SystemVariables.getDefault;
 
 public class WebTransformer<T extends WebDataType> extends Transformer<T> {
     private static final Map<String, Integer> FUNCTION_TO_PARAM_LIST = discoverFunctions(WebTransformer.class);
@@ -242,30 +244,38 @@ public class WebTransformer<T extends WebDataType> extends Transformer<T> {
 
     public TextDataType text(T data) { return super.text(data); }
 
-    public WebDataType check(T data, String locator) {
+    public WebDataType check(T data, String locator, String waitMs) {
         if (data == null || data.getValue() == null) { return null; }
 
-        ExecutionContext context = ExecutionThread.get();
+        if (StringUtils.isEmpty(waitMs)) {
+            ExecutionContext context = ExecutionThread.get();
+            waitMs = context != null ? context.getPollWaitMs() + "" : getDefault(POLL_WAIT_MS);
+        }
+
         WebCommand webCommand = resolveWebCommand();
 
         StepResult stepResult;
         try {
-            stepResult = webCommand.checkAll(locator, context.getPollWaitMs() + "");
+            stepResult = webCommand.checkAll(locator, waitMs);
         } catch (Exception e) {
             stepResult = new StepResult(false, resolveErrorMessage(e), null);
         }
         return saveResult(data, "check(" + locator + ")", stepResult);
     }
 
-    public WebDataType uncheck(T data, String locator) {
+    public WebDataType uncheck(T data, String locator, String waitMs) {
         if (data == null || data.getValue() == null) { return null; }
 
-        ExecutionContext context = ExecutionThread.get();
+        if (StringUtils.isEmpty(waitMs)) {
+            ExecutionContext context = ExecutionThread.get();
+            waitMs = context != null ? context.getPollWaitMs() + "" : getDefault(POLL_WAIT_MS);
+        }
+
         WebCommand webCommand = resolveWebCommand();
 
         StepResult stepResult;
         try {
-            stepResult = webCommand.uncheckAll(locator, context.getPollWaitMs() + "");
+            stepResult = webCommand.uncheckAll(locator, waitMs);
         } catch (Exception e) {
             stepResult = new StepResult(false, resolveErrorMessage(e), null);
         }

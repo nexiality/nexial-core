@@ -1076,7 +1076,7 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
 
         // step 4. check if current file view is in grid or list
         if (findElements(gridView).isEmpty()) {
-            val (listViewIcon, findBy) = findElement(listView)
+            val (listViewIcon, _) = findElement(listView)
             listViewIcon.click()
         }
 

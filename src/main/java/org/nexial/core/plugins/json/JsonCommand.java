@@ -39,13 +39,14 @@ import org.nexial.core.plugins.base.BaseCommand;
 import org.nexial.core.utils.*;
 import org.nexial.core.utils.JsonEditor.JsonEditorConfig;
 
-import javax.validation.constraints.NotNull;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
+import javax.validation.constraints.NotNull;
 
+import static com.networknt.schema.SpecVersion.VersionFlag.V201909;
 import static org.nexial.core.NexialConst.DEF_CHARSET;
 import static org.nexial.core.NexialConst.Data.*;
 import static org.nexial.core.NexialConst.GSON;
@@ -264,15 +265,13 @@ public class JsonCommand extends BaseCommand {
         }
     }
 
-    public static Set<ValidationMessage> validateJsonWithSchema(JsonNode jsonNode,
-                                                         String jsonSchemaContent)
+    public static Set<ValidationMessage> validateJsonWithSchema(JsonNode jsonNode, String jsonSchemaContent)
         throws JsonProcessingException {
-        ObjectMapper mapper = new ObjectMapper();
-        JsonNode jsonSchemaNode = mapper.readTree(jsonSchemaContent);
+        JsonNode jsonSchemaNode = new ObjectMapper().readTree(jsonSchemaContent);
+
         // if schema is not found, default to latest
         VersionFlag versionFlag = StringUtils.contains(jsonSchemaContent, "$schema") ?
-                                  SpecVersionDetector.detect(jsonSchemaNode) :
-                                  VersionFlag.V201909;
+                                  SpecVersionDetector.detect(jsonSchemaNode) : V201909;
         JsonSchemaFactory factory = JsonSchemaFactory.getInstance(versionFlag);
         JsonSchema jsonSchema = factory.getSchema(jsonSchemaNode);
 
