@@ -26,9 +26,9 @@ import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 
-import javax.validation.constraints.NotNull;
 import java.util.HashMap;
 import java.util.Map;
+import javax.validation.constraints.NotNull;
 
 import static org.nexial.core.NexialConst.Data.CMD_PROFILE_DEFAULT;
 import static org.nexial.core.NexialConst.Data.CMD_PROFILE_SEP;
@@ -134,6 +134,8 @@ public class PluginManager implements ApplicationContextAware {
     }
 
     protected Browser initBrowser(String profile) {
+        if (StringUtils.isBlank(profile)) { profile = CMD_PROFILE_DEFAULT; }
+
         Browser browser = getBrowser(profile);
         if (browser != null) { return browser; }
 

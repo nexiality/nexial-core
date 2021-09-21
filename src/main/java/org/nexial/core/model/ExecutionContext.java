@@ -1472,17 +1472,18 @@ public class ExecutionContext {
      * same command co-exist and distinguish by the associated "profile".
      */
     public Map<String, String> updateProfileConfig(String command, String profile, String config) {
-        Map<String, String> configMap = getProfileConfig(command, profile);
+        Map<String, String> configMap = new HashMap<>();
+        if (StringUtils.isNotBlank(config)) {
+            // replace , with newline, except if comma is escaped.
+            config = StringUtils.remove(config, "\r");
+            config = StringUtils.replace(config, "\\,", "!@#>>*<<#@!");
+            config = StringUtils.replace(config, ",", "\n");
+            config = StringUtils.replace(config, "!@#>>*<<#@!", ",");
+            config = StringUtils.trim(config);
+            configMap = TextUtils.toMap(config, "\n", "=");
+        }
 
-        if (StringUtils.isBlank(config)) { return configMap; }
-
-        // replace , with newline, except if comma is escaped.
-        config = StringUtils.remove(config, "\r");
-        config = StringUtils.replace(config, "\\,", "!@#>>*<<#@!");
-        config = StringUtils.replace(config, ",", "\n");
-        config = StringUtils.replace(config, "!@#>>*<<#@!", ",");
-        config = StringUtils.trim(config);
-        return updateProfileConfig(command, profile, TextUtils.toMap(config, "\n", "="));
+        return updateProfileConfig(command, profile, configMap);
     }
 
     /**
@@ -1492,9 +1493,7 @@ public class ExecutionContext {
      */
     public Map<String, String> updateProfileConfig(String command, String profile, Map<String, String> config) {
         Map<String, String> configMap = getProfileConfig(command, profile);
-        if (MapUtils.isEmpty(config)) { return configMap; }
-
-        configMap.putAll(config);
+        if (MapUtils.isNotEmpty(config)) { configMap.putAll(config); }
 
         // config map is updated and ready for use
         setData(resolveProfileConfigKey(command, profile), configMap);
