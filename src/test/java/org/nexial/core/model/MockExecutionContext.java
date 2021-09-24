@@ -17,18 +17,10 @@
 
 package org.nexial.core.model;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
-
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.SystemUtils;
-import org.nexial.commons.utils.DateUtility;
 import org.nexial.commons.utils.EnvUtils;
 import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.ExecutionThread;
@@ -38,8 +30,16 @@ import org.nexial.core.logs.ExecutionLogger;
 import org.nexial.core.plugins.NexialCommand;
 import org.nexial.core.plugins.db.LocalDbCommand;
 import org.nexial.core.plugins.web.Browser;
+import org.nexial.core.utils.ExecUtils;
 import org.nexial.core.variable.ExpressionProcessor;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 
 import static java.io.File.separator;
 import static org.apache.commons.lang3.SystemUtils.JAVA_IO_TMPDIR;
@@ -63,27 +63,25 @@ public class MockExecutionContext extends ExecutionContext {
         super();
 
         hostname = StringUtils.upperCase(EnvUtils.getHostName());
-        runId = DateUtility.createTimestampString(System.currentTimeMillis());
+        runId = ExecUtils.createTimestampString(System.currentTimeMillis());
         System.setProperty(TEST_LOG_PATH, JAVA_IO_TMPDIR);
         System.setProperty(OPT_OUT_DIR, JAVA_IO_TMPDIR);
         executionLogger = new ExecutionLogger(this);
 
         if (withSpring) {
-            this.springContext = new ClassPathXmlApplicationContext("classpath:/nexial.xml");
-            this.otc = springContext.getBean("otc", NexialS3Helper.class);
-            this.localdb = springContext.getBean("localdb", LocalDbCommand.class);
-            this.mockBrowser = springContext.getBean("browserTemplate", Browser.class);
-            this.failfastCommands = springContext.getBean("failfastCommands", new ArrayList<String>().getClass());
-            this.builtinFunctions = springContext.getBean("builtinFunctions", new HashMap<String, Object>().getClass());
-            this.readOnlyVars = springContext.getBean("readOnlyVars", new ArrayList<String>().getClass());
-            this.defaultContextProps =
-                springContext.getBean("defaultContextProps", new HashMap<String, String>().getClass());
-            this.referenceDataForExecution =
+            springContext = new ClassPathXmlApplicationContext("classpath:/nexial.xml");
+            otc = springContext.getBean("otc", NexialS3Helper.class);
+            localdb = springContext.getBean("localdb", LocalDbCommand.class);
+            mockBrowser = springContext.getBean("browserTemplate", Browser.class);
+            failfastCommands = springContext.getBean("failfastCommands", new ArrayList<String>().getClass());
+            builtinFunctions = springContext.getBean("builtinFunctions", new HashMap<String, Object>().getClass());
+            readOnlyVars = springContext.getBean("readOnlyVars", new ArrayList<String>().getClass());
+            defaultContextProps = springContext.getBean("defaultContextProps", new HashMap<String, String>().getClass());
+            referenceDataForExecution =
                 TextUtils.toList(defaultContextProps.get("nexial.referenceDataForExecution"), ",", true);
-            this.webdriverHelperConfig =
+            webdriverHelperConfig =
                 springContext.getBean("webdriverHelperConfig", new HashMap<BrowserType, String>().getClass());
-
-            this.dbdriverHelperConfig =
+            dbdriverHelperConfig =
                 springContext.getBean("dbdriverHelperConfig", new HashMap<String, String>().getClass());
         } else {
             readOnlyVars = Arrays.asList("nexial.runID", "nexial.runID.prefix", "nexial.iterationEnded",

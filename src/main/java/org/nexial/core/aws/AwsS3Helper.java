@@ -1,11 +1,11 @@
 /*
- * Copyright 2012-2018 the original author or authors.
+ * Copyright 2012-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *       http://www.apache.org/licenses/LICENSE-2.0
+ * 	http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -29,7 +29,6 @@ import org.nexial.commons.utils.CollectionUtil;
 import org.nexial.commons.utils.RegexUtils;
 import org.nexial.core.plugins.aws.AwsSettings;
 
-import javax.validation.constraints.NotNull;
 import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -40,15 +39,14 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import javax.validation.constraints.NotNull;
 
 import static com.amazonaws.SDKGlobalConfiguration.DISABLE_CERT_CHECKING_SYSTEM_PROPERTY;
 import static com.amazonaws.regions.Regions.DEFAULT_REGION;
 import static com.amazonaws.services.s3.model.CannedAccessControlList.PublicRead;
 import static com.amazonaws.services.s3.model.StorageClass.ReducedRedundancy;
 import static org.nexial.commons.utils.FilePathFilter.REGEX_FOR_ANY;
-import static org.nexial.core.NexialConst.PolyMatcher.REGEX;
-import static org.nexial.core.NexialConst.S3_PATH_SEP;
-import static org.nexial.core.NexialConst.S3_PUBLIC_URL;
+import static org.nexial.core.NexialConst.*;
 
 public class AwsS3Helper {
     // characters that must be escaped in order NOT to be mistaken as part of regex
@@ -69,36 +67,36 @@ public class AwsS3Helper {
         private boolean publiclyReadable;
         private boolean reducedRedundancy;
 
-        public boolean isPubliclyReadable() { return publiclyReadable;}
+        public boolean isPubliclyReadable() { return publiclyReadable; }
 
-        public void setPubliclyReadable(boolean publiclyReadable) { this.publiclyReadable = publiclyReadable;}
+        public void setPubliclyReadable(boolean publiclyReadable) { this.publiclyReadable = publiclyReadable; }
 
-        public boolean isReducedRedundancy() { return reducedRedundancy;}
+        public boolean isReducedRedundancy() { return reducedRedundancy; }
 
-        public void setReducedRedundancy(boolean reducedRedundancy) { this.reducedRedundancy = reducedRedundancy;}
+        public void setReducedRedundancy(boolean reducedRedundancy) { this.reducedRedundancy = reducedRedundancy; }
     }
 
-    public void setAccessKey(String accessKey) { this.accessKey = accessKey;}
+    public void setAccessKey(String accessKey) { this.accessKey = accessKey; }
 
-    public void setSecretKey(String secretKey) { this.secretKey = secretKey;}
+    public void setSecretKey(String secretKey) { this.secretKey = secretKey; }
 
-    public void setRegion(Regions region) { this.region = region;}
+    public void setRegion(Regions region) { this.region = region; }
 
     public void setUrl(String url) { this.url = url; }
 
-    public void setBucketName(String bucketName) { this.bucketName = bucketName;}
+    public void setBucketName(String bucketName) { this.bucketName = bucketName; }
 
-    public void setSubDir(String subDir) { this.subDir = subDir;}
+    public void setSubDir(String subDir) { this.subDir = subDir; }
 
     public void setS3PathStyleAccessEnabled(boolean s3PathStyleAccessEnabled) {
         this.s3PathStyleAccessEnabled = s3PathStyleAccessEnabled;
     }
 
-    public void setAssumeRoleArn(String assumeRoleArn) { this.assumeRoleArn = assumeRoleArn;}
+    public void setAssumeRoleArn(String assumeRoleArn) { this.assumeRoleArn = assumeRoleArn; }
 
-    public void setAssumeRoleSession(String assumeRoleSession) { this.assumeRoleSession = assumeRoleSession;}
+    public void setAssumeRoleSession(String assumeRoleSession) { this.assumeRoleSession = assumeRoleSession; }
 
-    public void setAssumeRoleDuration(int assumeRoleDuration) { this.assumeRoleDuration = assumeRoleDuration;}
+    public void setAssumeRoleDuration(int assumeRoleDuration) { this.assumeRoleDuration = assumeRoleDuration; }
 
     public void setCredentials(AwsSettings settings) {
         setAccessKey(settings.getAccessKey());
@@ -236,7 +234,7 @@ public class AwsS3Helper {
     public static String toPattern(String path) {
         if (StringUtils.isEmpty(path)) { return StringUtils.defaultString(path); }
 
-        String delim = (StringUtils.startsWith(path, REGEX)) ? REGEX : (S3_PATH_SEP + REGEX);
+        String delim = (StringUtils.startsWith(path, REGEX_PREFIX)) ? REGEX_PREFIX : (S3_PATH_SEP + REGEX_PREFIX);
         int delimLength = delim.length();
 
         int regexStartPos = StringUtils.indexOf(path, delim);
@@ -259,9 +257,9 @@ public class AwsS3Helper {
         // assumes that the path before first / is the bucket
         bucketName = StringUtils.substringBefore(s3Path, S3_PATH_SEP);
         String path = StringUtils.substringAfter(s3Path, S3_PATH_SEP);
-        subDir = StringUtils.substringBefore(StringUtils.substringBefore(path, REGEX), "*");
+        subDir = StringUtils.substringBefore(StringUtils.substringBefore(path, REGEX_PREFIX), "*");
 
-        if (!StringUtils.contains(path, REGEX)) {
+        if (!StringUtils.contains(path, REGEX_PREFIX)) {
             // [bucket]
             // [bucket]/
             // [bucket]/subdir
@@ -304,9 +302,9 @@ public class AwsS3Helper {
     }
 
     /**
-     * Retrieves the s3 object keys of the files in the sub directory matching the pattern if set.
+     * Retrieves the s3 object keys of the files in the sub-directory matching the pattern if set.
      *
-     * @param pattern files matching the pattern are filtered from the sub directory.
+     * @param pattern files matching the pattern are filtered from the sub-directory.
      * @return list of files matching.
      */
     protected List<String> getFileKeys(@NotNull final String pattern) {

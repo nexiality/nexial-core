@@ -17,11 +17,6 @@
 
 package org.nexial.core.model;
 
-import java.io.File;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Set;
-import javax.annotation.Nonnull;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -29,6 +24,12 @@ import org.nexial.commons.utils.FileUtil;
 import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.ExecUtils;
+
+import java.io.File;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Set;
+import javax.annotation.Nonnull;
 
 import static java.io.File.separator;
 import static org.nexial.core.NexialConst.Data.ENV_NAME;
@@ -202,7 +203,7 @@ public class TestProject {
 
         if (MapUtils.isNotEmpty(properties)) {
             PROJECT_PROPERTIES.clear();
-            properties.forEach(PROJECT_PROPERTIES::put);
+            PROJECT_PROPERTIES.putAll(properties);
             hasProjectProps = MapUtils.isNotEmpty(PROJECT_PROPERTIES);
         }
     }

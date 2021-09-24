@@ -1,11 +1,11 @@
 /*
- * Copyright 2012-2018 the original author or authors.
+ * Copyright 2012-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *       http://www.apache.org/licenses/LICENSE-2.0
+ * 	http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -18,7 +18,6 @@
 package org.nexial.core.plugins.filevalidation.validators;
 
 import org.apache.commons.lang3.StringUtils;
-import org.nexial.core.NexialConst.PolyMatcher;
 import org.nexial.core.plugins.filevalidation.FieldBean;
 import org.nexial.core.plugins.filevalidation.config.FieldConfig;
 import org.nexial.core.plugins.filevalidation.validators.Error.ErrorBuilder;
@@ -33,6 +32,7 @@ import java.util.ArrayList;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
+import static org.nexial.core.NexialConst.REGEX_PREFIX;
 import static org.nexial.core.plugins.filevalidation.validators.ValidationsExecutor.DataType.*;
 import static org.nexial.core.plugins.filevalidation.validators.ValidationsExecutor.Severity.ERROR;
 import static org.nexial.core.plugins.filevalidation.validators.ValidationsExecutor.Severity.WARNING;
@@ -53,14 +53,14 @@ public class BasicValidator {
         CheckUtils.requiresNotNull(fieldValue, "Invalid field value", fieldValue);
 
         String dataType = StringUtils.trim(config.getDatatype());
-        if (StringUtils.startsWith(dataType, PolyMatcher.REGEX)) {
-            String regex = StringUtils.substringAfter(dataType, PolyMatcher.REGEX);
+        if (StringUtils.startsWith(dataType, REGEX_PREFIX)) {
+            String regex = StringUtils.substringAfter(dataType, REGEX_PREFIX);
             try {
                 final Pattern pattern = Pattern.compile(regex);
-                if (!pattern.matcher(fieldValue).matches()) { addDataTypeError(field, DataType.REGEX); }
+                if (!pattern.matcher(fieldValue).matches()) { addDataTypeError(field, REGEX); }
             } catch (PatternSyntaxException e) {
                 ConsoleUtils.error("Invalid REGEX: " + regex);
-                addDataTypeError(field, DataType.REGEX);
+                addDataTypeError(field, REGEX);
             }
             return;
         }
@@ -181,7 +181,5 @@ public class BasicValidator {
                                                                                             config))
                                         .build();
         field.getErrors().add(error);
-
     }
-
 }

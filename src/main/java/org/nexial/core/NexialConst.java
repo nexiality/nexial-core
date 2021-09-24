@@ -246,6 +246,8 @@ public final class NexialConst {
                                                 "([\\w]+)(\\" + TOKEN_PARAM_SEP + "(.+)+)*";
     public static final String TOKEN_TEMP_DELIM = "~!@1I4n3x@!~";
     public static final String REGEX_VALID_WEB_PROTOCOL = "(http|https|ftp|file|about)\\:.+";
+    public static final String REGEX_PREFIX = "REGEX:";
+
     // public static final int MAX_VERBOSE_CHAR = 2000;
     public static final int MAX_VERBOSE_CHAR = 32760;
     public static final int MAX_FORMULA_CHAR = 8192;
@@ -264,7 +266,7 @@ public final class NexialConst {
         public static final String START_ANY_CASE = register("START_ANY_CASE:");
         public static final String END = register("END:");
         public static final String END_ANY_CASE = register("END_ANY_CASE:");
-        public static final String REGEX = register("REGEX:");
+        public static final String REGEX = register(REGEX_PREFIX);
         public static final String EXACT = register("EXACT:");
         public static final String EMPTY = register("EMPTY:");
         public static final String BLANK = register("BLANK:");
@@ -283,6 +285,13 @@ public final class NexialConst {
             return MATCHES.stream().anyMatch(match -> StringUtils.startsWith(text, match));
         }
 
+        public static class Message {
+            public static final String REGEX_NOT_SUPPORTED = "PolyMatcher REGEX not supported for this locator:";
+            public static final String NUMERIC_NOT_SUPPORTED = "PolyMatcher NUMERIC not supported for this locator:";
+            public static final String END_NOT_SUPPORTED = "PolyMatcher END not supported for this locator:";
+            public static final String END_ANY_CASE_NOT_SUPPORTED =
+                "PolyMatcher END_ANY_CASE not supported for this locator:";
+        }
     }
 
     // Macro Flex var prefix
@@ -2104,8 +2113,6 @@ public final class NexialConst {
             public static final String INVALID_INDEX = "Invalid index:";
             public static final String INVALID_INDEX2 = "Option index must be greater than zero:";
             public static final String INVALID_LENGTH = "Invalid number specified as length";
-            public static final String NO_REGEX_POLYMATCHER = "PolyMatcher REGEX not supported for this locator:";
-            public static final String NO_NUMERIC_POLYMATCHER = "PolyMatcher NUMERIC not supported for this locator:";
             public static final String INVALID_COMPOUND_LOCATOR =
                 "Invalid locator specified. The one-of locator must be in the form of one-of={...}{...}. Found:";
             public static final String INVALID_COMPOUND_LOCATOR2 =
@@ -2127,7 +2134,7 @@ public final class NexialConst {
             public static final String INVALID_NODE_PATH = "Node path did not resolve to a valid executable NodeJS " +
                                                            "executable:";
             public static final String APP_NOT_INSTALLED = "Configured app is currently not installed on device:";
-            public static final String SCRIPT_NOT_EXECUTABLE = "cannot be found or is not executable. Unable to proceed";
+            public static final String SCRIPT_NOT_EXECUTABLE = "is not found or is not executable. Unable to proceed";
             public static final String NOT_SUPPORT_FILE_EXT = "File extension not supported for iOS file transfer:";
         }
 

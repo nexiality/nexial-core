@@ -29,7 +29,7 @@ import org.nexial.core.NexialConst.Web.OPT_DELAY_BROWSER
 import org.nexial.core.NexialConst.WebMail.BROWSER_CONFIG
 import org.nexial.core.NexialConst.WebMail.MAILINATOR_BROWSER_PROFILE
 import org.nexial.core.model.ExecutionContext
-import org.nexial.core.plugins.web.LocatorHelper.normalizeXpathText
+import org.nexial.core.plugins.web.LocatorHelper.Companion.normalizeXpathText
 import org.nexial.core.plugins.ws.WebServiceClient
 import org.nexial.core.utils.ConsoleUtils
 import org.nexial.core.utils.JSONPath

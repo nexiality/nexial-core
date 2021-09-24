@@ -26,9 +26,11 @@ import org.nexial.commons.utils.RegexUtils
 import org.nexial.commons.utils.TextUtils
 import org.nexial.core.NexialConst.Mobile.Message.*
 import org.nexial.core.NexialConst.PolyMatcher.*
+import org.nexial.core.NexialConst.PolyMatcher.Message.NUMERIC_NOT_SUPPORTED
+import org.nexial.core.NexialConst.PolyMatcher.Message.REGEX_NOT_SUPPORTED
 import org.nexial.core.plugins.mobile.MobileType.ANDROID
 import org.nexial.core.plugins.mobile.MobileType.IOS
-import org.nexial.core.plugins.web.LocatorHelper.normalizeXpathText
+import org.nexial.core.plugins.web.LocatorHelper.Companion.normalizeXpathText
 import org.nexial.core.utils.CheckUtils.requiresInteger
 import org.nexial.core.utils.CheckUtils.requiresPositiveNumber
 import org.nexial.core.utils.ConsoleUtils
@@ -320,10 +322,10 @@ class MobileLocatorHelper(private val mobileService: MobileService) {
 
         internal fun resolveFilter(attribute: String, value: String) = when {
             StringUtils.startsWith(value, REGEX)            ->
-                throw IllegalArgumentException("$NO_REGEX_POLYMATCHER $attribute=$value")
+                throw IllegalArgumentException("$REGEX_NOT_SUPPORTED $attribute=$value")
 
             StringUtils.startsWith(value, NUMERIC)          ->
-                throw IllegalArgumentException("$NO_NUMERIC_POLYMATCHER $attribute=$value")
+                throw IllegalArgumentException("$NUMERIC_NOT_SUPPORTED $attribute=$value")
 
             StringUtils.startsWith(value, CONTAIN)          ->
                 "contains(@$attribute,${normalizeText(value, after = CONTAIN)})"
@@ -339,7 +341,7 @@ class MobileLocatorHelper(private val mobileService: MobileService) {
 
             StringUtils.startsWith(value, START_ANY_CASE)   -> {
                 // Android and iOS compatible approach
-                val valueLower = value.substringAfter(CONTAIN_ANY_CASE).toLowerCase()
+                val valueLower = value.substringAfter(START_ANY_CASE).toLowerCase()
                 "starts-with(${lower(attribute, valueLower)},'$valueLower')"
             }
 
@@ -348,7 +350,7 @@ class MobileLocatorHelper(private val mobileService: MobileService) {
 
             StringUtils.startsWith(value, END_ANY_CASE)     -> {
                 // Android and iOS compatible approach
-                val valueLower = value.substringAfter(CONTAIN_ANY_CASE).toLowerCase()
+                val valueLower = value.substringAfter(END_ANY_CASE).toLowerCase()
                 "ends-with(${lower(attribute, valueLower)},'$valueLower')"
             }
 

@@ -1,11 +1,11 @@
 /*
- * Copyright 2012-2018 the original author or authors.
+ * Copyright 2012-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *       http://www.apache.org/licenses/LICENSE-2.0
+ * 	http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -42,10 +42,7 @@ import org.nexial.core.plugins.filevalidation.parser.FileParserFactory;
 import org.nexial.core.plugins.filevalidation.validators.ErrorReport;
 import org.nexial.core.plugins.filevalidation.validators.MasterFileValidator;
 import org.nexial.core.plugins.pdf.PdfTextExtractor;
-import org.nexial.core.utils.CheckUtils;
-import org.nexial.core.utils.ConsoleUtils;
-import org.nexial.core.utils.OutputFileUtils;
-import org.nexial.core.utils.OutputResolver;
+import org.nexial.core.utils.*;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -86,7 +83,7 @@ public class IoCommand extends BaseCommand {
     private static final NumberFormat PERCENT_FORMAT = NumberFormat.getPercentInstance();
     private static final String CHECKSUM_ALGO = "SHA-256";
 
-    enum CompareMode {FAIL_FAST, THOROUGH, DIFF}
+    enum CompareMode { FAIL_FAST, THOROUGH, DIFF }
 
     @Override
     public String getTarget() { return "io"; }
@@ -94,10 +91,10 @@ public class IoCommand extends BaseCommand {
     /**
      * "fast" compare between {@code file1} and {@code file2}.
      * </p>
-     * The "fast" comparision includes file size and fail-fast byte-by-byte comparison without detailed
+     * The "fast" comparison includes file size and fail-fast byte-by-byte comparison without detailed
      * differential report.
      * </p>
-     * This method is different than {@link #compare(String, String, String)} in that
+     * This method is different from {@link #compare(String, String, String)} in that
      * {@link #compare(String, String, String)} includes the same "fast" compare, plus: <ol>
      * <li><code>compare()</code> includes line-by-line comparison and differential report</li>
      * </ol>
@@ -860,7 +857,7 @@ public class IoCommand extends BaseCommand {
         File targetDir = new File(target);
         if (matched.size() == 1) {
             if (!targetDir.exists()) {
-                // How to recognize target is file or folde:-
+                // How to recognize target is file or folder:-
                 // if target ends with slash, then its directory. e.g. C:/projects/demo/
                 // else if target's parent exist, then its file. else it is directory.
                 if (!StringUtils.endsWith(target, separator)) {
@@ -1019,7 +1016,7 @@ public class IoCommand extends BaseCommand {
             return StepResult.fail("Unable to read content: " + e.getMessage(), e);
         }
 
-        // WON'T WORK: context.replaceToken() will forcefully unified EOL to \n
+        // WON'T WORK: context.replaceToken() will forcefully unify EOL to \n
         // 2. check for difference in EOL
         // int expectedNl = StringUtils.countMatches(expectedContent, '\n');
         // int expectedCr = StringUtils.countMatches(expectedContent, "\r\n");
@@ -1239,10 +1236,10 @@ public class IoCommand extends BaseCommand {
         String eol;
         String eolConfig = context.getStringData(OPT_IO_EOL_CONFIG, getDefault(OPT_IO_EOL_CONFIG));
         switch (eolConfig) {
-            case EOL_CONFIG_AS_IS: {
-                eol = "";
-                break;
-            }
+            // case EOL_CONFIG_AS_IS: {
+            //     eol = "";
+            //     break;
+            // }
             case EOL_CONFIG_PLATFORM: {
                 eol = lineSeparator();
                 break;

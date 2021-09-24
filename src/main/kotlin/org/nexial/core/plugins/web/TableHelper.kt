@@ -148,7 +148,7 @@ class TableHelper(private val webCommand: WebCommand) {
         val msgPrefix = "Table '$locator'"
 
         var headers: List<WebElement> = ArrayList()
-        tableHeaderLocators.forEach(fun(locator: String?) {
+        tableHeaderLocators.forEach(fun(locator: String) {
             run {
                 if (CollectionUtils.isEmpty(headers))
                     headers = table.findElements(webCommand.locatorHelper.findBy(locator, true))

@@ -1,17 +1,18 @@
 /*
- * Copyright 2012-2018 the original author or authors.
+ * Copyright 2012-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *       http://www.apache.org/licenses/LICENSE-2.0
+ * 	http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package org.nexial.core.utils;
@@ -24,12 +25,12 @@ import org.json.JSONObject;
 import org.nexial.commons.utils.RegexUtils;
 import org.nexial.commons.utils.TextUtils;
 
-import javax.validation.constraints.NotNull;
 import java.util.Map;
+import javax.validation.constraints.NotNull;
 
 import static org.json.JSONObject.NULL;
 import static org.nexial.core.NexialConst.NL;
-import static org.nexial.core.NexialConst.PolyMatcher.REGEX;
+import static org.nexial.core.NexialConst.REGEX_PREFIX;
 
 /**
  * Helper class to add or replace an existing JSON Document (JSONObject or JSONArray) via JSON Path.
@@ -40,17 +41,14 @@ public final class JsonEditor {
     public static class JsonEditorConfig {
         private boolean removeNull;
 
-        public void setRemoveNull(boolean removeNull) { this.removeNull = removeNull;}
+        public void setRemoveNull(boolean removeNull) { this.removeNull = removeNull; }
     }
 
     private JsonEditor() { }
 
     public static JsonEditor newInstance(JsonEditorConfig config) {
         JsonEditor editor = new JsonEditor();
-        if (config != null) {
-            editor.removeNull = config.removeNull;
-        }
-
+        if (config != null) { editor.removeNull = config.removeNull; }
         return editor;
     }
 
@@ -87,11 +85,11 @@ public final class JsonEditor {
         }
 
         // 4 filter is not ordinal or single node; therefore it could be equality filter or REGEX filter
-        boolean regexFilter = StringUtils.startsWith(filter, REGEX);
+        boolean regexFilter = StringUtils.startsWith(filter, REGEX_PREFIX);
         if (regexFilter) {
             // regex is too complicated for now.. maybe later
             // todo: future -> we can enhance this method to support regex filter
-            String regex = StringUtils.removeStart(filter, REGEX);
+            String regex = StringUtils.removeStart(filter, REGEX_PREFIX);
             throw new RuntimeException("NOT YET IMPLEMENTED for REGEX filter" + NL +
                                        "\tjson=" + json + NL +
                                        "\tnodeName=" + nodeName + NL +

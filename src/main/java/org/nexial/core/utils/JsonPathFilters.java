@@ -1,11 +1,11 @@
 /*
- * Copyright 2012-2018 the original author or authors.
+ * Copyright 2012-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *       http://www.apache.org/licenses/LICENSE-2.0
+ * 	http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -29,7 +29,7 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
-import static org.nexial.core.NexialConst.PolyMatcher.REGEX;
+import static org.nexial.core.NexialConst.REGEX_PREFIX;
 import static org.nexial.core.utils.JsonUtils.isSimpleType;
 
 class JsonPathFilters {
@@ -73,13 +73,13 @@ class JsonPathFilters {
         public String toString() { return original; }
 
         protected void parseValue(String value) {
-            regexOnValue = StringUtils.startsWith(value, REGEX);
-            this.value = regexOnValue ? StringUtils.substringAfter(value, REGEX) : value;
+            regexOnValue = StringUtils.startsWith(value, REGEX_PREFIX);
+            this.value = regexOnValue ? StringUtils.substringAfter(value, REGEX_PREFIX) : value;
         }
 
         protected void parseKey(String key) {
-            regexOnKey = StringUtils.startsWith(key, REGEX);
-            this.key = regexOnKey ? StringUtils.substringAfter(key, REGEX) : key;
+            regexOnKey = StringUtils.startsWith(key, REGEX_PREFIX);
+            this.key = regexOnKey ? StringUtils.substringAfter(key, REGEX_PREFIX) : key;
         }
 
         protected boolean accept(String jsonValue) {
@@ -147,7 +147,7 @@ class JsonPathFilters {
     public void filter(Object candidate, JSONArray matched) {
         if (candidate == null) { return; }
 
-        // no filters means all in!
+        // no filter means all in!
         if (CollectionUtils.isEmpty(filters)) { matched.put(candidate); }
 
         if (isSimpleType(candidate)) {
@@ -174,7 +174,7 @@ class JsonPathFilters {
     public Object find(Object candidate) {
         if (candidate == null) { return null; }
 
-        // no filters means all in!
+        // no filter means all in!
         if (CollectionUtils.isEmpty(filters)) { return candidate; }
 
         if (isSimpleType(candidate)) { return StringUtils.isNotEmpty(find(candidate.toString())) ? candidate : null; }
@@ -304,7 +304,7 @@ class JsonPathFilters {
         while (childKeys.hasNext()) {
             String childKey = childKeys.next();
             Object childValue = json.opt(childKey);
-            if (isMatched(childKey, childValue)) { json.remove(childKey);}
+            if (isMatched(childKey, childValue)) { json.remove(childKey); }
         }
 
         return json;

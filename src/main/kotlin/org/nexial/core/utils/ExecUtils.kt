@@ -1,17 +1,18 @@
 /*
- * Copyright 2012-2018 the original author or authors.
+ * Copyright 2012-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *       http://www.apache.org/licenses/LICENSE-2.0
+ * 	http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package org.nexial.core.utils
@@ -20,7 +21,6 @@ import org.apache.commons.lang3.StringUtils
 import org.apache.commons.lang3.SystemUtils.*
 import org.nexial.commons.proc.ProcessInvoker
 import org.nexial.commons.proc.ProcessOutcome
-import org.nexial.commons.utils.DateUtility
 import org.nexial.core.Nexial
 import org.nexial.core.NexialConst.*
 import org.nexial.core.NexialConst.Data.*
@@ -42,28 +42,28 @@ object ExecUtils {
 
     @JvmField
     val IGNORED_CLI_OPT = arrayListOf<String>(
-            "awt.", "java.", "jdk.",
-            "idea.test.", "intellij.debug",
-            "org.gradle.", "org.apache.poi.util.POILogger",
+        "awt.", "java.", "jdk.",
+        "idea.test.", "intellij.debug",
+        "org.gradle.", "org.apache.poi.util.POILogger",
 
-            "file.encoding", "file.separator", "line.separator", "path.separator",
+        "file.encoding", "file.separator", "line.separator", "path.separator",
 
-            "ftp.nonProxyHosts", "gopherProxySet", "http.nonProxyHosts", "socksNonProxyHosts",
+        "ftp.nonProxyHosts", "gopherProxySet", "http.nonProxyHosts", "socksNonProxyHosts",
 
-            "nexial-mailer.", "nexial.3rdparty.logpath", "nexial.jdbc.", NEXIAL_HOME,
-            OPT_OUT_DIR, OPT_PLAN_DIR, OPT_SCRIPT_DIR, OPT_DATA_DIR, OPT_DEF_OUT_DIR, OPT_CLOUD_OUTPUT_BASE,
-            "site-name", SMS_PREFIX, MAIL_PREFIX, OTC_PREFIX, TTS_PREFIX, VISION_PREFIX,
+        "nexial-mailer.", "nexial.3rdparty.logpath", "nexial.jdbc.", NEXIAL_HOME,
+        OPT_OUT_DIR, OPT_PLAN_DIR, OPT_SCRIPT_DIR, OPT_DATA_DIR, OPT_DEF_OUT_DIR, OPT_CLOUD_OUTPUT_BASE,
+        "site-name", SMS_PREFIX, MAIL_PREFIX, OTC_PREFIX, TTS_PREFIX, VISION_PREFIX,
 
-            "sun.arch", "sun.boot", "sun.cpu", "sun.desktop", "sun.font", "sun.io", "sun.java", "sun.jnu",
-            "sun.management", "sun.os", "sun.stderr.encoding", "sun.stdout.encoding",
+        "sun.arch", "sun.boot", "sun.cpu", "sun.desktop", "sun.font", "sun.io", "sun.java", "sun.jnu",
+        "sun.management", "sun.os", "sun.stderr.encoding", "sun.stdout.encoding",
 
-            "jboss.modules",
+        "jboss.modules",
 
-            "user.country", "user.dir", "user.home", "user.language", "user.variant",
+        "user.country", "user.dir", "user.home", "user.language", "user.variant",
 
-            "webdriver.",
+        "webdriver.",
 
-            "nashorn."
+        "nashorn."
     )
 
     @JvmField
@@ -80,25 +80,25 @@ object ExecUtils {
 
     /** determine if we are running under CI (Jenkins) using current system properties  */
     @JvmStatic
-    fun isRunningInCi(): Boolean = StringUtils.isNotBlank(System.getenv()[OPT_JENKINS_URL]) &&
-                                   StringUtils.isNotBlank(System.getenv()[OPT_JENKINS_HOME]) &&
-                                   StringUtils.isNotBlank(System.getenv()[OPT_BUILD_ID]) &&
-                                   StringUtils.isNotBlank(System.getenv()[OPT_BUILD_URL])
+    fun isRunningInCi() = StringUtils.isNotBlank(System.getenv()[OPT_JENKINS_URL]) &&
+                          StringUtils.isNotBlank(System.getenv()[OPT_JENKINS_HOME]) &&
+                          StringUtils.isNotBlank(System.getenv()[OPT_BUILD_ID]) &&
+                          StringUtils.isNotBlank(System.getenv()[OPT_BUILD_URL])
 
     @JvmStatic
     fun isRunningInZeroTouchEnv(): Boolean = IS_RUNNING_IN_JUNIT || isRunningInCi()
 
     @JvmStatic
-    fun currentCiBuildUrl() = if (!isRunningInCi()) "" else System.getenv(OPT_BUILD_URL)
+    fun currentCiBuildUrl() = if (!isRunningInCi()) "" else System.getenv(OPT_BUILD_URL) ?: ""
 
     @JvmStatic
-    fun currentCiBuildId() = if (!isRunningInCi()) "" else System.getenv(OPT_BUILD_ID)
+    fun currentCiBuildId() = if (!isRunningInCi()) "" else System.getenv(OPT_BUILD_ID) ?: ""
 
     @JvmStatic
-    fun currentCiBuildNumber() = if (!isRunningInCi()) "" else System.getenv(OPT_BUILD_NUMBER)
+    fun currentCiBuildNumber() = if (!isRunningInCi()) "" else System.getenv(OPT_BUILD_NUMBER) ?: ""
 
     @JvmStatic
-    fun currentCiBuildUser() = if (!isRunningInCi()) "" else System.getenv(OPT_BUILD_USER_ID)
+    fun currentCiBuildUser() = if (!isRunningInCi()) "" else System.getenv(OPT_BUILD_USER_ID) ?: ""
 
     @JvmStatic
     fun deriveRunId(): String {
@@ -106,7 +106,7 @@ object ExecUtils {
         if (StringUtils.isNotBlank(runId)) return runId
 
         val rightNow = System.currentTimeMillis()
-        runId = DateUtility.createTimestampString(rightNow)
+        runId = createTimestampString(rightNow)
 
         val runIdPrefix = StringUtils.defaultString(StringUtils.trim(System.getProperty(OPT_RUN_ID_PREFIX)))
         if (StringUtils.isNotBlank(runIdPrefix) && !StringUtils.startsWith(runId, "$runIdPrefix.")) {
@@ -185,7 +185,8 @@ object ExecUtils {
         if (pkg != null) {
             val implTitle = pkg.implementationTitle
             val implVersion = pkg.implementationVersion
-            if (StringUtils.isNotBlank(implTitle) && StringUtils.isNotBlank(implVersion)) return "$implTitle $implVersion"
+            if (StringUtils.isNotBlank(implTitle) && StringUtils.isNotBlank(implVersion))
+                return "$implTitle $implVersion"
         }
 
         val cl = javaClass.classLoader
@@ -223,12 +224,9 @@ object ExecUtils {
         when {
             IS_OS_MAC     -> ProcessInvoker.invokeNoWait("open", listOf(filePath), null)
             IS_OS_LINUX   -> ProcessInvoker.invokeNoWait("xdg-open", listOf(filePath), null)
-
-            IS_OS_WINDOWS -> {
-                // https://superuser.com/questions/198525/how-can-i-execute-a-windows-command-line-in-background
-                // start "" [program]... will cause CMD to exit before program executes.. sorta like running program in background
-                ProcessInvoker.invokeNoWait(WIN32_CMD, deriveWinParams(filePath), null)
-            }
+            // https://superuser.com/questions/198525/how-can-i-execute-a-windows-command-line-in-background
+            // start "" [program]... will cause CMD to exit before program executes... sorta like running program in background
+            IS_OS_WINDOWS -> ProcessInvoker.invokeNoWait(WIN32_CMD, deriveWinParams(filePath), null)
         }
     }
 
@@ -237,13 +235,9 @@ object ExecUtils {
         return when {
             IS_OS_MAC     -> ProcessInvoker.invoke("open", listOf(filePath), null)
             IS_OS_LINUX   -> ProcessInvoker.invoke("xdg-open", listOf(filePath), null)
-
-            IS_OS_WINDOWS -> {
-                // https://superuser.com/questions/198525/how-can-i-execute-a-windows-command-line-in-background
-                // start "" [program]... will cause CMD to exit before program executes.. sorta like running program in background
-                ProcessInvoker.invoke(WIN32_CMD, deriveWinParams(filePath), null)
-            }
-
+            // https://superuser.com/questions/198525/how-can-i-execute-a-windows-command-line-in-background
+            // start "" [program]... will cause CMD to exit before program executes... sorta like running program in background
+            IS_OS_WINDOWS -> ProcessInvoker.invoke(WIN32_CMD, deriveWinParams(filePath), null)
             else          -> {
                 val outcome = ProcessOutcome()
                 outcome.exitStatus = 1
@@ -252,6 +246,11 @@ object ExecUtils {
             }
         }
     }
+
+    @JvmStatic
+    fun createTimestampString(timestamp: Long?) =
+        DF_TIMESTAMP.format(if (timestamp == null) Date() else Date(timestamp))
+
 
     private fun deriveWinParams(filePath: String) = arrayListOf("/C", "start", "\"\"", "\"" + filePath + "\"")
 }

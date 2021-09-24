@@ -26,6 +26,7 @@ import org.nexial.core.ExecutionThread;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.model.StepResult;
 import org.nexial.core.plugins.web.Browser;
+import org.nexial.core.plugins.web.LocatorHelper;
 import org.nexial.core.plugins.web.WebCommand;
 import org.nexial.core.plugins.web.WebDriverExceptionHelper;
 import org.nexial.core.utils.ConsoleUtils;
@@ -97,6 +98,32 @@ public class WebTransformer<T extends WebDataType> extends Transformer<T> {
             stepResult = new StepResult(false, resolveErrorMessage(e), null);
         }
         return saveResult(data, "click(" + locator + ")", stepResult);
+    }
+
+    /**
+     * alternative to {@link #click(WebDataType, String)} without limitation of predefined timeout (via
+     * {`nexial.pollWaitMs`}). Use this when the timeout value is insufficient, or if the target application is
+     * inconsistent in responding, or if there's no need to wait for target application to respond.
+     * <p>
+     * Note that this type of click (using JavaScript) does not work in all situation, particularly for web applications
+     * that are built using Angular.
+     */
+    public WebDataType jsClick(T data, String locator) {
+        if (data == null || data.getValue() == null) { return null; }
+
+        WebCommand webCommand = resolveWebCommand();
+
+        StepResult stepResult;
+        try {
+            if (StringUtils.startsWith(locator, LABEL_PREFIX)) {
+                locator = LocatorHelper.resolveLabelXpath(StringUtils.substringAfter(locator, LABEL_PREFIX));
+            }
+            webCommand.jsClick(locator);
+            stepResult = StepResult.success("jsClick() on '" + locator + "' successfully.");
+        } catch (Exception e) {
+            stepResult = new StepResult(false, resolveErrorMessage(e), null);
+        }
+        return saveResult(data, "jsClick(" + locator + ")", stepResult);
     }
 
     public WebDataType selectWindow(T data, String winId) {

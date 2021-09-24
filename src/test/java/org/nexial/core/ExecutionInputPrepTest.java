@@ -27,7 +27,6 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.nexial.commons.utils.DateUtility;
 import org.nexial.commons.utils.FileUtil;
 import org.nexial.core.NexialConst.Project;
 import org.nexial.core.excel.Excel;
@@ -35,6 +34,7 @@ import org.nexial.core.excel.Excel.Worksheet;
 import org.nexial.core.excel.ExcelAddress;
 import org.nexial.core.model.ExecutionDefinition;
 import org.nexial.core.model.TestProject;
+import org.nexial.core.utils.ExecUtils;
 import org.springframework.util.ResourceUtils;
 
 import java.io.File;
@@ -166,7 +166,7 @@ public class ExecutionInputPrepTest {
 
         String baseScriptName = StringUtils.substringBefore(fileTestScript.getName(), ".xlsx");
         // ExecutionInputPrep prep = new ExecutionInputPrep();
-        String runId = DateUtility.createTimestampString(null);
+        String runId = ExecUtils.createTimestampString(null);
 
         // IterationManager iterationManager = execDef.getTestData().getIterationManager();
 

@@ -1,17 +1,18 @@
 /*
- * Copyright 2012-2018 the original author or authors.
+ * Copyright 2012-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *       http://www.apache.org/licenses/LICENSE-2.0
+ * 	http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package org.nexial.core.plugins.web
@@ -47,35 +48,33 @@ internal class FrameHelper(private val webCommand: WebCommand, private var drive
     }
 
     fun selectFrame(locator: String): StepResult {
-        val locator1 = webCommand.locatorHelper.validateLocator(locator)
-
         try {
-            if (StringUtils.equals(locator1, "relative=top")) {
+            if (StringUtils.equals(locator, "relative=top")) {
                 driver = driver.switchTo().defaultContent()
-                return StepResult.success("selected frame '$locator1'")
+                return StepResult.success("selected frame '$locator'")
             }
 
-            if (StringUtils.startsWith(locator1, "index=")) {
-                val frameIndex = StringUtils.substringAfter(locator1, "index=")
+            if (StringUtils.startsWith(locator, "index=")) {
+                val frameIndex = StringUtils.substringAfter(locator, "index=")
                 requiresPositiveNumber(frameIndex, "invalid frame index", frameIndex)
                 driver = driver.switchTo().frame(NumberUtils.toInt(frameIndex))
-                return StepResult.success("selected frame '$locator1'")
+                return StepResult.success("selected frame '$locator'")
             }
 
-            if (StringUtils.startsWith(locator1, "id=")) {
-                driver = driver.switchTo().frame(StringUtils.substringAfter(locator1, "id="))
-                return StepResult.success("selected frame '$locator1'")
+            if (StringUtils.startsWith(locator, "id=")) {
+                driver = driver.switchTo().frame(StringUtils.substringAfter(locator, "id="))
+                return StepResult.success("selected frame '$locator'")
             }
 
-            if (StringUtils.startsWith(locator1, "name=")) {
-                driver = driver.switchTo().frame(StringUtils.substringAfter(locator1, "name="))
-                return StepResult.success("selected frame '$locator1'")
+            if (StringUtils.startsWith(locator, "name=")) {
+                driver = driver.switchTo().frame(StringUtils.substringAfter(locator, "name="))
+                return StepResult.success("selected frame '$locator'")
             }
 
-            driver = driver.switchTo().frame(webCommand.findElement(locator1))
-            return StepResult.success("selected frame '$locator1'")
+            driver = driver.switchTo().frame(webCommand.findElement(locator))
+            return StepResult.success("selected frame '$locator'")
         } catch (e: NoSuchFrameException) {
-            return StepResult.fail("Cannot switch to target frame '" + locator1 + "': " + e.message)
+            return StepResult.fail("Cannot switch to target frame '" + locator + "': " + e.message)
         }
     }
 

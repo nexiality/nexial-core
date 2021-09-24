@@ -1,11 +1,11 @@
 /*
- * Copyright 2012-2018 the original author or authors.
+ * Copyright 2012-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *       http://www.apache.org/licenses/LICENSE-2.0
+ * 	http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  */
-package org.nexial.commons.utils
+package org.nexial.core.utils
 
 import org.apache.commons.io.FileUtils
 import org.apache.commons.io.filefilter.FalseFileFilter
@@ -23,7 +23,9 @@ import org.apache.commons.io.filefilter.RegexFileFilter
 import org.apache.commons.io.filefilter.TrueFileFilter
 import org.apache.commons.lang3.StringUtils
 import org.apache.commons.lang3.SystemUtils.IS_OS_WINDOWS
-import org.nexial.core.NexialConst.PolyMatcher.REGEX
+import org.nexial.commons.utils.FilePathFilter
+import org.nexial.commons.utils.RegexUtils
+import org.nexial.core.NexialConst.REGEX_PREFIX
 import org.springframework.util.CollectionUtils
 import java.io.File
 import java.io.File.separator
@@ -59,9 +61,9 @@ class IOFilePathFilter @JvmOverloads constructor(private val recurse: Boolean = 
             if (!baseDir.isDirectory) return emptyList()
 
             val lastElementOfPath = StringUtils.substringAfterLast(pattern, separator)
-            if (lastElementOfPath.startsWith(REGEX)) {
+            if (lastElementOfPath.startsWith(REGEX_PREFIX)) {
                 // If the file pattern contains a path like C:/xyz/abc/REGEX:ab.*[1]{1}
-                regex = StringUtils.substringAfter(lastElementOfPath, REGEX)
+                regex = StringUtils.substringAfter(lastElementOfPath, REGEX_PREFIX)
                 fileFilter = RegexFileFilter(regex)
                 dirFilter = deriveDirFilter(baseDir, regex)
             } else if (lastElementOfPath != "*" && lastElementOfPath.contains("*")) {
@@ -73,19 +75,20 @@ class IOFilePathFilter @JvmOverloads constructor(private val recurse: Boolean = 
         }
 
         val matches =
-                if (matchDirectories) FileUtils.listFilesAndDirs(baseDir, fileFilter, dirFilter)
-                else FileUtils.listFiles(baseDir, fileFilter, dirFilter)
+            if (matchDirectories) FileUtils.listFilesAndDirs(baseDir, fileFilter, dirFilter)
+            else FileUtils.listFiles(baseDir, fileFilter, dirFilter)
         if (CollectionUtils.isEmpty(matches)) return emptyList()
 
         // not sure why apache io is adding `searchFrom` into the match list... we are taking it out
         if (matchDirectories) matches.remove(baseDir)
 
-        // `FileUtils` likely to return all directories too. Need to filter them down..
-        return matches.filter {
-            if (StringUtils.isNotBlank(regex)) RegexUtils.match(it.name, regex, false, !IS_OS_WINDOWS) else true
-        }
-                .filter { if (!recurse) StringUtils.equals(it.parent, baseDir.absolutePath) else true }
-                .map { it.absolutePath }
+        // `FileUtils` likely to return all directories too. Need to filter them down...
+        return matches
+            .filter {
+                if (StringUtils.isNotBlank(regex)) RegexUtils.match(it.name, regex, false, !IS_OS_WINDOWS) else true
+            }
+            .filter { if (!recurse) StringUtils.equals(it.parent, baseDir.absolutePath) else true }
+            .map { it.absolutePath }
     }
 
     private fun deriveDirFilter(baseDir: File, fileRegex: String): IOFileFilter {

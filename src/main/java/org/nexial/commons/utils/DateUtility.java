@@ -1,11 +1,11 @@
 /*
- * Copyright 2012-2018 the original author or authors.
+ * Copyright 2012-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *       http://www.apache.org/licenses/LICENSE-2.0
+ * 	http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,6 +17,10 @@
 
 package org.nexial.commons.utils;
 
+import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.sql.Timestamp;
 import java.text.DateFormat;
 import java.text.ParseException;
@@ -24,12 +28,7 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 
-import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import static java.util.Calendar.*;
-import static org.nexial.core.NexialConst.DF_TIMESTAMP;
 
 public final class DateUtility {
     private static final Logger LOGGER = LoggerFactory.getLogger(DateUtility.class);
@@ -136,7 +135,7 @@ public final class DateUtility {
         return formatTo(DateUtility.getCurrentDateTime(), patternFrom, patternTo);
     }
 
-    /** Formats a date for ccmmdd to mm/dd/yyyy */
+    /** Formats a date for yymmdd to mm/dd/yyyy */
     public static String convertYYMMDDtoMMDDYYYY(String date) {
         date = StringUtils.trim(date);
         if (StringUtils.length(date) >= 6) {
@@ -203,11 +202,6 @@ public final class DateUtility {
             LOGGER.warn("Date [" + date + "] could not be formatted as '" + format + "': " + e.getMessage());
             return -1;
         }
-
-    }
-
-    public static String createTimestampString(Long timestamp) {
-        return DF_TIMESTAMP.format(timestamp == null ? new Date() : new Date(timestamp));
     }
 
     private static Date addToMidnight(long timestamp) {

@@ -50,7 +50,7 @@ import org.eclipse.jubula.toolkit.swt.internal.impl.handler.ApplicationActionHan
 import org.eclipse.jubula.toolkit.swt.internal.impl.handler.MenuActionHandler
 import org.eclipse.jubula.tools.AUTIdentifier
 import org.eclipse.jubula.tools.internal.exception.JBVersionException
-import org.nexial.core.NexialConst.PolyMatcher.REGEX
+import org.nexial.core.NexialConst.REGEX_PREFIX
 import org.nexial.core.SystemVariables.getDefaultLong
 import org.nexial.core.plugins.javaui.JavaUIConst.SystemVariable
 import org.nexial.core.plugins.javaui.JavaUIConst.embedded
@@ -262,8 +262,8 @@ abstract class JubulaHelper {
 
     fun waitForTitleBar(text: String): Result<Any> {
         require(StringUtils.isNotBlank(text)) { "invalid text for title bar: $text" }
-        val operator = if (StringUtils.startsWith(text, REGEX)) matches else simpleMatch
-        val title = if (StringUtils.startsWith(text, REGEX)) StringUtils.substringAfter(text, REGEX) else text
+        val operator = if (StringUtils.startsWith(text, REGEX_PREFIX)) matches else simpleMatch
+        val title = if (StringUtils.startsWith(text, REGEX_PREFIX)) StringUtils.substringAfter(text, REGEX_PREFIX) else text
         return newApplicationActionHandler().waitForWindow(title, operator, delayBetweenStepsMs.toInt())
     }
 
@@ -274,8 +274,8 @@ abstract class JubulaHelper {
         val component = MakeR.createCI<BaseTextComponent>(objectMapping[name]!!)
                         ?: throw java.lang.RuntimeException("Unable to reference a 'text' component via '$name'")
 
-        val operator = if (StringUtils.startsWith(text, REGEX)) matches else simpleMatch
-        val value = if (StringUtils.startsWith(text, REGEX)) StringUtils.substringAfter(text, REGEX) else text
+        val operator = if (StringUtils.startsWith(text, REGEX_PREFIX)) matches else simpleMatch
+        val value = if (StringUtils.startsWith(text, REGEX_PREFIX)) StringUtils.substringAfter(text, REGEX_PREFIX) else text
 
         val cap = AbstractComponents.createTextComponent(component).checkText(value, operator)
         return resolveAut().execute(cap, null)

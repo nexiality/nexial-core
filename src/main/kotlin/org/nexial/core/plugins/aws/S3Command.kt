@@ -1,17 +1,18 @@
 /*
- * Copyright 2012-2018 the original author or authors.
+ * Copyright 2012-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *       http://www.apache.org/licenses/LICENSE-2.0
+ * 	http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package org.nexial.core.plugins.aws
@@ -20,19 +21,19 @@ import org.apache.commons.collections4.CollectionUtils
 import org.apache.commons.io.FileUtils
 import org.apache.commons.lang3.StringUtils
 import org.nexial.commons.utils.FileUtil
-import org.nexial.commons.utils.IOFilePathFilter
 import org.nexial.commons.utils.TextUtils
 import org.nexial.core.IntegrationConfigException
 import org.nexial.core.NexialConst.S3_PATH_SEP
 import org.nexial.core.aws.AwsS3Helper
 import org.nexial.core.aws.NexialS3Helper
-import org.nexial.core.model.StepResult
 import org.nexial.core.model.RemoteFileActionOutcome
 import org.nexial.core.model.RemoteFileActionOutcome.TransferAction.*
 import org.nexial.core.model.RemoteFileActionOutcome.TransferProtocol.AWS
+import org.nexial.core.model.StepResult
 import org.nexial.core.plugins.base.BaseCommand
 import org.nexial.core.utils.CheckUtils.*
 import org.nexial.core.utils.ConsoleUtils
+import org.nexial.core.utils.IOFilePathFilter
 import java.io.File
 import java.io.File.separator
 
@@ -56,7 +57,7 @@ class S3Command : BaseCommand() {
      */
     @Throws(IntegrationConfigException::class)
     fun copyTo(`var`: String, profile: String, local: String, remote: String) =
-            moveOrCopyToS3(`var`, profile, local, remote, false, COPY_TO)
+        moveOrCopyToS3(`var`, profile, local, remote, false, COPY_TO)
 
     /**
      * Same as [S3Command.copyTo]. Except that it deletes the files from the
@@ -65,7 +66,7 @@ class S3Command : BaseCommand() {
      */
     @Throws(IntegrationConfigException::class)
     fun moveTo(`var`: String, profile: String, local: String, remote: String) =
-            moveOrCopyToS3(`var`, profile, local, remote, true, MOVE_TO)
+        moveOrCopyToS3(`var`, profile, local, remote, true, MOVE_TO)
 
     /**
      * This is a nexial command to download file(s) from S3 bucket. The file path can contain the directory name so
@@ -79,7 +80,7 @@ class S3Command : BaseCommand() {
      */
     @Throws(IntegrationConfigException::class)
     fun copyFrom(`var`: String, profile: String, remote: String, local: String) =
-            moveOrCopyFromS3(`var`, profile, remote, local, false, COPY_FROM)
+        moveOrCopyFromS3(`var`, profile, remote, local, false, COPY_FROM)
 
     /**
      * Same as [S3Command.copyFrom]. Except that it deletes the files from the
@@ -87,7 +88,7 @@ class S3Command : BaseCommand() {
      */
     @Throws(IntegrationConfigException::class)
     fun moveFrom(`var`: String, profile: String, remote: String, local: String) =
-            moveOrCopyFromS3(`var`, profile, remote, local, true, MOVE_FROM)
+        moveOrCopyFromS3(`var`, profile, remote, local, true, MOVE_FROM)
 
     /**
      * This is a nexial command used to delete the files from the s3 bucket based on the criteria provided
@@ -141,10 +142,8 @@ class S3Command : BaseCommand() {
         return if (CollectionUtils.isNotEmpty(failedFiles))
             StepResult.fail("Following files failed to get deleted from S3: $failedFiles.")
         else
-            StepResult.success(if (CollectionUtils.isEmpty(keys))
-                                   noMatchingFiles
-                               else
-                                   "The following files are successfully deleted ${outcome.affected}.")
+            StepResult.success(if (CollectionUtils.isEmpty(keys)) noMatchingFiles
+                               else "The following files are successfully deleted ${outcome.affected}.")
     }
 
     /**
@@ -212,16 +211,12 @@ class S3Command : BaseCommand() {
         val filesPresent = CollectionUtils.isNotEmpty(keys)
 
         if (assertPresent) {
-            return if (filesPresent)
-                StepResult.success("Successfully retrieved files from $remotePath.")
-            else
-                StepResult.fail("There are no files matching the criteria.")
+            return if (filesPresent) StepResult.success("Successfully retrieved files from $remotePath.")
+            else StepResult.fail("There are no files matching the criteria.")
         }
 
-        return if (!filesPresent)
-            StepResult.success("No files matching the criteria")
-        else
-            StepResult.fail("Files found: ${TextUtils.toString(keys, ", ")}")
+        return if (!filesPresent) StepResult.success("No files matching the criteria")
+        else StepResult.fail("Files found: ${TextUtils.toString(keys, ", ")}")
     }
 
     /**
@@ -315,11 +310,11 @@ class S3Command : BaseCommand() {
             StepResult.fail("Following downloads from S3 failed: $failedFiles.")
         } else
             StepResult.success(
-                    if (CollectionUtils.isEmpty(keys))
-                        msgNoMatches
-                    else
-                        "The file(s) are ${if (removeFromBucket) "moved" else "uploaded"} " +
-                        "to the local path '$systemPath'. The files are ${outcome.affected}.")
+                if (CollectionUtils.isEmpty(keys))
+                    msgNoMatches
+                else
+                    "The file(s) are ${if (removeFromBucket) "moved" else "uploaded"} " +
+                    "to the local path '$systemPath'. The files are ${outcome.affected}.")
     }
 
     /**

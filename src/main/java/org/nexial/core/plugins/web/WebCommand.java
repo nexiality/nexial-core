@@ -91,7 +91,6 @@ import static org.apache.commons.lang3.SystemUtils.IS_OS_MAC_OSX;
 import static org.nexial.core.NexialConst.BrowserType.safari;
 import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.NexialConst.Data.*;
-import static org.nexial.core.NexialConst.PolyMatcher.REGEX;
 import static org.nexial.core.NexialConst.Project.BROWSER_META_CACHE_PATH;
 import static org.nexial.core.NexialConst.Web.*;
 import static org.nexial.core.SystemVariables.*;
@@ -1367,7 +1366,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     public StepResult clickByLabel(String label) { return clickByLabelAndWait(label, ""); }
 
     public StepResult clickByLabelAndWait(String label, String waitMs) {
-        String xpath = locatorHelper.resolveLabelXpath(label);
+        String xpath = LocatorHelper.resolveLabelXpath(label);
         StepResult result = assertOneMatch(xpath);
         return result.failed() ? result : clickAndWait(xpath, waitMs);
     }
@@ -2905,8 +2904,8 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
                 return StepResult.fail(msg + "CONTAINS blank, which is NOT expected");
             }
 
-            if (StringUtils.startsWithIgnoreCase(contains, REGEX)) {
-                boolean matched = RegexUtils.match(actual, StringUtils.substringAfter(contains, REGEX));
+            if (StringUtils.startsWithIgnoreCase(contains, REGEX_PREFIX)) {
+                boolean matched = RegexUtils.match(actual, StringUtils.substringAfter(contains, REGEX_PREFIX));
                 if (matched) {
                     if (expectsContains) { return StepResult.success(msg + "CONTAINS " + contains + " as EXPECTED"); }
                     return StepResult.fail(msg + "CONTAINS " + contains + ", which is NOT as expected");
@@ -2979,6 +2978,11 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         }
     }
 
+    public void jsClick(String locator) {
+        requiresNotBlank(locator, "Invalid locator", locator);
+        jsClick(findElement(locator));
+    }
+
     protected void jsClick(WebElement element) {
         ConsoleUtils.log("click target via JS, @id=" + element.getAttribute("id"));
         scrollIntoView(element);
@@ -3036,7 +3040,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
                 return StepResult.success("click via JS event");
             } else {
                 // better impl. for CI
-                new Actions(driver).moveToElement(element).click(element).perform();
+                new Actions(driver).click(element).perform();
                 return StepResult.success("clicked on web element");
             }
         } catch (WebDriverException e) {

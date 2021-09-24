@@ -77,16 +77,16 @@ class LocatorHelperTest {
     @Test
     @Throws(Exception::class)
     fun testFixBadXpath() {
-        Assert.assertNull(subject.fixBadXpath(null))
-        Assert.assertEquals("", subject.fixBadXpath(""))
-        Assert.assertEquals("/", subject.fixBadXpath("/"))
-        Assert.assertEquals("//", subject.fixBadXpath("//"))
-        Assert.assertEquals("//", subject.fixBadXpath(".//"))
-        Assert.assertEquals("//", subject.fixBadXpath(" .//"))
-        Assert.assertEquals("//", subject.fixBadXpath("    .//"))
-        Assert.assertEquals("(//", subject.fixBadXpath("(//"))
-        Assert.assertEquals("(//", subject.fixBadXpath("(.//"))
-        Assert.assertEquals("(//", subject.fixBadXpath("( .//"))
-        Assert.assertEquals("(//", subject.fixBadXpath("( .//"))
+        Assert.assertNull(LocatorHelper.fixBadXpath(null))
+        Assert.assertEquals("", LocatorHelper.fixBadXpath(""))
+        Assert.assertEquals("/", LocatorHelper.fixBadXpath("/"))
+        Assert.assertEquals("//", LocatorHelper.fixBadXpath("//"))
+        Assert.assertEquals("//", LocatorHelper.fixBadXpath(".//"))
+        Assert.assertEquals("//", LocatorHelper.fixBadXpath(" .//"))
+        Assert.assertEquals("//", LocatorHelper.fixBadXpath("    .//"))
+        Assert.assertEquals("(//", LocatorHelper.fixBadXpath("(//"))
+        Assert.assertEquals("(//", LocatorHelper.fixBadXpath("(.//"))
+        Assert.assertEquals("(//", LocatorHelper.fixBadXpath("( .//"))
+        Assert.assertEquals("(//", LocatorHelper.fixBadXpath("( .//"))
     }
 }
