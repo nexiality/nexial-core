@@ -53,9 +53,9 @@ public final class FlowControlUtils {
         if (!shouldPause(context, testStep, PauseBefore)) { return; }
 
         if (IS_OS_WINDOWS) {
-            DesktopNotification.notifyNoAutoDismiss(warn,
-                                                    "TEST EXECUTION PAUSED DUE TO PauseBefore() CONDITION. "
-                                                    + "PRESS ENTER ON CONSOLE TO CONTINUE EXECUTION");
+            DesktopNotification.notifyNoAutoDismiss(
+                warn,
+                "TEST EXECUTION PAUSED DUE TO PauseBefore() CONDITION. PRESS ENTER ON CONSOLE TO CONTINUE EXECUTION");
         }
 
         ConsoleUtils.pause(context, msgPrefix + ", conditions: " +
@@ -68,9 +68,9 @@ public final class FlowControlUtils {
         if (!shouldPause(context, testStep, PauseAfter)) { return; }
 
         if (IS_OS_WINDOWS) {
-            DesktopNotification.notifyNoAutoDismiss(warn,
-                                                    "TEST EXECUTION PAUSED DUE TO PauseAfter() CONDITION. "
-                                                    + "PRESS ENTER ON CONSOLE TO CONTINUE EXECUTION");
+            DesktopNotification.notifyNoAutoDismiss(
+                warn,
+                "TEST EXECUTION PAUSED DUE TO PauseAfter() CONDITION. PRESS ENTER ON CONSOLE TO CONTINUE EXECUTION");
         }
 
         ConsoleUtils.pause(context, "PAUSE AFTER EXECUTION - row " + (testStep.getRow().get(0).getRowIndex() + 1) +

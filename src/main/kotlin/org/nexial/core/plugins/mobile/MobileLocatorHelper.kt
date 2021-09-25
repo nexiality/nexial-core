@@ -180,6 +180,7 @@ class MobileLocatorHelper(private val mobileService: MobileService) {
         const val scriptSelectPickerValue = "mobile: selectPickerWheelValue"
         const val doneLocator = "name=Done"
         const val pickerWheelLocator = "//XCUIElementTypePickerWheel"
+        const val iosKeyboardDoneLocator = "//XCUIElementTypeKeyboard//XCUIElementTypeButton[@name='Done']"
 
         internal const val clearAllNotificationsLocators = prefixOneOfLocator +
                                                            "{text=Clear all}" +

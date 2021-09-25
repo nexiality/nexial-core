@@ -29,8 +29,8 @@ class LayeredFindBy(val locators: List<String>) : By(), Serializable {
         index, locator -> LocatorHelper.LocatorType.build(locator, index != 0)
     }.toList()
 
-    override fun findElement(context: SearchContext): WebElement =
-        findElements(context, findBys[0], findBys.drop(1)).first()
+    override fun findElement(context: SearchContext): WebElement? =
+        findElements(context, findBys[0], findBys.drop(1)).firstOrNull()
 
     override fun findElements(context: SearchContext): MutableList<WebElement> =
         findElements(context, findBys[0], findBys.drop(1))

@@ -18,6 +18,7 @@
 package org.nexial.core.model;
 
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
@@ -35,11 +36,11 @@ import org.nexial.core.variable.Expression;
 import org.nexial.core.variable.ExpressionParser;
 import org.nexial.core.variable.TypeConversionException;
 
-import javax.validation.constraints.NotNull;
 import java.io.File;
 import java.io.Serializable;
 import java.util.*;
 import java.util.stream.Stream;
+import javax.validation.constraints.NotNull;
 
 import static org.nexial.core.NexialConst.Data.NULL;
 import static org.nexial.core.NexialConst.FILTER_TEMP_DELIM1;
@@ -59,6 +60,7 @@ public class NexialFilter implements Serializable {
     protected List<String> controlList;
     static final String ITEM_SEP = "|";
     static final String PREFIX_KEY = "^^^";
+    private static final List<String> EMPTY_ALIASES = Arrays.asList("null", "\"\"", "(empty)", "");
 
     public static class ListItemConverterImpl implements ListItemConverter<NexialFilter> {
         @Override
@@ -144,6 +146,7 @@ public class NexialFilter implements Serializable {
 
     @NotNull
     private static String replaceKey(final Map<String, String> expressionMap, String text) {
+        if (text == null || MapUtils.isEmpty(expressionMap)) { return null; }
         if (text.contains(PREFIX_KEY)) {
             for (String key : expressionMap.keySet()) {
                 if (text.contains(key)) {
@@ -461,7 +464,8 @@ public class NexialFilter implements Serializable {
     }
 
     protected static boolean isEqualsTextOrNumeric(String expected, String actual) {
-        if (StringUtils.equals(expected, actual)) { return true; }
+        if (StringUtils.isEmpty(expected) && EMPTY_ALIASES.contains(actual) ||
+            StringUtils.equals(expected, actual)) { return true; }
 
         return NumberUtils.isCreatable(numericReady(expected)) &&
                NumberUtils.isCreatable(numericReady(actual)) &&

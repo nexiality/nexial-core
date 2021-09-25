@@ -28,7 +28,6 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.lang3.math.NumberUtils;
-import org.json.JSONObject;
 import org.nexial.commons.utils.TextUtils;
 import org.nexial.commons.utils.web.URLEncodingUtils;
 import org.nexial.core.ExecutionThread;
@@ -39,8 +38,6 @@ import org.nexial.core.utils.CheckUtils;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.OutputResolver;
 
-import javax.annotation.Nullable;
-import javax.validation.constraints.NotNull;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -49,15 +46,15 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.util.*;
-import java.util.Map.Entry;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import javax.validation.constraints.NotNull;
 
 import static io.jsonwebtoken.SignatureAlgorithm.HS256;
 import static io.jsonwebtoken.impl.TextCodec.BASE64URL;
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static java.util.Base64.getEncoder;
-import static org.apache.commons.lang3.StringUtils.SPACE;
 import static org.apache.http.HttpHeaders.AUTHORIZATION;
 import static org.apache.http.HttpHeaders.CONTENT_TYPE;
 import static org.nexial.core.NexialConst.*;
@@ -391,9 +388,10 @@ public class WsCommand extends BaseCommand {
         String failPrefix = "OAuth request failed: ";
 
         if (response == null) { return StepResult.fail(failPrefix + "no response found"); }
+        String responseBody = response.getBody();
         if (response.getReturnCode() != 200) {
             ConsoleUtils.log("ERROR:\n" +
-                             response.getReturnCode() + " " + response.getStatusText() + "\n" + response.getBody());
+                             response.getReturnCode() + " " + response.getStatusText() + "\n" + responseBody);
             return StepResult.fail(failPrefix + response.getReturnCode() + " " + response.getStatusText());
         }
         if (response.getContentLength() < 5) {
@@ -405,23 +403,22 @@ public class WsCommand extends BaseCommand {
             return StepResult.fail(failPrefix + "unexpected response content type: " + responseContentType);
         }
 
+        return processOAuthResponse(var, responseBody);
+    }
+
+    private StepResult processOAuthResponse(String var, String responseBody) {
         // parse response as JSON
-        JsonObject json = GSON_COMPRESSED.fromJson(response.getBody(), JsonObject.class);
-        Set<Entry<String, JsonElement>> jsonProps = json.entrySet();
+        JsonObject json = GSON_COMPRESSED.fromJson(responseBody, JsonObject.class);
 
         // save response to var
         Map<String, String> oauthResponse = new HashMap<>();
-        jsonProps.forEach(entry -> {
+        json.entrySet().forEach(entry -> {
             String key = entry.getKey();
             JsonElement value = entry.getValue();
             // accommodate situation where json response contains multi-element array
             if (value.isJsonArray()) {
-                JsonArray arrayValue = value.getAsJsonArray();
-                if (arrayValue.size() == 1) {
-                    oauthResponse.put(key, arrayValue.get(0).toString());
-                } else {
-                    oauthResponse.put(key, arrayValue.toString());
-                }
+                JsonArray array = value.getAsJsonArray();
+                oauthResponse.put(key, array.size() == 1 ? array.get(0).toString() : array.toString());
             } else {
                 oauthResponse.put(key, value.getAsString());
             }
@@ -430,7 +427,7 @@ public class WsCommand extends BaseCommand {
 
         String tokenType = oauthResponse.get(OAUTH_TOKEN_TYPE);
         if (StringUtils.isBlank(tokenType)) {
-            return StepResult.fail(failPrefix + "invalid " + OAUTH_TOKEN_TYPE + ": " + tokenType);
+            return StepResult.fail("OAuth request failed: invalid " + OAUTH_TOKEN_TYPE + ": " + tokenType);
         }
 
         // bearer support
@@ -450,7 +447,7 @@ public class WsCommand extends BaseCommand {
         // if (StringUtils.equalsIgnoreCase(tokenType, OAUTH_TOKEN_TYPE_MAC)) {
         // }
 
-        return StepResult.fail(failPrefix + "unknown/unsupported " + OAUTH_TOKEN_TYPE + "found: " + tokenType);
+        return StepResult.fail("OAuth request failed: unknown/unsupported " + OAUTH_TOKEN_TYPE + "found: " + tokenType);
     }
 
     /**
@@ -467,29 +464,22 @@ public class WsCommand extends BaseCommand {
 
         ExecutionContext context = ExecutionThread.get();
         Map<String, String> config = context.getDataByPrefix(profile + ".");
-        if (MapUtils.isEmpty(config)) {
-            context.logCurrentStep("No OAuth2 configuration found for '" + profile + "'; Unable to connect.");
-            return null;
-        }
+        if (MapUtils.isEmpty(config)) { return StepResult.fail("No OAuth2 configuration found for '" + profile + "'"); }
 
         String type = config.get("type");
         if (!type.equals(OAUTH_CUSTOM_TYPE)) {
             Map<String, String> vendorDetails = oauthProviderDetails.get(type);
-
             if (vendorDetails == null || vendorDetails.isEmpty()) {
                 return StepResult.fail(type + " is not a valid OAuth provider type.");
             }
             config.putAll(vendorDetails);
         }
 
-        Map<String, String> responses;
         try {
-            responses = getOAuthResponse(config);
+            return processOAuth(var, config);
         } catch (Exception e) {
-            return StepResult.fail("An error occurred. Error message is " + e.getMessage());
+            return StepResult.fail("Error occurred while processing OAuth2 for '" + profile + "': " + e.getMessage());
         }
-        context.setData(var, responses);
-        return StepResult.success("OAuth2 responses are:- " + responses);
     }
 
     /**
@@ -498,33 +488,23 @@ public class WsCommand extends BaseCommand {
      *
      * @param config the OAuth configuration details like client_id, client_secret, username, password ,scope etc.
      * @return OAuth related token(s) as well as other information needed for authenticating further calls.
-     * @throws IOException
      */
-    private Map<String, String> getOAuthResponse(Map<String, String> config) throws IOException {
+    private StepResult processOAuth(String var, Map<String, String> config) throws IOException {
         String oAuthUrl = config.get("url");
         if (oAuthUrl.contains(OAUTH_URL_PLACEHOLDER)) {
             oAuthUrl = oAuthUrl.replace(OAUTH_URL_PLACEHOLDER, config.get("tenant_id"));
         }
 
-        if (!config.get("type").equals(OAUTH_CUSTOM_TYPE)) {
-            config.put(OAUTH_GRANT_TYPE, config.get("grantType"));
-        }
+        if (!config.get("type").equals(OAUTH_CUSTOM_TYPE)) { config.put(OAUTH_GRANT_TYPE, config.get("grantType")); }
 
-        String basicAuthUsernameKey = config.get(OAUTH_BASIC_AUTH_USERNAME_KEY);
-        String basicAuthPasswordKey = config.get(OAUTH_BASIC_AUTH_PASSWORD_KEY);
+        String basicAuthUsername = config.get(OAUTH_BASIC_AUTH_USER);
+        String basicAuthPassword = config.get(OAUTH_BASIC_AUTH_PASSWORD);
 
-        String basicAuthUsername = config.get(basicAuthUsernameKey);
-        String basicAuthPassword = config.get(basicAuthPasswordKey);
-
-        String[] keys = {"url", "type", OAUTH_BASIC_AUTH_USERNAME_KEY, OAUTH_BASIC_AUTH_PASSWORD_KEY,
-                         basicAuthUsernameKey, basicAuthPasswordKey};
-        Arrays.stream(keys).forEach(config::remove);
+        Arrays.asList("url", "type", OAUTH_BASIC_AUTH_USER, OAUTH_BASIC_AUTH_PASSWORD).forEach(config::remove);
 
         StringBuilder postData = new StringBuilder();
         for (Map.Entry<String, String> param : config.entrySet()) {
-            if (postData.length() != 0) {
-                postData.append('&');
-            }
+            if (postData.length() != 0) { postData.append('&'); }
             postData.append(URLEncoder.encode(param.getKey(), DEF_FILE_ENCODING));
             postData.append('=');
             postData.append(URLEncoder.encode(String.valueOf(param.getValue()), DEF_FILE_ENCODING));
@@ -532,36 +512,39 @@ public class WsCommand extends BaseCommand {
         byte[] postDataBytes = postData.toString().getBytes(DEF_FILE_ENCODING);
 
         URL url = new URL(oAuthUrl);
-        HttpURLConnection con = (HttpURLConnection) url.openConnection();
-        con.setDoOutput(true);
-        con.setUseCaches(false);
-        con.setRequestMethod("POST");
+        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+        conn.setDoOutput(true);
+        conn.setUseCaches(false);
+        conn.setRequestMethod("POST");
 
         if (StringUtils.isNotEmpty(basicAuthUsername) && StringUtils.isNotEmpty(basicAuthPassword)) {
-            String encoding =
-                getEncoder().encodeToString((basicAuthUsername + ":" + basicAuthPassword).getBytes(UTF_8));
-            con.setRequestProperty("Authorization", StringUtils.join(OAUTH_TOKEN_TYPE_BASIC, SPACE, encoding));
+            String encoded =
+                new String(Base64.encodeBase64((basicAuthUsername + ":" + basicAuthPassword).getBytes(UTF_8)));
+            conn.setRequestProperty("Authorization", OAUTH_TOKEN_TYPE_BASIC + " " + encoded);
         }
-        con.getOutputStream().write(postDataBytes);
+        conn.getOutputStream().write(postDataBytes);
 
-        BufferedReader reader = new BufferedReader(new InputStreamReader(con.getInputStream()));
+        BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
         StringBuilder buffer = new StringBuilder();
-        for (String line = reader.readLine(); line != null; line = reader.readLine()) {
-            buffer.append(line);
-        }
+        for (String line = reader.readLine(); line != null; line = reader.readLine()) { buffer.append(line); }
 
-        Map<String, String> oauthResponse = new HashMap<>();
-        JSONObject json = new JSONObject(buffer.toString());
-        for (String key : json.keySet()) {
-            oauthResponse.put(key, String.valueOf(json.get(key)));
-        }
-        return oauthResponse;
+        return processOAuthResponse(var, buffer.toString());
     }
 
     /**
      * download content of {@code @url}, assuming the content is of text nature.
      */
-    public static String resolveWebContent(String url) throws IOException {
+    public static String resolveWebContent(String url) throws IOException { return retrieveWebContent(url).getBody(); }
+
+    /**
+     * download content of {@code @url}, assuming the content can be text or binary in nature
+     */
+    public static byte[] resolveWebContentBytes(String url) throws IOException {
+        return retrieveWebContent(url).getRawBody();
+    }
+
+    @Nonnull
+    private static Response retrieveWebContent(String url) throws IOException {
         if (StringUtils.isBlank(url)) { throw new IOException("Unable to retrieve content from URL [" + url + "]"); }
 
         WebServiceClient wsClient = new WebServiceClient(null);
@@ -577,29 +560,8 @@ public class WsCommand extends BaseCommand {
                 throw new IOException("Unable to retrieve content from '" + url + "': " + response.getStatusText());
             }
         }
-        return response.getBody();
-    }
 
-    /**
-     * download content of {@code @url}, assuming the content can be text or binary in nature
-     */
-    public static byte[] resolveWebContentBytes(String url) throws IOException {
-        if (StringUtils.isBlank(url)) { throw new IOException("Unable to retrieve content from URL [" + url + "]"); }
-
-        WebServiceClient wsClient = new WebServiceClient(null);
-        Response response = wsClient.get(url, null);
-        int returnCode = response.getReturnCode();
-        if (returnCode <= 199 || returnCode >= 300) {
-            // sleep and try again...
-            try { Thread.sleep(5000); } catch (InterruptedException e) { }
-            response = wsClient.get(url, null);
-            returnCode = response.getReturnCode();
-            if (returnCode <= 199 || returnCode >= 300) {
-                // give up
-                throw new IOException("Unable to retrieve content from '" + url + "': " + response.getStatusText());
-            }
-        }
-        return response.getRawBody();
+        return response;
     }
 
     /**

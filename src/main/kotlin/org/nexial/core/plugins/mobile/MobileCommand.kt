@@ -68,6 +68,7 @@ import org.nexial.core.plugins.mobile.Direction.*
 import org.nexial.core.plugins.mobile.MobileLocatorHelper.Companion.clearAllNotificationsLocators
 import org.nexial.core.plugins.mobile.MobileLocatorHelper.Companion.doneLocator
 import org.nexial.core.plugins.mobile.MobileLocatorHelper.Companion.iosAlertLocator
+import org.nexial.core.plugins.mobile.MobileLocatorHelper.Companion.iosKeyboardDoneLocator
 import org.nexial.core.plugins.mobile.MobileLocatorHelper.Companion.pickerWheelLocator
 import org.nexial.core.plugins.mobile.MobileLocatorHelper.Companion.prefixIndex
 import org.nexial.core.plugins.mobile.MobileLocatorHelper.Companion.regexOneOfLocator
@@ -564,13 +565,15 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
             if (StringUtils.equals(elementText, text))
                 StepResult.success("Element '$locator' already contain text '$text")
             else {
-                clearText(findBy)
+                if (StringUtils.isNotEmpty(elementText)) clearText(findBy)
                 findElement(findBy).sendKeys(text)
                 val postWaitMs = mobileService.profile.postActionWaitMs
                 if (postWaitMs > MIN_WAIT_MS) waitFor(postWaitMs.toInt())
 
                 // close keyboard if possible
-                if (mobileService.isIOS() && isElementPresent("name=Done")) click("name=Done")
+                if (mobileService.profile.hideKeyboard &&
+                    mobileService.isIOS() &&
+                    isElementPresent(iosKeyboardDoneLocator)) click(iosKeyboardDoneLocator)
 
                 StepResult.success("Text '$text' typed on '$locator'")
             }
@@ -892,7 +895,10 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
             StepResult.success("on-screen keyboard already hidden")
     }
 
-    fun home(): StepResult = keyPress(if (getMobileService().profile.mobileType.isAndroid()) HOME.code else MENU.code)
+    fun home() = when (getMobileService().profile.mobileType) {
+        ANDROID -> keyPress(HOME.code)
+        IOS -> launchApp("com.apple.springboard")
+    }
 
     fun back() = keyPress(BACK.code)
 
@@ -1462,6 +1468,8 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
     private fun clearText(findBy: By) {
         val element = findElement(findBy)
         val elementText = element.text
+        if (StringUtils.isEmpty(elementText)) return
+
         element.click()
         // blank/spaces must be treated different, at least for android
         if (StringUtils.isBlank(elementText))
