@@ -22,6 +22,7 @@ import org.apache.commons.lang3.ArrayUtils
 import org.apache.commons.lang3.BooleanUtils
 import org.apache.commons.lang3.StringUtils
 import org.nexial.commons.utils.JRegexUtils
+import org.nexial.commons.utils.RegexUtils
 import org.nexial.commons.utils.TextUtils
 import org.nexial.core.NexialConst.PolyMatcher.*
 import org.nexial.core.NexialConst.PolyMatcher.Message.*
@@ -253,13 +254,6 @@ class LocatorHelper internal constructor(private val delegator: WebCommand) {
         return StringUtils.removeEnd(xpath.toString(), " and ") + "]"
     }
 
-    // internal fun validateLocator(locator: String): String {
-    //     if (StringUtils.isBlank(locator)) CheckUtils.fail("invalid locator")
-    //     return if (StringUtils.startsWithIgnoreCase(locator, id) && delegator.browser.isRunSafari)
-    //         "//*[@id='" + StringUtils.substring(locator, id.length) + "']"
-    //     else locator
-    // }
-
     fun assertTextList(locator: String, textList: String, ignoreOrder: String?): StepResult {
         // remove empty items since we can't compare them...
         val matchText = ListUtils.removeAll(collectTextList(locator), listOf(""))
@@ -383,6 +377,9 @@ class LocatorHelper internal constructor(private val delegator: WebCommand) {
         // (//a/b/c)[2]
         // (.//a/b/c)[2]
         private val PATH_STARTS_WITH = listOf("/", "./", "(/", "( /", "(./", "( ./")
+
+        @JvmStatic
+        fun toLocatorString(findBy: By): String = RegexUtils.removeMatches(findBy.toString(), "^By\\..+\\:\\s*")
 
         @JvmStatic
         fun normalizeXpathText(label: String?): String {

@@ -75,9 +75,9 @@ import org.nexial.core.plugins.mobile.MobileLocatorHelper.Companion.regexOneOfLo
 import org.nexial.core.plugins.mobile.MobileLocatorHelper.Companion.scriptPressButton
 import org.nexial.core.plugins.mobile.MobileLocatorHelper.Companion.scrollableLocator
 import org.nexial.core.plugins.mobile.MobileLocatorHelper.Companion.scrollableLocator2
-import org.nexial.core.plugins.mobile.MobileLocatorHelper.Companion.toLocatorString
 import org.nexial.core.plugins.mobile.MobileType.ANDROID
 import org.nexial.core.plugins.mobile.MobileType.IOS
+import org.nexial.core.plugins.web.LocatorHelper.Companion.toLocatorString
 import org.nexial.core.plugins.web.WebDriverExceptionHelper.resolveErrorMessage
 import org.nexial.core.utils.CheckUtils.*
 import org.nexial.core.utils.ConsoleUtils
@@ -897,7 +897,7 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
 
     fun home() = when (getMobileService().profile.mobileType) {
         ANDROID -> keyPress(HOME.code)
-        IOS -> launchApp("com.apple.springboard")
+        IOS     -> launchApp("com.apple.springboard")
     }
 
     fun back() = keyPress(BACK.code)

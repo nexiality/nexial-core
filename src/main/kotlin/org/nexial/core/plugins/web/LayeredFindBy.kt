@@ -18,6 +18,8 @@
 package org.nexial.core.plugins.web
 
 import org.apache.commons.collections4.CollectionUtils
+import org.nexial.core.plugins.web.LocatorHelper.Companion.toLocatorString
+import org.nexial.core.utils.ConsoleUtils
 import org.openqa.selenium.By
 import org.openqa.selenium.SearchContext
 import org.openqa.selenium.WebElement
@@ -25,9 +27,13 @@ import java.io.Serializable
 
 class LayeredFindBy(val locators: List<String>) : By(), Serializable {
     // very first locator should be absolute while all subsequent locators should be relative
-    private val findBys = locators.mapIndexed {
-        index, locator -> LocatorHelper.LocatorType.build(locator, index != 0)
+    private val findBys = locators.mapIndexed { index, locator ->
+        LocatorHelper.LocatorType.build(locator, index != 0)
     }.toList()
+
+    init {
+        ConsoleUtils.log("${toString()} mapped to ${findBys.joinToString(separator = " -> ") { toLocatorString(it) }}")
+    }
 
     override fun findElement(context: SearchContext): WebElement? =
         findElements(context, findBys[0], findBys.drop(1)).firstOrNull()

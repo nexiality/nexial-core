@@ -186,13 +186,6 @@ class MobileLocatorHelper(private val mobileService: MobileService) {
                                                            "{text=Clear all}" +
                                                            "{android;id=com.android.systemui:id/dismiss_text}" +
                                                            "{android;id=com.android.systemui:id/clear_all_button}"
-        // internal val clearAllNotificationsLocators = listOf(
-        //     ConditionalLocator(ANDROID, "text=Clear all"),
-        //     ConditionalLocator(ANDROID, "id=com.android.systemui:id/dismiss_text"),
-        //     ConditionalLocator(ANDROID, "id=com.android.systemui:id/clear_all_button"),
-        // )
-
-        internal fun toLocatorString(findBy: By) = RegexUtils.removeMatches(findBy.toString(), "^By\\..+\\:\\s*")
 
         /**
          * Expected format: `nearby={left-of|right-of|below|above:text}{attribute_with_value_as_true,attribute=value,...}`

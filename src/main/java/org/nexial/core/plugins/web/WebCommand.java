@@ -3005,7 +3005,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     protected StepResult clickInternal(String locator) {
         try {
             WebElement element = findElement(locator);
-            if (!isElementVisible(locator, context.getPollWaitMs())) {
+            if (!isElementVisible(element)) {
                 ConsoleUtils.log("Target element not visible; clicking on such element might not work...");
             }
             ConsoleUtils.log("clicking '" + locator + "'...");
@@ -3762,11 +3762,15 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
     private boolean isElementVisible(String locator, long maxWait) {
         By by = locatorHelper.findBy(locator);
-        return waitForCondition(maxWait, object -> {
-            WebElement elem = driver.findElement(by);
-            if (elem == null || !elem.isDisplayed()) { return false; }
-            return isTrue(jsExecutor.executeScript(JsLib.isVisible(), elem));
-        });
+        return waitForCondition(maxWait, object -> { return isElementVisible(driver.findElement(by)); });
+    }
+
+    private boolean isElementVisible(WebElement element) {
+        if (element == null || !element.isDisplayed()) {
+            return false;
+        } else {
+            return isTrue(jsExecutor.executeScript(JsLib.isVisible(), element));
+        }
     }
 
     protected StepResult saveTextSubstring(String var, String locator, String delimStart, String delimEnd) {
