@@ -27,7 +27,6 @@ import java.util.List;
  */
 public class SwaggerActivity {
     private String name;
-    private String description;
     private List<SwaggerStep> steps;
 
     public String getName() {
@@ -38,13 +37,6 @@ public class SwaggerActivity {
         this.name = name;
     }
 
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
 
     public List<SwaggerStep> getSteps() {
         return steps;
@@ -58,7 +50,7 @@ public class SwaggerActivity {
     public String toString() {
         return "SwaggerActivity{" +
                "name='" + name + '\'' +
-               ", description='" + description + '\'' +
+               ", description='" + '\'' +
                ", steps=" + steps +
                '}';
     }

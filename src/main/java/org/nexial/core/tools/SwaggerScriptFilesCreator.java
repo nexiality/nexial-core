@@ -41,7 +41,6 @@ import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.nexial.commons.utils.ResourceUtils;
 import org.nexial.core.tools.swagger.*;
-import org.nexial.core.utils.ConsoleUtils;
 
 /**
  * This class is used to generate the files related to the Swagger script generation like the script, data and binary
@@ -77,7 +76,7 @@ public class SwaggerScriptFilesCreator {
         createBatchFile(projectDirPath, BATCH_FILE_SH_TEMPLATE, BATCH_FILE_SH_EXTENSION, swaggerPrefix);
 
         copySwaggerFileToProjectDir(swaggerPrefix, swaggerFile, projectDirPath);
-        displayCreatedFileInfo(projectDirPath, swaggerPrefix);
+        displayCreatedFileInfo(projectDirPath, swaggerPrefix, swaggerFile);
     }
 
     /**
@@ -87,38 +86,45 @@ public class SwaggerScriptFilesCreator {
      * @param projectDirPath the Nexial project Directory path.
      * @param prefix         the Swagger prefix.
      */
-    private void displayCreatedFileInfo(String projectDirPath, String prefix) {
-        ConsoleUtils.log("Generation completed.");
-        ConsoleUtils.log("Nexial artifact generated in " + join(projectDirPath, separator, "artifact", separator));
+    private void displayCreatedFileInfo(String projectDirPath, String prefix, String swaggerFile) {
+        String projectName = substringAfterLast(projectDirPath, separator);
+        System.out.println("Generation completed.\n");
+        System.out.println("Nexial .meta directory generated in " + join(projectDirPath, separator, ".meta") + "\n");
 
-        ConsoleUtils.log("\tbin\\");
-        ConsoleUtils.log("\t\trun-" + prefix + ".cmd");
-        ConsoleUtils.log("\t\trun-" + prefix + ".sh");
+        System.out.println("Nexial artifacts generated in " + join(projectDirPath, separator, "artifact"));
+        System.out.println("\tbin");
+        System.out.println("\t\trun-" + prefix + ".cmd");
+        System.out.println("\t\trun-" + prefix + ".sh");
 
-        ConsoleUtils.log("\tdata\\");
-        ConsoleUtils.log(join("\t\t", prefix, ".data", EXCEL_EXTENSION));
+        System.out.println("\tdata");
+        System.out.println(join("\t\t", prefix, ".data", EXCEL_EXTENSION));
+        System.out.println(
+                "\t\t" + joinWith(separator, "Swagger", join(prefix, ".", substringAfterLast(swaggerFile, separator))) +
+                " (The Swagger file)");
 
-        ConsoleUtils.log("\tscript\\");
-        ConsoleUtils.log(join("\t\t", prefix, EXCEL_EXTENSION));
+        System.out.println("\t\t" + joinWith(separator, "Schema", prefix) + " (The Schema folder)");
 
-        ConsoleUtils.log("\t" + join("project.", prefix, ".properties") + "\n");
+        System.out.println("\tplan");
+        System.out.println(join("\t\t", projectName, "-plan", EXCEL_EXTENSION));
 
-        ConsoleUtils.log("Before running the script,");
-        ConsoleUtils.log("\tupdate your test data in " + joinWith(separator, projectDirPath, "artifact", "data",
-                                                                  join(prefix, ".data", EXCEL_EXTENSION)));
+        System.out.println("\tscript");
+        System.out.println(join("\t\t", prefix, EXCEL_EXTENSION));
+        System.out.println("\t" + join("project.", prefix, ".properties") + "\n");
 
-        ConsoleUtils.log("\tupdate your data variables in " + joinWith(separator, projectDirPath, "artifact",
-                                                                       join("project.", prefix, ".properties")));
+        System.out.println("Before running the script,");
+        System.out.println("\tupdate your test data in " + joinWith(separator, projectDirPath, "artifact", "data",
+                                                                    join(prefix, ".data", EXCEL_EXTENSION)));
 
-        ConsoleUtils.log("\tadjust the generated script as needed - "
-                         + joinWith(separator, projectDirPath, "artifact", "script", join(prefix, EXCEL_EXTENSION)) +
-                         "\n");
+        System.out.println("\tupdate your data variables in " + joinWith(separator, projectDirPath, "artifact",
+                                                                         join("project.", prefix, ".properties")));
+        System.out.println("\tadjust the generated script as needed - "
+                           + joinWith(separator, projectDirPath, "artifact", "script", join(prefix, EXCEL_EXTENSION)) +
+                           "\n");
 
-        ConsoleUtils.log("To run the generated tests, use ");
-        ConsoleUtils.log("\t" + joinWith(separator, projectDirPath, "artifact", "bin",
-                                         join("run-", prefix,
-                                              SystemUtils.OS_NAME.toLowerCase().startsWith("windows") ? ".cmd" :
-                                              ".sh")));
+        System.out.println("To run the generated tests, use ");
+        String osName = SystemUtils.OS_NAME.toLowerCase();
+        System.out.println("\t" + joinWith(separator, projectDirPath, "artifact", "bin",
+                                           join("run-", prefix, osName.startsWith("windows") ? ".cmd" : ".sh")));
     }
 
     /**
@@ -165,7 +171,24 @@ public class SwaggerScriptFilesCreator {
         if (!propertiesFile.exists()) {
             boolean propertiesFileCreated = propertiesFile.createNewFile();
             if (!propertiesFileCreated) {
-                System.err.println("Properties file" + propertiesFile.getAbsolutePath() + " failed to created.");
+                System.err.println("Properties file" + propertiesFile.getAbsolutePath() + " failed to create.");
+            }
+        }
+
+        File metaDir = new File(joinWith(separator, dir.getAbsolutePath(), ".meta"));
+        if (!metaDir.exists()) {
+            boolean dirCreated = metaDir.mkdir();
+            if (dirCreated) {
+                File projectIdFile = new File(joinWith(separator, metaDir.getAbsolutePath(), "project.id"));
+                boolean fileCreated = projectIdFile.createNewFile();
+                if (fileCreated) {
+                    FileUtils.writeStringToFile(projectIdFile, substringAfterLast(dir.getAbsolutePath(), separator),
+                                                "UTF-8");
+                } else {
+                    System.err.println("Failed to created file " + projectIdFile.getAbsolutePath());
+                }
+            } else {
+                System.err.println("Failed to created folder " + metaDir.getAbsolutePath());
             }
         }
 
@@ -383,12 +406,7 @@ public class SwaggerScriptFilesCreator {
         for (int i = 0; i < scenariosLength; i++) {
             SwaggerScenario scenario = scenarios.get(i);
             String scenarioName = scenario.getName();
-
-            if (scriptWorkBook.getSheetIndex(scenarioName) == -1) {
-                sheet = scriptWorkBook.cloneSheet(index, scenarioName);
-            } else {
-                sheet = scriptWorkBook.cloneSheet(index, String.valueOf(i).concat(scenarioName));
-            }
+            sheet = scriptWorkBook.cloneSheet(index, scenarioName);
 
             sheet.getRow(1).getCell(0)
                  .setCellValue(scenarios.get(i).getDescription());
