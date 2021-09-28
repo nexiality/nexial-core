@@ -1916,15 +1916,20 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         try {
             clearValue(element);
         } catch (WebDriverException e) {
-            // sometimes the `clear` invokes page action such as reload, in which case the target element might no longer
-            // available (aka NoSuchElementException or StaleElementException)
-            // ignore this... move on.
-            ConsoleUtils.log("Unable to reference element (" + locator + "), possibly due to page loading; wait...");
-            if (waitForElementPresent(locator, getPollWaitMs() + "").failed()) {
-                error("Web element '" + locator + "' no longer available after its value is cleared");
+            if (e instanceof ElementNotInteractableException) {
+                // element is found, not cannot be interacted... I guess we'll give up and move on
+                ConsoleUtils.log("Unable to interact with element (" + locator + ")...");
             } else {
-                // do what we came here for...
-                clearValue(element);
+                // sometimes the `clear` invokes page action such as reload, in which case the target element might no longer
+                // available (aka NoSuchElementException or StaleElementException)
+                // ignore this... move on.
+                ConsoleUtils.log("Unable to reference element (" + locator + "), possibly due to page loading...");
+                if (waitForElementPresent(locator, getPollWaitMs() + "").failed()) {
+                    error("Web element '" + locator + "' no longer available after its value is cleared");
+                } else {
+                    // do what we came here for...
+                    clearValue(element);
+                }
             }
             // proceed anyways...
         }
