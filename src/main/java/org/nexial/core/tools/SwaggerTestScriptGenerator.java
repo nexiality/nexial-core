@@ -60,7 +60,6 @@ import org.yaml.snakeyaml.Yaml;
 public class SwaggerTestScriptGenerator {
     private static final int PREFIX_MAX_LENGTH = 30;
     private static final int MAX_TAB_NAME_LENGTH_EXCEL = 31;
-    private static final String SWAGGER_PATH_SEPARATOR = "/";
     private static final String STRING_SEPARATOR = "-";
     private static final String QUERY_STRING_PARAMS_APPENDER = "&";
 
@@ -87,7 +86,6 @@ public class SwaggerTestScriptGenerator {
     private static final String COMMAND_CLEAR = "clear(vars)";
     private static final String COMMAND_OBSERVE = "observe(prompt)";
 
-    private static final String NEXIAL_EMPTY_STRING = "(empty)";
     private static final String RESPONSE_FILE_POSTFIX = "Schema.json";
 
     private static final String HEADER_CONTENT_TYPE = "Content-Type";
@@ -232,7 +230,7 @@ public class SwaggerTestScriptGenerator {
             for (String method : methods.keySet()) {
                 String title = json.optJSONObject("info").optString("title");
                 String scenarioName =
-                        getScenarioName(path.equals(SWAGGER_PATH_SEPARATOR) ? title.replaceAll("\\s", EMPTY) : path,
+                        getScenarioName(path.equals("/") ? title.replaceAll("\\s", EMPTY) : path,
                                         method);
                 SwaggerScenario scenario = new SwaggerScenario();
                 List<SwaggerActivity> activities = new ArrayList<>();
@@ -304,7 +302,7 @@ public class SwaggerTestScriptGenerator {
 
                     if (!authenticationAdded && methodSecurity != null) {
                         securityHeaders = generateSecurityVariable(methodSecurity, sameAuthentication,
-                                                                   scenarioName, method);
+                                                                   scenarioName);
                         if (securityHeaders != null) {
                             for (String s : securityHeaders.keySet()) {
                                 headerValue = securityHeaders.get(s);
@@ -327,7 +325,7 @@ public class SwaggerTestScriptGenerator {
                             String authScheme = methodSecurity.optString("scheme");
                             String scheme = isNotEmpty(authScheme) ? authScheme : methodSecurity.optString("type");
                             String promptMessage = "Authentication mechanism " + scheme +
-                                                   " is not supported. Edit the script accordingly";
+                                                   " is not supported. Edit the script accordingly.";
                             String name = "Warning";
                             String description = "Unsupported Authentication mechanism.";
                             addPromptStep(activities, promptMessage, name, description);
@@ -499,7 +497,7 @@ public class SwaggerTestScriptGenerator {
             String requestBodyRefStr = requestBody.optString("$ref");
             if (isNotEmpty(requestBodyRefStr)) {
                 JSONObject schemas = components.optJSONObject("schemas");
-                return schemas.optJSONObject(substringAfterLast(requestBodyRefStr, SWAGGER_PATH_SEPARATOR));
+                return schemas.optJSONObject(substringAfterLast(requestBodyRefStr, "/"));
             }
         }
         return requestBody;
@@ -547,7 +545,7 @@ public class SwaggerTestScriptGenerator {
                     if (isNotEmpty(propertyRef)) {
                         JSONObject current = new JSONObject();
                         result.put(property, current);
-                        String innerSchema = substringAfterLast(propertyRef, SWAGGER_PATH_SEPARATOR);
+                        String innerSchema = substringAfterLast(propertyRef, "/");
                         getRequestBody(components, schemas.optJSONObject(innerSchema),
                                        current, joinWith(".", prefix, innerSchema),
                                        requestBodyVariables, varName);
@@ -631,7 +629,7 @@ public class SwaggerTestScriptGenerator {
             JSONObject parameterSchemas = attributes.getParameterSchemas();
             if (parameterSchemas != null && isNotEmpty(parameterSchemaRef)) {
                 paramDetails = parameterSchemas.getJSONObject(substringAfterLast(parameterSchemaRef,
-                                                                                 SWAGGER_PATH_SEPARATOR));
+                                                                                 "/"));
             }
 
             String paramType = paramDetails.optString("in");
@@ -674,9 +672,8 @@ public class SwaggerTestScriptGenerator {
 
     /**
      * Retrieves the scenario name out of the path and method. The path is appended with method.
-     * The {@link SwaggerTestScriptGenerator#SWAGGER_PATH_SEPARATOR}
-     * will be replaced with {@link SwaggerTestScriptGenerator#STRING_SEPARATOR}. Similarly, the "{" and "}" will be
-     * removed. If the obtained text is greater than
+     * The / will be replaced with {@link SwaggerTestScriptGenerator#STRING_SEPARATOR}.
+     * Similarly, the "{" and "}" will be removed. If the obtained text is greater than
      * characters then the last {@link SwaggerTestScriptGenerator#MAX_TAB_NAME_LENGTH_EXCEL} characters from the end
      * becomes the scenario name.
      *
@@ -685,8 +682,7 @@ public class SwaggerTestScriptGenerator {
      * @return the scenario name.
      */
     private static String getScenarioName(String path, String method) {
-        String scenarioName = path.replace(SWAGGER_PATH_SEPARATOR, STRING_SEPARATOR)
-                                  .replace("{", EMPTY).replace("}", EMPTY);
+        String scenarioName = remove(remove(path.replace("/", STRING_SEPARATOR), "{"), "}");
         if (scenarioName.startsWith(STRING_SEPARATOR)) {scenarioName = scenarioName.substring(1);}
         scenarioName = joinWith(STRING_SEPARATOR, scenarioName, method.toUpperCase());
         return substring(scenarioName, MAX_TAB_NAME_LENGTH_EXCEL * -1);
@@ -748,14 +744,14 @@ public class SwaggerTestScriptGenerator {
                                                     .withQueryParamString(generateQueryParams(attributes.getParams()));
 
         if (contentType.equals(CONTENT_TYPE_APPLICATION_JSON)) {
-            String requestJSONBodyFile = joinWith(SWAGGER_PATH_SEPARATOR, "$(syspath|data|fullpath)",
+            String requestJSONBodyFile = joinWith("/", "$(syspath|data|fullpath)",
                                                   swaggerPrefix, attributes.getRequestJSONBodyFile());
             methodInvocationStepAttributes.withRequestBody(requestJSONBodyFile);
         } else if (contentType.equals(CONTENT_TYPE_OCTECT_STREAM)) {
             String fileVar = joinWith(".", attributes.getScenarioName(), response, "file");
             methodInvocationStepAttributes.withRequestBody(fileVar);
         } else {
-            methodInvocationStepAttributes.withRequestBody(NEXIAL_EMPTY_STRING);
+            methodInvocationStepAttributes.withRequestBody(Data.EMPTY);
         }
         generateMethodInvocationStep(methodInvocationStepAttributes, steps);
 
@@ -863,7 +859,7 @@ public class SwaggerTestScriptGenerator {
                              join(attributes.getMethod(), "(url,body,var)"),
                              join("${baseUrl}", attributes.getPathString(), isNotEmpty(queryParamString) ?
                                                                             "?" : EMPTY, queryParamString).trim(),
-                             isNotEmpty(requestBody) ? requestBody : NEXIAL_EMPTY_STRING,
+                             isNotEmpty(requestBody) ? requestBody : Data.EMPTY,
                              attributes.getResponseVariable()));
     }
 
@@ -962,7 +958,7 @@ public class SwaggerTestScriptGenerator {
                 if (value != null) {
                     for (String x : value.keySet()) {
                         if (x.equals("$ref")) {
-                            String inlineSchema = substringAfterLast(value.getString(x), SWAGGER_PATH_SEPARATOR);
+                            String inlineSchema = substringAfterLast(value.getString(x), "/");
                             JSONObject innerSchema = schemas.getJSONObject(inlineSchema).getJSONObject("properties");
                             properties.put(key, innerSchema);
                             getResponseSchemaJSON(innerSchema, schemas);
@@ -971,7 +967,7 @@ public class SwaggerTestScriptGenerator {
                         if (x.equals("items")) {
                             String ref = value.optJSONObject("items").optString("$ref");
                             if (isNotEmpty(ref)) {
-                                String inlineSchema = substringAfterLast(ref, SWAGGER_PATH_SEPARATOR);
+                                String inlineSchema = substringAfterLast(ref, "/");
                                 value.getJSONObject(x).put("$ref", join("#/$defs/", inlineSchema));
 
                                 JSONObject inSchema = schemas.getJSONObject(inlineSchema).getJSONObject("properties");
@@ -997,7 +993,7 @@ public class SwaggerTestScriptGenerator {
             if (items != null) {
                 String ref = items.optString("$ref");
                 if (isNotEmpty(ref)) {
-                    String inlineSchema = substringAfterLast(ref, SWAGGER_PATH_SEPARATOR);
+                    String inlineSchema = substringAfterLast(ref, "/");
                     items.put("$ref", join("#/$defs/", inlineSchema));
                     JSONObject innerSchema = schemas.getJSONObject(inlineSchema).getJSONObject("properties");
                     schema.put("$defs", new JSONObject().put(inlineSchema, innerSchema));
@@ -1017,12 +1013,11 @@ public class SwaggerTestScriptGenerator {
      * @param sameAuthentication tells if the authentication mechanism is same for all the Rest API calls
      *                           in the Swagger or not.
      * @param scenarioName       the scenario name.
-     * @param method             the http method.
      * @return a {@link Map} of security variable scenarioName-value pairs. For example "Authorization" is the scenarioName and value
      *         is in the format ${<AUTH_TYPE>.<scenarioName>.<method>}.
      */
     private static Map<String, String> generateSecurityVariable(JSONObject security, boolean sameAuthentication,
-                                                                String scenarioName, String method) {
+                                                                String scenarioName) {
         // TODO OAuth2.0 and OpenId connectivity are not considered for now. Will support in later releases.
         String in = security.optString("in");
         String name = security.optString("name");

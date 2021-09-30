@@ -183,7 +183,7 @@ public class SwaggerScriptFilesCreator {
                 boolean fileCreated = projectIdFile.createNewFile();
                 if (fileCreated) {
                     FileUtils.writeStringToFile(projectIdFile, substringAfterLast(dir.getAbsolutePath(), separator),
-                                                "UTF-8");
+                                                DEF_CHARSET);
                 } else {
                     System.err.println("Failed to created file " + projectIdFile.getAbsolutePath());
                 }
