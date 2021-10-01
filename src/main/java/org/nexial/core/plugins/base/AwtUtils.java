@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2018 the original author or authors.
+ * Copyright 2012-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,17 +17,16 @@
 
 package org.nexial.core.plugins.base;
 
-import java.awt.*;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
-
-import javax.annotation.Nullable;
-
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.nexial.core.utils.ConsoleUtils;
+
+import java.awt.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
+import javax.annotation.Nullable;
 
 import static java.awt.event.KeyEvent.*;
 
@@ -64,12 +63,9 @@ public final class AwtUtils {
 
     @Nullable
     public static Dimension getScreenDimension(int monitorIndex) {
-        GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
-        if (ge == null) { return null; }
-
-        GraphicsDevice[] screens = ge.getScreenDevices();
+        GraphicsDevice[] screens = getAvailableScreens();
+        if (screens == null) { return null; }
         if (ArrayUtils.isEmpty(screens)) { return null; }
-
         if (monitorIndex < 0 || screens.length <= monitorIndex) { monitorIndex = 0; }
 
         GraphicsConfiguration[] screenConfig = screens[monitorIndex].getConfigurations();
@@ -79,6 +75,50 @@ public final class AwtUtils {
         allBounds.height = screenConfig[0].getBounds().height;
         return allBounds;
     }
+
+    @Nullable
+    public static GraphicsDevice[] getAvailableScreens() {
+        GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+        return ge == null ? null : ge.getScreenDevices();
+    }
+
+
+    // DOESN'T WORK?
+    /**
+     * change the application's starting position (x, y) based on specific monitor ({@literal screenIndex}) and the
+     * starting position of that screen ({@literal screenStartingPosition}).
+     */
+    // @NotNull
+    // public static Point adjustForScreen(Point appStartingPosition, int screenIndex, Point screenStartingPosition) {
+    //     GraphicsDevice[] screens = GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices();
+    //
+    //     // default to 1st
+    //     if (screenIndex < 1) { screenIndex = 0; }
+    //
+    //     // default to last
+    //     if (screenIndex >= screens.length) { screenIndex = screens.length - 1; }
+    //
+    //     // target screen dimension
+    //     Rectangle bounds = screens[screenIndex].getDefaultConfiguration().getBounds();
+    //
+    //     // Is double?
+    //     double x = screenStartingPosition.x;
+    //     // Decimal -> percentage
+    //     if (x == Math.floor(x) && !Double.isInfinite(x)) { x *= bounds.x; }
+    //
+    //     // Decimal -> percentage
+    //     double y = screenStartingPosition.y;
+    //     if (y == Math.floor(y) && !Double.isInfinite(y)) { y *= bounds.y; }
+    //
+    //     x = bounds.x + x;
+    //     y = appStartingPosition.y + y;
+    //
+    //     // make sure we stay within target screen bounds
+    //     if (x > bounds.x) { x = bounds.x; }
+    //     if (y > bounds.y) { y = bounds.y; }
+    //
+    //     return new Point((int) x, (int) y);
+    // }
 
     public static void typeKey(String text) {
         if (StringUtils.isEmpty(text)) { throw new IllegalArgumentException("text is blank/null"); }

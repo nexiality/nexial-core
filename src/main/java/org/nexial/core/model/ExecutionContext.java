@@ -349,7 +349,8 @@ public class ExecutionContext {
     }
 
     public boolean isFailFastCommand(String target, String command) {
-        return failfastCommands.contains(target + "." + StringUtils.substringBefore(command, "("));
+        return !getBooleanData(DISABLE_CRITICAL_COMMANDS, getDefaultBool(DISABLE_CRITICAL_COMMANDS)) &&
+               failfastCommands.contains(target + "." + StringUtils.substringBefore(command, "("));
     }
 
     public boolean isFailFastCommand(TestStep testStep) {

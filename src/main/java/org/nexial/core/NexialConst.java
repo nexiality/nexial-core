@@ -486,6 +486,7 @@ public final class NexialConst {
 
         // determine if we should clear off any fail-fast state at the end of each script
         public static final String RESET_FAIL_FAST = registerSysVar(NAMESPACE + "resetFailFast", false);
+        public static final String DISABLE_CRITICAL_COMMANDS = registerSysVar(NAMESPACE + "disableCriticalCommands", false);
         public static final String VERBOSE = registerSysVar(NAMESPACE + "verbose", false);
         public static final String QUIET = registerSysVar(NAMESPACE + "quiet", false);
         public static final String NULL_VALUE = registerSysVar(NAMESPACE + "nullValue", "(null)");
