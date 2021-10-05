@@ -1,17 +1,18 @@
 /*
- * Copyright 2012-2018 the original author or authors.
+ * Copyright 2012-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *       http://www.apache.org/licenses/LICENSE-2.0
+ * 	http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package org.nexial.core.utils
@@ -39,7 +40,7 @@ object NativeInputParser {
                 // get all keys before [
                 keystrokes += StringUtils.substringBefore(allKeys, "[$substring]")
 
-                val keyStroke = "{${substring.toUpperCase()}}"
+                val keyStroke = "{${substring.uppercase()}}"
                 keystrokes += if (isKey(keyStroke)) keyStroke else parseKeys(substring)
 
                 StringUtils.substringAfter(allKeys, "[$substring]")
@@ -57,7 +58,7 @@ object NativeInputParser {
         var keystrokes = ""
 
         TextUtils.toList(keys, "-", true).forEach { key ->
-            val keystroke = "{${key.toUpperCase()}}"
+            val keystroke = "{${key.uppercase()}}"
             keystrokes += if (isKey(keystroke)) {
                 containsKey = true
                 keystroke

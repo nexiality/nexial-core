@@ -1,17 +1,18 @@
 /*
- * Copyright 2012-2018 the original author or authors.
+ * Copyright 2012-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *       http://www.apache.org/licenses/LICENSE-2.0
+ * 	http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package org.nexial.core.plugins.db
@@ -37,7 +38,7 @@ import java.sql.SQLException
 
 /**
  * The concept of "localdb" is to maintain a database within a Nexial installation, with its data stay persisted and
- * intact across executions. It is "local" - meaning, it does not share with a remote Nexial instance and it
+ * intact across executions. It is "local" - meaning, it does not share with a remote Nexial instance, and it
  * cannot be connected via a remote Nexial instance. The purpose of a local-only database can be manifold:
  * 1. store and compare data over multiple executions
  * 2. tally and summary over multiple executions
@@ -78,7 +79,7 @@ class LocalDbCommand : BaseCommand() {
             context.removeData(DAO_PREFIX + dbName)
             dao.dataSource?.connection?.close()
         } catch (e: SQLException) {
-            // probably not yet connected.. ignore
+            // probably not yet connected... ignore
         }
 
         val deleted = FileUtils.deleteQuietly(File(dbFile))
@@ -98,7 +99,7 @@ class LocalDbCommand : BaseCommand() {
         requiresNotBlank(tables, "invalid table(s)", tables)
 
         val sqls = StringUtils.split(tables, context.textDelim)
-                           .joinToString(separator = "\n") { table -> "DROP TABLE $table;" } + "\nVACUUM;"
+                       .joinToString(separator = "\n") { table -> "DROP TABLE $table;" } + "\nVACUUM;"
         return rdbms.runSQLs(`var`, dbName, sqls)
     }
 
@@ -108,7 +109,7 @@ class LocalDbCommand : BaseCommand() {
         requiresNotBlank(target, "invalid target table", target)
 
         // 1. find DDL SQL for `source`
-        val sql = "SELECT sql FROM SQLITE_MASTER WHERE TYPE='table' AND lower(name)='${source.toLowerCase()}';"
+        val sql = "SELECT sql FROM SQLITE_MASTER WHERE TYPE='table' AND lower(name)='${source.lowercase()}';"
         val result = rdbms.dataAccess.execute(sql, dao)
                      ?: return StepResult.fail("FAILED TO DETERMINE DDL SQL for $source: no result found")
 
@@ -179,11 +180,11 @@ class LocalDbCommand : BaseCommand() {
 
         // 2. set up csv parser
         val parser = CsvParserBuilder()
-                .setDelim(context.textDelim)
-                .setHasHeader(true)
-                .setMaxColumns(context.getIntData(CSV_MAX_COLUMNS, -1))
-                .setMaxColumnWidth(context.getIntData(CSV_MAX_COLUMN_WIDTH, -1))
-                .build()
+            .setDelim(context.textDelim)
+            .setHasHeader(true)
+            .setMaxColumns(context.getIntData(CSV_MAX_COLUMNS, -1))
+            .setMaxColumnWidth(context.getIntData(CSV_MAX_COLUMN_WIDTH, -1))
+            .build()
 
         // 3. parse csv and resolve csv metadata
         val csvRecords = parser.parseAllRecords(StringReader(csvContent))
@@ -193,8 +194,8 @@ class LocalDbCommand : BaseCommand() {
 
         // 4. if target table not exist, create it
         val tableInfo = dao.executeSqls(SqlComponent.toList(
-                "SELECT name, \"notnull\" AS 'not_null', dflt_value FROM pragma_table_info('$table') ORDER BY cid;" +
-                "SELECT upper(name) || '=' || dflt_value AS 'defaults' FROM pragma_table_info('$table') WHERE dflt_value IS NOT NULL"))
+            "SELECT name, \"notnull\" AS 'not_null', dflt_value FROM pragma_table_info('$table') ORDER BY cid;" +
+            "SELECT upper(name) || '=' || dflt_value AS 'defaults' FROM pragma_table_info('$table') WHERE dflt_value IS NOT NULL"))
 
         val columns = if (tableInfo.rowCount < 1) {
             // target table does not exist, let's create it
@@ -204,22 +205,22 @@ class LocalDbCommand : BaseCommand() {
         } else {
             // target table exist, let's map out its columns
             val definedColumns = tableInfo[0].cells("name")
-            // there are more columns in CSV than the existing table.. FAIL this
+            // there are more columns in CSV than the existing table... FAIL this
             if (definedColumns.size < headers.size)
                 throw IllegalArgumentException("Existing table $table has ${definedColumns.size} columns " +
                                                "but the specified CSV has ${headers.size} columns")
 
-            val normalizedDefinedColumns = definedColumns.map { it.toString().toLowerCase() }.sorted()
-            val normalizedCsvHeaders = headers.map { it.toLowerCase() }.sorted()
+            val normalizedDefinedColumns = definedColumns.map { it.toString().lowercase() }.sorted()
+            val normalizedCsvHeaders = headers.map { it.lowercase() }.sorted()
 
             TextUtils.toString(
-                    if (normalizedDefinedColumns.containsAll(normalizedCsvHeaders)) {
-                        // all CSV headers are found as column name in the existing table. We'll use name-matching mapping
-                        headers
-                    } else {
-                        // not all CSV headers are found in existing table as column. We'll use left-to-right mapping
-                        definedColumns.subList(0, headers.size)
-                    }.map { treatColumnName(it.toString()) }, ",")
+                if (normalizedDefinedColumns.containsAll(normalizedCsvHeaders)) {
+                    // all CSV headers are found as column name in the existing table. We'll use name-matching mapping
+                    headers
+                } else {
+                    // not all CSV headers are found in existing table as column. We'll use left-to-right mapping
+                    definedColumns.subList(0, headers.size)
+                }.map { treatColumnName(it.toString()) }, ",")
         }
 
         val defaultValues = if (tableInfo.rowCount < 1)
@@ -234,14 +235,13 @@ class LocalDbCommand : BaseCommand() {
         // 5. import data via INSERT generator
         csvRecords.forEach { record ->
             queries.append("INSERT INTO $table ($columns) VALUES (")
-                    .append(record.values.mapIndexed { index, value ->
-                        "'" + treatColumnValue(
-                                if (StringUtils.isEmpty(value))
-                                    defaultValues[headers[index].toUpperCase()] ?: value
-                                else value
-                        ) + "'"
-                    }.joinToString(separator = ","))
-                    .append(");\n")
+                .append(record.values.mapIndexed { index, value ->
+                    "'" + treatColumnValue(
+                        if (StringUtils.isEmpty(value)) defaultValues[headers[index].lowercase()] ?: value
+                        else value
+                    ) + "'"
+                }.joinToString(separator = ","))
+                .append(");\n")
         }
 
         // 6. execute generated queries
@@ -262,10 +262,10 @@ class LocalDbCommand : BaseCommand() {
 
     // handle column names with spaces or commas
     private fun treatColumnName(column: String) = when {
-        StringUtils.isEmpty(column)                           -> "\"\""
-        StringUtils.containsAny(column, " ,()/-")             -> TextUtils.wrapIfMissing(column, "\"", "\"")
-        conflictingColumnNames.contains(column.toLowerCase()) -> TextUtils.wrapIfMissing(column, "\"", "\"")
-        else                                                  -> column
+        StringUtils.isEmpty(column)                         -> "\"\""
+        StringUtils.containsAny(column, " ,()/-")           -> TextUtils.wrapIfMissing(column, "\"", "\"")
+        conflictingColumnNames.contains(column.lowercase()) -> TextUtils.wrapIfMissing(column, "\"", "\"")
+        else                                                -> column
     }
 
     fun exportCSV(sql: String, output: String): StepResult = rdbms.saveResult(dbName, sql, output)
@@ -300,7 +300,7 @@ class LocalDbCommand : BaseCommand() {
     }
 
     fun exportXML(sql: String, output: String, root: String = "root", row: String = "row", cell: String = "cell"):
-            StepResult {
+        StepResult {
         requiresNotBlank(sql, "invalid sql", sql)
         requiresNotBlank(output, "invalid output", output)
         return postExport(dao.saveAsXML(sql, File(output), root, row, cell), output)
@@ -349,27 +349,27 @@ class LocalDbCommand : BaseCommand() {
                 } ?: return StepResult.fail("No valid content matched against '$jsonpath' was not found")
 
             */
-/*
-         * `json` could be:
-         * 1. array of arrays
-         *    [
-         *      [ "header1", "header2", "header3" ],
-         *      [ "col1-1", "col1-2", "col1-3" ],
-         *      [ "col2-1", "col2-2", "col2-3" ]
-         *    ]
-         * 2. array of objects
-         *    [
-         *      { "header1": "col1-1", "header2": "col1-2", "header3": "col1-3" },
-         *      { "header1": "col2-1", "header2": "col2-2", "header3": "col2-3" },
-         *      { "header1": "col3-1", "header2": "col3-2", "header3": "col3-3" }
-         *    ]
-         * 3. objects of array
-         *    {
-         *      "header": [ "header1", "header2", "header3" ],
-         *      "row1": [ "col1-1", "col1-2", "col1-3" ],
-         *      "row2" :[ "col2-1", "col2-2", "col2-3" ]
-         *    }
-         */    /*
+    /*
+             * `json` could be:
+             * 1. array of arrays
+             *    [
+             *      [ "header1", "header2", "header3" ],
+             *      [ "col1-1", "col1-2", "col1-3" ],
+             *      [ "col2-1", "col2-2", "col2-3" ]
+             *    ]
+             * 2. array of objects
+             *    [
+             *      { "header1": "col1-1", "header2": "col1-2", "header3": "col1-3" },
+             *      { "header1": "col2-1", "header2": "col2-2", "header3": "col2-3" },
+             *      { "header1": "col3-1", "header2": "col3-2", "header3": "col3-3" }
+             *    ]
+             * 3. objects of array
+             *    {
+             *      "header": [ "header1", "header2", "header3" ],
+             *      "row1": [ "col1-1", "col1-2", "col1-3" ],
+             *      "row2" :[ "col2-1", "col2-2", "col2-3" ]
+             *    }
+             */    /*
 
 
         // 3. generate INSERT statements

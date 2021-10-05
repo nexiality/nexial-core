@@ -1,17 +1,18 @@
 /*
- * Copyright 2012-2018 the original author or authors.
+ * Copyright 2012-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *       http://www.apache.org/licenses/LICENSE-2.0
+ * 	http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package org.nexial.core.interactive
@@ -19,11 +20,13 @@ package org.nexial.core.interactive
 import org.apache.commons.lang3.StringUtils
 import org.apache.commons.lang3.SystemUtils.*
 import org.apache.cxf.helpers.FileUtils
+import org.aspectj.weaver.tools.cache.SimpleCacheFactory.path
 import org.nexial.commons.proc.ProcessInvoker
 import org.nexial.commons.utils.ResourceUtils
 import org.nexial.core.ExecutionThread
 import org.nexial.core.NexialConst.Data.WIN32_CMD
 import org.nexial.core.NexialConst.OPT_LAST_OUTPUT_LINK
+import org.nexial.core.NexialConst.RB
 import org.nexial.core.plugins.base.BaseCommand
 import org.nexial.core.utils.ConsoleUtils
 import java.io.File
@@ -55,23 +58,20 @@ class ExecutionRecorder(private val baseCommand: BaseCommand) {
         recordingInSession = false
 
         if (outcome.isSuccess) {
-            val videoLink = context.getStringData(OPT_LAST_OUTPUT_LINK)
-            if (videoLink != null) {
-                val selection = ConsoleUtils.pauseForInput(null,
-                                                           "Previous desktop recording available at $videoLink\n" +
-                                                           "Would you like to (P)lay it, (S)how it, (D)elete it? ",
-                                                           "INPUT REQUEST")
+            val link = context.getStringData(OPT_LAST_OUTPUT_LINK)
+            if (link != null) {
+                val selection = ConsoleUtils.pauseForInput(null, RB.Recorder.text("stop.prompt", link), "INPUT REQUEST")
                 if (StringUtils.isBlank(selection)) return
 
-                when (selection.toUpperCase()) {
+                when (selection.uppercase()) {
                     // play it
-                    "P" -> play(videoLink)
+                    "P" -> play(link)
 
                     // show it
-                    "S" -> show(videoLink)
+                    "S" -> show(link)
 
                     // delete it (local only)
-                    "D" -> delete(videoLink)
+                    "D" -> delete(link)
                 }
             }
         } else {
@@ -81,7 +81,7 @@ class ExecutionRecorder(private val baseCommand: BaseCommand) {
 
     private fun delete(videoLink: String) {
         if (ResourceUtils.isWebResource(videoLink)) {
-            ConsoleUtils.error("The video file is not currently located in local drive; delete CANCELLED")
+            ConsoleUtils.error(RB.Recorder.text("delete.notLocal"))
         } else {
             FileUtils.delete(File(videoLink))
         }
@@ -107,7 +107,7 @@ class ExecutionRecorder(private val baseCommand: BaseCommand) {
             }
 
             else          -> {
-                ConsoleUtils.error("Unknown O/S; Nexial doesn't know how to open path $path")
+                ConsoleUtils.error(RB.Recorder.text("open.notSupported", path))
             }
         }
     }
@@ -127,7 +127,7 @@ class ExecutionRecorder(private val baseCommand: BaseCommand) {
             }
 
             else          -> {
-                ConsoleUtils.error("Unknown O/S; Nexial doesn't know how to open file $videoLink")
+                ConsoleUtils.error(RB.Recorder.text("open.notSupported", path))
             }
         }
     }

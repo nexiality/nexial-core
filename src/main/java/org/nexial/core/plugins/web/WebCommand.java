@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *       http://www.apache.org/licenses/LICENSE-2.0
+ * 	http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -245,7 +245,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     }
 
     public StepResult assertLinkByLabel(String label) {
-        return assertElementPresent("//a[text()=" + locatorHelper.normalizeXpathText(label) + "]");
+        return assertElementPresent("//a[text()=" + LocatorHelper.normalizeXpathText(label) + "]");
     }
 
     public StepResult assertChecked(String locator) { return new StepResult(isChecked(locator)); }
@@ -1029,7 +1029,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         //if (selenium.isTextPresent(text)) { }
 
         // text might contain single quote; hence use resolveContainLabelXpath()
-        StepResult result = assertElementPresent(locatorHelper.resolveContainLabelXpath(text));
+        StepResult result = assertElementPresent(LocatorHelper.resolveContainLabelXpath(text));
         if (result.failed()) {
             return StepResult.fail(msgPrefix + "not found");
         } else {
@@ -1054,7 +1054,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         requiresNotBlank(text, "Invalid text to search", text);
         requiresPositiveNumber(minMatch, "index must be a positive number", minMatch);
 
-        String locator = locatorHelper.resolveContainLabelXpath(text);
+        String locator = LocatorHelper.resolveContainLabelXpath(text);
         int atLeast = NumberUtils.toInt(minMatch);
         boolean alsoScrollTo = CheckUtils.toBoolean(scrollTo);
 
@@ -1282,7 +1282,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         String locatorWithText = (StringUtils.endsWith(locator, "]") ?
                                   StringUtils.substringBeforeLast(locator, "]") + " and " :
                                   locator + "[") +
-                                 "text() = " + locatorHelper.normalizeXpathText(label) + "]";
+                                 "text() = " + LocatorHelper.normalizeXpathText(label) + "]";
         result = click(locatorWithText);
         if (result.failed()) { log("text/label for '" + label + "' not clickable at " + locator); }
         return result;
@@ -1402,12 +1402,12 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
     public StepResult doubleClickByLabel(String label) {
         if (browser.isRunSafari()) { return StepResult.fail("double-click not supported by Safari"); }
-        return doubleClickInternal(locatorHelper.resolveLabelXpath(label));
+        return doubleClickInternal(LocatorHelper.resolveLabelXpath(label));
     }
 
     public StepResult doubleClickByLabelAndWait(String label, String waitMs) {
         if (browser.isRunSafari()) { return StepResult.fail("double-click not supported by Safari"); }
-        return doubleClickAndWait(locatorHelper.resolveLabelXpath(label), waitMs);
+        return doubleClickAndWait(LocatorHelper.resolveLabelXpath(label), waitMs);
     }
 
     public StepResult doubleClick(String locator) { return doubleClickInternal(locator); }
@@ -1866,30 +1866,6 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
     public StepResult scrollTo(String locator) { return scrollTo(locator, (Locatable) toElement(locator)); }
 
-    // public StepResult scrollLeft(String locator, String pixel) {
-    //     requiresInteger(pixel, "invalid number", pixel);
-    //
-    //     logDeprecated(getTarget() + " » scrollLeft(locator,pixel)",
-    //                   getTarget() + " » scrollElement(locator,xOffset,yOffset)");
-    //
-    //     WebElement element = toElement(locator);
-    //     jsExecutor.executeScript(JsLib.scrollLeft(pixel), element);
-    //
-    //     return scrollTo(locator, (Locatable) element);
-    // }
-    //
-    // public StepResult scrollRight(String locator, String pixel) {
-    //     requiresInteger(pixel, "invalid number", pixel);
-    //
-    //     logDeprecated(getTarget() + " » scrollRight(locator,pixel)",
-    //                   getTarget() + " » scrollElement(locator,xOffset,yOffset)");
-    //
-    //     WebElement element = toElement(locator);
-    //     jsExecutor.executeScript("arguments[0].scrollBy(" + (NumberUtils.toInt(pixel) * -1) + ",0)", element);
-    //
-    //     return scrollTo(locator, (Locatable) element);
-    // }
-
     public StepResult scrollPage(String xOffset, String yOffset) {
         requiresInteger(xOffset, "invalid xOffset", xOffset);
         requiresInteger(yOffset, "invalid yOffset", yOffset);
@@ -1897,16 +1873,6 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         jsExecutor.executeScript(JsLib.windowScrollBy(xOffset, yOffset));
         return StepResult.success("current window/page scrolled by (" + xOffset + "," + yOffset + ")");
     }
-
-    // public StepResult scrollElement(String locator, String xOffset, String yOffset) {
-    //     requiresInteger(xOffset, "invalid xOffset", xOffset);
-    //     requiresInteger(yOffset, "invalid yOffset", yOffset);
-    //
-    //     WebElement element = toElement(locator);
-    //     might not work since `scrollBy()` JS function largely depends on the style of the corresponding element
-    // jsExecutor.executeScript(JsLib.scrollBy(xOffset, yOffset), element);
-    // return scrollTo(locator, (Locatable) element);
-    // }
 
     public StepResult type(String locator, String value) {
         WebElement element = findElement(locator);
@@ -3509,8 +3475,8 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
     protected byte[] downloadLink(String sessionName, String url) {
         // sanity check
-        if (ws == null) { fail("command type 'ws' is not available. " + MSG_CHECK_SUPPORT); }
-        if (cookie == null) { fail("command type 'webcookie' is not available. " + MSG_CHECK_SUPPORT); }
+        if (ws == null) { fail(RB.Fatal.text("command.missing", "ws")); }
+        if (cookie == null) { fail(RB.Fatal.text("command.missing", "webcookie")); }
         requiresNotBlank(url, "valid/full URL or property reference required", url);
 
         String cookieVar = NAMESPACE + "downloadCookies";
@@ -3767,7 +3733,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
     private boolean isElementVisible(String locator, long maxWait) {
         By by = locatorHelper.findBy(locator);
-        return waitForCondition(maxWait, object -> { return isElementVisible(driver.findElement(by)); });
+        return waitForCondition(maxWait, object -> isElementVisible(driver.findElement(by)));
     }
 
     private boolean isElementVisible(WebElement element) {

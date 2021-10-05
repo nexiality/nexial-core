@@ -1,11 +1,11 @@
 /*
- * Copyright 2012-2018 the original author or authors.
+ * Copyright 2012-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *       http://www.apache.org/licenses/LICENSE-2.0
+ * 	http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -166,21 +166,21 @@ public class TestCase {
             // this line is added here instead of outside the loop so that we can consider any changes to nexial.failFast
             // whilst executing the activity
             if (context.isFailFastCommand(testStep)) {
-                logger.log(this, MSG_CRITICAL_COMMAND_FAIL + testStep.getCommandFQN());
+                logger.log(this, RB.Abort.text("criticalCommand.fail", testStep.getCommandFQN()));
                 trackTimeLogs.trackingDetails("Execution Failed");
                 context.setFailImmediate(true);
                 break;
             }
 
             if (context.isFailImmediate()) {
-                logger.log(this, MSG_EXEC_FAIL_IMMEDIATE);
+                logger.log(this, RB.Abort.text("exec.failImmediate"));
                 trackTimeLogs.trackingDetails("Execution Failed");
                 break;
             }
 
             boolean shouldFailFast = context.isFailFast();
             if (shouldFailFast) {
-                logger.log(this, MSG_STEP_FAIL_FAST);
+                logger.log(this, RB.Abort.text("step.failFast"));
                 trackTimeLogs.trackingDetails("Execution Failed");
                 break;
             }

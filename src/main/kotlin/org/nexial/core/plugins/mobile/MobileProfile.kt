@@ -22,7 +22,7 @@ import org.apache.commons.collections4.MapUtils
 import org.apache.commons.lang3.BooleanUtils
 import org.apache.commons.lang3.StringUtils
 import org.nexial.core.NexialConst.Mobile.*
-import org.nexial.core.NexialConst.Mobile.Message.*
+import org.nexial.core.NexialConst.RB
 import org.nexial.core.model.ExecutionContext
 import org.nexial.core.plugins.mobile.MobileType.ANDROID
 import org.nexial.core.plugins.mobile.MobileType.IOS
@@ -42,7 +42,7 @@ class MobileProfile(context: ExecutionContext, val profile: String) {
     internal val hideKeyboard: Boolean
     internal val explicitWaitEnabled: Boolean
 
-    internal lateinit var appId: String
+    internal var appId: String
 
     /*
     todo: investigate
@@ -55,14 +55,15 @@ class MobileProfile(context: ExecutionContext, val profile: String) {
         val config = context.getDataByPrefix(StringUtils.appendIfMissing(profile, "."))
 
         // check required config
-        if (MapUtils.isEmpty(config)) throw IllegalArgumentException("$MISSING_PROFILE $profile")
-        if (!config.containsKey(CONF_TYPE)) throw IllegalArgumentException("$MISSING_TYPE_CONFIG $profile")
+        if (MapUtils.isEmpty(config)) throw IllegalArgumentException(RB.Mobile.text("missing.profile", profile))
+        if (!config.containsKey(CONF_TYPE)) throw IllegalArgumentException(RB.Mobile.text("missing.type", profile))
 
         context.updateProfileConfig(COMMAND, profile, config)
 
-        mobileType = MobileType.valueOf(config.remove(CONF_TYPE)!!.toUpperCase())
+        mobileType = MobileType.valueOf(config.remove(CONF_TYPE)!!.uppercase())
         for (key in mobileType.requiredConfig) {
-            if (!config.containsKey(key)) throw IllegalArgumentException("$MISSING_CONFIG $profile.$key")
+            if (!config.containsKey(key))
+                throw IllegalArgumentException(RB.Mobile.text("missing.config", "$profile.$key"))
         }
 
         appId = when (mobileType) {

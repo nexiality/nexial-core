@@ -480,13 +480,13 @@ public class ExecutionContext {
 
     public boolean isResolveTextAsURL() {
         return hasData(RESOLVE_TEXT_AS_URL) ? getBooleanData(RESOLVE_TEXT_AS_URL) :
-               hasData(EXPRESSION_RESOLVE_URL) ? getBooleanData(EXPRESSION_RESOLVE_URL) :
+               hasData(Expression.EXPRESSION_RESOLVE_URL) ? getBooleanData(Expression.EXPRESSION_RESOLVE_URL) :
                getDefaultBool(RESOLVE_TEXT_AS_URL);
     }
 
     public boolean isResolveTextAsIs() {
         return hasData(RESOLVE_TEXT_AS_IS) ? getBooleanData(RESOLVE_TEXT_AS_IS) :
-               hasData(EXPRESSION_OPEN_FILE_AS_IS) ? getBooleanData(EXPRESSION_OPEN_FILE_AS_IS) :
+               hasData(Expression.EXPRESSION_OPEN_FILE_AS_IS) ? getBooleanData(Expression.EXPRESSION_OPEN_FILE_AS_IS) :
                getDefaultBool(RESOLVE_TEXT_AS_IS);
     }
 
@@ -1362,7 +1362,7 @@ public class ExecutionContext {
 
         for (TestScenario testScenario : testScenarios) {
             if (BooleanUtils.toBoolean(System.getProperty(END_SCRIPT_IMMEDIATE, "false"))) {
-                executionLogger.log(this, MSG_EXEC_END_IF);
+                executionLogger.log(this, RB.Abort.text("exec.endIf"));
                 break;
             }
             // re-init scenario ref data
@@ -1373,23 +1373,23 @@ public class ExecutionContext {
                 allPass = false;
 
                 if (isFailFast()) {
-                    executionLogger.error(testScenario, MSG_SCENARIO_FAIL_FAST);
+                    executionLogger.error(testScenario, RB.Abort.text("scenario.failFast"));
                     break;
                 }
             }
 
             if (isFailImmediate()) {
-                executionLogger.error(this, MSG_EXEC_FAIL_IMMEDIATE);
+                executionLogger.error(this, RB.Abort.text("exec.failImmediate"));
                 break;
             }
 
             if (isEndImmediate()) {
-                executionLogger.log(this, MSG_EXEC_END_IF);
+                executionLogger.log(this, RB.Abort.text("exec.endIf"));
                 break;
             }
 
             if (isBreakCurrentIteration()) {
-                executionLogger.log(this, MSG_EXEC_END_LOOP_IF);
+                executionLogger.log(this, RB.Abort.text("exec.endLoopIf"));
                 break;
             }
         }

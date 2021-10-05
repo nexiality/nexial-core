@@ -1,11 +1,11 @@
 /*
- * Copyright 2012-2018 the original author or authors.
+ * Copyright 2012-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *       http://www.apache.org/licenses/LICENSE-2.0
+ * 	http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,14 +17,12 @@
 
 package org.nexial.commons.conversion;
 
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.util.HashMap;
-import java.util.Map;
-
+import com.itextpdf.text.*;
+import com.itextpdf.text.io.RandomAccessSourceFactory;
+import com.itextpdf.text.pdf.PdfContentByte;
+import com.itextpdf.text.pdf.PdfWriter;
+import com.itextpdf.text.pdf.RandomAccessFileOrArray;
+import com.itextpdf.text.pdf.codec.TiffImage;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -32,16 +30,9 @@ import org.nexial.commons.InvalidTiffContentException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.itextpdf.text.Document;
-import com.itextpdf.text.DocumentException;
-import com.itextpdf.text.ExceptionConverter;
-import com.itextpdf.text.Image;
-import com.itextpdf.text.Rectangle;
-import com.itextpdf.text.io.RandomAccessSourceFactory;
-import com.itextpdf.text.pdf.PdfContentByte;
-import com.itextpdf.text.pdf.PdfWriter;
-import com.itextpdf.text.pdf.RandomAccessFileOrArray;
-import com.itextpdf.text.pdf.codec.TiffImage;
+import java.io.*;
+import java.util.HashMap;
+import java.util.Map;
 
 import static com.itextpdf.text.PageSize.LETTER;
 

@@ -1,11 +1,11 @@
 /*
- * Copyright 2012-2018 the original author or authors.
+ * Copyright 2012-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *       http://www.apache.org/licenses/LICENSE-2.0
+ * 	http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -185,7 +185,7 @@ public final class ExecutionThread extends Thread {
                 ExecutionLogger logger = context.getLogger();
                 logPlan(context, scriptLocation, iterationIndex);
 
-                logger.log(context, LogMessage.EXECUTING_ITERATION + iterationIndex + " of " + totalIterations +
+                logger.log(context, EXECUTING_ITERATION + iterationIndex + " of " + totalIterations +
                                     "; Iteration Id " + iterationRef);
                 allPass = context.execute();
 
@@ -278,7 +278,7 @@ public final class ExecutionThread extends Thread {
 
         ExecutionLogger logger = context.getLogger();
         if (context.isFailImmediate()) {
-            logger.error(context, MSG_SCENARIO_FAIL_IMMEDIATE);
+            logger.error(context, RB.Abort.text("scenario.failImmediate"));
             collectIntraExecutionData(context, 0);
             return true;
         }
@@ -288,7 +288,7 @@ public final class ExecutionThread extends Thread {
                 // reset and pretend nothing's wrong.  Current script will be executed..
                 context.setData(OPT_LAST_OUTCOME, true);
             } else {
-                logger.error(context, MSG_SCENARIO_FAIL_FAST);
+                logger.error(context, RB.Abort.text("scenario.failFast"));
                 collectIntraExecutionData(context, 0);
                 return true;
             }
@@ -302,17 +302,17 @@ public final class ExecutionThread extends Thread {
 
         ExecutionLogger logger = context.getLogger();
         if (!allPass && context.isFailFast()) {
-            logger.error(context, MSG_EXEC_FAIL_FAST);
+            logger.error(context, RB.Abort.text("exec.failFast"));
             return true;
         }
 
         if (context.isFailImmediate()) {
-            logger.error(context, MSG_EXEC_FAIL_IMMEDIATE);
+            logger.error(context, RB.Abort.text("exec.failImmediate"));
             return true;
         }
 
         if (context.isEndImmediate()) {
-            logger.log(context, MSG_EXEC_END_IF);
+            logger.log(context, RB.Abort.text("exec.endIf"));
             return true;
         }
 

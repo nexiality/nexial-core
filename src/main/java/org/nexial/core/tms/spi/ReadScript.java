@@ -1,8 +1,22 @@
+/*
+ * Copyright 2012-2021 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * 	http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
+
 package org.nexial.core.tms.spi;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.jetbrains.annotations.NotNull;
@@ -12,12 +26,16 @@ import org.nexial.core.excel.Excel.Worksheet;
 import org.nexial.core.excel.ExcelAddress;
 import org.nexial.core.excel.ExcelArea;
 import org.nexial.core.model.TestProject;
+import org.nexial.core.model.TestScenario;
 import org.nexial.core.tms.model.TmsCustomStep;
 import org.nexial.core.tms.model.TmsTestCase;
 import org.nexial.core.tms.model.TmsTestStep;
 import org.nexial.core.utils.InputFileUtils;
 
-import static org.nexial.core.NexialConst.MSG_PROBLMATIC_NAME;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
+
 import static org.nexial.core.excel.ExcelConfig.*;
 
 /**
@@ -65,10 +83,11 @@ public class ReadScript {
             System.err.println("The path specified does not exist");
             System.exit(-1);
         }
+
         Excel script = InputFileUtils.resolveValidScript(testScriptPath);
         if (script == null) {
             System.err.println("Invalid test script - " + testScriptPath);
-            System.exit(0);
+            System.exit(-1);
         }
 
         File testScriptFile = new File(testScriptPath);
@@ -79,13 +98,14 @@ public class ReadScript {
                                "structure, related directories would not be resolved from commandline arguments.");
             System.exit(-1);
         }
+
         return script;
     }
 
     /**
      * Parse each scenario present in the script and return a list if Test Steps inside the scenario
      *
-     * @param scenario A scenario in the Nexial script, mapped to a single Test Case
+     * @param scenario  A scenario in the Nexial script, mapped to a single Test Case
      * @param worksheet the current {@link Worksheet}
      * @return List of Test Steps belonging to the scenario
      */
@@ -105,33 +125,18 @@ public class ReadScript {
             List<XSSFCell> row = area.getWholeArea().get(i);
 
             XSSFCell cellActivity = row.get(COL_IDX_TESTCASE);
-            String errorPrefix = scenarioRef + "[" + cellActivity.getReference() + "]: ";
             String activity = Excel.getCellValue(cellActivity);
 
-            // detect space only activity name
-            if (StringUtils.isNotEmpty(activity) && StringUtils.isAllBlank(activity)) {
-                System.err.println(errorPrefix + "Found invalid, space-only activity name");
+            try {
+                TestScenario.validateActivity(activity,
+                                              testCases,
+                                              scenarioRef + "[" + cellActivity.getReference() + "]:");
+            } catch (RuntimeException e) {
+                System.err.println(e.getMessage());
                 System.exit(-1);
             }
 
-            // detect leading/trailing non-printable characters
-            if (!StringUtils.equals(activity, StringUtils.trim(activity))) {
-                System.err.printf(errorPrefix + MSG_PROBLMATIC_NAME + "%n", "activity", activity);
-                System.exit(-1);
-            }
-
-            boolean hasActivity = StringUtils.isNotBlank(activity);
-            if (currentActivity == null && !hasActivity) {
-                // first row must define test case (hence at least 1 test case is required)
-                System.err.println(errorPrefix + "Invalid format; First row must contain valid activity name");
-                System.exit(-1);
-            }
-            if (hasActivity) {
-                if (testCases.contains(activity)) {
-                    // found duplicate activity name!
-                    System.err.println(errorPrefix + "Found duplicate activity name '" + activity + "'");
-                    System.exit(-1);
-                }
+            if (StringUtils.isNotBlank(activity)) {
                 testCases.add(activity);
                 currentActivity = new TmsTestStep(scenario);
                 currentActivity.setName(TextUtils.toOneLine(activity, true));
@@ -140,6 +145,7 @@ public class ReadScript {
             TmsCustomStep testStep = new TmsCustomStep(worksheet, row, currentActivity);
             currentActivity.addTmsCustomTestStep(testStep);
         }
+
         return testSteps;
     }
 }

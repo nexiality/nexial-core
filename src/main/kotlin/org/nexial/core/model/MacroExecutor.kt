@@ -175,20 +175,20 @@ class MacroExecutor(private val initialTestStep: TestStep, val macro: Macro,
             // this line is added here instead of outside the loop so that we can consider any changes to nexial.failFast
             // whilst executing the activity
             if (context.isFailFastCommand(testStep)) {
-                logger.log(testStep, MSG_CRITICAL_COMMAND_FAIL + testStep.commandFQN)
+                logger.log(testStep, RB.Abort.text("criticalCommand.fail", testStep.commandFQN))
                 trackTimeLogs.trackingDetails("Execution Failed")
                 context.isFailImmediate = true
                 break
             }
 
             if (context.isFailImmediate) {
-                logger.log(testStep, MSG_EXEC_FAIL_IMMEDIATE)
+                logger.log(testStep, RB.Abort.text("exec.failImmediate"))
                 trackTimeLogs.trackingDetails("Execution Failed")
                 break
             }
 
             if (shouldFailFast(context, testStep)) {
-                logger.log(testStep, MSG_STEP_FAIL_FAST)
+                logger.log(testStep, RB.Abort.text("step.failFast"))
                 trackTimeLogs.trackingDetails("Execution Failed")
                 break
             }
@@ -396,7 +396,8 @@ class MacroExecutor(private val initialTestStep: TestStep, val macro: Macro,
 
     private fun shouldFailFast(context: ExecutionContext, testStep: TestStep): Boolean {
         return if (context.isFailFast || context.isFailFastCommand(testStep)) {
-            context.logCurrentStep(MSG_CRITICAL_COMMAND_FAIL + testStep.commandFQN)
+            context.logCurrentStep(
+                RB.Abort.text("criticalCommand.fail", testStep.commandFQN))
             true
         } else false
     }

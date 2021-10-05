@@ -25,7 +25,7 @@ import org.nexial.commons.utils.JRegexUtils
 import org.nexial.commons.utils.RegexUtils
 import org.nexial.commons.utils.TextUtils
 import org.nexial.core.NexialConst.PolyMatcher.*
-import org.nexial.core.NexialConst.PolyMatcher.Message.*
+import org.nexial.core.NexialConst.RB
 import org.nexial.core.model.NexialFilterList
 import org.nexial.core.model.StepResult
 import org.nexial.core.plugins.web.LocatorHelper.InnerValueType.TEXT
@@ -106,13 +106,17 @@ class LocatorHelper internal constructor(private val delegator: WebCommand) {
                     if (isPolyMatcher(text)) {
                         when {
                             StringUtils.startsWith(text, REGEX)            ->
-                                throw IllegalArgumentException("$REGEX_NOT_SUPPORTED $locator")
+                                throw IllegalArgumentException(
+                                    RB.PolyMatcher.text("notSupported.REGEX", locator))
                             StringUtils.startsWith(text, NUMERIC)          ->
-                                throw IllegalArgumentException("$NUMERIC_NOT_SUPPORTED $locator")
+                                throw IllegalArgumentException(
+                                    RB.PolyMatcher.text("notSupported.NUMERIC", locator))
                             StringUtils.startsWith(text, END)              ->
-                                throw IllegalArgumentException("$END_NOT_SUPPORTED $locator")
+                                throw IllegalArgumentException(
+                                    RB.PolyMatcher.text("notSupported.END", locator))
                             StringUtils.startsWith(text, END_ANY_CASE)     ->
-                                throw IllegalArgumentException("$END_ANY_CASE_NOT_SUPPORTED $locator")
+                                throw IllegalArgumentException(
+                                    RB.PolyMatcher.text("notSupported.END_ANY_CASE", locator))
 
                             StringUtils.startsWith(text, CONTAIN)          ->
                                 "//*[contains($elemText,${normalizeXpathText(text.substringAfter(CONTAIN))})]"

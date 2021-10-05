@@ -236,7 +236,7 @@ object AndroidSetup {
         }
 
         val downloaded = downloadResp.payloadLocation
-        if (StringUtils.substringAfterLast(downloaded, ".").toLowerCase() != "zip") {
+        if (StringUtils.substringAfterLast(downloaded, ".").lowercase() != "zip") {
             System.err.println("ERROR: File downloaded from $downloadUrl is not a ZIP file as expected!")
             exitProcess(-1)
         }

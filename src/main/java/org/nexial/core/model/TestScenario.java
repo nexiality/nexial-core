@@ -1,11 +1,11 @@
 /*
- * Copyright 2012-2018 the original author or authors.
+ * Copyright 2012-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *       http://www.apache.org/licenses/LICENSE-2.0
+ * 	http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -26,6 +26,7 @@ import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.nexial.commons.InvalidInputRuntimeException;
+import org.nexial.commons.utils.CollectionUtil;
 import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.excel.Excel;
 import org.nexial.core.excel.Excel.Worksheet;
@@ -44,7 +45,8 @@ import static org.nexial.core.CommandConst.CMD_REPEAT_UNTIL;
 import static org.nexial.core.CommandConst.CMD_SECTION;
 import static org.nexial.core.NexialConst.Data.END_SCRIPT_IMMEDIATE;
 import static org.nexial.core.NexialConst.LogMessage.EXECUTING_TEST_SCENARIO;
-import static org.nexial.core.NexialConst.*;
+import static org.nexial.core.NexialConst.RB;
+import static org.nexial.core.NexialConst.OPT_INPUT_EXCEL_FILE;
 import static org.nexial.core.excel.ExcelConfig.*;
 import static org.nexial.core.model.ExecutionSummary.ExecutionLevel.SCENARIO;
 
@@ -114,22 +116,22 @@ public class TestScenario {
             context.setCurrentActivity(testCase);
 
             if (BooleanUtils.toBoolean(System.getProperty(END_SCRIPT_IMMEDIATE, "false"))) {
-                logger.log(testCase, MSG_ACTIVITY_ENDING_IF);
+                logger.log(testCase, RB.Abort.text("activity.endIf"));
                 break;
             }
 
             if (skipDueToFailFast) {
-                logger.log(this, MSG_ACTIVITY_FAIL_FAST);
+                logger.log(this, RB.Abort.text("activity.failFast"));
                 continue;
             }
 
             if (skipDueToEndFast) {
-                logger.log(this, MSG_ACTIVITY_FAIL_END);
+                logger.log(this, RB.Abort.text("activity.failEnd"));
                 continue;
             }
 
             if (skipDueToEndLoop) {
-                logger.log(this, MSG_ACTIVITY_FAIL_END_LOOP);
+                logger.log(this, RB.Abort.text("activity.failLoop"));
                 continue;
             }
 
@@ -144,10 +146,10 @@ public class TestScenario {
                 }
             } else if (context.isEndImmediate()) {
                 skipDueToEndFast = true;
-                logger.log(testCase, MSG_ACTIVITY_ENDING_IF);
+                logger.log(testCase, RB.Abort.text("activity.endIf"));
             } else if (context.isBreakCurrentIteration()) {
                 skipDueToEndLoop = true;
-                logger.log(testCase, MSG_ACTIVITY_ENDING_LOOP_IF);
+                logger.log(testCase, RB.Abort.text("activity.endLoopIf"));
             }
 
             executionSummary.addNestSummary(testCase.getExecutionSummary());
@@ -245,34 +247,12 @@ public class TestScenario {
             List<XSSFCell> row = area.getWholeArea().get(i);
 
             XSSFCell cellActivity = row.get(COL_IDX_TESTCASE);
-            String errorPrefix = scenarioRef + "[" + cellActivity.getReference() + "]: ";
             String activity = Excel.getCellValue(cellActivity);
 
-            // detect space only activity name
-            if (StringUtils.isNotEmpty(activity) && StringUtils.isAllBlank(activity)) {
-                throw new RuntimeException(errorPrefix + "Found invalid, space-only activity name");
-            }
-
-            // detect leading/trailing non-printable characters
-            if (!StringUtils.equals(activity, StringUtils.trim(activity))) {
-                throw new RuntimeException(String.format(errorPrefix + MSG_PROBLMATIC_NAME, "activity", activity));
-            }
-
-            boolean hasActivity = StringUtils.isNotBlank(activity);
-            if (currentActivity == null && !hasActivity) {
-                // first row must define test case (hence at least 1 test case is required)
-                throw new RuntimeException(errorPrefix + "Invalid format; First row must contain valid activity name");
-            }
-
-            if (hasActivity) {
-                if (testCaseMap.containsKey(activity)) {
-                    // found duplicate activity name!
-                    throw new InvalidInputRuntimeException(
-                        errorPrefix + "Found duplicate activity name '" + activity + "'",
-                        System.getProperty(OPT_INPUT_EXCEL_FILE)
-                    );
-                }
-
+            validateActivity(activity,
+                             CollectionUtil.toList(testCaseMap.keySet()),
+                             scenarioRef + "[" + cellActivity.getReference() + "]:");
+            if (StringUtils.isNotBlank(activity)) {
                 currentActivity = new TestCase();
                 currentActivity.setName(TextUtils.toOneLine(activity, true));
                 currentActivity.setTestScenario(this);
@@ -280,11 +260,43 @@ public class TestScenario {
                 testCaseMap.put(currentActivity.getName(), currentActivity);
             }
 
-            TestStep testStep = new TestStep(currentActivity, row, worksheet);
-            if (testStep.isCommandRepeater()) { i += collectRepeatingCommandSet(testStep, area, i + 1); }
-            currentActivity.addTestStep(testStep);
-            allSteps.add(testStep);
-            testStepsByRow.put(row.get(0).getRowIndex() + 1, testStep);
+            if (currentActivity != null) {
+                TestStep testStep = new TestStep(currentActivity, row, worksheet);
+                if (testStep.isCommandRepeater()) { i += collectRepeatingCommandSet(testStep, area, i + 1); }
+                currentActivity.addTestStep(testStep);
+                allSteps.add(testStep);
+                testStepsByRow.put(row.get(0).getRowIndex() + 1, testStep);
+            }
+        }
+    }
+
+    public static void validateActivity(String activity, List<String> existingActivities, String errorPrefix) {
+        // detect space only activity name
+        if (StringUtils.isNotEmpty(activity) && StringUtils.isAllBlank(activity)) {
+            throw new RuntimeException(RB.Fatal.text("activity.bad", errorPrefix));
+        }
+
+        // detect leading/trailing non-printable characters
+        if (!StringUtils.equals(activity, StringUtils.trim(activity))) {
+            throw new RuntimeException(RB.Fatal.text("problematicName", errorPrefix, "activity", activity));
+        }
+
+        boolean activityFound = CollectionUtils.isNotEmpty(existingActivities);
+        boolean hasActivity = StringUtils.isNotBlank(activity);
+        if (!activityFound && !hasActivity) {
+            // first row must define test case (hence at least 1 test case is required)
+            throw new RuntimeException(RB.Fatal.text("activity.missing", errorPrefix));
+        }
+
+        if (hasActivity && existingActivities.contains(activity)) {
+            // found duplicate activity name!
+            String error = RB.Fatal.text("activity.dup", errorPrefix, activity);
+            String currentExcelScript = System.getProperty(OPT_INPUT_EXCEL_FILE);
+            if (StringUtils.isNotBlank(currentExcelScript)) {
+                throw new InvalidInputRuntimeException(error, currentExcelScript);
+            } else {
+                throw new RuntimeException(error);
+            }
         }
     }
 

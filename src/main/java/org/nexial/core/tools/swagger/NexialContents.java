@@ -1,5 +1,3 @@
-package org.nexial.core.tools.swagger;
-
 /*
  * Copyright 2012-2021 the original author or authors.
  *
@@ -17,6 +15,7 @@ package org.nexial.core.tools.swagger;
  *
  */
 
+package org.nexial.core.tools.swagger;
 
 import java.util.List;
 

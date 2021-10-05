@@ -1,5 +1,3 @@
-package org.nexial.core.tools.swagger;
-
 /*
  * Copyright 2012-2021 the original author or authors.
  *
@@ -16,6 +14,8 @@ package org.nexial.core.tools.swagger;
  * limitations under the License.
  *
  */
+
+package org.nexial.core.tools.swagger;
 
 /**
  * Represents a class in the Nexial Swagger script.

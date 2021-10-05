@@ -151,7 +151,7 @@ class PdfOutputProfile(name: String, profileData: Map<String, String>) : Service
                 RectangleReadOnly(PDF_MARGIN_UNIT * dimension[0].trim().toFloat(),
                                   PDF_MARGIN_UNIT * dimension[1].trim().toFloat())
             } else {
-                PageSize.getRectangle(pageSize.toUpperCase())
+                PageSize.getRectangle(pageSize.uppercase())
             }
         }
 

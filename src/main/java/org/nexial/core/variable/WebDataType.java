@@ -1,11 +1,11 @@
 /*
- * Copyright 2012-2018 the original author or authors.
+ * Copyright 2012-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *       http://www.apache.org/licenses/LICENSE-2.0
+ * 	http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,15 +17,15 @@
 
 package org.nexial.core.variable;
 
+import org.nexial.commons.utils.TextUtils;
+
 import java.util.ArrayList;
 import java.util.List;
-
-import org.nexial.commons.utils.TextUtils;
 
 import static org.nexial.core.NexialConst.NL;
 
 public class WebDataType extends ExpressionDataType<String> {
-    private WebTransformer transformer = new WebTransformer();
+    private WebTransformer<WebDataType> transformer = new WebTransformer<>();
     private boolean allPass;
     private List<Result> results;
 
@@ -88,7 +88,7 @@ public class WebDataType extends ExpressionDataType<String> {
     public String getName() { return "WEB"; }
 
     @Override
-    WebTransformer getTransformer() { return transformer; }
+    WebTransformer<WebDataType> getTransformer() { return transformer; }
 
     @Override
     WebDataType snapshot() {

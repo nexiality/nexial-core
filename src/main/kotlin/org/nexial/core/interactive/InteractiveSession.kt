@@ -269,7 +269,7 @@ data class InteractiveSession(val context: ExecutionContext) {
                 allActivities[allActivities.size + 1] = activityName
 
                 if (StringUtils.isEmpty(currentActivity)) {
-                    // first time.. probably first row in this cell area
+                    // first time... probably first row in this cell area
                     currentActivity = activityName
                     activityStepMap[currentActivity] = mutableListOf()
                 } else {
@@ -318,7 +318,7 @@ data class InteractiveSession(val context: ExecutionContext) {
 
                 val sysProps = System.getProperties()
                 if (MapUtils.isNotEmpty(sysProps))
-                    sysProps.forEach { name, value -> data[name.toString()] = value.toString() }
+                    sysProps.forEach { propName, propValue -> data[propName.toString()] = propValue.toString() }
 
                 // remove all excluded data variables
                 val dataNames = data.keys.toTypedArray()
@@ -474,7 +474,7 @@ data class InteractiveSession(val context: ExecutionContext) {
 
     private fun calibrateActivitiesAndSteps() {
         if (activities.isEmpty() || activities.find { activity -> !allActivities.containsValue(activity) } != null) {
-            // currently without activity or one or more activities are invalid against `allActivities`
+            // currently, without activity or one or more activities are invalid against `allActivities`
             clearActivities()
 
             // check if current steps are valid / if not use the ones from scenario

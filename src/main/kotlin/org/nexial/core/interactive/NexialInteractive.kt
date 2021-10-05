@@ -34,7 +34,6 @@ import org.nexial.core.NexialConst.Iteration.CURR_ITERATION
 import org.nexial.core.NexialConst.Iteration.ITERATION
 import org.nexial.core.NexialConst.Project.appendLog
 import org.nexial.core.excel.Excel
-import org.nexial.core.excel.ExcelConfig.MSG_SKIPPED
 import org.nexial.core.excel.ExcelStyleHelper
 import org.nexial.core.interactive.InteractiveConsole.Commands.ALL_STEP
 import org.nexial.core.interactive.InteractiveConsole.Commands.EXIT
@@ -394,7 +393,7 @@ class NexialInteractive {
             // perhaps the current step is marked as SKIP due to its enclosing "section" being skipped
             if (sectionStepsToSkip.contains(rowIndex)) {
                 val skipStep = scenario.getTestStepByRowIndex(rowIndex)
-                if (skipStep != null) context.logger.log(skipStep, "$MSG_SKIPPED $NESTED_SECTION_STEP_SKIPPED")
+                if (skipStep != null) context.logger.log(skipStep, RB.Skipped.text("nestedSectionStep2"))
                 continue
             }
 

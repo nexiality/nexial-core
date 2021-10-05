@@ -50,7 +50,6 @@ import org.nexial.core.NexialConst.*
 import org.nexial.core.NexialConst.Data.WIN32_CMD
 import org.nexial.core.NexialConst.Mobile.*
 import org.nexial.core.NexialConst.Mobile.Android.SCRIPT_COPY_TO_ANDROID
-import org.nexial.core.NexialConst.Mobile.Message.*
 import org.nexial.core.NexialConst.Mobile.iOS.*
 import org.nexial.core.NexialConst.Project.NEXIAL_HOME
 import org.nexial.core.NexialConst.Project.NEXIAL_MOBILE_BIN_REL_PATH
@@ -155,7 +154,7 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
         if (StringUtils.isNotBlank(appId)) {
             val driver = mobileService!!.driver
             val appState = driver.queryAppState(appId)
-            if (appState == NOT_INSTALLED) throw IllegalArgumentException("$APP_NOT_INSTALLED $appId")
+            if (appState == NOT_INSTALLED) throw IllegalArgumentException(RB.Mobile.text("missing.app", appId))
             if (appState != RUNNING_IN_FOREGROUND) launchApp(appId)
         }
 
@@ -1154,7 +1153,7 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
             ANDROID -> "${SCRIPT_COPY_TO_ANDROID}${if (IS_OS_WINDOWS) "cmd" else "sh"}"
             IOS     -> SCRIPT_COPY_TO_IOS
         }
-        if (!FileUtil.isFileExecutable(script)) throw RuntimeException("$script $SCRIPT_NOT_EXECUTABLE")
+        if (!FileUtil.isFileExecutable(script)) throw RuntimeException(RB.Mobile.text("script.notExecutable", script))
 
         val outcome = when (mobileType) {
             ANDROID -> {
@@ -1167,7 +1166,7 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
             IOS     -> {
                 // check file extension (only .png, .jpg, .mp4, .gif, .wbem
                 if (!SUPPORTED_COPY_FILE_EXT.contains(StringUtils.lowerCase(StringUtils.substringAfterLast(file, "."))))
-                    throw IllegalArgumentException("$NOT_SUPPORT_FILE_EXT $file")
+                    throw IllegalArgumentException(RB.Mobile.text("ext.notSupported", file))
                 ProcessInvoker.invoke(script, listOf(file), extProcEnv)
             }
         }
@@ -1209,7 +1208,7 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
     }
 
     internal fun getMobileService(): MobileService {
-        if (mobileService == null) throw IllegalStateException(ERR_NO_SERVICE)
+        if (mobileService == null) throw IllegalStateException(RB.Mobile.text("noService"))
         return mobileService as MobileService
     }
 
@@ -1265,7 +1264,7 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
             }
         }
 
-        throw NoSuchElementException("$NO_MATCH_COMPOUND_LOCATOR $locator")
+        throw NoSuchElementException(RB.Mobile.text("mismatch.locator.oneOf", locator))
     }
 
     @Throws(NoSuchElementException::class)
@@ -1535,10 +1534,10 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
         else IOSTouchAction(mobileService.driver)
 
     private fun toPointOption(position: String, currentScreen: Dimension): PointOption<*> {
-        val x = StringUtils.substringBefore(position.toLowerCase(), ",")
+        val x = StringUtils.substringBefore(position.lowercase(), ",")
         requiresPositiveNumber(x, "Invalid x-coordinate", x)
 
-        val y = StringUtils.substringAfter(position.toLowerCase(), ",")
+        val y = StringUtils.substringAfter(position.lowercase(), ",")
         requiresPositiveNumber(y, "Invalid y-coordinate", y)
 
         return PointOption.point(withinLimit(EDGE_WIDTH, currentScreen.width - EDGE_WIDTH, NumberUtils.toInt(x)),

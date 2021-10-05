@@ -36,7 +36,7 @@ import org.nexial.commons.proc.ProcessInvoker
 import org.nexial.commons.utils.FileUtil
 import org.nexial.core.NexialConst.Data.WIN32_CMD
 import org.nexial.core.NexialConst.Mobile.*
-import org.nexial.core.NexialConst.Mobile.Message.*
+import org.nexial.core.NexialConst.RB
 import org.nexial.core.plugins.mobile.MobileType.ANDROID
 import org.nexial.core.plugins.mobile.MobileType.IOS
 import org.nexial.core.utils.ConsoleUtils
@@ -146,14 +146,14 @@ class MobileService(val profile: MobileProfile, val remoteUrl: String?) {
             try {
                 driver.closeApp()
             } catch (e: Exception) {
-                ConsoleUtils.error("$FAIL_CLOSE_APP ${e.message}")
+                ConsoleUtils.error(RB.Mobile.text("error.closeApp", e.message))
             }
         }
 
         try {
             driver.quit()
         } catch (e: Exception) {
-            ConsoleUtils.error("$FAIL_QUIT_DRIVER ${e.message}")
+            ConsoleUtils.error(RB.Mobile.text("error.shutdown", e.message))
         }
 
         if (appiumService != null) appiumService!!.stop()
@@ -209,7 +209,7 @@ class MobileService(val profile: MobileProfile, val remoteUrl: String?) {
         val service = AppiumDriverLocalService.buildService(builder)
         service.start()
         val url = service.url
-        ConsoleUtils.log("$APPIUM_SERVER_STARTED $url")
+        ConsoleUtils.log(RB.Mobile.text("appium.started", url))
 
         appiumService = service
         return url
@@ -221,10 +221,10 @@ class MobileService(val profile: MobileProfile, val remoteUrl: String?) {
                                                           System.getProperty(envAppiumBinaryPath))
         if (StringUtils.isBlank(appiumBinaryPath)) {
             val binary = possibleAppiumBinaryPaths.firstOrNull { path -> FileUtil.isFileExecutable(path.toFile()) }
-                         ?: throw RuntimeException("$MISSING_APPIUM_PATH_ENV $envAppiumBinaryPath")
+                         ?: throw RuntimeException(RB.Mobile.text("missing.appium.path", envAppiumBinaryPath))
             appiumBinaryPath = binary.toFile().absolutePath
         } else if (!FileUtil.isFileExecutable(appiumBinaryPath))
-            throw RuntimeException("$INVALID_APPIUM_PATH $appiumBinaryPath")
+            throw RuntimeException(RB.Mobile.text("invalid.appium.path", appiumBinaryPath))
 
         System.setProperty(envAppiumBinaryPath, appiumBinaryPath)
 
@@ -233,10 +233,10 @@ class MobileService(val profile: MobileProfile, val remoteUrl: String?) {
                                                         System.getProperty(envNodeBinaryPath))
         if (StringUtils.isBlank(nodeBinaryPath)) {
             val binary = possibleNodeBinaryPaths.firstOrNull { path -> FileUtil.isFileExecutable(path.toFile()) }
-                         ?: throw RuntimeException("$MISSING_NODE_PATH_ENV $envNodeBinaryPath")
+                         ?: throw RuntimeException(RB.Mobile.text("missing.node.path", envNodeBinaryPath))
             nodeBinaryPath = binary.toFile().absolutePath
         } else if (!FileUtil.isFileExecutable(nodeBinaryPath))
-            throw RuntimeException("$INVALID_NODE_PATH $nodeBinaryPath")
+            throw RuntimeException(RB.Mobile.text("invalid.node.path", nodeBinaryPath))
 
         System.setProperty(envNodeBinaryPath, nodeBinaryPath)
     }

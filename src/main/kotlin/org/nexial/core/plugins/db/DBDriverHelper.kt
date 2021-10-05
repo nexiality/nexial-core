@@ -167,7 +167,7 @@ abstract class DBDriverHelper protected constructor(protected var context: Execu
 
     companion object {
 
-        const val DRIVER_MIN_SIZE: Long = 1024 * 50
+        const val DRIVER_MIN_SIZE: Long = (1024 * 50).toLong()
 
         @JvmStatic
         @Throws(IOException::class)

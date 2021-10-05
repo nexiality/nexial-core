@@ -1,17 +1,18 @@
 /*
- * Copyright 2012-2018 the original author or authors.
+ * Copyright 2012-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *       http://www.apache.org/licenses/LICENSE-2.0
+ * 	http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package org.nexial.core.reports
@@ -33,7 +34,6 @@ import org.thymeleaf.TemplateEngine
 import org.thymeleaf.context.Context
 import java.io.File
 import java.io.IOException
-import java.util.*
 
 class ExecutionReporter {
     private var templateEngine: TemplateEngine? = null
@@ -138,7 +138,7 @@ class ExecutionReporter {
             if (script == null) return
 
             if (!isAutoOpenResult()) {
-                if (ExecUtils.isRunningInZeroTouchEnv()) ConsoleUtils.log(MSG_SKIP_AUTO_OPEN_RESULT)
+                if (ExecUtils.isRunningInZeroTouchEnv()) ConsoleUtils.log(RB.Commons.text("noAutoOpenResult"))
                 return
             }
 
@@ -166,7 +166,7 @@ class ExecutionReporter {
         @JvmStatic
         fun openExecutionSummaryReport(location: String) {
             if (!isAutoOpenExecResult()) {
-                if (ExecUtils.isRunningInZeroTouchEnv()) ConsoleUtils.log(MSG_SKIP_AUTO_OPEN_RESULT)
+                if (ExecUtils.isRunningInZeroTouchEnv()) ConsoleUtils.log(RB.Commons.text("noAutoOpenResult"))
             } else ExecUtils.openExecReportFile(location)
         }
 

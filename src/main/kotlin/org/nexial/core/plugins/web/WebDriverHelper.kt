@@ -1,17 +1,18 @@
 /*
- * Copyright 2012-2018 the original author or authors.
+ * Copyright 2012-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *       http://www.apache.org/licenses/LICENSE-2.0
+ * 	http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package org.nexial.core.plugins.web
@@ -133,11 +134,11 @@ abstract class WebDriverHelper protected constructor(protected var context: Exec
     protected open fun resolveDriverManifest(pollForUpdates: Boolean): WebDriverManifest {
         val (manifest: WebDriverManifest, hasDriver) = initManifestAndCheckDriver()
 
-        // never check is turned on and we already have a driver, so just keep this one
+        // never check is turned on, and we already have a driver, so just keep this one
         if (manifest.neverCheck && hasDriver) return manifest
 
         if (pollForUpdates && manifest.lastChecked + config.checkFrequency > System.currentTimeMillis()) {
-            // we still have time.. no need to check now
+            // we still have time... no need to check now
             return manifest
         }
         // else, need to check online, poll online for newer driver
@@ -205,7 +206,7 @@ abstract class WebDriverHelper protected constructor(protected var context: Exec
         }
 
         if (TextUtils.isBetween(driverUrl, "[", "]")) {
-            // [corner case] multiple matches found.. most likely one with ".tar.gz" and the other one ".tar.gz.asc"
+            // [corner case] multiple matches found... most likely one with ".tar.gz" and the other one ".tar.gz.asc"
             val driverUrlList = JSONArray(driverUrl).map { it.toString() }.filter { !it.endsWith(".asc") }
             driverUrl = driverUrlList[0]
         }
@@ -404,7 +405,7 @@ abstract class WebDriverHelper protected constructor(protected var context: Exec
     protected abstract fun resolveLocalDriverPath(): String
 
     companion object {
-        const val DRIVER_MIN_SIZE: Long = 1024 * 50
+        const val DRIVER_MIN_SIZE: Long = (1024 * 50).toLong()
         protected const val MANIFEST = ".manifest"
 
         @JvmStatic

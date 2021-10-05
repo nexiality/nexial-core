@@ -188,5 +188,5 @@ data class RecognizedCollection(val source: String) : ArrayList<RecognizedText>(
     }
 
     @JvmName("getConfidence")
-    fun getConfidence() = this.sumByDouble { it.confidence } / this.size
+    fun getConfidence() = this.sumOf { it.confidence } / this.size
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2018 the original author or authors.
+ * Copyright 2012-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -212,13 +212,13 @@ class ImageOcrApi(
                (if (StringUtils.isNotBlank(errorDetails)) ". $errorDetails" else "")
     }
 
-    private fun toMimeType(imageFile: File) = when (imageFile.extension.toLowerCase()) {
-        "pdf" -> "application/pdf"
+    private fun toMimeType(imageFile: File) = when (imageFile.extension.lowercase()) {
+        "pdf"         -> "application/pdf"
         "tif", "tiff" -> "image/tiff"
-        "png" -> "image/png"
+        "png"         -> "image/png"
         "jpeg", "jpg" -> "image/jpeg"
-        "gif" -> "image/gif"
-        "bmp" -> "image/bmp"
+        "gif"         -> "image/gif"
+        "bmp"         -> "image/bmp"
         else          -> "image/ief"    /* probably won't work */
     }
 }

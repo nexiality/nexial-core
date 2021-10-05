@@ -1,5 +1,3 @@
-package org.nexial.core.tools;
-
 /*
  * Copyright 2012-2021 the original author or authors.
  *
@@ -17,6 +15,7 @@ package org.nexial.core.tools;
  *
  */
 
+package org.nexial.core.tools;
 
 import static java.io.File.separator;
 import static org.apache.commons.lang3.StringUtils.*;

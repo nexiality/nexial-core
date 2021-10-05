@@ -1,11 +1,11 @@
 /*
- * Copyright 2012-2018 the original author or authors.
+ * Copyright 2012-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *       http://www.apache.org/licenses/LICENSE-2.0
+ * 	http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -57,7 +57,7 @@ public class CommandRepeater {
 
     public TestStep getInitialTestStep() { return initialTestStep; }
 
-    public void addStep(TestStep nextStep) { steps.add(nextStep);}
+    public void addStep(TestStep nextStep) { steps.add(nextStep); }
 
     public int getStepCount() { return steps.size(); }
 
@@ -118,7 +118,7 @@ public class CommandRepeater {
                     if (!result.isSkipped()) { context.setData(OPT_LAST_OUTCOME, succeed); }
 
                     if (context.isBreakCurrentIteration()) {
-                        logger.log(testStep, MSG_REPEAT_UNTIL_BREAK);
+                        logger.log(testStep, RB.RepeatUntil.text("break"));
                         return result;
                     }
 
@@ -130,9 +130,7 @@ public class CommandRepeater {
                             return result;
                         } else {
                             // else failure means continue... no sweat
-                            logger.log(testStep,
-                                       MSG_REPEAT_UNTIL + "condition not met (" + result.getMessage() + "); " +
-                                       "loop proceeds");
+                            logger.log(testStep, RB.RepeatUntil.text("conditionNotMet", result.getMessage()));
                         }
                     } else {
                         if (result.isSuccess()) {
@@ -141,11 +139,7 @@ public class CommandRepeater {
                             logger.log(testStep, MSG_REPEAT_UNTIL + result.getMessage());
                         } else {
                             // fail or warn
-                            logger.log(testStep,
-                                       MSG_REPEAT_UNTIL + MSG_FAIL + result.getMessage() + "; " +
-                                       FAIL_FAST + "=" + context.isFailFast() + "; " +
-                                       OPT_LAST_OUTCOME + "=" + context.getBooleanData(OPT_LAST_OUTCOME),
-                                       true);
+                            logError(context, testStep, result.getMessage());
                         }
 
                         // evaluate if this is TRULY a failure, using result.failed() is not accurate
@@ -224,10 +218,10 @@ public class CommandRepeater {
     @Override
     public String toString() {
         return new ToStringBuilder(this, SIMPLE_STYLE)
-                   .append("initialTestStep", initialTestStep)
-                   .append("steps", steps)
-                   .append("maxWaitMs", maxWaitMs)
-                   .toString();
+            .append("initialTestStep", initialTestStep)
+            .append("steps", steps)
+            .append("maxWaitMs", maxWaitMs)
+            .toString();
     }
 
     public void close() {
@@ -238,21 +232,20 @@ public class CommandRepeater {
     }
 
     protected void logRepeatUntilStart(ExecutionLogger logger, TestStep testStep, int loopCount) {
-        String message = "<" + MSG_REPEAT_UNTIL + "entering loop #" + loopCount + " ";
-        message += StringUtils.repeat("-", 78 - message.length()) + ">";
-        logger.log(testStep, NL + message, true);
+        String message = RB.RepeatUntil.text("loop", loopCount);
+        logger.log(testStep, NL + message + StringUtils.repeat("-", 77 - message.length()) + " >", true);
     }
 
     protected boolean shouldFailFast(ExecutionContext context, TestStep testStep) {
         boolean shouldFailFast = context.isFailFast() || context.isFailFastCommand(testStep);
-        if (shouldFailFast) { context.logCurrentStep(MSG_CRITICAL_COMMAND_FAIL + testStep.getCommandFQN()); }
+        if (shouldFailFast) { context.logCurrentStep(RB.Abort.text("criticalCommand.fail", testStep.getCommandFQN())); }
         return shouldFailFast;
     }
 
     private StepResult handleException(TestStep testStep, int stepIndex, Throwable e) {
         if (e == null) { return null; }
 
-        // first command is assertion.. failure means we need to keep going..
+        // first command is assertion... failure means we need to keep going...
         if (stepIndex == 0) {
             if (e instanceof AssertionError) { return null; }
 
@@ -269,16 +262,20 @@ public class CommandRepeater {
         context.setData(OPT_LAST_OUTCOME, false);
 
         String error = resolveRootCause(e);
-        context.getLogger().log(testStep,
-                                MSG_REPEAT_UNTIL + MSG_FAIL + error + "; " +
-                                FAIL_FAST + "=" + context.isFailFast() + "; " +
-                                OPT_LAST_OUTCOME + "=" + context.getBooleanData(OPT_LAST_OUTCOME),
-                                true);
+        logError(context, testStep, error);
 
         if (shouldFailFast(context, testStep)) { return StepResult.fail(error); }
 
         // else, fail-fast not in effect, so we push on
         return null;
+    }
+
+    private void logError(ExecutionContext context, TestStep testStep, String error) {
+        context.getLogger().log(testStep,
+                                MSG_REPEAT_UNTIL + MSG_FAIL + error + "; " +
+                                FAIL_FAST + "=" + context.isFailFast() + "; " +
+                                OPT_LAST_OUTCOME + "=" + context.getBooleanData(OPT_LAST_OUTCOME),
+                                true);
     }
 
     private String resolveRootCause(Throwable e) {

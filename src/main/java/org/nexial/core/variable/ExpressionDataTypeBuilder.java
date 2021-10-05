@@ -1,11 +1,11 @@
 /*
- * Copyright 2012-2018 the original author or authors.
+ * Copyright 2012-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *       http://www.apache.org/licenses/LICENSE-2.0
+ * 	http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -35,7 +35,9 @@ import java.util.List;
 import java.util.Map;
 
 import static org.nexial.core.NexialConst.Data.TEXT_DELIM;
+import static org.nexial.core.NexialConst.Expression.WEB_RESULT_ALWAYS_NEW;
 import static org.nexial.core.SystemVariables.getDefault;
+import static org.nexial.core.SystemVariables.getDefaultBool;
 import static org.nexial.core.variable.BinaryDataType.BINARY;
 import static org.nexial.core.variable.ExpressionConst.REGEX_VALID_TYPE_PREFIX;
 import static org.nexial.core.variable.ExpressionConst.REGEX_VALID_TYPE_SUFFIX;
@@ -167,7 +169,14 @@ final class ExpressionDataTypeBuilder {
 
     WebDataType newWebDataType(String value) throws TypeConversionException {
         WebDataType data = resumeExpression(value, WebDataType.class);
-        return data != null ? data : new WebDataType(handleExternal("WEB", value));
+        if (data != null) { return data; }
+
+        WebDataType dataType = new WebDataType(handleExternal("WEB", value));
+
+        boolean ensureNewResult = context.getBooleanData(WEB_RESULT_ALWAYS_NEW, getDefaultBool(WEB_RESULT_ALWAYS_NEW));
+        if (ensureNewResult) { context.removeData(value); }
+
+        return dataType;
     }
 
     BinaryDataType newBinaryDataType(String value) throws TypeConversionException {

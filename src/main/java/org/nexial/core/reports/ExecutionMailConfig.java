@@ -1,20 +1,33 @@
 /*
- * Copyright 2012-2018 the original author or authors.
+ * Copyright 2012-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *       http://www.apache.org/licenses/LICENSE-2.0
+ * 	http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package org.nexial.core.reports;
+
+import com.amazonaws.regions.Regions;
+import org.apache.commons.collections4.MapUtils;
+import org.apache.commons.lang3.BooleanUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.math.NumberUtils;
+import org.nexial.commons.utils.EnvUtils;
+import org.nexial.commons.utils.TextUtils;
+import org.nexial.core.NexialConst.RB;
+import org.nexial.core.model.ExecutionContext;
+import org.nexial.core.plugins.aws.AwsSesSettings;
+import org.nexial.core.utils.ConsoleUtils;
 
 import java.util.Hashtable;
 import java.util.List;
@@ -23,18 +36,6 @@ import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
-
-import org.apache.commons.collections4.MapUtils;
-import org.apache.commons.lang3.BooleanUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.math.NumberUtils;
-import org.nexial.commons.utils.EnvUtils;
-import org.nexial.commons.utils.TextUtils;
-import org.nexial.core.model.ExecutionContext;
-import org.nexial.core.plugins.aws.AwsSesSettings;
-import org.nexial.core.utils.ConsoleUtils;
-
-import com.amazonaws.regions.Regions;
 
 import static com.amazonaws.regions.Regions.DEFAULT_REGION;
 import static javax.naming.Context.INITIAL_CONTEXT_FACTORY;
@@ -88,13 +89,13 @@ public class ExecutionMailConfig {
     public boolean isReady() {
         String enableEmail = MapUtils.getString(configurations, ENABLE_EMAIL, getDefault(ENABLE_EMAIL));
         if (!BooleanUtils.toBoolean(enableEmail)) {
-            ConsoleUtils.log(NOT_READY_PREFIX + ENABLE_EMAIL + "=" + enableEmail);
+            ConsoleUtils.log(RB.Mailer.text("notReady.disabled"));
             return false;
         }
 
         String mailTo2 = MapUtils.getString(configurations, POST_EXEC_MAIL_TO);
         if (StringUtils.isBlank(mailTo2)) {
-            ConsoleUtils.log(NOT_READY_PREFIX + POST_EXEC_MAIL_TO + "=" + mailTo2);
+            ConsoleUtils.log(RB.Mailer.text("notReady.mailToUndefined"));
             return false;
         }
 
@@ -105,7 +106,7 @@ public class ExecutionMailConfig {
         // jndi as first priority
         if (isConfigFound(configurations, MAIL_KEY_MAIL_JNDI_URL)) {
             if (!isConfigFound(configurations, INITIAL_CONTEXT_FACTORY)) {
-                ConsoleUtils.log(JNDI_NOT_READY);
+                ConsoleUtils.log(RB.Mailer.text("notReady.jndi"));
             } else {
                 return true;
             }
@@ -115,7 +116,7 @@ public class ExecutionMailConfig {
         if (isConfigFound(configurations, MAIL_KEY_MAIL_HOST)) {
             if (!isConfigFound(configurations, MAIL_KEY_PROTOCOL) ||
                 !isConfigFound(configurations, MAIL_KEY_MAIL_PORT)) {
-                ConsoleUtils.log(SMTP_NOT_READY);
+                ConsoleUtils.log(RB.Mailer.text("notReady.smtp"));
             } else {
                 return true;
             }
@@ -125,14 +126,14 @@ public class ExecutionMailConfig {
         if (isConfigFound(configurations, SES_PREFIX + AWS_ACCESS_KEY)) {
             if (!isConfigFound(configurations, SES_PREFIX + AWS_SECRET_KEY) ||
                 !isConfigFound(configurations, SES_PREFIX + AWS_SES_FROM)) {
-                ConsoleUtils.log(SES_NOT_READY);
+                ConsoleUtils.log(RB.Mailer.text("notReady.ses"));
             } else {
                 return true;
             }
         }
 
         // can't find required config for JNDI, SMTP, IMAP or SES
-        ConsoleUtils.log(MAILER_NOT_READY);
+        ConsoleUtils.log(RB.Mailer.text("notReady.mail"));
         return false;
     }
 

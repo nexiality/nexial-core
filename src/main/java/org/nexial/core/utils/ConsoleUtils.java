@@ -25,6 +25,7 @@ import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.nexial.commons.logging.LogbackUtils;
 import org.nexial.commons.utils.DateUtility;
+import org.nexial.core.NexialConst.RB;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.model.ExecutionEventListener;
 import org.nexial.core.model.TestCase;
@@ -40,8 +41,9 @@ import java.util.List;
 import java.util.Scanner;
 
 import static org.nexial.core.NexialConst.Data.QUIET;
+import static org.nexial.core.NexialConst.Exec.INSPECT_END;
+import static org.nexial.core.NexialConst.Exec.INSPECT_RESUME;
 import static org.nexial.core.NexialConst.FlowControls.OPT_INSPECT_ON_PAUSE;
-import static org.nexial.core.NexialConst.FlowControls.RESUME_FROM_PAUSE;
 import static org.nexial.core.NexialConst.NL;
 import static org.nexial.core.SystemVariables.getDefaultBool;
 import static org.slf4j.event.Level.ERROR;
@@ -68,7 +70,7 @@ public final class ConsoleUtils {
     private static final Logger LOGGER = LoggerFactory.getLogger(ConsoleUtils.class);
     private static final List<Pair<Level, String>> PRE_EXEC_READY_BUFFER = new ArrayList<>();
 
-    public enum LogType {LOG, ERROR}
+    public enum LogType { LOG, ERROR }
 
     private ConsoleUtils() { }
 
@@ -162,8 +164,10 @@ public final class ConsoleUtils {
 
     @SuppressWarnings("PMD.SystemPrintln")
     public static void doPause(ExecutionContext context, String msg) {
-        pauseAndInspect(context, msg, context != null && context.getBooleanData(OPT_INSPECT_ON_PAUSE,
-                                                                                getDefaultBool(OPT_INSPECT_ON_PAUSE)));
+        pauseAndInspect(context,
+                        msg,
+                        context != null &&
+                        context.getBooleanData(OPT_INSPECT_ON_PAUSE, getDefaultBool(OPT_INSPECT_ON_PAUSE)));
     }
 
     @SuppressWarnings("PMD.SystemPrintln")
@@ -173,23 +177,30 @@ public final class ConsoleUtils {
 
         if (inspect) {
             // inspect mode
-            System.out.println("/" + StringUtils.repeat("-", PROMPT_LINE_WIDTH - 2) + "\\");
-            System.out.println(MARGIN_RIGHT + centerPrompt("INSPECT ON PAUSE", PROMPT_LINE_WIDTH - 2) + MARGIN_RIGHT);
-            System.out.println("\\" + StringUtils.repeat("-", PROMPT_LINE_WIDTH - 2) + "/");
-            System.out.println("> Enter statement to inspect.  Press ENTER or " + RESUME_FROM_PAUSE + " to resume " +
-                               "execution" + NL);
-            System.out.print("inspect-> ");
+            System.out.print(RB.Console.text("inspectPrompt"));
+            // System.out.println("/" + StringUtils.repeat("-", PROMPT_LINE_WIDTH - 2) + "\\");
+            // System.out.println(MARGIN_RIGHT + centerPrompt("INSPECT ON PAUSE", PROMPT_LINE_WIDTH - 2) + MARGIN_RIGHT);
+            // System.out.println("\\" + StringUtils.repeat("-", PROMPT_LINE_WIDTH - 2) + "/");
+            // System.out.println("> Enter statement to inspect.  Press ENTER or " + RESUME_FROM_PAUSE + " to resume " +
+            //                    "execution" + NL);
+            // System.out.print("inspect-> ");
             Scanner in = new Scanner(System.in);
             String input = in.nextLine();
 
-            while (StringUtils.isNotBlank(input) && !StringUtils.equals(StringUtils.trim(input), RESUME_FROM_PAUSE)) {
+            while (StringUtils.isNotBlank(input) && !StringUtils.equals(StringUtils.trim(input), INSPECT_RESUME)) {
+                if (StringUtils.equals(StringUtils.trim(input), INSPECT_END)) {
+                    context.setEndImmediate(true);
+                    break;
+                }
+
                 System.out.println(context.replaceTokens(input, true));
                 System.out.println();
                 System.out.print("inspect-> ");
                 input = in.nextLine();
             }
         } else {
-            System.out.println("\t>>> Press ENTER to continue... ");
+            System.out.print(RB.Console.text("continuePrompt"));
+            // System.out.println("\t>>> Press ENTER to continue... ");
             Scanner in = new Scanner(System.in);
             in.nextLine();
         }
@@ -263,14 +274,12 @@ public final class ConsoleUtils {
     }
 
     @SuppressWarnings("PMD.SystemPrintln")
-    public static String pauseForInput(ExecutionContext context, String prompt,
-                                       String header) {
+    public static String pauseForInput(ExecutionContext context, String prompt, String header) {
         return pauseForInput(context, prompt, header, false);
     }
 
     @SuppressWarnings("PMD.SystemPrintln")
-    public static String pauseForInput(ExecutionContext context, String prompt,
-                                       String header, boolean interruptable) {
+    public static String pauseForInput(ExecutionContext context, String prompt, String header, boolean interruptable) {
         // not applicable when running in Jenkins environment
         if (!isPauseReady()) { return null; }
 

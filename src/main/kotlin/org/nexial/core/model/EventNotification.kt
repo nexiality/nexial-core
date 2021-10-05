@@ -96,7 +96,7 @@ class EmailNotification(context: ExecutionContext, event: ExecutionEvent, data: 
                 "subject" -> subject = context.replaceTokens(value)
                 "from"    -> mailData.fromAddr = value
                 "html"    -> mailData.mimeType = if (BooleanUtils.toBoolean(value)) MIME_HTML else MIME_PLAIN
-                "footer"  -> mailData.isFooter = BooleanUtils.toBoolean(value.toLowerCase())
+                "footer"  -> mailData.isFooter = BooleanUtils.toBoolean(value.lowercase())
                 "body"    -> body = StringUtils.trim(value)
                 else      -> ConsoleUtils.error("Unknown configuration for email notification: $key")
             }

@@ -200,7 +200,8 @@ class DataDocGenerator(val options: InspectorOptions, val logger: InspectorLogge
                 val position = "line ${index + 1}"
 
                 if (RegexUtils.match(line1, ".*\\-D(.+)=(.+).*")) {
-                    val overrides = if (line1.contains("=-D")) line1.substringAfter("=-D") else line1.substringAfter("-D")
+                    val overrides =
+                        if (line1.contains("=-D")) line1.substringAfter("=-D") else line1.substringAfter("-D")
                     handleCommandlineOverrides(dataVariables, overrides, " -D", location, position)
                     continue
                 }
@@ -218,7 +219,7 @@ class DataDocGenerator(val options: InspectorOptions, val logger: InspectorLogge
 
         val varCommands = retrieveVarCommands()
         if (varCommands == null) {
-            System.err.println("Unable to retrieve command variable metadata. $MSG_CHECK_SUPPORT")
+            System.err.println(RB.Fatal.text("cmdMeta.missing"))
             return
         }
 
@@ -273,17 +274,17 @@ class DataDocGenerator(val options: InspectorOptions, val logger: InspectorLogge
 
                             if (activityCache != null) {
                                 activityCache!!.steps += StepCache(
-                                        row = rowIndex,
-                                        description = Excel.getCellRawValue(row[1]),
-                                        cmdType = cmdType,
-                                        command = command,
-                                        param1 = Excel.getCellRawValue(row[4]),
-                                        param2 = Excel.getCellRawValue(row[5]),
-                                        param3 = Excel.getCellRawValue(row[6]),
-                                        param4 = Excel.getCellRawValue(row[7]),
-                                        param5 = Excel.getCellRawValue(row[8]),
-                                        flowControl = Excel.getCellRawValue(row[9]),
-                                        screenshot = BooleanUtils.toBoolean(Excel.getCellRawValue(row[11])))
+                                    row = rowIndex,
+                                    description = Excel.getCellRawValue(row[1]),
+                                    cmdType = cmdType,
+                                    command = command,
+                                    param1 = Excel.getCellRawValue(row[4]),
+                                    param2 = Excel.getCellRawValue(row[5]),
+                                    param3 = Excel.getCellRawValue(row[6]),
+                                    param4 = Excel.getCellRawValue(row[7]),
+                                    param5 = Excel.getCellRawValue(row[8]),
+                                    flowControl = Excel.getCellRawValue(row[9]),
+                                    screenshot = BooleanUtils.toBoolean(Excel.getCellRawValue(row[11])))
                             }
 
                             val commandFqn = "$cmdType.$command"
@@ -370,7 +371,7 @@ class DataDocGenerator(val options: InspectorOptions, val logger: InspectorLogge
                         firstInstance.advices += getMessage("dv.value.missing")
 
                     // Rule #7: sentry no more!
-                    if (name.toLowerCase().contains("sentry"))
+                    if (name.lowercase().contains("sentry"))
                         firstInstance.advices += getMessage("dv.name.sentry")
 
                     // Rule #5: sensitive data value
@@ -408,7 +409,7 @@ class DataDocGenerator(val options: InspectorOptions, val logger: InspectorLogge
     }
 
     private fun isDefinedInDataSheet(locationTypes: List<DataVariableLocationType>) =
-            locationTypes.contains(DefaultDataSheet) || locationTypes.contains(ScenarioDataSheet)
+        locationTypes.contains(DefaultDataSheet) || locationTypes.contains(ScenarioDataSheet)
 
     private fun handleCommandlineOverrides(dataVariables: DataVariableEntity,
                                            overrides: String,
@@ -447,7 +448,7 @@ class DataDocGenerator(val options: InspectorOptions, val logger: InspectorLogge
         if (name.isEmpty() || values.isEmpty()) return false
 
         // test data variable name
-        val varName = name.toLowerCase()
+        val varName = name.lowercase()
         return if (RegexUtils.match(varName, ".*password.*") ||
                    RegexUtils.match(varName, ".*secret.*(key|code).*") ||
                    RegexUtils.match(varName, ".*access.*(key|code).*"))

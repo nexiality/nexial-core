@@ -32,7 +32,6 @@ class HeadlessBaseTests : ExcelBasedTests() {
     @Test
     @Throws(Exception::class)
     fun baseCommandTests_part1() {
-        // ExecutionSummary executionSummary = testViaExcel("unitTest_base_part1.xlsx", "actual_in_output2");
         val executionSummary = testViaExcel("unitTest_base_part1.xlsx")
         assertPassFail(executionSummary, "base_showcase", TestOutcomeStats.allPassed())
         assertPassFail(executionSummary, "function_projectfile", TestOutcomeStats.allPassed())
@@ -46,7 +45,6 @@ class HeadlessBaseTests : ExcelBasedTests() {
     @Test
     @Throws(Exception::class)
     fun baseCommandTests_part2() {
-        // ExecutionSummary executionSummary = testViaExcel("unitTest_base_part2.xlsx", "flow_controls");
         val executionSummary = testViaExcel("unitTest_base_part2.xlsx")
         assertPassFail(executionSummary, "crypto", TestOutcomeStats.allPassed())
         assertPassFail(executionSummary, "macro-test", TestOutcomeStats.allPassed())
@@ -60,7 +58,6 @@ class HeadlessBaseTests : ExcelBasedTests() {
     @Throws(Exception::class)
     fun baseCommandTests_part3() {
         val executionSummary = testViaExcel("unitTest_base_part3.xlsx")
-        // ExecutionSummary executionSummary = testViaExcel("unitTest_base_part3.xlsx", "function_format");
         assertPassFail(executionSummary, "function_format", TestOutcomeStats.allPassed())
         assertPassFail(executionSummary, "execution_count", TestOutcomeStats(2, 9))
         assertPassFail(executionSummary, "waitForCondition", TestOutcomeStats(1, 6))
@@ -101,11 +98,11 @@ class HeadlessBaseTests : ExcelBasedTests() {
 
     @Test
     @Throws(Exception::class)
-    fun repeatUntilAssetTests() {
+    fun repeatUntilAssertTests() {
         val executionSummary = testViaExcel("unitTest_repeatUntil_assert.xlsx", "repeatUntil")
         assertPassFail(executionSummary, "repeatUntil", TestOutcomeStats.allPassed())
 
-        // in this test, we expects no screenshot to be generated
+        // in this test, we expect no screenshot to be generated
         val outputDir = System.getProperty("nexial.outBase")
         val captureDir = File(StringUtils.appendIfMissing(outputDir, "/") + "captures/")
         val screenshots = FileUtils.listFiles(captureDir, arrayOf("png"), false)
@@ -146,7 +143,7 @@ class HeadlessBaseTests : ExcelBasedTests() {
     fun buildNumTest_sysprop() {
         System.setProperty("nexial.generateReport", "true")
 
-        // test that sys prop won't affected the same being modified in execution (script, in this case)
+        // test that sys prop won't affect the same being modified in execution (script, in this case)
         System.setProperty("nexial.scriptRef.buildnum", "1.2.3-4")
 
         try {

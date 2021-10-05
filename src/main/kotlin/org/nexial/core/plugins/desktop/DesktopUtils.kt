@@ -273,11 +273,9 @@ internal object DesktopUtils {
 
     @JvmStatic
     fun countChildren(element: WebElement, filter: (child: WebElement) -> Boolean): Int {
-        // we don't know if there are any row in this data
-        // so we use "*" to all children -- this is faster
+        // we don't know if there are any row in this data, so we use "*" to all children -- this is faster
         val children = element.findElements<WebElement>(By.xpath("*"))
-        if (CollectionUtils.isEmpty(children)) return 0
-        return children.sumBy { if (filter(it)) 1 else 0 }
+        return if (CollectionUtils.isEmpty(children)) 0 else children.sumOf { (if (filter(it)) 1 else 0) as Int }
     }
 
     @JvmStatic

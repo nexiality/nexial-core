@@ -45,6 +45,7 @@ import java.io.FileOutputStream
 import java.util.jar.Attributes.Name.MANIFEST_VERSION
 import java.util.jar.JarOutputStream
 import java.util.jar.Manifest
+import kotlin.system.exitProcess
 
 object CommandMetaGenerator {
     private val variables = listOf("var", "saveVar", "profile", "db", "config")
@@ -209,9 +210,8 @@ object CommandMetaGenerator {
         if (StringUtils.isEmpty(libDir)) {
             val nexialHome = System.getenv(ENV_NEXIAL_HOME)
             if (StringUtils.isEmpty(nexialHome)) {
-                error("NEXIAL_LIB and NEXIAL_HOME environment variables are missing. $MSG_CHECK_SUPPORT")
-                System.exit(RC_BAD_BATCH_FILE)
-                return
+                error(RB.Fatal.text("env.missing"))
+                exitProcess(RC_BAD_BATCH_FILE)
             }
 
             libDir = nexialHome + separator + "lib"

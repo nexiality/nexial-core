@@ -1,5 +1,3 @@
-package org.nexial.core.tools;
-
 /*
  * Copyright 2012-2021 the original author or authors.
  *
@@ -16,6 +14,8 @@ package org.nexial.core.tools;
  * limitations under the License.
  *
  */
+
+package org.nexial.core.tools;
 
 import static org.apache.commons.lang3.StringUtils.*;
 import static org.nexial.core.NexialConst.ExitStatus.RC_BAD_CLI_ARGS;

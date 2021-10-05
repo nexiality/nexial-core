@@ -59,7 +59,6 @@ import static org.apache.commons.lang3.SystemUtils.*;
 import static org.nexial.core.NexialConst.AwsSettings.*;
 import static org.nexial.core.NexialConst.CommonColor.COLOR_NAMES;
 import static org.nexial.core.NexialConst.Data.*;
-import static org.nexial.core.NexialConst.Doc.DOCUMENTATION_URL;
 import static org.nexial.core.NexialConst.Exec.*;
 import static org.nexial.core.NexialConst.Image.OPT_IMAGE_DIFF_COLOR;
 import static org.nexial.core.NexialConst.Integration.MAIL_PREFIX;
@@ -151,8 +150,8 @@ public final class NexialConst {
     public static final String OPT_TEXT_MATCH_LENIENT = registerSysVar(NS_TEXT_MATCH + "lenient", true);
     public static final String OPT_TEXT_MATCH_AS_NUMBER = registerSysVar(NS_TEXT_MATCH + "asNumber", true);
     public static final String OPT_TEXT_MATCH_USE_TRIM = registerSysVar(NS_TEXT_MATCH + "useTrim", false);
-    public static final String OPT_TEXT_MATCH_CASE_INSENSITIVE = registerSysVar(NS_TEXT_MATCH + "caseInsensitive",
-                                                                                false);
+    public static final String OPT_TEXT_MATCH_CASE_INSENSITIVE =
+        registerSysVar(NS_TEXT_MATCH + "caseInsensitive", false);
 
     // number related operations
     public static final String NS_NUMBER = NAMESPACE + "number.";
@@ -165,8 +164,8 @@ public final class NexialConst {
     public static final String OPT_LAST_SCREENSHOT_NAME = registerSysVar(NAMESPACE + "lastScreenshot");
     public static final String OPT_NATIVE_SCREENSHOT = registerSysVar(NAMESPACE + "screenshotAsDesktop", false);
     public static final String OPT_SCREENSHOT_FULL = registerSysVar(NAMESPACE + "screenshotInFull", false);
-    public static final String OPT_SCREENSHOT_FULL_TIMEOUT = registerSysVar(NAMESPACE + "screenshotInFullTimeout",
-                                                                            5000);
+    public static final String OPT_SCREENSHOT_FULL_TIMEOUT =
+        registerSysVar(NAMESPACE + "screenshotInFullTimeout", 5000);
     public static final String SCREENSHOT_EXT = ".png";
     public static final String OPT_SCREENSHOT_ENABLED = registerSysVar(NAMESPACE + "screenshotEnabled", true);
 
@@ -258,6 +257,23 @@ public final class NexialConst {
     public static final String PROPERTIES_REGEX = "(.*?(?<!\\\\))(=|:)(.*)";
     public static final String PROPERTIES_SECTION_START = "####";
 
+    public static final class RB {
+        private static final ResourceBundle Messages = new ResourceBundle("org/nexial/core/resources");
+
+        public static final ResourceBundle Abort = Messages.subset("Abort");
+        public static final ResourceBundle Commons = Messages.subset("Commons");
+        public static final ResourceBundle Console = Messages.subset("Console");
+        public static final ResourceBundle Fatal = Messages.subset("Fatal");
+        public static final ResourceBundle Mailer = Messages.subset("Mailer");
+        public static final ResourceBundle Mobile = Messages.subset("Mobile");
+        public static final ResourceBundle PolyMatcher = Messages.subset("PolyMatcher");
+        public static final ResourceBundle Recorder = Messages.subset("Recorder");
+        public static final ResourceBundle RepeatUntil = Messages.subset("RepeatUntil");
+        public static final ResourceBundle SQS = Messages.subset("SQS");
+        public static final ResourceBundle Skipped = Messages.subset("Skipped");
+        public static final ResourceBundle Tools = Messages.subset("Tools");
+    }
+
     public static class PolyMatcher {
         public static final List<String> MATCHES = new ArrayList<>();
         public static final String CONTAIN = register("CONTAIN:");
@@ -284,14 +300,6 @@ public final class NexialConst {
         public static boolean isPolyMatcher(String text) {
             return MATCHES.stream().anyMatch(match -> StringUtils.startsWith(text, match));
         }
-
-        public static class Message {
-            public static final String REGEX_NOT_SUPPORTED = "PolyMatcher REGEX not supported for this locator:";
-            public static final String NUMERIC_NOT_SUPPORTED = "PolyMatcher NUMERIC not supported for this locator:";
-            public static final String END_NOT_SUPPORTED = "PolyMatcher END not supported for this locator:";
-            public static final String END_ANY_CASE_NOT_SUPPORTED =
-                "PolyMatcher END_ANY_CASE not supported for this locator:";
-        }
     }
 
     // Macro Flex var prefix
@@ -303,50 +311,10 @@ public final class NexialConst {
     public static final String MSG_WARN = ExcelConfig.MSG_WARN;
     public static final String MSG_SKIPPED = ExcelConfig.MSG_SKIPPED;
     public static final String MSG_TERMINATED = ExcelConfig.MSG_ENDED;
-    public static final String MSG_CHECK_SUPPORT = "Check with Nexial Support Group for details.";
-    public static final String MSG_SCRIPT_UPDATE_ERR = "ERROR: Failed to update scripts due to command metadata " +
-                                                       "missing; " + MSG_CHECK_SUPPORT;
-    public static final String MSG_SKIP_AUTO_OPEN_RESULT = "SKIPPING auto-open-result since Nexial is currently " +
-                                                           "running in non-interactive environment";
 
     public static final String MSG_ABORT = "[ABORT] ";
-    public static final String MSG_ALL_SCENARIOS_SKIPPED = " - subsequent test scenarios will be skipped";
-    public static final String MSG_EXEC_STOP = " - test execution will stop now.";
-    public static final String MSG_ITERATION_STOP = " - current iteration will stop now.";
-    public static final String MSG_STEP_FAIL_FAST = MSG_ABORT + "due to execution failure and fail-fast in effect";
-    public static final String MSG_ACTIVITY_FAIL_FAST = MSG_ABORT + "skipping test activity due to previous failure";
-    public static final String MSG_ACTIVITY_FAIL_END = MSG_ABORT + "skipping test activity due to previous end";
-    public static final String MSG_ACTIVITY_FAIL_END_LOOP =
-        MSG_ABORT + "skipping test activity due to break-loop in effect";
-    public static final String MSG_ACTIVITY_ENDING_IF =
-        MSG_ABORT + "activity ending due to EndIf() flow control activated.";
-    public static final String MSG_ACTIVITY_ENDING_LOOP_IF =
-        MSG_ABORT + "activity ending due to EndLoopIf() flow control activated or unrecoverable execution failure.";
-    public static final String MSG_SCENARIO_FAIL_FAST =
-        MSG_ABORT + "scenario failed and fail-fast is in effect" + MSG_ALL_SCENARIOS_SKIPPED;
-    public static final String MSG_SCENARIO_FAIL_IMMEDIATE =
-        MSG_ABORT + "scenario failed and fail-immediate is in effect" + MSG_ALL_SCENARIOS_SKIPPED;
-    public static final String MSG_SCENARIO_END_IF = MSG_ABORT + "scenario ended due to EndIf() flow control";
-    public static final String MSG_SCRIPT_END_IF = "script execution ended due to end immediate in effect";
-    public static final String MSG_SCENARIO_END_LOOP_IF = MSG_ABORT + "scenario ended due to EndLoopIf() flow control";
-    public static final String MSG_EXEC_FAIL_FAST =
-        MSG_ABORT + "failure found and fail-fast is in effect" + MSG_EXEC_STOP;
-    public static final String MSG_EXEC_FAIL_IMMEDIATE = MSG_ABORT + "fail-immediate in effect" + MSG_EXEC_STOP;
-    public static final String MSG_EXEC_END_IF = MSG_ABORT + "EndIf() flow control activated" + MSG_EXEC_STOP;
-    public static final String MSG_EXEC_END_LOOP_IF =
-        MSG_ABORT + "EndLoopIf() flow control activated" + MSG_ITERATION_STOP;
-    public static final String MSG_CRITICAL_COMMAND_FAIL = MSG_ABORT + "due to failure on fail-fast command: ";
     public static final String MSG_REPEAT_UNTIL = "[repeat-until] ";
-    public static final String MSG_REPEAT_UNTIL_BREAK =
-        MSG_REPEAT_UNTIL + "loop terminating due to break-loop condition";
-    public static final String NESTED_SECTION_STEP_SKIPPED =
-        "current step skipped due to the enclosing section command being skipped";
-    public static final String MSG_PROBLMATIC_NAME = "leading/trailing non-printable characters (whitespaces, tabs " +
-                                                     "or newlines) found in %s name '%s' will likely cause " +
-                                                     "execution-time issue.";
-
     public static final String COMMENT_AUTHOR = "NexialBot";
-
     public static final String PREFIX_JAR = "jar:";
 
     // text matching rules
@@ -486,7 +454,8 @@ public final class NexialConst {
 
         // determine if we should clear off any fail-fast state at the end of each script
         public static final String RESET_FAIL_FAST = registerSysVar(NAMESPACE + "resetFailFast", false);
-        public static final String DISABLE_CRITICAL_COMMANDS = registerSysVar(NAMESPACE + "disableCriticalCommands", false);
+        public static final String DISABLE_CRITICAL_COMMANDS =
+            registerSysVar(NAMESPACE + "disableCriticalCommands", false);
         public static final String VERBOSE = registerSysVar(NAMESPACE + "verbose", false);
         public static final String QUIET = registerSysVar(NAMESPACE + "quiet", false);
         public static final String NULL_VALUE = registerSysVar(NAMESPACE + "nullValue", "(null)");
@@ -523,11 +492,6 @@ public final class NexialConst {
         public static final String RESOLVE_TEXT_AS_URL = registerSysVar(NAMESPACE + "resolveTextAsURL", false);
         // supersede `OPT_EXPRESSION_READ_FILE_AS_IS` for wider coverage
         public static final String RESOLVE_TEXT_AS_IS = registerSysVar(NAMESPACE + "resolveTextAsIs", false);
-        public static final String NS_EXPRESSION = NAMESPACE + "expression.";
-        // outdated - use `RESOLVE_TEXT_AS_IS` instead
-        public static final String EXPRESSION_OPEN_FILE_AS_IS = registerSysVar(NS_EXPRESSION + "OpenFileAsIs", false);
-        // outdated - use `RESOLVE_TEXT_AS_URL` instead
-        public static final String EXPRESSION_RESOLVE_URL = registerSysVar(NS_EXPRESSION + "resolveURL", false);
 
         public static final String COMMAND_DISCOVERY_MODE = NAMESPACE + "commandDiscovery";
         public static final String DEF_COMMAND_DISCOVERY_MODE = "false";
@@ -701,6 +665,18 @@ public final class NexialConst {
         static void init() { }
     }
 
+    public static final class Expression {
+
+        public static final String NS = NAMESPACE + "expression.";
+
+        // outdated - use `RESOLVE_TEXT_AS_URL` instead
+        public static final String EXPRESSION_RESOLVE_URL = registerSysVar(NS + "resolveURL", false);
+        // outdated - use `RESOLVE_TEXT_AS_IS` instead
+        public static final String EXPRESSION_OPEN_FILE_AS_IS = registerSysVar(NS + "OpenFileAsIs", false);
+
+        public static final String WEB_RESULT_ALWAYS_NEW = registerSysVar(NS + "web.alwaysNew", false);
+    }
+
     public static final class LogMessage {
         public static final String EXECUTING_ITERATION = "executing iteration #";
         public static final String EXECUTING_TEST_SCENARIO = "executing test scenario";
@@ -760,7 +736,6 @@ public final class NexialConst {
     public static final class FlowControls {
         public static final String OPT_STEP_BY_STEP = registerSysVar(NAMESPACE + "stepByStep", false);
         public static final String OPT_INSPECT_ON_PAUSE = registerSysVar(NAMESPACE + "inspectOnPause", false);
-        public static final String RESUME_FROM_PAUSE = ":resume";
         public static final String OPT_PAUSE_ON_ERROR = registerSysVar(NAMESPACE + "pauseOnError", false);
         public static final String OPT_ODI_ENABLED = registerSysVar(NAMESPACE + "odiEnabled", true);
         public static final String OPT_ODI_TIMER = registerSysVar(NAMESPACE + "odiTimer", 500);
@@ -1097,20 +1072,26 @@ public final class NexialConst {
                     if (StringUtils.containsIgnoreCase(projectId, "echo is off")) {
                         // need to notify user of this... they would need to upgrade to more recent version of Nexial
                         // (with fix)
-                        String error = NL + NL +
-                                       StringUtils.repeat("-", 80) + NL +
-                                       "!!!!! ERROR !!!!!" + NL +
-                                       "The file " + projectIdFile + " contains INCORRECT project id:" + NL +
-                                       "\t" + projectId + NL + NL +
-                                       "Please fix this issue by:" + NL +
-                                       "1. Run the 'nexial-project' batch:" + NL +
-                                       "   cd " + System.getProperty(NEXIAL_HOME) + separator + "bin" + NL +
-                                       "   " + (IS_OS_WINDOWS ? "nexial-project.cmd" : "./nexial-project.sh") + " " +
-                                       projectHome + NL + NL +
-                                       "2. Update " + projectIdFile + " with the appropriate project ID." + NL +
-                                       "   Project ID should be a single word, without spaces." + NL + NL +
-                                       "Nexial execution will stop now." + NL + NL +
-                                       StringUtils.repeat("-", 80) + NL + NL;
+                        // String error = NL + NL +
+                        //                StringUtils.repeat("-", 80) + NL +
+                        //                "!!!!! ERROR !!!!!" + NL +
+                        //                "The file " + projectIdFile + " contains INCORRECT project id:" + NL +
+                        //                "\t" + projectId + NL + NL +
+                        //                "Please fix this issue by:" + NL +
+                        //                "1. Run the 'nexial-project' batch:" + NL +
+                        //                "   cd " + System.getProperty(NEXIAL_HOME) + separator + "bin" + NL +
+                        //                "   " + (IS_OS_WINDOWS ? "nexial-project.cmd" : "./nexial-project.sh") + " " +
+                        //                projectHome + NL + NL +
+                        //                "2. Update " + projectIdFile + " with the appropriate project ID." + NL +
+                        //                "   Project ID should be a single word, without spaces." + NL + NL +
+                        //                "Nexial execution will stop now." + NL + NL +
+                        //                StringUtils.repeat("-", 80) + NL + NL;
+                        String error = RB.Fatal.text("invalidProjectId",
+                                                     projectIdFile,
+                                                     projectId,
+                                                     System.getProperty(NEXIAL_HOME),
+                                                     (IS_OS_WINDOWS ? "nexial-project.cmd" : "./nexial-project.sh"),
+                                                     projectHome);
                         throw new ServiceConfigurationError(error);
                     }
 
@@ -1161,31 +1142,15 @@ public final class NexialConst {
 
         private static Options initCmdOptions() {
             Options cmdOptions = new Options();
-            cmdOptions.addOption(SCRIPT, true, "[REQUIRED] if -" + PLAN + " is missing] The fully qualified " +
-                                               "path of the test script.");
-            cmdOptions.addOption(SCENARIO, true, "[optional] One or more test scenarios, separated by commas, " +
-                                                 "to execute. Default is to execute all scenarios.");
-            cmdOptions.addOption(DATA, true, "[optional] The data file in ../data directory (relative to test " +
-                                             "script, or fully qualified path, for this test execution.  " +
-                                             "Default is the data file in the ../data directory with the same " +
-                                             "name of the test script.");
-            cmdOptions.addOption(DATASHEETS, true, "[optional] Restricting to a comma-separated list of data " +
-                                                   "sheets for this test execution. Default is to utilize all " +
-                                                   "the data sheets of the specified/implied data file.");
-            cmdOptions.addOption(OUTPUT, true, "[optional] The output directory where results and execution " +
-                                               "artifacts will be stored. Default is ../../output, relative to " +
-                                               "the specified test script.");
-            cmdOptions.addOption(PLAN, true, "[REQUIRED if -" + SCRIPT + " is missing] The fully qualified path of a " +
-                                             "test plan (or plans). Multiple plans can be specified using comma as " +
-                                             "separator. The use of this argument will disable the other arguments.");
-            cmdOptions.addOption(SUBPLANS, true, "[optional] Comma separated list of the subplans" +
-                                                 "(worksheets) of a test plan. The use of this argument will be only " +
-                                                 " enabled for single " + PLAN + " execution.");
-            cmdOptions.addOption(OVERRIDE, true, "[optional] Add or override data variables in the form of " +
-                                                 "name=value. Multiple overrides are supported via multiple " +
-                                                 "-" + OVERRIDE + " name=value declarations. Note that variable name " +
-                                                 "or value with spaces must be enclosed in double quotes.");
-            cmdOptions.addOption(INTERACTIVE, false, "[optional] Run Nexial in Interactive Mode.");
+            cmdOptions.addOption(SCRIPT, true, RB.Tools.text("cli.script"));
+            cmdOptions.addOption(SCENARIO, true, RB.Tools.text("cli.scenario"));
+            cmdOptions.addOption(DATA, true, RB.Tools.text("cli.data"));
+            cmdOptions.addOption(DATASHEETS, true, RB.Tools.text("cli.datasheets"));
+            cmdOptions.addOption(OUTPUT, true, RB.Tools.text("cli.output"));
+            cmdOptions.addOption(PLAN, true, RB.Tools.text("cli.plan"));
+            cmdOptions.addOption(SUBPLANS, true, RB.Tools.text("cli.subPlans"));
+            cmdOptions.addOption(OVERRIDE, true, RB.Tools.text("cli.override"));
+            cmdOptions.addOption(INTERACTIVE, false, RB.Tools.text("cli.interactive"));
             return cmdOptions;
         }
     }
@@ -1231,6 +1196,10 @@ public final class NexialConst {
                                                                         SPREADSHEET_PROGRAM_EXCEL);
         public static final String SPREADSHEET_PROGRAM_WPS = "wps";
         public static final String WPS_EXE_LOCATION = "nexialInternal.wpsLocation";
+
+        // console
+        public static final String INSPECT_RESUME = ":resume";
+        public static final String INSPECT_END = ":end";
 
         private Exec() { }
 
@@ -1294,23 +1263,6 @@ public final class NexialConst {
                                                                     POST_EXEC_EMAIL_HEADER,
                                                                     POST_EXEC_EMAIL_FOOTER),
                                                       SMTP_KEYS), JNDI_KEYS), SES_KEYS);
-
-        public static final String NOT_READY_PREFIX = "nexial mailer not enabled: ";
-        public static final String DOC_REF_SUFFIX = " Please check " + DOCUMENTATION_URL +
-                                                    "/tipsandtricks/IntegratingNexialWithEmail.html for more details";
-
-        public static final String JNDI_NOT_READY = NOT_READY_PREFIX +
-                                                    "missing required JNDI configurations." +
-                                                    DOC_REF_SUFFIX;
-        public static final String SMTP_NOT_READY = NOT_READY_PREFIX +
-                                                    "missing required smtp/imap configurations." +
-                                                    DOC_REF_SUFFIX;
-        public static final String SES_NOT_READY = NOT_READY_PREFIX +
-                                                   "missing required AWS SES configurations." +
-                                                   DOC_REF_SUFFIX;
-        public static final String MAILER_NOT_READY = NOT_READY_PREFIX +
-                                                      "unable to resolve any valid mailer configurations." +
-                                                      DOC_REF_SUFFIX;
 
         private Mailer() { }
 
@@ -2097,48 +2049,6 @@ public final class NexialConst {
 
         protected static final String SCRIPT_EXT = (IS_OS_WINDOWS ? ".bat" : "");
 
-        public static final class Message {
-            public static final String ERR_NO_SERVICE =
-                "No mobile driver available at this time. Please be sure to invoke use(profile) command prior to " +
-                "other mobile commands. See https://nexiality.github.io/documentation/commands/mobile/use(profile) " +
-                "for details";
-
-            public static final String MISSING_PROFILE = "No configuration found for profile";
-            public static final String MISSING_TYPE_CONFIG = "Missing configuration '" + CONF_TYPE + "' in profile";
-            public static final String MISSING_CONFIG = "Missing configuration:";
-
-            public static final String INVALID_LOCATOR = "Invalid locator:";
-            public static final String INVALID_LOCATOR_FOR_IOS = "This locator is only supported on iOS device:";
-            public static final String INVALID_LOCATOR_FOR_ANDROID = "This locator is only support on Android device:";
-            public static final String INVALID_NEARBY_SYNTAX = "Invalid nearby locator";
-            public static final String INVALID_INDEX = "Invalid index:";
-            public static final String INVALID_INDEX2 = "Option index must be greater than zero:";
-            public static final String INVALID_LENGTH = "Invalid number specified as length";
-            public static final String INVALID_COMPOUND_LOCATOR =
-                "Invalid locator specified. The one-of locator must be in the form of one-of={...}{...}. Found:";
-            public static final String INVALID_COMPOUND_LOCATOR2 =
-                "Invalid locator specified. Either no locators found or none was fitting the target mobile platform:";
-            public static final String NO_MATCH_COMPOUND_LOCATOR =
-                "Unable to find an element matching to any of the locators specified in";
-
-            public static final String FAIL_CLOSE_APP = "Unable to close app:";
-            public static final String FAIL_QUIT_DRIVER = "Unable to shutdown mobile driver:";
-            public static final String APPIUM_SERVER_STARTED = "Appium server started on";
-            public static final String MISSING_APPIUM_PATH_ENV = "Unable to resolve an appropriate path for Appium " +
-                                                                 "server (main.js) because required environment " +
-                                                                 "variable is not defined:";
-            public static final String INVALID_APPIUM_PATH = "Appium path did not resolve to a valid executable for " +
-                                                             "Appium server (main.js):";
-            public static final String MISSING_NODE_PATH_ENV = "Unable to resolve an appropriate path for NodeJS " +
-                                                               "(to run Appium server) because required environment " +
-                                                               "variable is not defined:";
-            public static final String INVALID_NODE_PATH = "Node path did not resolve to a valid executable NodeJS " +
-                                                           "executable:";
-            public static final String APP_NOT_INSTALLED = "Configured app is currently not installed on device:";
-            public static final String SCRIPT_NOT_EXECUTABLE = "is not found or is not executable. Unable to proceed";
-            public static final String NOT_SUPPORT_FILE_EXT = "File extension not supported for iOS file transfer:";
-        }
-
         public static final class Android {
             public static final String RESOURCE_BASE =
                 "https://nexiality.github.io/documentation/commands/mobile/resources";
@@ -2181,7 +2091,8 @@ public final class NexialConst {
         public static final class iOS {
             public static final String MULTI_PICKER_DELIM = "|";
             public static final String SCRIPT_COPY_TO_IOS = "copy-to-ios.sh";
-            public static final List<String> SUPPORTED_COPY_FILE_EXT = Arrays.asList("png", "jpg", "mp4", "gif", "wbem");
+            public static final List<String> SUPPORTED_COPY_FILE_EXT =
+                Arrays.asList("png", "jpg", "mp4", "gif", "wbem");
         }
     }
 
@@ -2195,8 +2106,7 @@ public final class NexialConst {
 
     @NotNull
     public static String failAfterReached(int failCount, int failAfter) {
-        return MSG_ABORT + "execution fail count (" + failCount + ") exceeds fail-after limit (" + failAfter + "); " +
-               "setting fail-immediate to true";
+        return RB.Abort.text("exceedFailAfter", failCount, failAfter);
     }
 
     public static boolean isKnownTextContentType(String contentType) {
@@ -2211,7 +2121,7 @@ public final class NexialConst {
 
     public static boolean isAutoOpenExecResult() {
         if (ExecUtils.isRunningInZeroTouchEnv()) {
-            ConsoleUtils.log(MSG_SKIP_AUTO_OPEN_RESULT);
+            ConsoleUtils.log(RB.Commons.text("noAutoOpenResult"));
             return false;
         }
 
@@ -2232,8 +2142,8 @@ public final class NexialConst {
         if (context != null) {
             return context.getBooleanData(OPT_OPEN_RESULT, context.getBooleanData(ASSISTANT_MODE, def));
         } else {
-            return BooleanUtils.toBoolean(System.getProperty(OPT_OPEN_RESULT, System.getProperty(ASSISTANT_MODE,
-                                                                                                 def + "")));
+            return BooleanUtils.toBoolean(System.getProperty(OPT_OPEN_RESULT,
+                                                             System.getProperty(ASSISTANT_MODE, def + "")));
         }
     }
 
@@ -2261,10 +2171,7 @@ public final class NexialConst {
     }
 
     public static String toCloudIntegrationNotReadyMessage(String data) {
-        return "Unable to save " + (StringUtils.isBlank(data) ? "content" : data) + " to cloud storage since " +
-               "Nexial Cloud Integration is not properly configured. See " +
-               DOCUMENTATION_URL + "/systemvars/index.html#nexial.outputToCloud " +
-               "for more details.";
+        return RB.Commons.text("otcNotReady", StringUtils.isBlank(data) ? "content" : data);
     }
 
     public static class Doc {

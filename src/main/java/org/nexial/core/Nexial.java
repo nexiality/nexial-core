@@ -1,11 +1,11 @@
 /*
- * Copyright 2012-2018 the original author or authors.
+ * Copyright 2012-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *       http://www.apache.org/licenses/LICENSE-2.0
+ * 	http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -775,10 +775,10 @@ public class Nexial {
 
                 ExecutionDefinition exec = executions.get(i);
                 if (BooleanUtils.toBoolean(System.getProperty(END_SCRIPT_IMMEDIATE, "false"))) {
-                    ConsoleUtils.log(runId, MSG_ABORT + exec.getTestScript() + " " + MSG_SCRIPT_END_IF);
+                    ConsoleUtils.log(runId, RB.Abort.text("script.endIf", exec.getTestScript()));
                     continue;
                 }
-                // re-read data sheets to ensure latest data being considered
+                // re-read data sheets to ensure the latest data being considered
                 exec.getTestData(true);
                 exec.setRunId(runId);
 

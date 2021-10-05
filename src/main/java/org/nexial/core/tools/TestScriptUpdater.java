@@ -1,11 +1,11 @@
 /*
- * Copyright 2012-2018 the original author or authors.
+ * Copyright 2012-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *       http://www.apache.org/licenses/LICENSE-2.0
+ * 	http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -52,8 +52,9 @@ import static java.io.File.separator;
 import static org.nexial.core.CommandConst.*;
 import static org.nexial.core.NexialConst.Data.SHEET_SYSTEM;
 import static org.nexial.core.NexialConst.ExitStatus.RC_BAD_CLI_ARGS;
-import static org.nexial.core.NexialConst.*;
+import static org.nexial.core.NexialConst.NL;
 import static org.nexial.core.NexialConst.Project.COMMAND_JSON_FILE_NAME;
+import static org.nexial.core.NexialConst.RB;
 import static org.nexial.core.excel.ExcelConfig.*;
 import static org.nexial.core.tools.CliConst.OPT_VERBOSE;
 import static org.nexial.core.tools.CliUtils.newArgOption;
@@ -61,7 +62,7 @@ import static org.nexial.core.tools.CliUtils.newNonArgOption;
 import static org.nexial.core.tools.CommandDiscovery.GSON;
 
 /**
- * utility to update one or more test scripts with the latest command listing.  The command listing is sync'd from
+ * utility to update one or more test scripts with the latest command listing.  The command listing is synced from
  * ${NEXIAL_HOME}/template.
  *
  * @see CommandMetaGenerator
@@ -98,7 +99,7 @@ public class TestScriptUpdater {
     }
 
     protected void parseCLIOptions(CommandLine cmd) {
-        if (!cmd.hasOption("t")) { throw new RuntimeException("[target] is a required argument and is missing"); }
+        if (!cmd.hasOption("t")) { throw new RuntimeException(RB.Tools.text("cli.missingRequired", "target")); }
 
         verbose = cmd.hasOption("v");
         fixDuplicateActivity = cmd.hasOption("u");
@@ -106,12 +107,12 @@ public class TestScriptUpdater {
         String target = cmd.getOptionValue("t");
         File targetFile = new File(target);
         if (!targetFile.exists() || !targetFile.canRead()) {
-            throw new RuntimeException("specified target - " + target + " is not accessible");
+            throw new RuntimeException(RB.Tools.text("target.bad", target));
         }
 
         targetFiles = new ArrayList<>();
         if (targetFile.isFile()) {
-            if (verbose) { System.out.println("resolved target as a single Excel file " + targetFile); }
+            if (verbose) { System.out.println(RB.Tools.text("target.isExcel", targetFile)); }
             targetFiles.add(targetFile);
         } else {
             targetFiles.addAll(
@@ -119,7 +120,7 @@ public class TestScriptUpdater {
                          .filter(file -> !file.getName().startsWith("~") &&
                                          !file.getAbsolutePath().contains(separator + "output" + separator))
                          .collect(Collectors.toList()));
-            if (verbose) { System.out.println("resolved target as a set of " + targetFiles.size() + " Excel files"); }
+            if (verbose) { System.out.println(RB.Tools.text("target.isExcels", targetFiles.size())); }
         }
     }
 
@@ -127,13 +128,13 @@ public class TestScriptUpdater {
         try {
             String commandJson = ResourceUtils.loadResource("/" + COMMAND_JSON_FILE_NAME);
             if (StringUtils.isEmpty(commandJson)) {
-                System.err.println(MSG_SCRIPT_UPDATE_ERR);
+                System.err.println(RB.Fatal.text("cmdMeta.scriptUpdateErr"));
                 System.exit(-1);
             }
             return GSON.fromJson(commandJson, ScriptMetadata.class);
         } catch (Exception e) {
             System.err.println(e.getMessage());
-            System.err.println(MSG_SCRIPT_UPDATE_ERR);
+            System.err.println(RB.Fatal.text("cmdMeta.scriptUpdateErr"));
             System.exit(-1);
         }
         return null;
@@ -150,13 +151,13 @@ public class TestScriptUpdater {
                 if (InputFileUtils.isValidScript(excel)) {
                     System.out.println("processing " + filePath);
 
-                    if (updateTemplate(excel) && verbose) { System.out.println("\tscript updated to latest template"); }
+                    if (updateTemplate(excel) && verbose) { System.out.println(RB.Tools.text("updateTemplate")); }
 
                     handleSystemSheet(excel, metadata);
-                    if (verbose) { System.out.println("\tupdated commands"); }
+                    if (verbose) { System.out.println(RB.Tools.text("updateCommands")); }
 
                     scanInvalidCommands(excel, metadata);
-                    if (verbose) { System.out.println("\tcompleted script inspection"); }
+                    if (verbose) { System.out.println(RB.Tools.text("inspectedScript")); }
 
                     findProblematicNames(excel, ADDR_COMMAND_START);
                     fixDuplicateActivities(excel, ADDR_COMMAND_START);
@@ -167,25 +168,25 @@ public class TestScriptUpdater {
                     System.out.println("processing " + filePath);
 
                     handleMacroSystemSheet(excel, metadata);
-                    if (verbose) { System.out.println("\tupdated commands"); }
+                    if (verbose) { System.out.println(RB.Tools.text("updateCommands")); }
 
                     scanInvalidMacroCommands(excel, metadata);
-                    if (verbose) { System.out.println("\tcompleted macro inspection"); }
+                    if (verbose) { System.out.println(RB.Tools.text("inspectedMacro")); }
 
                     findProblematicNames(excel, ADDR_MACRO_COMMAND_START);
                     fixDuplicateActivities(excel, ADDR_MACRO_COMMAND_START);
                     resetZoomAndStartingPosition(excel, 1, "A2");
                     excel.save();
                 } else {
-                    // remove system sheet, if found..
+                    // remove system sheet, if found...
                     Worksheet worksheet = excel.worksheet(SHEET_SYSTEM);
                     if (worksheet != null) {
-                        if (verbose) {System.out.println("\tremoving 'system' sheet for non-script file: " + fileName);}
+                        if (verbose) { System.out.println(RB.Tools.text("removeSystemSheet", fileName)); }
 
                         // XSSFWorkbook workbook = workbook;
                         for (int i = 0; i < workbook.getNumberOfSheets(); i++) {
                             if (StringUtils.equals(workbook.getSheetAt(i).getSheetName(), SHEET_SYSTEM)) {
-                                System.out.println("\tdeleting sheet #" + i + " for " + file.getAbsolutePath());
+                                System.out.println(RB.Tools.text("deleteSystemSheet", i, file.getAbsolutePath()));
                                 workbook.removeSheetAt(i);
                                 Excel.save(file, workbook);
                                 break;
@@ -196,27 +197,21 @@ public class TestScriptUpdater {
                     // could be a plan of old (v2) format...
                     List<Worksheet> v2Plans = InputFileUtils.retrieveV2Plan(excel);
                     if (CollectionUtils.isEmpty(v2Plans)) {
-                        if (verbose) { System.out.println("not recognized as nexial script: " + filePath); }
+                        if (verbose) { System.out.println(RB.Tools.text("notNexialScript", filePath)); }
                     } else {
                         System.out.println("processing " + filePath);
                         v2Plans.forEach(plan -> {
                             if (!updateV2Plan(plan)) {
-                                System.err.println("\tUNABLE TO UPDATE TEST PLAN " + plan.getName() +
-                                                   " in " + filePath + "; CHECK TEST PLAN FOR ERRORS");
+                                System.err.println(RB.Tools.text("errorUpdatePlan", plan.getName(), filePath));
                             }
                         });
 
                         resetZoomAndStartingPosition(excel, 0, "A2");
-
-                        // XSSFWorkbook workbook = workbook;
-                        // workbook.setActiveSheet(0);
-                        // workbook.setFirstVisibleTab(0);
-                        // workbook.setSelectedTab(0);
                         excel.save();
                     }
                 }
             } catch (Exception e) {
-                System.err.println("Unable to parse Excel file " + file + ": " + e.getMessage());
+                System.err.println(RB.Tools.text("error.parse", file, e.getMessage()));
             }
         });
     }
@@ -268,12 +263,11 @@ public class TestScriptUpdater {
     protected boolean updateV2Plan(Worksheet plan) {
         XSSFSheet sheet = plan.getSheet();
         String sheetName = sheet.getSheetName();
-        if (verbose) { System.out.println("\tupdating test plan " + sheetName); }
+        if (verbose) { System.out.println(RB.Tools.text("updateTestPlan", sheetName)); }
 
         plan.setColumnValues(ADD_PLAN_HEADER_FEATURE_AND_TEST,
                              Arrays.asList(PLAN_HEADER_FEATURE_OVERRIDE, PLAN_HEADER_TESTREF_OVERRIDE));
 
-        // System.out.println("\t[" + sheetName + "] setting starting position as A5 and reset zoom to 100%");
         sheet.setActiveCell(new CellAddress("A5"));
         sheet.setZoom(100);
         return true;
@@ -299,14 +293,8 @@ public class TestScriptUpdater {
 
     private static void initOptions() {
         cmdOptions.addOption(OPT_VERBOSE);
-        cmdOptions.addOption(newArgOption("t",
-                                          "target",
-                                          "[REQUIRED] Location of a single Excel test script or a directory to update.",
-                                          true));
-        cmdOptions.addOption(newNonArgOption("u",
-                                             "unique",
-                                             "attempt to auto-correct duplicate activity names within a scenario",
-                                             false));
+        cmdOptions.addOption(newArgOption("t", "target", RB.Tools.text("cli.target"), true));
+        cmdOptions.addOption(newNonArgOption("u", "unique", RB.Tools.text("cli.autocorrect"), false));
     }
 
     private void handleMacroSystemSheet(Excel excel, ScriptMetadata metadata) throws IOException {
@@ -364,7 +352,7 @@ public class TestScriptUpdater {
         scanInvalidCommands(excel, metadata, ADDR_COMMAND_START);
     }
 
-    private void scanInvalidCommands(Excel excel, ScriptMetadata metadata, ExcelAddress addrCommandStart) {
+    private void scanInvalidCommands(Excel excel, ScriptMetadata metadata, ExcelAddress commandStartAddress) {
         List<String> targetCommands = new ArrayList<>();
 
         List<String> targets = metadata.getTargets();
@@ -388,10 +376,10 @@ public class TestScriptUpdater {
             MDC.put("script.scenario", sheetName);
 
             Worksheet worksheet = excel.worksheet(sheetName);
-            int lastCommandRow = worksheet.findLastDataRow(addrCommandStart);
-            String commandAreaAddr = "" + COL_TEST_CASE + (addrCommandStart.getRowStartIndex() + 1) + ":" +
-                                     COL_CAPTURE_SCREEN + lastCommandRow;
-            ExcelArea area = new ExcelArea(worksheet, new ExcelAddress(commandAreaAddr), false);
+            int lastCommandRow = worksheet.findLastDataRow(commandStartAddress);
+            String commandAreaAddress = "" + COL_TEST_CASE + (commandStartAddress.getRowStartIndex() + 1) + ":" +
+                                        COL_CAPTURE_SCREEN + lastCommandRow;
+            ExcelArea area = new ExcelArea(worksheet, new ExcelAddress(commandAreaAddress), false);
 
             for (int j = 0; j < area.getWholeArea().size(); j++) {
                 List<XSSFCell> row = area.getWholeArea().get(j);
@@ -402,14 +390,14 @@ public class TestScriptUpdater {
                 XSSFCell cellTarget = row.get(COL_IDX_TARGET);
                 String target = Excel.getCellValue(cellTarget);
                 if (!targets.contains(target)) {
-                    System.err.println("\tInvalid command target:\t" + target);
+                    System.err.println(RB.Tools.text("error.cmdTarget", target));
                     continue;
                 }
 
                 XSSFCell cellCommand = row.get(COL_IDX_COMMAND);
                 String command = Excel.getCellValue(cellCommand);
                 if (StringUtils.isBlank(command)) {
-                    System.err.println("\tInvalid command:\t" + command);
+                    System.err.println(RB.Tools.text("error.cmd", command));
                     continue;
                 }
 
@@ -430,23 +418,15 @@ public class TestScriptUpdater {
                 // check for removed commands
                 Map<String, String> removedWarnings = getRemovedCommandWarnings();
                 if (removedWarnings.containsKey(targetCommand)) {
-                    String warning = removedWarnings.get(targetCommand);
-                    System.err.printf("\t!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" + NL +
-                                      "\t!!! [ERROR on ROW %s] :\t%s" + NL +
-                                      "\t!!! - %s" + NL +
-                                      "\t!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" + NL + NL,
-                                      rowIndex, commandDisplay, warning);
+                    System.err.println(RB.Tools.text("error.removedCommand",
+                                                     rowIndex, commandDisplay, removedWarnings.get(targetCommand)));
                 }
 
                 // check for warning/suggest
                 Map<String, String> deprecatedWarnings = getDeprecatedCommandWarnings();
                 if (deprecatedWarnings.containsKey(targetCommand)) {
-                    String suggestion = deprecatedWarnings.get(targetCommand);
-                    System.err.printf("\t************************************************************" + NL +
-                                      "\t*** [WARNING on ROW %s]:\t%s" + NL +
-                                      "\t*** - %s" + NL +
-                                      "\t************************************************************" + NL + NL,
-                                      rowIndex, commandDisplay, suggestion);
+                    System.err.println(RB.Tools.text("warning.deprecated",
+                                                     rowIndex, commandDisplay, deprecatedWarnings.get(targetCommand)));
                 }
 
                 String commandSignature = targetCommand;
@@ -471,23 +451,21 @@ public class TestScriptUpdater {
                 List<String> paramValues = TestStep.readParamValues(row);
                 int paramValuesCount = CollectionUtils.size(paramValues);
                 if (paramValuesCount != paramCount) {
-                    System.err.printf(
-                        "\tPossibly error on parameter(s) for %s: expected %s parameter(s) but found %s" + NL,
-                        commandDisplay, paramCount, paramValuesCount);
+                    System.err.println(RB.Tools.text("error.paramMismatch",
+                                                     commandDisplay, paramCount, paramValuesCount));
                 }
 
                 for (int k = 0; k < paramCount; k++) {
                     if (StringUtils.isBlank(Excel.getCellValue(row.get(COL_IDX_PARAMS_START + k)))) {
-                        System.err.printf(
-                            "\tPossible error on parameter(s) for %s: no value found for parameter '%s'" + NL,
-                            commandDisplay, IterableUtils.get(paramList, k));
+                        System.err.println(RB.Tools.text("error.noParam",
+                                                         commandDisplay, IterableUtils.get(paramList, k)));
                     }
                 }
             }
         }
     }
 
-    private void findProblematicNames(Excel excel, ExcelAddress addrCommandStart) {
+    private void findProblematicNames(Excel excel, ExcelAddress commandStartAddress) {
         String filename = excel.getFile().getName();
 
         // find all existing worksheet (minus system sheet)
@@ -497,14 +475,14 @@ public class TestScriptUpdater {
 
             String sheetNameTrimmed = StringUtils.trim(sheetName);
             if (!StringUtils.equals(sheetName, sheetNameTrimmed)) {
-                System.err.printf("\t[%s]: " + MSG_PROBLMATIC_NAME + "\n", filename, "sheet", sheetName);
+                System.err.println(RB.Fatal.text("problematicName", "\t[" + filename + "]:", "sheet", sheetName));
                 System.out.printf("\t[%s]: fixing sheet name now...\n\n", filename);
                 sheet.setSheetName(sheetNameTrimmed);
             }
 
-            String commandAreaAddr = "" + COL_TEST_CASE + (addrCommandStart.getRowStartIndex() + 1) + ":" +
-                                     COL_CAPTURE_SCREEN + sheet.findLastDataRow(addrCommandStart);
-            ExcelArea area = new ExcelArea(sheet, new ExcelAddress(commandAreaAddr), false);
+            String commandAreaAddress = "" + COL_TEST_CASE + (commandStartAddress.getRowStartIndex() + 1) + ":" +
+                                        COL_CAPTURE_SCREEN + sheet.findLastDataRow(commandStartAddress);
+            ExcelArea area = new ExcelArea(sheet, new ExcelAddress(commandAreaAddress), false);
             for (int j = 0; j < area.getWholeArea().size(); j++) {
                 List<XSSFCell> row = area.getWholeArea().get(j);
 
@@ -517,7 +495,8 @@ public class TestScriptUpdater {
                 String activityNameTrimmed = StringUtils.trim(activityName);
                 if (!StringUtils.equals(activityName, activityNameTrimmed)) {
                     String cellAddress = cellActivity.getAddress().formatAsString();
-                    System.err.printf("\t[%s]: " + MSG_PROBLMATIC_NAME + "\n", cellAddress, "activity", activityName);
+                    System.err.println(RB.Fatal.text("problematicName",
+                                                     "\t[" + cellAddress + "]:", "activity", activityName));
                     System.out.printf("\t[%s]: fixing activity name now...\n\n", cellAddress);
                     cellActivity.setCellValue(activityNameTrimmed);
                 }
@@ -525,7 +504,7 @@ public class TestScriptUpdater {
         });
     }
 
-    private void fixDuplicateActivities(Excel excel, ExcelAddress addrCommandStart) {
+    private void fixDuplicateActivities(Excel excel, ExcelAddress commandStartAddress) {
         if (!fixDuplicateActivity) { return; }
 
         Map<String, String> activityNames = new HashMap<>();
@@ -535,9 +514,9 @@ public class TestScriptUpdater {
             String sheetName = sheet.getName();
             if (StringUtils.equals(sheetName, SHEET_SYSTEM)) { return; }
 
-            String commandAreaAddr = "" + COL_TEST_CASE + (addrCommandStart.getRowStartIndex() + 1) + ":" +
-                                     COL_CAPTURE_SCREEN + sheet.findLastDataRow(addrCommandStart);
-            ExcelArea area = new ExcelArea(sheet, new ExcelAddress(commandAreaAddr), false);
+            String commandAreaAddress = "" + COL_TEST_CASE + (commandStartAddress.getRowStartIndex() + 1) + ":" +
+                                        COL_CAPTURE_SCREEN + sheet.findLastDataRow(commandStartAddress);
+            ExcelArea area = new ExcelArea(sheet, new ExcelAddress(commandAreaAddress), false);
             for (int j = 0; j < area.getWholeArea().size(); j++) {
                 List<XSSFCell> row = area.getWholeArea().get(j);
 
@@ -552,8 +531,8 @@ public class TestScriptUpdater {
 
                 // check for activity name duplicates
                 if (!StringUtils.equals(activityName, newActivityName)) {
-                    System.out.printf("\t[%s]: duplicate activity name renamed from %s to %s" + NL,
-                                      cellAddress, activityName, newActivityName);
+                    System.out.println(RB.Tools.text("activity.dupRenamed",
+                                                     cellAddress, activityName, newActivityName));
                     cellActivity.setCellValue(newActivityName);
                 }
             }
@@ -561,7 +540,7 @@ public class TestScriptUpdater {
     }
 
     /**
-     * either return {@literal activity} as is - if it is an unique name, or rename it to make it unique. The naming
+     * either return {@literal activity} as is - if it is a unique name, or rename it to make it unique. The naming
      * strategy is to add a number to the end of the existing activity name.
      */
     private String findNewActivityName(Map<String, String> existingNames, String activity) {

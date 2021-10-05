@@ -38,7 +38,6 @@ import java.io.File
 import java.io.File.separator
 import java.io.FileInputStream
 import java.io.IOException
-import java.util.*
 import javax.xml.parsers.DocumentBuilderFactory
 import javax.xml.parsers.ParserConfigurationException
 
@@ -57,7 +56,7 @@ class WsdlHelper(val context: ExecutionContext) {
     fun download(wsdl: String): File {
 
         val localWsdl: File
-        if (StringUtils.startsWith(wsdl.toLowerCase(), "http")) {
+        if (StringUtils.startsWith(wsdl.lowercase(), "http")) {
             localWsdl = File(workingDir +
                              StringUtils.substringBefore(StringUtils.substringAfterLast(wsdl, "/"), "?") +
                              WSDL_EXT)
