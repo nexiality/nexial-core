@@ -22,6 +22,7 @@ import org.apache.commons.cli.Options
 import org.apache.commons.io.FileUtils
 import org.apache.commons.lang3.StringUtils
 import org.apache.commons.lang3.SystemUtils.IS_OS_WINDOWS
+import org.apache.commons.lang3.exception.ExceptionUtils
 import org.nexial.commons.utils.RegexUtils
 import org.nexial.core.NexialConst.ExitStatus.RC_BAD_CLI_ARGS
 import org.nexial.core.NexialConst.TEMP
@@ -33,6 +34,7 @@ import org.nexial.core.utils.ConsoleUtils
 import org.nexial.core.utils.IOFilePathFilter
 import java.io.File
 import java.io.File.separator
+import java.io.UncheckedIOException
 import java.util.*
 import java.util.Calendar.HOUR
 
@@ -65,15 +67,20 @@ object TempCleanUp {
         cal.add(HOUR, -24)
         val oneDayAgo = cal.time
 
-        IOFilePathFilter(true).filterFiles(TEMP).filter {
-            // filter directory with pattern `(_nexial_)?[a-zA-Z]{5}`
-            val dir = StringUtils.substringBetween(it, TEMP, separator)
-            RegexUtils.isExact(dir, filePattern) &&
-            isBefore(Date(File(TEMP + dir + separator).lastModified()), oneDayAgo)
-        }.forEach {
-            val dir = File(TEMP + StringUtils.substringBetween(it, TEMP, separator))
-            if (verbose) log("delete", dir.absolutePath)
-            if (!FileUtils.deleteQuietly(dir)) ConsoleUtils.error("unable to delete directory: ${dir.absolutePath}")
+        try {
+            IOFilePathFilter(true).filterFiles(TEMP).filter {
+                // filter directory with pattern `(_nexial_)?[a-zA-Z]{5}`
+                val dir = StringUtils.substringBetween(it, TEMP, separator)
+                RegexUtils.isExact(dir, filePattern) &&
+                isBefore(Date(File(TEMP + dir + separator).lastModified()), oneDayAgo)
+            }.forEach {
+                val dir = File(TEMP + StringUtils.substringBetween(it, TEMP, separator))
+                if (verbose) log("delete", dir.absolutePath)
+                if (!FileUtils.deleteQuietly(dir)) ConsoleUtils.error("unable to delete directory: ${dir.absolutePath}")
+            }
+        } catch (e: UncheckedIOException) {
+            ConsoleUtils.error("Unable to read or delete temp files from $TEMP, will try again later: " +
+                               ExceptionUtils.getRootCauseMessage(e))
         }
     }
 
