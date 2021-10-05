@@ -233,7 +233,7 @@ public class CommandRepeater {
 
     protected void logRepeatUntilStart(ExecutionLogger logger, TestStep testStep, int loopCount) {
         String message = RB.RepeatUntil.text("loop", loopCount);
-        logger.log(testStep, NL + message + StringUtils.repeat("-", 77 - message.length()) + " >", true);
+        logger.log(testStep, NL + message + StringUtils.repeat("-", 78 - message.length()) + ">", true);
     }
 
     protected boolean shouldFailFast(ExecutionContext context, TestStep testStep) {
