@@ -139,10 +139,11 @@ public final class ExcelStyleHelper {
         if (cell == null) { return; }
 
         String cellValue = Excel.getCellValue(cell);
-        if (StringUtils.isBlank(cellValue) || !StringUtils.contains(cellValue, "\n")) { return; }
+        if (StringUtils.isBlank(cellValue)) { return; }
 
+        // wrap text if cell contains newline character
         Map<StyleName, Object> props = new HashMap<>();
-        props.put(WRAP_TEXT, true);
+        props.put(WRAP_TEXT, StringUtils.contains(cellValue, "\n"));
         extendCellStyle(cell, props);
     }
 

@@ -3011,7 +3011,8 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
                 return StepResult.success("click via JS event");
             } else {
                 // better impl. for CI
-                new Actions(driver).click(element).perform();
+                // use `moveToElement` to ensure element is in view and mouse point in the middle of click target
+                new Actions(driver).moveToElement(element).click().perform();
                 return StepResult.success("clicked on web element");
             }
         } catch (WebDriverException e) {

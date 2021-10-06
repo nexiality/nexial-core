@@ -1,4 +1,4 @@
-/*
+♥/*
  * Copyright 2012-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -531,7 +531,7 @@ public class TestStep extends TestStepManifest {
 
     protected void postExecCommand(StepResult result, long elapsedMs) {
         // also include screenshot-on-error handling
-        if (!context.isInteractiveMode()) { updateResult(result, elapsedMs); }
+        updateResult(result, elapsedMs);
 
         ExecutionSummary summary = testCase.getTestScenario().getExecutionSummary();
         if (result.isSkipped()) {
@@ -604,234 +604,247 @@ public class TestStep extends TestStepManifest {
     }
 
     protected void updateResult(StepResult result, long elapsedMs) {
-        ExcelStyleHelper.formatActivityCell(worksheet, row.get(COL_IDX_TESTCASE));
-
-        // description
-        XSSFCell cellDescription = row.get(COL_IDX_DESCRIPTION);
-        String description = Excel.getCellValue(cellDescription);
-        if (StringUtils.startsWith(description, SECTION_DESCRIPTION_PREFIX)) {
-            ExcelStyleHelper.formatSectionDescription(worksheet, cellDescription);
-        } else if (StringUtils.contains(description, REPEAT_DESCRIPTION_PREFIX)) {
-            ExcelStyleHelper.formatRepeatUntilDescription(worksheet, cellDescription);
-        } else {
-            ExcelStyleHelper.formatDescription(worksheet, cellDescription);
-        }
-
-        ExcelStyleHelper.formatTargetCell(worksheet, row.get(COL_IDX_TARGET));
-        ExcelStyleHelper.formatCommandCell(worksheet, row.get(COL_IDX_COMMAND));
-
-        String commandName = row.get(COL_IDX_TARGET).toString() + "." + row.get(COL_IDX_COMMAND).toString();
-        String message = result.getMessage();
-
         boolean isSkipped = result.isSkipped();
         boolean isEnded = result.isEnded();
-        if (isSkipped) {
-            XSSFCellStyle styleSkipped = worksheet.getStyle(STYLE_PARAM_SKIPPED);
-            for (int i = COL_IDX_PARAMS_START; i <= COL_IDX_PARAMS_END; i++) { row.get(i).setCellStyle(styleSkipped); }
-        } else if (!isEnded) {
-            cellDescription.setCellValue(context.containsCrypt(description) ?
-                                         CellTextReader.readValue(description) :
-                                         context.replaceTokens(description, true));
-
-            XSSFCellStyle styleParam = worksheet.getStyle(STYLE_PARAM);
-            XSSFCellStyle styleTaintedParam = worksheet.getStyle(STYLE_TAINTED_PARAM);
-
-            // merging resolved parameter value (what's evaluated) and parameter template (what's written)
-            List<String> mergedParams = params == null ? new ArrayList<>() : new ArrayList<>(params);
-            Object[] paramValues = result.getParamValues();
-            if (paramValues != null) {
-                for (int i = 0; i < mergedParams.size(); i++) {
-                    if (paramValues.length > i) { mergedParams.set(i, Objects.toString(paramValues[i], "")); }
-                }
-
-                if (paramValues.length > mergedParams.size()) {
-                    int startFrom = mergedParams.size();
-                    for (int i = startFrom; i < paramValues.length; i++) {
-                        mergedParams.add(Objects.toString(paramValues[i], ""));
-                    }
-                }
-            }
-
-            if (linkableParams == null) {
-                linkableParams = new ArrayList<>(mergedParams.size());
-                for (int i = 0; i < mergedParams.size(); i++) { linkableParams.add(i, null); }
-            } else if (linkableParams.size() < mergedParams.size()) {
-                int startFrom = linkableParams.size();
-                for (int i = startFrom; i < mergedParams.size(); i++) { linkableParams.add(i, null); }
-            }
-
-            // update the params that can be expressed as links (file or url)
-            for (int i = COL_IDX_PARAMS_START; i <= COL_IDX_PARAMS_END; i++) {
-                int paramIdx = i - COL_IDX_PARAMS_START;
-                if (mergedParams.size() <= paramIdx) { break; }
-                XSSFCell paramCell = row.get(i);
-
-                String param = mergedParams.get(paramIdx);
-                if (StringUtils.isBlank(param)) { continue; }
-
-                String link = resolveParamAsLink(param);
-                if (link != null) {
-                    // create hyperlink where path is referenced
-                    linkableParams.set(paramIdx, link);
-
-                    if (isURL(link)) {
-                        worksheet.setHyperlink(paramCell, link, param);
-                        continue;
-                    }
-
-                    // support output to cloud:
-                    // - if link is local resource but output-to-cloud is enabled, then copy resource to cloud and update link
-                    if (context.isOutputToCloud()) {
-                        // create new local resource with name matching to current row, so that duplicate use of the
-                        // same name will not result in overriding cloud resource
-
-                        if (FileUtil.isFileReadable(link, 1)) {
-                            // target file should exist with at least 1 byte
-                            File tmpFile = new File(StringUtils.substringBeforeLast(link, separator) + separator +
-                                                    row.get(COL_IDX_TESTCASE).getReference() + "_" +
-                                                    StringUtils.substringAfterLast(link, separator));
-
-                            try {
-                                // ConsoleUtils.log("copy local resource " + link + " to " + tmpFile);
-                                FileUtils.copyFile(new File(link), tmpFile);
-
-                                ConsoleUtils.log("output-to-cloud enabled; copying " + link + " cloud...");
-                                String cloudUrl = context.getOtc().importFile(tmpFile, true);
-                                context.setData(OPT_LAST_OUTPUT_LINK, cloudUrl);
-                                context.setData(OPT_LAST_OUTPUT_PATH, StringUtils.substringBeforeLast(cloudUrl, "/"));
-                                ConsoleUtils.log("output-to-cloud enabled; copied  " + link + " to " + cloudUrl);
-
-                                worksheet.setHyperlink(paramCell, cloudUrl, "(cloud) " + param);
-                                continue;
-                            } catch (IOException e) {
-                                ConsoleUtils.log("Unable to copy resource to cloud: " + e.getMessage());
-                                log(toCloudIntegrationNotReadyMessage(link + ": " + e.getMessage()));
-                            }
-                        } else {
-                            ConsoleUtils.log("output-to-cloud enabled; but file " + link + " is empty or unreadable");
-                        }
-                    }
-
-                    // if `link` contains double quote, it's likely not a link..
-                    if (!StringUtils.containsAny(link, "\"")) { worksheet.setHyperlink(paramCell, link, param); }
-                    continue;
-                } else {
-                    paramCell.setCellValue(context.truncateForDisplay(param));
-                    paramCell.setCellStyle(styleParam);
-                }
-
-                String origParamValue = Excel.getCellValue(paramCell);
-                if (StringUtils.isBlank(origParamValue)) {
-                    paramCell.setCellType(BLANK);
-                    continue;
-                }
-
-                if (i == COL_IDX_PARAMS_START && StringUtils.equals(getCommandFQN(), CMD_VERBOSE)) {
-                    if (context.containsCrypt(origParamValue)) {
-                        paramCell.setCellComment(toSystemComment(paramCell, "detected crypto"));
-                    } else {
-                        message = StringUtils.trim(platformSpecificEOL(message));
-                        if (StringUtils.length(message) > MAX_VERBOSE_CHAR) {
-                            message = StringUtils.abbreviate(message, MAX_VERBOSE_CHAR);
-                        }
-                        paramCell.setCellValue(message);
-                        paramCell.setCellComment(toSystemComment(paramCell, origParamValue));
-                    }
-                    continue;
-                }
-
-                // respect the crypts... if value has crypt:, then keep it as is
-                if (context.containsCrypt(origParamValue)) {
-                    paramCell.setCellComment(toSystemComment(paramCell, "detected crypto"));
-                    continue;
-                }
-
-                String taintedValue = CellTextReader.getOriginal(origParamValue, param);
-                boolean tainted = !StringUtils.equals(origParamValue, taintedValue);
-                if (tainted) {
-                    paramCell.setCellValue(context.truncateForDisplay(taintedValue));
-                    if (StringUtils.isNotEmpty(origParamValue)) {
-                        paramCell.setCellComment(toSystemComment(paramCell, origParamValue));
-                    }
-                    paramCell.setCellStyle(styleTaintedParam);
-                } else {
-                    paramCell.setCellStyle(styleParam);
-                }
-            }
-        }
-
-        // flow control
-        ExcelStyleHelper.formatFlowControlCell(worksheet, row.get(COL_IDX_FLOW_CONTROLS));
 
         // screenshot
+        // take care of screenshot requirement first...
+        // in interactive mode, we won't proceed if any of the Excel-related operations
         if (!isSkipped || !isEnded) {
             // don't capture screenshot if step skipped or ended by endIf
             handleScreenshot(result);
-            // elapsed time
-            row.get(COL_IDX_ELAPSED_MS).setCellStyle(worksheet.getStyle(STYLE_ELAPSED_MS));
         }
 
-        boolean pass = result.isSuccess();
+        if (!context.isInteractiveMode()) {
+            ExcelStyleHelper.formatActivityCell(worksheet, row.get(COL_IDX_TESTCASE));
 
-        if ((!isSkipped && !isEnded) &&
-            !SLA_EXEMPT_COMMANDS.contains(commandName) &&
-            !StringUtils.contains(commandName, ".wait")) {
-            // SLA not applicable to composite commands and all wait* commands
-            long elapsedTimeSLA = context.getSLAElapsedTimeMs();
-            if (!updateElapsedTime(elapsedMs, elapsedTimeSLA > 0 && elapsedTimeSLA < elapsedMs)) {
-                result.markElapsedTimeSlaNotMet();
-                pass = false;
-                message = result.getMessage();
-            }
-        }
-
-        createCommentForMacro(cellDescription, pass);
-
-        // result
-        XSSFCell cellResult = row.get(COL_IDX_RESULT);
-        String resultMsg = MESSAGE_REQUIRED_COMMANDS.contains(commandName) && (result.isSuccess() || result.isError()) ?
-                           (result.isSuccess() ? MSG_PASS : MSG_FAIL) + message :
-                           MessageUtils.markResult(message, pass, true);
-        cellResult.setCellValue(StringUtils.left(resultMsg, MAX_VERBOSE_CHAR));
-
-        if (result.isError()) {
-            ExcelStyleHelper.formatFailedStepDescription(this);
-            Excel.createComment(cellDescription, cellResult.getStringCellValue(), COMMENT_AUTHOR);
-        }
-
-        if (isSkipped) {
-            // paint both result and description the same style to improve readability
-            cellResult.setCellStyle(worksheet.getStyle(STYLE_SKIPPED_RESULT));
-            cellDescription.setCellStyle(worksheet.getStyle(STYLE_SKIPPED_RESULT));
-            Excel.createComment(cellDescription, message, COMMENT_AUTHOR);
-        } else if (isEnded) {
-            // paint both result and description the same style to improve readability
-            cellResult.setCellStyle(ExcelStyleHelper.generate(worksheet, TERMINATED));
-            cellDescription.setCellStyle(ExcelStyleHelper.generate(worksheet, TERMINATED));
-            Excel.createComment(cellDescription, message, COMMENT_AUTHOR);
-        } else {
-            cellResult.setCellStyle(worksheet.getStyle(pass ? STYLE_SUCCESS_RESULT : STYLE_FAILED_RESULT));
-        }
-        // ExcelStyleHelper.handleTextWrap(cellResult);
-
-        // reason
-        XSSFCell cellReason = row.get(COL_IDX_REASON);
-        if (cellReason != null && !pass) {
-            if (StringUtils.isNotBlank(result.getDetailedLogLink())) {
-                // currently support just 1 log link
-                String logLink = result.getDetailedLogLink();
-                if (StringUtils.isNotBlank(logLink)) {
-                    Excel.setHyperlink(cellReason, logLink, "details");
-                    ConsoleUtils.error("Check corresponding error log for details: " + logLink);
-                }
+            // description
+            XSSFCell cellDescription = row.get(COL_IDX_DESCRIPTION);
+            String description = Excel.getCellValue(cellDescription);
+            if (StringUtils.startsWith(description, SECTION_DESCRIPTION_PREFIX)) {
+                ExcelStyleHelper.formatSectionDescription(worksheet, cellDescription);
+            } else if (StringUtils.contains(description, REPEAT_DESCRIPTION_PREFIX)) {
+                ExcelStyleHelper.formatRepeatUntilDescription(worksheet, cellDescription);
             } else {
-                Throwable exception = result.getException();
-                if (exception != null) {
-                    Throwable rootCause = ExceptionUtils.getRootCause(exception);
-                    cellReason.setCellValue(context.truncateForDisplay(rootCause == null ?
-                                                                       exception.getMessage() :
-                                                                       rootCause.getMessage()));
-                    cellReason.setCellStyle(worksheet.getStyle(STYLE_MESSAGE));
+                ExcelStyleHelper.formatDescription(worksheet, cellDescription);
+            }
+
+            ExcelStyleHelper.formatTargetCell(worksheet, row.get(COL_IDX_TARGET));
+            ExcelStyleHelper.formatCommandCell(worksheet, row.get(COL_IDX_COMMAND));
+
+            String commandName = row.get(COL_IDX_TARGET).toString() + "." + row.get(COL_IDX_COMMAND).toString();
+            String message = result.getMessage();
+
+            if (isSkipped) {
+                XSSFCellStyle styleSkipped = worksheet.getStyle(STYLE_PARAM_SKIPPED);
+                for (int i = COL_IDX_PARAMS_START; i <= COL_IDX_PARAMS_END; i++) {
+                    row.get(i).setCellStyle(styleSkipped);
+                }
+            } else if (!isEnded) {
+                cellDescription.setCellValue(context.containsCrypt(description) ?
+                                             CellTextReader.readValue(description) :
+                                             context.replaceTokens(description, true));
+
+                XSSFCellStyle styleParam = worksheet.getStyle(STYLE_PARAM);
+                XSSFCellStyle styleTaintedParam = worksheet.getStyle(STYLE_TAINTED_PARAM);
+
+                // merging resolved parameter value (what's evaluated) and parameter template (what's written)
+                List<String> mergedParams = params == null ? new ArrayList<>() : new ArrayList<>(params);
+                Object[] paramValues = result.getParamValues();
+                if (paramValues != null) {
+                    for (int i = 0; i < mergedParams.size(); i++) {
+                        if (paramValues.length > i) { mergedParams.set(i, Objects.toString(paramValues[i], "")); }
+                    }
+
+                    if (paramValues.length > mergedParams.size()) {
+                        int startFrom = mergedParams.size();
+                        for (int i = startFrom; i < paramValues.length; i++) {
+                            mergedParams.add(Objects.toString(paramValues[i], ""));
+                        }
+                    }
+                }
+
+                if (linkableParams == null) {
+                    linkableParams = new ArrayList<>(mergedParams.size());
+                    for (int i = 0; i < mergedParams.size(); i++) { linkableParams.add(i, null); }
+                } else if (linkableParams.size() < mergedParams.size()) {
+                    int startFrom = linkableParams.size();
+                    for (int i = startFrom; i < mergedParams.size(); i++) { linkableParams.add(i, null); }
+                }
+
+                // update the params that can be expressed as links (file or url)
+                for (int i = COL_IDX_PARAMS_START; i <= COL_IDX_PARAMS_END; i++) {
+                    int paramIdx = i - COL_IDX_PARAMS_START;
+                    if (mergedParams.size() <= paramIdx) { break; }
+                    XSSFCell paramCell = row.get(i);
+
+                    String param = mergedParams.get(paramIdx);
+                    if (StringUtils.isBlank(param)) { continue; }
+
+                    String link = resolveParamAsLink(param);
+                    if (link != null) {
+                        // create hyperlink where path is referenced
+                        linkableParams.set(paramIdx, link);
+
+                        if (isURL(link)) {
+                            worksheet.setHyperlink(paramCell, link, param);
+                            continue;
+                        }
+
+                        // support output to cloud:
+                        // - if link is local resource but output-to-cloud is enabled, then copy resource to cloud and update link
+                        if (context.isOutputToCloud()) {
+                            // create new local resource with name matching to current row, so that duplicate use of the
+                            // same name will not result in overriding cloud resource
+
+                            if (FileUtil.isFileReadable(link, 1)) {
+                                // target file should exist with at least 1 byte
+                                File tmpFile = new File(StringUtils.substringBeforeLast(link, separator) + separator +
+                                                        row.get(COL_IDX_TESTCASE).getReference() + "_" +
+                                                        StringUtils.substringAfterLast(link, separator));
+
+                                try {
+                                    // ConsoleUtils.log("copy local resource " + link + " to " + tmpFile);
+                                    FileUtils.copyFile(new File(link), tmpFile);
+
+                                    ConsoleUtils.log("output-to-cloud enabled; copying " + link + " cloud...");
+                                    String cloudUrl = context.getOtc().importFile(tmpFile, true);
+                                    context.setData(OPT_LAST_OUTPUT_LINK, cloudUrl);
+                                    context.setData(OPT_LAST_OUTPUT_PATH, StringUtils.substringBeforeLast(cloudUrl, "/"));
+                                    ConsoleUtils.log("output-to-cloud enabled; copied  " + link + " to " + cloudUrl);
+
+                                    worksheet.setHyperlink(paramCell, cloudUrl, "(cloud) " + param);
+                                    continue;
+                                } catch (IOException e) {
+                                    ConsoleUtils.log("Unable to copy resource to cloud: " + e.getMessage());
+                                    log(toCloudIntegrationNotReadyMessage(link + ": " + e.getMessage()));
+                                }
+                            } else {
+                                ConsoleUtils.log(
+                                    "output-to-cloud enabled; but file " + link + " is empty or unreadable");
+                            }
+                        }
+
+                        // if `link` contains double quote, it's likely not a link..
+                        if (!StringUtils.containsAny(link, "\"")) { worksheet.setHyperlink(paramCell, link, param); }
+                        continue;
+                    } else {
+                        paramCell.setCellValue(context.truncateForDisplay(param));
+                        paramCell.setCellStyle(styleParam);
+                    }
+
+                    String origParamValue = Excel.getCellValue(paramCell);
+                    if (StringUtils.isBlank(origParamValue)) {
+                        paramCell.setCellType(BLANK);
+                        continue;
+                    }
+
+                    if (i == COL_IDX_PARAMS_START && StringUtils.equals(getCommandFQN(), CMD_VERBOSE)) {
+                        if (context.containsCrypt(origParamValue)) {
+                            paramCell.setCellComment(toSystemComment(paramCell, "detected crypto"));
+                        } else {
+                            message = StringUtils.trim(platformSpecificEOL(message));
+                            if (StringUtils.length(message) > MAX_VERBOSE_CHAR) {
+                                message = StringUtils.abbreviate(message, MAX_VERBOSE_CHAR);
+                            }
+                            paramCell.setCellValue(message);
+                            paramCell.setCellComment(toSystemComment(paramCell, origParamValue));
+                        }
+                        continue;
+                    }
+
+                    // respect the crypts... if value has crypt:, then keep it as is
+                    if (context.containsCrypt(origParamValue)) {
+                        paramCell.setCellComment(toSystemComment(paramCell, "detected crypto"));
+                        continue;
+                    }
+
+                    String taintedValue = CellTextReader.getOriginal(origParamValue, param);
+                    boolean tainted = !StringUtils.equals(origParamValue, taintedValue);
+                    if (tainted) {
+                        paramCell.setCellValue(context.truncateForDisplay(taintedValue));
+                        if (StringUtils.isNotEmpty(origParamValue)) {
+                            paramCell.setCellComment(toSystemComment(paramCell, origParamValue));
+                        }
+                        paramCell.setCellStyle(styleTaintedParam);
+                    } else {
+                        paramCell.setCellStyle(styleParam);
+                    }
+
+                    ExcelStyleHelper.handleTextWrap(paramCell);
+                }
+            }
+
+            // flow control
+            ExcelStyleHelper.formatFlowControlCell(worksheet, row.get(COL_IDX_FLOW_CONTROLS));
+
+            // elapsed time
+            if (!isSkipped || !isEnded) {
+                row.get(COL_IDX_ELAPSED_MS).setCellStyle(worksheet.getStyle(STYLE_ELAPSED_MS));
+            }
+
+            boolean pass = result.isSuccess();
+
+            if ((!isSkipped && !isEnded) &&
+                !SLA_EXEMPT_COMMANDS.contains(commandName) &&
+                !StringUtils.contains(commandName, ".wait")) {
+                // SLA not applicable to composite commands and all wait* commands
+                long elapsedTimeSLA = context.getSLAElapsedTimeMs();
+                if (!updateElapsedTime(elapsedMs, elapsedTimeSLA > 0 && elapsedTimeSLA < elapsedMs)) {
+                    result.markElapsedTimeSlaNotMet();
+                    pass = false;
+                    message = result.getMessage();
+                }
+            }
+
+            createCommentForMacro(cellDescription, pass);
+
+            // result
+            XSSFCell cellResult = row.get(COL_IDX_RESULT);
+            String resultMsg =
+                MESSAGE_REQUIRED_COMMANDS.contains(commandName) && (result.isSuccess() || result.isError()) ?
+                (result.isSuccess() ? MSG_PASS : MSG_FAIL) + message :
+                MessageUtils.markResult(message, pass, true);
+            cellResult.setCellValue(StringUtils.left(resultMsg, MAX_VERBOSE_CHAR));
+
+            if (result.isError()) {
+                ExcelStyleHelper.formatFailedStepDescription(this);
+                Excel.createComment(cellDescription, cellResult.getStringCellValue(), COMMENT_AUTHOR);
+            }
+
+            if (isSkipped) {
+                // paint both result and description the same style to improve readability
+                cellResult.setCellStyle(worksheet.getStyle(STYLE_SKIPPED_RESULT));
+                cellDescription.setCellStyle(worksheet.getStyle(STYLE_SKIPPED_RESULT));
+                Excel.createComment(cellDescription, message, COMMENT_AUTHOR);
+            } else if (isEnded) {
+                // paint both result and description the same style to improve readability
+                cellResult.setCellStyle(ExcelStyleHelper.generate(worksheet, TERMINATED));
+                cellDescription.setCellStyle(ExcelStyleHelper.generate(worksheet, TERMINATED));
+                Excel.createComment(cellDescription, message, COMMENT_AUTHOR);
+            } else {
+                cellResult.setCellStyle(worksheet.getStyle(pass ? STYLE_SUCCESS_RESULT : STYLE_FAILED_RESULT));
+            }
+
+            // reason
+            XSSFCell cellReason = row.get(COL_IDX_REASON);
+            if (cellReason != null && !pass) {
+                if (StringUtils.isNotBlank(result.getDetailedLogLink())) {
+                    // currently support just 1 log link
+                    String logLink = result.getDetailedLogLink();
+                    if (StringUtils.isNotBlank(logLink)) {
+                        Excel.setHyperlink(cellReason, logLink, "details");
+                        ConsoleUtils.error("Check corresponding error log for details: " + logLink);
+                    }
+                } else {
+                    Throwable exception = result.getException();
+                    if (exception != null) {
+                        Throwable rootCause = ExceptionUtils.getRootCause(exception);
+                        cellReason.setCellValue(context.truncateForDisplay(rootCause == null ?
+                                                                           exception.getMessage() :
+                                                                           rootCause.getMessage()));
+                        cellReason.setCellStyle(worksheet.getStyle(STYLE_MESSAGE));
+                    }
                 }
             }
         }

@@ -168,15 +168,12 @@ final class ExpressionDataTypeBuilder {
     }
 
     WebDataType newWebDataType(String value) throws TypeConversionException {
+        if (context.getBooleanData(WEB_RESULT_ALWAYS_NEW, getDefaultBool(WEB_RESULT_ALWAYS_NEW))) {
+            context.removeData(value);
+        }
+
         WebDataType data = resumeExpression(value, WebDataType.class);
-        if (data != null) { return data; }
-
-        WebDataType dataType = new WebDataType(handleExternal("WEB", value));
-
-        boolean ensureNewResult = context.getBooleanData(WEB_RESULT_ALWAYS_NEW, getDefaultBool(WEB_RESULT_ALWAYS_NEW));
-        if (ensureNewResult) { context.removeData(value); }
-
-        return dataType;
+        return data != null ? data : new WebDataType(handleExternal("WEB", value));
     }
 
     BinaryDataType newBinaryDataType(String value) throws TypeConversionException {
