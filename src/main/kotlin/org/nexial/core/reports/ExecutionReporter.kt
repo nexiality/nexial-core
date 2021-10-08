@@ -84,6 +84,9 @@ class ExecutionReporter {
         engineContext.setVariable("logs", summary.logs)
         engineContext.setVariable("summary", summary)
 
+        ExecutionSummary.gatherSupplementProofs(summary)
+        engineContext.setVariable("screenRecordings", summary.screenRecordings)
+
         val sysProps = System.getProperties()
         if (sysProps.containsKey(WEB_METRICS_GENERATED) &&
             BooleanUtils.toBoolean(sysProps.getProperty(WEB_METRICS_GENERATED))) {

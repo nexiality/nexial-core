@@ -26,7 +26,6 @@ import org.nexial.core.utils.ConsoleUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.validation.constraints.NotNull;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -38,6 +37,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipException;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
+import javax.validation.constraints.NotNull;
 
 import static java.io.File.separator;
 import static org.apache.commons.io.comparator.LastModifiedFileComparator.LASTMODIFIED_COMPARATOR;
@@ -149,6 +149,7 @@ public final class FileUtil {
         return deleted;
     }
 
+    @NotNull
     public static List<File> listFiles(String directory, final String filenameRegex, final boolean recursive) {
         if (StringUtils.isBlank(directory)) { return new ArrayList<>(); }
 
@@ -193,6 +194,7 @@ public final class FileUtil {
         return files;
     }
 
+    @NotNull
     public static List<File> listFiles(String directory, final String filenameRegex, final boolean recursive,
                                        SortBy sortBy) {
         List<File> files = listFiles(directory, filenameRegex, recursive);

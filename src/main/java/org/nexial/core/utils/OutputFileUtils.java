@@ -22,7 +22,6 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.SystemUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.nexial.commons.utils.DateUtility;
 import org.nexial.commons.utils.FileUtil;
@@ -33,21 +32,21 @@ import org.nexial.core.model.TestStep;
 import org.nexial.core.plugins.web.Browser;
 import org.nexial.core.variable.Syspath;
 
-import javax.validation.constraints.NotNull;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.net.URL;
-import java.util.Comparator;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
+import javax.annotation.Nonnull;
+import javax.validation.constraints.NotNull;
 
 import static java.io.File.separator;
+import static org.apache.commons.lang3.SystemUtils.JAVA_IO_TMPDIR;
 import static org.nexial.core.NexialConst.*;
 
 /**
- * dedicated as an utility to decorate Nexial excel files with additional runtime information.
+ * dedicated as a utility to decorate Nexial Excel files with additional runtime information.
  * <p/>
  * <b>General format rule:</b>
  * <pre>[TEST_CASE_ID]-[SHORT_DESCRIPTION].[START_DATE_TIME].[BROWSER].[SEQ_NAME]~[ITERATION].[EXTENSION]</pre>
@@ -61,14 +60,14 @@ import static org.nexial.core.NexialConst.*;
  * from extension).
  */
 public final class OutputFileUtils {
-    public static final Comparator<String> CASE_INSENSIVE_SORT = (o1, o2) -> {
+    public static final Comparator<String> CASE_INSENSITIVE_SORT = (o1, o2) -> {
         if (o1 == null) {
             return o2 == null ? 0 : -1;
         } else {
             return o2 == null ? 1 : o1.toLowerCase().compareTo(o2.toLowerCase());
         }
     };
-    private static final String NAME = OutputFileUtils.class.getSimpleName();
+    // private static final String NAME = OutputFileUtils.class.getSimpleName();
     private static final String DELIM = FILE_PART_SEP;
     private static final String DELIM_ITER = "~";
     private static final String[] UNSUPPORTED_FILE_CHARS =
@@ -95,16 +94,131 @@ public final class OutputFileUtils {
     static final int POS_STEP_N_ITER = 3;
     static final int POS_EXT = 4;
 
+    /**
+     * Intermediary model of an output file, which can be a XLSX, MP4, LOG, PNG, etc.
+     * <p>
+     * Naming convention differs based on output file format. Examples:
+     * <p>
+     * For test report (xlsx):<br/>
+     * <b>Single Run:</b><br/>
+     * <code>[script filename].[start_time yyyyMMdd_HHmmss].[iteration].xlsx</code><br/>
+     * <br/>
+     * <b>Test Plan Run:</b><br/>
+     * <code>[plan filename].[test plan].[sequence],[filename].[start_time yyyyMMdd_HHmmss].[iteration].xlsx</code><br/>
+     * <br/>
+     * <b>Other generated output (screenshot, recording, error log, comparison report, etc.):</b>
+     * <code>([plan filename].[test plan].[sequence],)?[script].[runID].[iteration].xlsx_[scenario]_([macro_invoked_step].)?[row #](_[repeatUntil loop index]_[screenCount])?.[extension]</code><br/>
+     * <p>
+     * <b>screenshot examples</b>:<br/>
+     * <code>captures/notes-plan.Parallel.003,notes.20211001_044508.001.xlsx_Android_A9.png</code><br/>
+     * <code>captures/notes-plan.Parallel.003,notes.20211001_044508.001.xlsx_Android_A25_003_2.png</code><br/>
+     * <code>captures/Employees.20211006_024631.001.xlsx_ToggleEmployeeStatus_A31.A21.png</code><br/>
+     * <p>
+     * <b>screen recording examples</b>:<br/>
+     * <code>captures/Employees.20211006_024631.001.xlsx_(nat)_Setup_A5.mp4</code><br/>
+     * <p>
+     * <b>log file</b>:<br/>
+     * <code>logs/nexial-20211006_024627.log</code><br/>
+     * <p>
+     * <b>ws log files</b>:<br/>
+     * <code>notes.20211007_115532.001.xlsx_Reminders-API_A21_006_5.ws-detail.log</code>
+     * <code>notes-plan.Parallel.001,notes.20211005_042137.001.xlsx_Reminders-API_A45_007_6.ws-detail.log</code>
+     * <code>logs/nexial-ws-20211007_114050.log</code>
+     */
     private static class FilePart {
+        // original file
+        String file = "";
+        String path = "";
+
+        String planFile = "";
+        String planName = "";
+        String planStep = "";
+
         String filename = "";
         String ext = "";
         String stepIter = "";
         String browser = "";
         String startTs = "";
         String prefix = "";
+
+        String script = "";
+        String scenario = "";
+        String macroInvokeRowId = "";
+        String rowId = "";
+        String repeatUntilLoopIndex = "";
+        String uniqueCounter = "";
+
+        /**
+         * distill filename by the pattern:
+         * <code>[script].[runID].[iteration].xlsx_[scenario]_([macro_invoked_step].)?[row #](_[repeatUntil loop index]_[screenCount])?.[extension]</code>
+         */
+        public void distillFilename() {
+            ext = DELIM + StringUtils.substringAfterLast(file, DELIM);
+            String filenameWithoutExt = StringUtils.substringBefore(file, ext);
+
+            String script;
+            if (StringUtils.contains(filenameWithoutExt, ".xlsx_")) {
+                script = StringUtils.substringBefore(filenameWithoutExt, ".xlsx_");
+                String[] fileParts = StringUtils.split(StringUtils.substringAfter(filenameWithoutExt, ".xlsx_"), "_");
+                if (ArrayUtils.isNotEmpty(fileParts)) {
+                    scenario = StringUtils.defaultString(ArrayUtils.get(fileParts, 0));
+                    String stepInfo = StringUtils.defaultString(ArrayUtils.get(fileParts, 1));
+                    if (StringUtils.contains(stepInfo, DELIM)) {
+                        macroInvokeRowId = StringUtils.substringBefore(stepInfo, DELIM);
+                        rowId = StringUtils.substringAfter(stepInfo, DELIM);
+                    } else {
+                        rowId = stepInfo;
+                    }
+                    repeatUntilLoopIndex = StringUtils.defaultString(ArrayUtils.get(fileParts, 2));
+                    uniqueCounter = StringUtils.defaultString(ArrayUtils.get(fileParts, 3));
+                }
+            } else {
+                script = filenameWithoutExt;
+            }
+
+            // nexial-ws-20211007_114050?
+            filename = script;
+            if (!RegexUtils.isExact(script, "nexial.+" + REGEX_START_DATE_TIME)) {
+                String[] parts = StringUtils.split(script, DELIM);
+                if (ArrayUtils.isNotEmpty(parts)) {
+                    this.script = StringUtils.defaultString(ArrayUtils.get(parts, 0));
+                    startTs = StringUtils.defaultString(ArrayUtils.get(parts, 1));
+                    stepIter = StringUtils.defaultString(ArrayUtils.get(parts, 2));
+                    // todo part[3] is browser?
+                }
+            }
+        }
     }
 
     private OutputFileUtils() { }
+
+    /**
+     * take an existing "output" file and break it down into its "parts":<ol>
+     * <li>plan</li>
+     * <li>subplan</li>
+     * <li>script</li>
+     * <li>scenario</li>
+     * <li>iteration</li>
+     * <li>repeat_until loop index</li>
+     * <li>row #</li>
+     * </ol>
+     */
+    public static Map<String, String> distillOutputFile(String file) {
+        Map<String, String> parts = new HashMap<>();
+        if (StringUtils.isBlank(file)) { return parts; }
+
+        FilePart fileParts = extractFileParts(file);
+        fileParts.distillFilename();
+        parts.put("path", fileParts.path);
+        parts.put("file", fileParts.file);
+        parts.put("planName", fileParts.planName);
+        parts.put("planStep", fileParts.planStep);
+        parts.put("script", fileParts.script);
+        parts.put("scenario", fileParts.scenario);
+        parts.put("iteration", fileParts.stepIter);
+        parts.put("row", StringUtils.defaultIfEmpty(fileParts.macroInvokeRowId, fileParts.rowId));
+        return parts;
+    }
 
     public static String generateScreenCaptureFilename(TestStep testStep) {
         return generateOutputFilename(testStep, SCREENSHOT_EXT);
@@ -123,11 +237,11 @@ public final class OutputFileUtils {
     public static String addBrowser(String filename, Browser browser) {
         String browserLabel = browser == null ?
                               "NONE" : browser.getBrowserType().toString() + "_" + browser.getBrowserVersion();
-        return add(filename, browserLabel, POS_BROWSER);
+        return updateFilePart(filename, browserLabel, POS_BROWSER);
     }
 
     public static String addIteration(String filename, String iteration) {
-        String stepIter = get(filename, POS_STEP_N_ITER);
+        String stepIter = getFilePart(filename, POS_STEP_N_ITER);
 
         String data = iteration;
         if (StringUtils.isNotBlank(stepIter)) {
@@ -137,11 +251,11 @@ public final class OutputFileUtils {
             if (StringUtils.isNotBlank(data)) { data = iteration + DELIM_ITER + data; }
         }
 
-        return add(filename, data, POS_STEP_N_ITER);
+        return updateFilePart(filename, data, POS_STEP_N_ITER);
     }
 
     public static String addIteration(String filename, int iteration) {
-        String stepIter = get(filename, POS_STEP_N_ITER);
+        String stepIter = getFilePart(filename, POS_STEP_N_ITER);
 
         String data = DELIM_ITER + iteration;
         if (StringUtils.isNotBlank(stepIter)) {
@@ -151,7 +265,7 @@ public final class OutputFileUtils {
             if (StringUtils.isNotBlank(data)) { data += DELIM_ITER + iteration; }
         }
 
-        return add(filename, data, POS_STEP_N_ITER);
+        return updateFilePart(filename, data, POS_STEP_N_ITER);
     }
 
     public static String addStartDateTime(String filename, Date startDateTime) {
@@ -159,11 +273,13 @@ public final class OutputFileUtils {
     }
 
     public static String addStartDateTime(String filename, String timestamp) {
-        return add(filename, timestamp, POS_START_TS);
+        return updateFilePart(filename, timestamp, POS_START_TS);
     }
 
     /** Run ID is the same as start date/time */
-    public static String addRunId(String filename, String runId) { return add(filename, runId, POS_START_TS); }
+    public static String addRunId(String filename, String runId) {
+        return updateFilePart(filename, runId, POS_START_TS);
+    }
 
     public static String webFriendly(String filename) {
         return StringUtils.replaceEach(filename, WEB_UNFRIENDLY_CHARS, WEB_FRIENDLY_CHARS);
@@ -189,41 +305,7 @@ public final class OutputFileUtils {
                                   replaceTokens,
                                   false,
                                   compact)
-                   .getContent();
-
-        // if (context.isNullOrEmptyValue(contentOrFile)) { return ""; }
-        //
-        // if (StringUtils.containsNone(contentOrFile, '\n', '\r', '\t') && ResourceUtils.isWebResource(contentOrFile)) {
-        //     String content;
-        //     if (resolveUrl) {
-        //         // must be HTTP-backed file
-        //         content = WsCommand.resolveWebContent(contentOrFile);
-        //         content = compact ? StringUtils.trim(content) : content;
-        //     } else {
-        //         content = contentOrFile;
-        //     }
-        //
-        //     return replaceTokens ? context.replaceTokens(content) : content;
-        // }
-        //
-        // if (!isContentReferencedAsFile(contentOrFile, context)) {
-        //     // must be just content (not file)
-        //     String content = compact ? StringUtils.trim(contentOrFile) : contentOrFile;
-        //     return replaceTokens ? context.replaceTokens(content) : content;
-        // }
-        //
-        // File input = new File(contentOrFile);
-        // String content;
-        // if (compact) {
-        //     List<String> list = FileUtils.readLines(input, DEF_CHARSET);
-        //     StringBuilder buffer = new StringBuilder();
-        //     for (String line : list) { buffer.append(StringUtils.trim(line)); }
-        //     content = buffer.toString();
-        // } else {
-        //     content = FileUtils.readFileToString(input, DEF_CHARSET);
-        // }
-        //
-        // return replaceTokens ? context.replaceTokens(content) : content;
+            .getContent();
     }
 
     /**
@@ -271,37 +353,13 @@ public final class OutputFileUtils {
      * <b>Test Plan Run:</b><br/>
      * <code>[plan filename].[test plan].[sequence],[filename].[start_time yyyyMMdd_HHmmss].[iteration].xlsx</code>
      */
-    public static String add(String file, String data, int position) {
+    public static String updateFilePart(String file, String data, int position) {
         if (StringUtils.isBlank(file)) { return file; }
         if (StringUtils.isBlank(data)) { return file; }
         if (position <= POS_FILENAME || position > POS_EXT) { return file; }
 
-        String path;
-        if (StringUtils.contains(file, separator)) {
-            path = StringUtils.substringBeforeLast(file, separator) + separator;
-            file = StringUtils.substringAfter(file, path);
-        } else {
-            path = "";
-        }
-
-        // todo: need to consider plan metadata
-        // e.g. PayrollProcessing.End to End - Simple.001,NGP_regression_prep.20171227_153928.001.xlsx
-        boolean hasPlanMetadata = RegexUtils.isExact(file, REGEX_PLAN_EXECUTION_OUTPUT_FILE);
-        if (hasPlanMetadata) { file = RegexUtils.collectGroups(file, REGEX_PLAN_EXECUTION_OUTPUT_FILE).get(1); }
-
-        // support AT MOST 5 parts (for now)
-        String[] parts = StringUtils.split(file, DELIM);
-        if (ArrayUtils.getLength(parts) < 2) { return file; }
-        if (ArrayUtils.getLength(parts) > 5) { return file; }
-
-        // since we don't know how many "parts" there are, use the last one as extension
-        FilePart fp = new FilePart();
-        fp.filename = parts[0];
-        fp.ext = DELIM + parts[parts.length - 1];
-
-        if (parts.length > 2) { deriveVaryingData(fp, parts[1]); }
-        if (parts.length > 3) { deriveVaryingData(fp, parts[2]); }
-        if (parts.length > 4) { deriveVaryingData(fp, parts[3]); }
+        FilePart fp = extractFileParts(file);
+        if (StringUtils.isBlank(fp.filename)) { return file; }
 
         switch (position) {
             case POS_START_TS:
@@ -314,10 +372,10 @@ public final class OutputFileUtils {
                 fp.stepIter = sanitize(data);
                 break;
             default:
-                throw new RuntimeException("Unsupported position for " + NAME + ": " + position);
+                throw new RuntimeException("Unsupported position for " + file + ": " + position);
         }
 
-        return path +
+        return fp.path +
                fp.filename +
                (StringUtils.isNotBlank(fp.startTs) ? DELIM + fp.startTs : "") +
                (StringUtils.isNotBlank(fp.browser) ? DELIM + fp.browser : "") +
@@ -327,10 +385,12 @@ public final class OutputFileUtils {
 
     public static String addTestPlan(String outputFileName, ExecutionDefinition execDef) {
         if (StringUtils.isBlank(outputFileName)) { return outputFileName; }
-        if (execDef == null) { return outputFileName; }
-        if (StringUtils.isBlank(execDef.getPlanFilename()) ||
+        if (execDef == null ||
+            StringUtils.isBlank(execDef.getPlanFilename()) ||
             StringUtils.isBlank(execDef.getPlanName()) ||
-            execDef.getPlanSequence() < 1) { return outputFileName; }
+            execDef.getPlanSequence() < 1) {
+            return outputFileName;
+        }
 
         String path;
         if (StringUtils.contains(outputFileName, separator)) {
@@ -345,41 +405,6 @@ public final class OutputFileUtils {
                webFriendly(execDef.getPlanName()) + DELIM +
                StringUtils.leftPad(execDef.getPlanSequence() + "", 3, "0") + PLAN_SCRIPT_SEP +
                outputFileName;
-    }
-
-    private static String get(String file, int position) {
-        if (StringUtils.isBlank(file)) { return file; }
-        if (position < POS_FILENAME) { return file; }
-        if (position > POS_EXT) { return file; }
-
-        // support AT MOST 5 parts (for now)
-        String[] parts = StringUtils.split(file, DELIM);
-        if (ArrayUtils.getLength(parts) < 2) { return file; }
-        if (ArrayUtils.getLength(parts) > 5) { return file; }
-
-        // since we don't know how many "parts" there are, use the last one as extension
-        FilePart fp = new FilePart();
-        fp.filename = parts[0];
-        fp.ext = DELIM + parts[parts.length - 1];
-
-        if (parts.length > 2) { deriveVaryingData(fp, parts[1]); }
-        if (parts.length > 3) { deriveVaryingData(fp, parts[2]); }
-        if (parts.length > 4) { deriveVaryingData(fp, parts[3]); }
-
-        switch (position) {
-            case POS_FILENAME:
-                return fp.filename;
-            case POS_START_TS:
-                return fp.startTs;
-            case POS_BROWSER:
-                return fp.browser;
-            case POS_STEP_N_ITER:
-                return fp.stepIter;
-            case POS_EXT:
-                return fp.ext;
-            default:
-                throw new RuntimeException("Unsupported position for " + NAME + ": " + position);
-        }
     }
 
     @NotNull
@@ -445,15 +470,84 @@ public final class OutputFileUtils {
 
     @NotNull
     public static File prependRandomizedTempDirectory(String filename) {
-        if (StringUtils.isBlank(filename)) { throw new IllegalArgumentException("Invalid filename '" + filename + "'");}
+        if (StringUtils.isBlank(filename)) {
+            throw new IllegalArgumentException("Invalid filename '" + filename + "'");
+        }
 
-        File tmpDir = SystemUtils.getJavaIoTmpDir();
         // use random alphabetic to avoid collision in parallel processing
-        return new File((tmpDir.getAbsolutePath() + separator + RandomStringUtils.randomAlphabetic(5)) + separator +
-                        filename);
+        return new File(JAVA_IO_TMPDIR + separator + RandomStringUtils.randomAlphabetic(5) + separator + filename);
     }
 
-    /** could be timestamp, browser or step-n-iteration */
+    @Nonnull
+    private static FilePart extractFileParts(String file) {
+        String path;
+        if (StringUtils.contains(file, separator)) {
+            path = StringUtils.substringBeforeLast(file, separator) + separator;
+            file = StringUtils.substringAfter(file, path);
+        } else {
+            path = "";
+        }
+
+        // need to consider plan metadata
+        // e.g. DataProcessing.End to End - Simple.001,XYZ_regression_prep.20171227_153928.001.xlsx
+        String planMetadata = null;
+        boolean hasPlanMetadata = RegexUtils.isExact(file, REGEX_PLAN_EXECUTION_OUTPUT_FILE);
+        if (hasPlanMetadata) {
+            List<String> groups = RegexUtils.collectGroups(file, REGEX_PLAN_EXECUTION_OUTPUT_FILE);
+            planMetadata = groups.get(0);
+            file = groups.get(1);
+        }
+
+        FilePart fp = new FilePart();
+        fp.path = path;
+        fp.file = file;
+
+        if (hasPlanMetadata) {
+            String[] planParts = StringUtils.split(planMetadata, DELIM);
+            if (planParts.length > 0) { fp.planFile = planParts[0]; }
+            if (planParts.length > 1) { fp.planName = planParts[1]; }
+            if (planParts.length > 2) { fp.planStep = planParts[2]; }
+        }
+
+        // support AT MOST 5 parts (for now)
+        String[] parts = StringUtils.split(file, DELIM);
+        if (ArrayUtils.getLength(parts) >= 2 && ArrayUtils.getLength(parts) <= 5) {
+            // since we don't know how many "parts" there are, use the last one as extension
+            fp.filename = parts[0];
+            fp.ext = DELIM + parts[parts.length - 1];
+
+            if (parts.length > 2) { deriveVaryingData(fp, parts[1]); }
+            if (parts.length > 3) { deriveVaryingData(fp, parts[2]); }
+            if (parts.length > 4) { deriveVaryingData(fp, parts[3]); }
+        }
+
+        return fp;
+    }
+
+    private static String getFilePart(String file, int position) {
+        if (StringUtils.isBlank(file)) { return file; }
+        if (position < POS_FILENAME || position > POS_EXT) { return file; }
+
+        FilePart fp = extractFileParts(file);
+        if (StringUtils.isBlank(fp.filename)) { return file; }
+
+        switch (position) {
+            case POS_FILENAME:
+                return fp.filename;
+            case POS_START_TS:
+                return fp.startTs;
+            case POS_BROWSER:
+                return fp.browser;
+            case POS_STEP_N_ITER:
+                return fp.stepIter;
+            case POS_EXT:
+                return fp.ext;
+            default:
+                throw new RuntimeException("Unsupported position for " + file + ": " + position);
+        }
+    }
+
+    /** could be a timestamp, browser or step-n-iteration */
     private static void deriveVaryingData(FilePart fp, String varData) {
         if (StringUtils.contains(varData, DELIM_ITER) || NumberUtils.isDigits(varData)) {
             fp.stepIter = varData;

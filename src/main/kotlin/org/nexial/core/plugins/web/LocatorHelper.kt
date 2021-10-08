@@ -31,7 +31,7 @@ import org.nexial.core.model.StepResult
 import org.nexial.core.plugins.web.LocatorHelper.InnerValueType.TEXT
 import org.nexial.core.plugins.web.LocatorHelper.InnerValueType.VALUE
 import org.nexial.core.utils.CheckUtils
-import org.nexial.core.utils.OutputFileUtils.CASE_INSENSIVE_SORT
+import org.nexial.core.utils.OutputFileUtils.CASE_INSENSITIVE_SORT
 import org.openqa.selenium.By
 import org.openqa.selenium.WebElement
 import java.util.*
@@ -336,7 +336,7 @@ class LocatorHelper internal constructor(private val delegator: WebCommand) {
             return StepResult.fail("No data for comparison, hence no order can be asserted")
 
         // now make 'expected' organized as expected
-        expected.sortWith(CASE_INSENSIVE_SORT)
+        expected.sortWith(CASE_INSENSITIVE_SORT)
         if (BooleanUtils.toBoolean(descending)) expected.reverse()
 
         // string comparison to determine if both the actual (displayed) list and sorted list is the same

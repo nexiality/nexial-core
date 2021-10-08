@@ -174,7 +174,7 @@ import static org.nexial.core.utils.ExecUtils.NEXIAL_MANIFEST;
  * </li>
  * <li>
  * iterate through all the derived iterations and invoke ExecutionThreadTest accordingly<br/>
- * The test results will be saved to the {@code summary} directory, the logs and screencapture
+ * The test results will be saved to the {@code summary} directory, the logs and screen captures
  * saved to the respective {@code logs} and {@code captures} directories.
  * </li>
  * <li>
@@ -495,7 +495,7 @@ public class Nexial {
         List<String> invalidSubplans = subplans.stream().filter(testPlan -> !planNames.contains(testPlan)).collect(
             Collectors.toList());
 
-        // system variable for subplans ommitted
+        // system variable for subplans omitted
         System.setProperty(SUBPLANS_OMITTED, TextUtils.toString(invalidSubplans, ","));
 
         if (invalidSubplans.size() != 0) {
@@ -536,7 +536,7 @@ public class Nexial {
             if (FileUtil.isFileReadable(testScriptPath1, MIN_EXCEL_FILE_SIZE)) {
                 testScriptPath = testScriptPath1;
             } else {
-                // hmm.. maybe it's a relative path based on current plan file?
+                // hmm... maybe it's a relative path based on current plan file?
                 testScriptPath = project.getPlanPath() + testScriptPath;
             }
         }
@@ -923,7 +923,7 @@ public class Nexial {
         summary.setCustomHeader(System.getProperty(SUMMARY_CUSTOM_HEADER));
         summary.setCustomFooter(System.getProperty(SUMMARY_CUSTOM_FOOTER));
 
-        // execution summary should be complete now.. time to generate execution synopsis
+        // execution summary should be complete now... time to generate execution synopsis
         double successRate = summary.getSuccessRate();
         System.setProperty(EXEC_SYNOPSIS,
                            successRate == 1 ? "ALL PASS" : "FAIL (" + summary.getSuccessRateString() + " success)");
@@ -935,6 +935,7 @@ public class Nexial {
         String reportPath = StringUtils.appendIfMissing(System.getProperty(OPT_OUT_DIR, project.getOutPath()),
                                                         separator);
         if (!StringUtils.contains(reportPath, runId)) { reportPath += runId + separator; }
+        summary.setOutputPath(reportPath);
 
         springContext = new ClassPathXmlApplicationContext(SPRING_CONTEXT);
         ExecutionReporter reporter = springContext.getBean("executionResultHelper", ExecutionReporter.class);
@@ -993,7 +994,7 @@ public class Nexial {
                 // project.name could be affected by project.id, as designed
                 String outputDir = NexialS3Helper.resolveOutputDir(project.getName(), runId);
 
-                // upload HTML report to cloud
+                // upload the HTML report to cloud
                 if (FileUtil.isFileReadable(htmlReport, 1024)) {
                     String url = otc.importToS3(htmlReport, outputDir, true);
                     ConsoleUtils.log("HTML output for this execution exported to " + url);
@@ -1126,7 +1127,7 @@ public class Nexial {
 
         // could be fully qualified or relative to script.
 
-        // let's resolve from closest point to script, then expand out
+        // let's resolve from the closest point to script, then expand out
         String dataFile1 = StringUtils.appendIfMissing(new File(testScriptPath).getParent(), separator) + dataFilePath;
         if (FileUtil.isFileReadable(dataFile1)) { return validateDataFile(project, dataFile1); }
 

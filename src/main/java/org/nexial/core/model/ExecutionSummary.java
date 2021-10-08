@@ -25,7 +25,10 @@ import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.xssf.usermodel.*;
+import org.jetbrains.annotations.NotNull;
 import org.nexial.commons.utils.*;
+import org.nexial.core.NexialConst;
+import org.nexial.core.NexialConst.Recording.Types;
 import org.nexial.core.aws.NexialS3Helper;
 import org.nexial.core.excel.Excel;
 import org.nexial.core.excel.Excel.Worksheet;
@@ -34,18 +37,21 @@ import org.nexial.core.excel.ExcelArea;
 import org.nexial.core.excel.ExcelStyleHelper;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.ExecUtils;
+import org.nexial.core.utils.OutputFileUtils;
 
 import java.io.File;
 import java.io.IOException;
 import java.text.MessageFormat;
 import java.text.NumberFormat;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static java.io.File.separator;
 import static java.lang.System.lineSeparator;
 import static java.util.Locale.US;
 import static org.apache.commons.lang3.SystemUtils.*;
 import static org.apache.poi.ss.usermodel.Row.MissingCellPolicy.CREATE_NULL_AS_BLANK;
+import static org.nexial.commons.utils.FileUtil.SortBy.FILENAME_ASC;
 import static org.nexial.core.NexialConst.Data.*;
 import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.excel.Excel.MIN_EXCEL_FILE_SIZE;
@@ -129,7 +135,43 @@ public class ExecutionSummary {
     private String planFile;
     private String planDescription;
 
-    public enum ExecutionLevel {EXECUTION, SCRIPT, ITERATION, SCENARIO, ACTIVITY, STEP}
+    // supplemental
+    private String outputPath;
+    private Map<String, Map<String, String>> screenRecordings;
+
+    public void setOutputPath(String outputPath) { this.outputPath = outputPath; }
+
+    public static void gatherSupplementProofs(@NotNull ExecutionSummary summary) {
+        if (!FileUtil.isDirectoryReadable(summary.outputPath)) { return; }
+
+        // 1. get capture directory
+        String captureDir = NexialConst.Project.appendCapture(summary.outputPath);
+
+        // 2. look for videos
+        String recordingFilesRegex = ".+\\.(" +
+                                     (Arrays.stream(Types.values()).map(Enum::name).collect(Collectors.joining("|"))) + ")";
+        List<File> recordings = FileUtil.listFiles(captureDir, recordingFilesRegex, false, FILENAME_ASC);
+
+        // 3. organize videos by "readable" name
+        summary.screenRecordings = new TreeMap<String, Map<String, String>>(recordings.stream().collect(
+            Collectors.toMap(
+                file -> SUBDIR_CAPTURES + "/" + file.getName(),
+                file -> OutputFileUtils.distillOutputFile(file.getAbsolutePath())))
+        );
+
+        // todo
+        // 4. get log directory
+
+        // 5. look for ws-summary log
+
+        // 6. map api call to ws-detail log
+
+        // 7. organize api calls by "invocation source" to ws details
+
+        // 8. create chart
+    }
+
+    public enum ExecutionLevel { EXECUTION, SCRIPT, ITERATION, SCENARIO, ACTIVITY, STEP }
 
     public ExecutionSummary() {
         // support "build-user-vars" plugin (Jenkins)
@@ -387,6 +429,8 @@ public class ExecutionSummary {
             }
         }
     }
+
+    public Map<String, Map<String, String>> getScreenRecordings() { return screenRecordings; }
 
     public String toString() {
         StringBuilder text = new StringBuilder();

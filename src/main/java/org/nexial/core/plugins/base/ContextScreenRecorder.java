@@ -17,10 +17,6 @@
 
 package org.nexial.core.plugins.base;
 
-import java.awt.*;
-import java.io.File;
-import java.io.IOException;
-
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.nexial.core.model.ExecutionContext;
@@ -29,9 +25,15 @@ import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.OutputFileUtils;
 import org.nexial.core.variable.Syspath;
 
+import java.awt.*;
+import java.io.File;
+import java.io.IOException;
+
 import static java.io.File.separator;
-import static org.nexial.core.NexialConst.Data.*;
 import static org.nexial.core.NexialConst.Project.appendCapture;
+import static org.nexial.core.NexialConst.Recording.*;
+import static org.nexial.core.NexialConst.Recording.Types.avi;
+import static org.nexial.core.NexialConst.Recording.Types.mp4;
 import static org.nexial.core.SystemVariables.getDefault;
 import static org.nexial.core.SystemVariables.getDefaultBool;
 
@@ -106,15 +108,15 @@ public class ContextScreenRecorder {
         self.context = context;
 
         String recorderType = context.getStringData(RECORDER_TYPE, getDefault(RECORDER_TYPE));
-        if (StringUtils.equals(recorderType, RECORDER_TYPE_MP4)) {
+        if (StringUtils.equals(recorderType, mp4.name())) {
             self.screenRecorder = new Mp4ScreenRecorder();
-            self.fileExt = RECORDER_TYPE_MP4;
+            self.fileExt = mp4.name();
             return self;
         }
 
-        if (StringUtils.equals(recorderType, RECORDER_TYPE_AVI)) {
+        if (StringUtils.equals(recorderType, avi.name())) {
             self.screenRecorder = new AviScreenRecorder();
-            self.fileExt = RECORDER_TYPE_AVI;
+            self.fileExt = avi.name();
             return self;
         }
 

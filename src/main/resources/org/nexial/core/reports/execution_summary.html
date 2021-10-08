@@ -284,6 +284,39 @@
     </div>
 </div>
 
+<div class="recording canHide" id="recordings" data-th-if="#{screenRecordings}">
+    <div class="showhide" target="all-recordings">
+        <i class="fas fa-minus-square" onclick="hideSection(this)" title="minimize this section"></i>
+        <i class="fas fa-plus-square" onclick="showSection(this)" title="restore this section"></i>
+    </div>
+
+    <div class="section-title">Screen Recordings</div>
+
+    <div class="canHide" id="all-recordings">
+        <th:block data-th-each="screenRecordingSet : ${screenRecordings}">
+            <div class="recording-container">
+                <div class="recording-caption">
+                    <div class="recording-caption-title" data-th-utext="${screenRecordingSet.value.file}">video.mp4</div>
+                    <div class="recording-caption-meta">
+                        <span class="meta-title">script</span>
+                        <span class="meta-value" data-th-utext="${screenRecordingSet.value.script}">EmployeesTemp</span>
+                        <span class="meta-title">scenario</span>
+                        <span class="meta-value" data-th-utext="${screenRecordingSet.value.scenario}">login</span>
+                        <span class="meta-title">iteration</span>
+                        <span class="meta-value" data-th-utext="${screenRecordingSet.value.iteration}">001</span>
+                        <span class="meta-title">row</span>
+                        <span class="meta-value" data-th-utext="${screenRecordingSet.value.row}">A5</span>
+                    </div>
+                </div>
+                <video width="540" controls>
+                    <source data-th-src="${screenRecordingSet.key}" src="captures/Employees.20211007_022758.001.xlsx_ToggleEmployeeRoles_A5.mp4" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+            </div>
+        </th:block>
+    </div>
+</div>
+
 <th:block data-th-if="${summary.customFooter}">
     <div class="custom-footer" data-th-utext="${summary.customFooter}">
         Special <a href="https://nexiality.github.io/documentation/">data file</a>.<br/>

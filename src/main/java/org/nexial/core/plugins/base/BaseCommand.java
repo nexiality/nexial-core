@@ -37,9 +37,6 @@ import org.nexial.core.tools.CommandDiscovery;
 import org.nexial.core.utils.*;
 import org.nexial.core.variable.Syspath;
 
-import javax.annotation.Nonnull;
-import javax.imageio.ImageIO;
-import javax.validation.constraints.NotNull;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -53,6 +50,9 @@ import java.math.BigDecimal;
 import java.util.*;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import javax.annotation.Nonnull;
+import javax.imageio.ImageIO;
+import javax.validation.constraints.NotNull;
 
 import static java.io.File.separator;
 import static java.lang.Boolean.FALSE;
@@ -71,7 +71,7 @@ import static org.nexial.core.plugins.base.ComparisonFormatter.displayAssertionR
 import static org.nexial.core.plugins.base.ComparisonFormatter.displayForCompare;
 import static org.nexial.core.plugins.base.IncrementStrategy.ALPHANUM;
 import static org.nexial.core.utils.CheckUtils.*;
-import static org.nexial.core.utils.OutputFileUtils.CASE_INSENSIVE_SORT;
+import static org.nexial.core.utils.OutputFileUtils.CASE_INSENSITIVE_SORT;
 
 public class BaseCommand implements NexialCommand {
     private static final String TMP_DELIM = "<--~.$.~-->";
@@ -99,7 +99,7 @@ public class BaseCommand implements NexialCommand {
     public ExecutionContext getContext() { return context; }
 
     @Override
-    public void destroy() {}
+    public void destroy() { }
 
     @Override
     public String getTarget() { return "base"; }
@@ -166,7 +166,7 @@ public class BaseCommand implements NexialCommand {
         }
 
         try {
-            // Create a instance of ScreenRecorder with the required configurations
+            // Create an instance of ScreenRecorder with the required configurations
             if (screenRecorder == null) { screenRecorder = ContextScreenRecorder.newInstance(context); }
             screenRecorder.start(context.getCurrentTestStep());
             return StepResult.success("desktop recording started; saved " + screenRecorder.getVideoFile());
@@ -219,6 +219,8 @@ public class BaseCommand implements NexialCommand {
             screenRecorder = null;
         }
     }
+
+    public boolean isRecordingStarted() { return screenRecorder != null && screenRecorder.isVideoRunning(); }
 
     // todo: reconsider command name.  this is not intuitive
     public StepResult incrementChar(String var, String amount, String config) {
@@ -441,8 +443,8 @@ public class BaseCommand implements NexialCommand {
             return StepResult.fail("No data for comparison, hence no order can be asserted");
         }
 
-        // now make 'expected' organized as expected - but applying case insensitive sort
-        expected.sort(CASE_INSENSIVE_SORT);
+        // now make 'expected' organized as expected - but applying case-insensitive sort
+        expected.sort(CASE_INSENSITIVE_SORT);
 
         if (CheckUtils.toBoolean(descending)) { Collections.reverse(expected); }
 
@@ -473,13 +475,8 @@ public class BaseCommand implements NexialCommand {
     }
 
     /**
-     * continue to support regex-based matching, as well as polyMatcher. This means that
-     * {@literal regex} is not treated as "equality match" but regex. To force equality match,
-     * use `EXACT:...` syntax instead.
-     *
-     * @param text
-     * @param regex
-     * @return
+     * continue to support regex-based matching, as well as polyMatcher. This means that {@literal regex} is not
+     * treated as "equality match" but regex. To force equality match, use `EXACT:...` syntax instead.
      */
     public StepResult assertMatch(String text, String regex) {
         requiresNotBlank(regex, "invalid regex", regex);
@@ -548,7 +545,7 @@ public class BaseCommand implements NexialCommand {
 
     public StepResult assertEndsWith(String text, String suffix) {
         boolean contains = StringUtils.endsWith(text, suffix);
-        // not so fast.. could be one of those quirky IE issues..
+        // not so fast... could be one of those quirky IE issues...
         if (!contains && context.isTextMatchLeniently()) {
             String lenientSuffix = StringUtils.replaceEach(StringUtils.trim(suffix),
                                                            new String[]{"\r", "\n"},
@@ -621,7 +618,7 @@ public class BaseCommand implements NexialCommand {
             ConsoleUtils.log("asserting that array (size " + list.size() + ") " + list + " contains " + expectedList);
         }
 
-        // all all items in `expectedList` is removed due to match against `list`, then all items in `expected` matched
+        // all items in `expectedList` is removed due to match against `list`, then all items in `expected` matched
         boolean containsAll = expectedList.removeIf(list::contains);
         if (context.isVerbose()) {
             ConsoleUtils.log("All expected items matched: " + containsAll + ", remaining unmatched: " + expectedList);
@@ -632,7 +629,7 @@ public class BaseCommand implements NexialCommand {
                StepResult.fail("Not all items in 'expected' are found in 'array': " + expected);
     }
 
-    /** assert that {@code array} DOES NOT contains any items in {@code expected}. */
+    /** assert that {@code array} DOES NOT contain any items in {@code expected}. */
     public StepResult assertArrayNotContain(String array, String unexpected) {
         // null corner case
         if (areBothEmpty(array, unexpected)) { return StepResult.fail("Both 'array' and 'unexpected' are NULL"); }
@@ -646,9 +643,11 @@ public class BaseCommand implements NexialCommand {
             .stream()
             .distinct()
             .collect(Collectors.toList());
-        if (CollectionUtils.isEmpty(unexpectedList)) { CheckUtils.fail("'unexpected' cannot be parsed: " + unexpected);}
+        if (CollectionUtils.isEmpty(unexpectedList)) {
+            CheckUtils.fail("'unexpected' cannot be parsed: " + unexpected);
+        }
 
-        // all all items in `expectedList` is removed due to match against `list`, then all items in `expected` matched
+        // all items in `expectedList` is removed due to match against `list`, then all items in `expected` matched
         return unexpectedList.removeIf(item -> !list.contains(item)) && unexpectedList.isEmpty() ?
                StepResult.success("All items in 'unexpected' are NOT found in 'array'") :
                StepResult.fail("One or more items in 'unexpected' are found in 'array': " + unexpectedList);
@@ -709,7 +708,7 @@ public class BaseCommand implements NexialCommand {
     public StepResult verbose(String text) {
         if (text == null) { text = context.getNullValueToken(); }
 
-        // we should not allow to print this.. security violation
+        // we should not allow to print this... security violation
         if (context.containsCrypt(text)) {
             // but we should still process any functions or expressions
             context.replaceTokens(text);
@@ -734,7 +733,9 @@ public class BaseCommand implements NexialCommand {
 
         long mustEndBy = System.currentTimeMillis() + NumberUtils.toLong(maxWaitMs);
         NexialFilterList filterList = new NexialFilterList(conditions);
-        if (filterList.size() == 0) { return StepResult.fail("Invalid filter condition " + filterList.getFilterText());}
+        if (filterList.size() == 0) {
+            return StepResult.fail("Invalid filter condition " + filterList.getFilterText());
+        }
 
         boolean isMatch = false;
         while (System.currentTimeMillis() < mustEndBy) {
@@ -833,7 +834,9 @@ public class BaseCommand implements NexialCommand {
     public StepResult outputToCloud(String resource) {
         requiresNotBlank(resource, "invalid resource", resource);
 
-        if (!context.isOutputToCloud()) { return StepResult.skipped("Execution not configured for cloud-based output");}
+        if (!context.isOutputToCloud()) {
+            return StepResult.skipped("Execution not configured for cloud-based output");
+        }
 
         // resource is a fully-qualified file?
         if (!FileUtil.isFileReadable(resource, 1)) {
@@ -857,7 +860,7 @@ public class BaseCommand implements NexialCommand {
     }
 
     public void waitFor(int waitMs) {
-        try { Thread.sleep(waitMs); } catch (InterruptedException e) { log("sleep - " + e.getMessage());}
+        try { Thread.sleep(waitMs); } catch (InterruptedException e) { log("sleep - " + e.getMessage()); }
     }
 
     public int toPositiveInt(String something, String label) {
@@ -1047,14 +1050,14 @@ public class BaseCommand implements NexialCommand {
      * data variable, Nexial will (and must) consider the System properties and in fact it does so <b>AHEAD</b> of
      * its internal memory space for data variables. This can cause confusion since the initially-set data variable
      * does not appear to be overwritten.  This method is created to overcome such issue. Use this only for the
-     * user-defined data variables. System variables and Java/OS specific ones should not be impacted by this phenomena.
+     * user-defined data variables. System variables and Java/OS specific ones should not be impacted by the phenomena.
      * since when
      */
     protected void updateDataVariable(String var, String value) {
         if (context.containsCrypt(TOKEN_START + var + TOKEN_END)) {
             throw new TokenReplacementException("Tampering with encrypted data is NOT permissible");
         }
-        // add `var` to context.. also update sys prop if `var` already exists in system and is not a read-only variable
+        // add `var` to context... also update sys prop if `var` already exists in system and is not a read-only variable
         // - if sys prop exists means the same var was already declared either in cmdline or in setup.properties
         // - if same var is a read-only variable, then we don't want to override it
         // context.setData(var, value, StringUtils.isNotBlank(System.getProperty(var)) && !context.isReadOnlyData(var));
@@ -1159,7 +1162,7 @@ public class BaseCommand implements NexialCommand {
 
     protected boolean lenientContains(String text, String prefix, boolean startsWith) {
         boolean valid = startsWith ? StringUtils.startsWith(text, prefix) : StringUtils.contains(text, prefix);
-        // not so fast.. could be one of those quirky IE issues..
+        // not so fast... could be one of those quirky IE issues...
         if (!valid && context.isTextMatchLeniently()) {
             String[] searchFor = {"\r", "\n", "\t"};
             String[] replaceWith = {" ", " ", " "};
@@ -1217,7 +1220,9 @@ public class BaseCommand implements NexialCommand {
             return;
         }
 
-        if (expected.equals(actual)) { CheckUtils.fail(NL + displayForCompare("expected", expected, "actual", actual));}
+        if (expected.equals(actual)) {
+            CheckUtils.fail(NL + displayForCompare("expected", expected, "actual", actual));
+        }
     }
 
     protected void assertTrue(boolean condition) { assertTrue(null, condition); }
@@ -1418,7 +1423,7 @@ public class BaseCommand implements NexialCommand {
         expected = StringUtils.replaceChars(expected, (char) 255, ' ');
         actual = StringUtils.replaceChars(actual, (char) 160, ' ');
         actual = StringUtils.replaceChars(actual, (char) 255, ' ');
-        
+
         if (context.isTextMatchAsNumber()) {
             boolean isExpectedANumber = false;
             BigDecimal expectedBD = null;
@@ -1458,7 +1463,7 @@ public class BaseCommand implements NexialCommand {
 
         boolean equals = seleniumEquals(expected, actual);
         if (!equals && context.isTextMatchLeniently()) {
-            // not so fast.. could be one of those quirky IE issues..
+            // not so fast... could be one of those quirky IE issues...
             String lenientExpected = toOneLine(expected, true);
             String lenientActual = toOneLine(actual, true);
             equals = StringUtils.equals(lenientExpected, lenientActual);

@@ -17,10 +17,6 @@
 
 package org.nexial.core.utils;
 
-import java.io.File;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-
 import org.apache.commons.io.FileUtils;
 import org.junit.After;
 import org.junit.Assert;
@@ -29,6 +25,10 @@ import org.junit.Test;
 import org.nexial.core.NexialConst.BrowserType;
 import org.nexial.core.model.MockExecutionContext;
 import org.nexial.core.plugins.web.Browser;
+
+import java.io.File;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 import static org.nexial.core.NexialConst.DEF_CHARSET;
 import static org.nexial.core.utils.OutputFileUtils.*;
@@ -51,43 +51,47 @@ public class OutputFileUtilsTest {
     @Test
     public void testAdd() {
         // individual test
-        Assert.assertEquals("MyTest." + timestamp + ext, OutputFileUtils.add(fixture, timestamp, POS_START_TS));
-        Assert.assertEquals("MyTest." + "firefox20_0_1" + ext, OutputFileUtils.add(fixture, browser, POS_BROWSER));
-        Assert.assertEquals("MyTest." + stepName + ext, OutputFileUtils.add(fixture, stepName, POS_STEP_N_ITER));
-        Assert.assertEquals("MyTest." + iteration + ext, OutputFileUtils.add(fixture, iteration + "", POS_STEP_N_ITER));
+        Assert.assertEquals(
+            "MyTest." + timestamp + ext, OutputFileUtils.updateFilePart(fixture, timestamp, POS_START_TS));
+        Assert.assertEquals(
+            "MyTest." + "firefox20_0_1" + ext, OutputFileUtils.updateFilePart(fixture, browser, POS_BROWSER));
+        Assert.assertEquals(
+            "MyTest." + stepName + ext, OutputFileUtils.updateFilePart(fixture, stepName, POS_STEP_N_ITER));
+        Assert.assertEquals(
+            "MyTest." + iteration + ext, OutputFileUtils.updateFilePart(fixture, iteration + "", POS_STEP_N_ITER));
     }
 
     @Test
     public void testAdd2() {
         // sequence test
-        fixture = OutputFileUtils.add(fixture, timestamp, POS_START_TS);
+        fixture = OutputFileUtils.updateFilePart(fixture, timestamp, POS_START_TS);
         Assert.assertEquals("MyTest." + timestamp + ext, fixture);
 
-        fixture = OutputFileUtils.add(fixture, browser, POS_BROWSER);
+        fixture = OutputFileUtils.updateFilePart(fixture, browser, POS_BROWSER);
         Assert.assertEquals("MyTest." + timestamp + ".firefox20_0_1" + ext,
-                            OutputFileUtils.add(fixture, browser, POS_BROWSER));
+                            OutputFileUtils.updateFilePart(fixture, browser, POS_BROWSER));
 
-        fixture = OutputFileUtils.add(fixture, stepName, POS_STEP_N_ITER);
+        fixture = OutputFileUtils.updateFilePart(fixture, stepName, POS_STEP_N_ITER);
         Assert.assertEquals("MyTest." + timestamp + ".firefox20_0_1." + stepName + ext, fixture);
 
-        fixture = OutputFileUtils.add(fixture, iteration + "", POS_STEP_N_ITER);
+        fixture = OutputFileUtils.updateFilePart(fixture, iteration + "", POS_STEP_N_ITER);
         Assert.assertEquals("MyTest." + timestamp + ".firefox20_0_1." + iteration + ext, fixture);
     }
 
     @Test
     public void testAdd3() {
         // jazz up the sequence
-        fixture = OutputFileUtils.add(fixture, iteration + "", POS_STEP_N_ITER);
+        fixture = OutputFileUtils.updateFilePart(fixture, iteration + "", POS_STEP_N_ITER);
         Assert.assertEquals("MyTest." + iteration + ext, fixture);
 
-        fixture = OutputFileUtils.add(fixture, browser, POS_BROWSER);
+        fixture = OutputFileUtils.updateFilePart(fixture, browser, POS_BROWSER);
         Assert.assertEquals("MyTest." + "firefox20_0_1." + iteration + ext,
-                            OutputFileUtils.add(fixture, browser, POS_BROWSER));
+                            OutputFileUtils.updateFilePart(fixture, browser, POS_BROWSER));
 
-        fixture = OutputFileUtils.add(fixture, timestamp, POS_START_TS);
+        fixture = OutputFileUtils.updateFilePart(fixture, timestamp, POS_START_TS);
         Assert.assertEquals("MyTest." + timestamp + ".firefox20_0_1." + iteration + ext, fixture);
 
-        fixture = OutputFileUtils.add(fixture, stepName, POS_STEP_N_ITER);
+        fixture = OutputFileUtils.updateFilePart(fixture, stepName, POS_STEP_N_ITER);
         Assert.assertEquals("MyTest." + timestamp + ".firefox20_0_1." + stepName + ext, fixture);
     }
 

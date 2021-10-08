@@ -39,6 +39,8 @@ import org.nexial.core.logs.ExecutionLogger;
 import org.nexial.core.logs.TrackTimeLogs;
 import org.nexial.core.plugins.CanTakeScreenshot;
 import org.nexial.core.plugins.NexialCommand;
+import org.nexial.core.plugins.base.BaseCommand;
+import org.nexial.core.plugins.base.ContextScreenRecorder;
 import org.nexial.core.plugins.javaui.JavaUICommand;
 import org.nexial.core.plugins.javaui.JavaUIProfile;
 import org.nexial.core.plugins.web.WebDriverExceptionHelper;
@@ -68,6 +70,9 @@ import static org.nexial.core.NexialConst.Data.*;
 import static org.nexial.core.NexialConst.FlowControls.CONDITION_DISABLE;
 import static org.nexial.core.NexialConst.MSG_FAIL;
 import static org.nexial.core.NexialConst.LogMessage.ERROR_LOG;
+import static org.nexial.core.NexialConst.Recording.Autostarts.execution;
+import static org.nexial.core.NexialConst.Recording.RECORDING_AUTOSTART;
+import static org.nexial.core.SystemVariables.getDefault;
 import static org.nexial.core.SystemVariables.getDefaultBool;
 import static org.nexial.core.excel.ExcelConfig.MSG_PASS;
 import static org.nexial.core.excel.ExcelConfig.*;
@@ -137,7 +142,7 @@ public class TestStep extends TestStepManifest {
 
     public TestCase getTestCase() { return testCase; }
 
-    public boolean isCommandRepeater() { return isCommandRepeater;}
+    public boolean isCommandRepeater() { return isCommandRepeater; }
 
     public List<NestedMessage> getNestedTestResults() { return nestedTestResults; }
 
@@ -149,7 +154,7 @@ public class TestStep extends TestStepManifest {
 
     public MacroExecutor getMacroExecutor() { return macroExecutor; }
 
-    public void setMacroExecutor(MacroExecutor macroExecutor) { this.macroExecutor = macroExecutor;}
+    public void setMacroExecutor(MacroExecutor macroExecutor) { this.macroExecutor = macroExecutor; }
 
     public Macro getMacro() { return macro; }
 
@@ -209,6 +214,18 @@ public class TestStep extends TestStepManifest {
 
         StepResult result = null;
         try {
+            if (ContextScreenRecorder.isRecordingEnabled(context)) {
+                String recordingAutostart = context.getStringData(RECORDING_AUTOSTART, getDefault(RECORDING_AUTOSTART));
+                if (StringUtils.equals(recordingAutostart, execution.name())) {
+                    BaseCommand base = (BaseCommand) context.findPlugin("base");
+                    if (!base.isRecordingStarted()) {
+                        ConsoleUtils.log("screen recording started; " + RECORDING_AUTOSTART + "=" + recordingAutostart);
+                        base.startRecording();
+                    }
+                }
+                // todo: support other events - script, scenario, iteration
+            }
+
             result = invokeCommand();
         } catch (Throwable e) {
             result = toFailedResult(e);
@@ -229,9 +246,9 @@ public class TestStep extends TestStepManifest {
         return result;
     }
 
-    public CommandRepeater getCommandRepeater() { return commandRepeater;}
+    public CommandRepeater getCommandRepeater() { return commandRepeater; }
 
-    public void setCommandRepeater(CommandRepeater commandRepeater) { this.commandRepeater = commandRepeater;}
+    public void setCommandRepeater(CommandRepeater commandRepeater) { this.commandRepeater = commandRepeater; }
 
     public String generateFilename(String ext) {
         String filename = generateFileName();
@@ -245,7 +262,6 @@ public class TestStep extends TestStepManifest {
             if (screenCount > 0) { filename += "_" + screenCount; }
         }
 
-        // make sure we don't have funky characters in the file name
         return filename + StringUtils.prependIfMissing(ext, ".");
     }
 
@@ -254,11 +270,12 @@ public class TestStep extends TestStepManifest {
                                   "_" + StringUtils.leftPad(context.getStringData(REPEAT_UNTIL_LOOP_INDEX), 3, '0') :
                                   "";
         String stepIndex = row.get(0).getReference();
-        Worksheet worksheet = testCase.getTestScenario().getWorksheet();
         if (context != null && context.hasData(MACRO_INVOKED_FROM)) {
             stepIndex = context.getStringData(MACRO_INVOKED_FROM) + "." + stepIndex;
         }
 
+        // [script].[runID].[iteration].xlsx_[scenario]_([macro_invoked_step].)?[row #](_[repeatUntil loop index])?
+        Worksheet worksheet = testCase.getTestScenario().getWorksheet();
         return worksheet.getFile().getName() + "_" + worksheet.getName() + "_" + stepIndex + repeatUntilIndex +
                (isExternalProgram() ? "_" + getParams().get(0) : "");
     }
@@ -418,8 +435,9 @@ public class TestStep extends TestStepManifest {
         ExecutionLogger logger = context.getLogger();
 
         String argText = Arrays.stream(args)
-              .map(arg -> StringUtils.startsWith(arg, "$(execution") ? context.replaceTokens(arg, true) : arg)
-              .collect(Collectors.joining(", "));
+                               .map(arg -> StringUtils.startsWith(arg, "$(execution") ?
+                                           context.replaceTokens(arg, true) : arg)
+                               .collect(Collectors.joining(", "));
 
         // force console logging
         logger.log(this, "executing " + command + "(" + argText + ")", true);

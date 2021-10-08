@@ -42,8 +42,8 @@ import static com.xuggle.xuggler.ICodec.ID.CODEC_ID_H264;
 import static java.awt.image.BufferedImage.TYPE_3BYTE_BGR;
 import static java.io.File.separator;
 import static java.util.concurrent.TimeUnit.*;
-import static org.nexial.core.NexialConst.Data.RECORDER_TYPE_MP4;
 import static org.nexial.core.NexialConst.OPT_OUT_DIR;
+import static org.nexial.core.NexialConst.Recording.Types.mp4;
 import static org.nexial.core.plugins.base.Mp4ScreenRecorder.Quality.HIGH;
 
 public class Mp4ScreenRecorder extends MediaToolAdapter implements Runnable, ScreenRecorder {
@@ -97,7 +97,7 @@ public class Mp4ScreenRecorder extends MediaToolAdapter implements Runnable, Scr
     public void start() {
         String outputDir = System.getProperty(OPT_OUT_DIR, SystemUtils.getJavaIoTmpDir().getAbsolutePath());
         start(Project.appendCapture(StringUtils.appendIfMissing(outputDir, separator)) + separator +
-              RandomStringUtils.randomAlphabetic(10) + "." + RECORDER_TYPE_MP4);
+              RandomStringUtils.randomAlphabetic(10) + "." + mp4.name());
     }
 
     @Override

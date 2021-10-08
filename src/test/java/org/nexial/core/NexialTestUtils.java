@@ -17,12 +17,6 @@
 
 package org.nexial.core;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.util.Collection;
-
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.IOFileFilter;
 import org.apache.commons.lang3.StringUtils;
@@ -30,6 +24,12 @@ import org.junit.Assert;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.OutputFileUtils;
 import org.springframework.util.ResourceUtils;
+
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.Collection;
 
 import static java.io.File.separator;
 import static org.nexial.core.NexialConst.*;
@@ -103,10 +103,10 @@ public class NexialTestUtils {
         }
 
         File excel = new File(classesRoot + "/" + StringUtils.replace(testClass.getName(), ".", "/") + ".xlsx");
-        String resultFileName = OutputFileUtils.add(excel.getAbsolutePath(), RESULT, 2);
+        String resultFileName = OutputFileUtils.updateFilePart(excel.getAbsolutePath(), RESULT, 2);
         FileUtils.deleteQuietly(new File(resultFileName));
 
-        // one last try just to make sure we really clean things up
+        // one last try just to make sure we clean things up really well
         String resourceRelPath = toPackageResourcePath(testClass, searchFor + "xlsx");
         try {
             File resource = ResourceUtils.getFile(resourceRelPath);

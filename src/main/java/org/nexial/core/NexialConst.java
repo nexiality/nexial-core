@@ -64,6 +64,8 @@ import static org.nexial.core.NexialConst.Image.OPT_IMAGE_DIFF_COLOR;
 import static org.nexial.core.NexialConst.Integration.MAIL_PREFIX;
 import static org.nexial.core.NexialConst.Iteration.*;
 import static org.nexial.core.NexialConst.Project.USER_NEXIAL_HOME;
+import static org.nexial.core.NexialConst.Recording.Autostarts.none;
+import static org.nexial.core.NexialConst.Recording.Types.mp4;
 import static org.nexial.core.NexialConst.Web.NS_BROWSER;
 import static org.nexial.core.NexialConst.Web.NS_WEB;
 import static org.nexial.core.NexialConst.Ws.WS_JSON_CONTENT_TYPE;
@@ -422,6 +424,21 @@ public final class NexialConst {
 
     // @formatter:on
 
+    //screen recording
+    public static final class Recording {
+        public enum Types {
+            mp4,avi
+        }
+
+        public enum Autostarts {
+            none,execution,script,scenario
+        }
+
+        public static final String RECORDER_TYPE = registerSysVar(NAMESPACE + "screenRecorder", mp4.name());
+        public static final String RECORDING_ENABLED = registerSysVar(NAMESPACE + "recordingEnabled", true);
+        public static final String RECORDING_AUTOSTART = registerSysVar(NAMESPACE + "recordingAutostart", none.name());
+    }
+
     public static final class Data {
         public static final String SCOPE = registerSysVarGroup(NAMESPACE + "scope.");
 
@@ -567,12 +584,6 @@ public final class NexialConst {
         public static final String DATA_FILE = "Data File";
         public static final String DATA_SHEETS = "DataSheet(s)";
         public static final String ITERATION_ENDED = NAMESPACE + "iterationEnded";
-
-        //screen recording
-        public static final String RECORDER_TYPE_MP4 = "mp4";
-        public static final String RECORDER_TYPE_AVI = "avi";
-        public static final String RECORDER_TYPE = registerSysVar(NAMESPACE + "screenRecorder", RECORDER_TYPE_MP4);
-        public static final String RECORDING_ENABLED = registerSysVar(NAMESPACE + "recordingEnabled", true);
 
         public static final int MAX_TTS_LENGTH = 500;
         public static final String NEXIAL_LOG_PREFIX = "nexial-";
