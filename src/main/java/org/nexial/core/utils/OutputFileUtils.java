@@ -159,7 +159,8 @@ public final class OutputFileUtils {
             String script;
             if (StringUtils.contains(filenameWithoutExt, ".xlsx_")) {
                 script = StringUtils.substringBefore(filenameWithoutExt, ".xlsx_");
-                String[] fileParts = StringUtils.split(StringUtils.substringAfter(filenameWithoutExt, ".xlsx_"), "_");
+                String fileMeta = StringUtils.substringAfter(filenameWithoutExt, ".xlsx_");
+                String[] fileParts = StringUtils.split(fileMeta, "_");
                 if (ArrayUtils.isNotEmpty(fileParts)) {
                     scenario = StringUtils.defaultString(ArrayUtils.get(fileParts, 0));
                     String stepInfo = StringUtils.defaultString(ArrayUtils.get(fileParts, 1));
@@ -192,6 +193,13 @@ public final class OutputFileUtils {
 
     private OutputFileUtils() { }
 
+    @Nonnull
+    private static FilePart toFileParts(String file) {
+        FilePart fileParts = extractFileParts(file);
+        fileParts.distillFilename();
+        return fileParts;
+    }
+
     /**
      * take an existing "output" file and break it down into its "parts":<ol>
      * <li>plan</li>
@@ -207,16 +215,17 @@ public final class OutputFileUtils {
         Map<String, String> parts = new HashMap<>();
         if (StringUtils.isBlank(file)) { return parts; }
 
-        FilePart fileParts = extractFileParts(file);
-        fileParts.distillFilename();
+        FilePart fileParts = toFileParts(file);
         parts.put("path", fileParts.path);
         parts.put("file", fileParts.file);
+        parts.put("filename", fileParts.filename);
         parts.put("planName", fileParts.planName);
         parts.put("planStep", fileParts.planStep);
         parts.put("script", fileParts.script);
         parts.put("scenario", fileParts.scenario);
         parts.put("iteration", fileParts.stepIter);
         parts.put("row", StringUtils.defaultIfEmpty(fileParts.macroInvokeRowId, fileParts.rowId));
+        parts.put("repeatUntilLoopIndex", fileParts.repeatUntilLoopIndex);
         return parts;
     }
 
@@ -513,7 +522,7 @@ public final class OutputFileUtils {
         String[] parts = StringUtils.split(file, DELIM);
         if (ArrayUtils.getLength(parts) >= 2 && ArrayUtils.getLength(parts) <= 5) {
             // since we don't know how many "parts" there are, use the last one as extension
-            fp.filename = parts[0];
+            fp.filename = (planMetadata != null ? planMetadata + "," : "") + parts[0];
             fp.ext = DELIM + parts[parts.length - 1];
 
             if (parts.length > 2) { deriveVaryingData(fp, parts[1]); }

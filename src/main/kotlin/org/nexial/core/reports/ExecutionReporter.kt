@@ -17,6 +17,7 @@
 
 package org.nexial.core.reports
 
+import org.apache.commons.collections4.MapUtils
 import org.apache.commons.io.FileUtils
 import org.apache.commons.lang3.BooleanUtils
 import org.apache.commons.lang3.StringUtils
@@ -85,7 +86,9 @@ class ExecutionReporter {
         engineContext.setVariable("summary", summary)
 
         ExecutionSummary.gatherSupplementProofs(summary)
-        engineContext.setVariable("screenRecordings", summary.screenRecordings)
+        if (MapUtils.isNotEmpty(summary.screenRecordings))
+            engineContext.setVariable("screenRecordings", summary.screenRecordings)
+        if (summary.wsLogs != null) engineContext.setVariable("wsLogs", summary.wsLogs)
 
         val sysProps = System.getProperties()
         if (sysProps.containsKey(WEB_METRICS_GENERATED) &&

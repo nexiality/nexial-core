@@ -138,6 +138,7 @@ public class ExecutionSummary {
     // supplemental
     private String outputPath;
     private Map<String, Map<String, String>> screenRecordings;
+    private WebServiceLogs wsLogs;
 
     public void setOutputPath(String outputPath) { this.outputPath = outputPath; }
 
@@ -149,24 +150,42 @@ public class ExecutionSummary {
 
         // 2. look for videos
         String recordingFilesRegex = ".+\\.(" +
-                                     (Arrays.stream(Types.values()).map(Enum::name).collect(Collectors.joining("|"))) + ")";
-        List<File> recordings = FileUtil.listFiles(captureDir, recordingFilesRegex, false, FILENAME_ASC);
+                                     (Arrays.stream(Types.values()).map(Enum::name).collect(Collectors.joining("|"))) +
+                                     ")";
 
         // 3. organize videos by "readable" name
-        summary.screenRecordings = new TreeMap<String, Map<String, String>>(recordings.stream().collect(
-            Collectors.toMap(
-                file -> SUBDIR_CAPTURES + "/" + file.getName(),
-                file -> OutputFileUtils.distillOutputFile(file.getAbsolutePath())))
-        );
+        summary.screenRecordings = new TreeMap<String, Map<String, String>>(
+            FileUtil.listFiles(captureDir, recordingFilesRegex, false, FILENAME_ASC).stream()
+                    .collect(Collectors.toMap(file -> SUBDIR_CAPTURES + "/" + file.getName(),
+                                              file -> OutputFileUtils.distillOutputFile(file.getAbsolutePath()))));
 
         // todo
         // 4. get log directory
+        String logDir = NexialConst.Project.appendLog(summary.outputPath);
 
         // 5. look for ws-summary log
+        List<File> wsLogs = FileUtil.listFiles(logDir, "nexial\\-ws\\-.+\\.log", false);
+        WebServiceSummaryLog wsSummaryLog = CollectionUtils.isNotEmpty(wsLogs) ?
+                                            new WebServiceSummaryLog(wsLogs.get(0)) : null;
 
         // 6. map api call to ws-detail log
-
         // 7. organize api calls by "invocation source" to ws details
+        List<WebServiceDetailLog> wsDetailLogList =
+            FileUtil.listFiles(summary.outputPath, ".+\\.ws\\-detail\\.log", false, FILENAME_ASC).stream()
+                    .map(logFile -> {
+                        Map<String, String> meta = OutputFileUtils.distillOutputFile(logFile.getAbsolutePath());
+                        return new WebServiceDetailLog(meta.get("filename"),
+                                                       meta.get("script"),
+                                                       meta.get("scenario"),
+                                                       meta.get("iteration"),
+                                                       meta.get("row"),
+                                                       meta.get("repeatUntilLoopIndex"),
+                                                       logFile);
+                    })
+                    .collect(Collectors.toList());
+        if (wsSummaryLog != null || CollectionUtils.isNotEmpty(wsDetailLogList)) {
+            summary.wsLogs = new WebServiceLogs(wsSummaryLog, wsDetailLogList);
+        }
 
         // 8. create chart
     }
@@ -431,6 +450,8 @@ public class ExecutionSummary {
     }
 
     public Map<String, Map<String, String>> getScreenRecordings() { return screenRecordings; }
+
+    public WebServiceLogs getWsLogs() { return wsLogs; }
 
     public String toString() {
         StringBuilder text = new StringBuilder();
