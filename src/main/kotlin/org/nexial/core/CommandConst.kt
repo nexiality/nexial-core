@@ -187,6 +187,7 @@ object CommandConst {
         "tn.5250.saveTableAsCSV",
 
         "web.assertElementNotPresent",
+        "web.switchBrowser",
         "web.waitForElementPresent",
         "web.waitUntilDisabled",
         "web.waitUntilEnabled",

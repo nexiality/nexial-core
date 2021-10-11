@@ -2498,6 +2498,19 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         context.updateProfileConfig(getTarget(), profile, config);
         browser = context.getBrowser();
 
+        WebDriver driver = browser.ensureWebDriverReady();
+        String handle = driver.getWindowHandle();
+        if (StringUtils.isNotEmpty(handle)) {
+            try {
+                ((JavascriptExecutor) driver).executeScript("alert('nexial:switch browser');");
+                driver.switchTo().alert().accept();
+                driver.switchTo().window(handle);
+            } catch (WebDriverException e) {
+                ConsoleUtils.error("Unable to focus on the browser '" + profile + "': " +
+                                   WebDriverExceptionHelper.resolveErrorMessage(e));
+            }
+        }
+
         return StepResult.success("switched to another browser profiled under '" + profile + "'");
     }
 
