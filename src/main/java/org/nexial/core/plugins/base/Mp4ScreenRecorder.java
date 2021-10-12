@@ -74,17 +74,27 @@ public class Mp4ScreenRecorder extends MediaToolAdapter implements Runnable, Scr
     public Mp4ScreenRecorder() throws AWTException {
         GraphicsDevice graphicsDevice = AwtUtils.getGraphicsDevice();
 
-        // try the `screen` property of this graphics device. If user is using Oracle/OpenJDK, then we'll likely get
-        // a value, if not just use 0 (default).
-        int screenId;
+        Dimension d;
         try {
-            String screenIdString = BeanUtils.getProperty(graphicsDevice, "screen");
-            screenId = NumberUtils.toInt(screenIdString, 0);
+            Rectangle defaultBounds = graphicsDevice.getDefaultConfiguration().getBounds();
+            d = new Dimension();
+            d.width = defaultBounds.width;
+            d.height = defaultBounds.height;
         } catch (Throwable e) {
-            screenId = 0;
+            // try the `screen` property of this graphics device. If user is using Oracle/OpenJDK, then we'll likely get
+            // a value, if not just use 0 (default).
+            int screenId;
+            try {
+                String screenIdString = BeanUtils.getProperty(graphicsDevice, "screen");
+                screenId = NumberUtils.toInt(screenIdString, 0);
+            } catch (Throwable e1) {
+                screenId = 0;
+            }
+
+            d = AwtUtils.getScreenDimension(screenId);
         }
 
-        screenBounds = AwtUtils.getScreenDimension(screenId);
+        screenBounds = d;
         robot = new Robot();
         pool = Executors.newScheduledThreadPool(1);
         ShutdownAdvisor.addAdvisor(this);

@@ -171,6 +171,9 @@ public final class OutputFileUtils {
                         rowId = stepInfo;
                     }
                     repeatUntilLoopIndex = StringUtils.defaultString(ArrayUtils.get(fileParts, 2));
+                    if (StringUtils.contains(repeatUntilLoopIndex, DELIM)) {
+                        repeatUntilLoopIndex = StringUtils.substringBefore(repeatUntilLoopIndex, DELIM);
+                    }
                     uniqueCounter = StringUtils.defaultString(ArrayUtils.get(fileParts, 3));
                 }
             } else {

@@ -160,7 +160,6 @@ public class ExecutionSummary {
                     .collect(Collectors.toMap(file -> SUBDIR_CAPTURES + "/" + file.getName(),
                                               file -> OutputFileUtils.distillOutputFile(file.getAbsolutePath()))));
 
-        // todo
         // 4. get log directory
         String logDir = NexialConst.Project.appendLog(summary.outputPath);
 
@@ -189,6 +188,7 @@ public class ExecutionSummary {
         }
 
         // 8. create chart
+        // todo
     }
 
     public enum ExecutionLevel { EXECUTION, SCRIPT, ITERATION, SCENARIO, ACTIVITY, STEP }
