@@ -86,9 +86,14 @@ class ExecutionReporter {
         engineContext.setVariable("summary", summary)
 
         ExecutionSummary.gatherSupplementProofs(summary)
-        if (MapUtils.isNotEmpty(summary.screenRecordings))
+        if (MapUtils.isNotEmpty(summary.screenRecordings)) {
             engineContext.setVariable("screenRecordings", summary.screenRecordings)
-        if (summary.wsLogs != null) engineContext.setVariable("wsLogs", summary.wsLogs)
+            engineContext.setVariable("hasSupplemental", true)
+        }
+        if (summary.wsLogs != null) {
+            engineContext.setVariable("wsLogs", summary.wsLogs)
+            engineContext.setVariable("hasSupplemental", true)
+        }
 
         val sysProps = System.getProperties()
         if (sysProps.containsKey(WEB_METRICS_GENERATED) &&

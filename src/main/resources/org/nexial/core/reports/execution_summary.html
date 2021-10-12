@@ -73,7 +73,21 @@
         </tr>
         <tr>
             <td nowrap="nowrap" class="execLabel">scenario passed</td>
-            <th class="execValue" colspan="3" data-th-utext="${execution.get('scenario passed')}">1 / 1</th>
+            <th class="execValue" data-th-utext="${execution.get('scenario passed')}">1 / 1</th>
+            <td nowrap="nowrap" class="execLabel">supplemental</td>
+            <th:block data-th-if="${hasSupplemental}">
+                <th class="execValue">
+                    <th:block data-th-if="${screenRecordings}">
+                        <a href="#recordings" class="supplemental-link">Screen Recordings</a>&nbsp;&nbsp;
+                    </th:block>
+                    <th:block data-th-if="${wsLogs}">
+                        <a href="#wsLogs" class="supplemental-link">Web Service Analysis</a>&nbsp;&nbsp;
+                    </th:block>
+                </th>
+            </th:block>
+            <th:block data-th-unless="${hasSupplemental}">
+                <td>Learn more about <a href="https://nexiality.github.io/documentation/userguide/ImprovingExecutionReport.html">the supplemental output</a></td>
+            </th:block>
         </tr>
         <tr>
             <td nowrap="nowrap" class="execLabel">total steps</td>
@@ -89,7 +103,7 @@
         </tr>
         <tr>
             <td nowrap="nowrap" class="execLabel">failed</td>
-            <th class="execValue" colspan="3" data-th-attrappend="class=${execution.get('executed steps') == execution.get('passed') ? '' : 'execValueFail'}"><pre data-th-utext="${execution.get('failed')}"> 0 (0.00%)</pre></th>
+            <th class="execValue" colspan="3" data-th-attrappend="class=${execution.get('executed steps') == execution.get('passed') ? '' : ' execValueFail'}"><pre data-th-utext="${execution.get('failed')}"> 0 (0.00%)</pre></th>
         </tr>
         <tr>
             <td nowrap="nowrap" class="execLabel">log</td>
@@ -251,8 +265,8 @@
                     <td class="value value-num value-tally passfail" data-th-utext="${#numbers.formatInteger(scenario.passCount, 1, 'DEFAULT')}">12345</td>
                     <td class="value value-num value-tally passfail" data-th-utext="${#numbers.formatInteger(scenario.failCount, 1, 'DEFAULT')}">10001</td>
                     <td class="value value-percent value-tally passfail" data-th-attrappend="class=${scenario.passCount == scenario.executed ? ' allPass' : ' hasFailure'}"
-                                          data-th-with="success=${scenario.executed == 0 ? 0.00 : (scenario.passCount * 1.0 / scenario.executed) * 100}"
-                                          data-th-utext="${#numbers.formatDecimal(success, 1, 2, 'DEFAULT')} + '%'">98.12%</td>
+                        data-th-with="success=${scenario.executed == 0 ? 0.00 : (scenario.passCount * 1.0 / scenario.executed) * 100}"
+                        data-th-utext="${#numbers.formatDecimal(success, 1, 2, 'DEFAULT')} + '%'">98.12%</td>
                 </tr>
 
                 <th:block data-th-if="${scenario.nestedExecutions}" data-th-each="activity : ${scenario.nestedExecutions}">
@@ -265,8 +279,8 @@
                     <td class="value value-num passfail" data-th-utext="${#numbers.formatInteger(activity.passCount, 1, 'DEFAULT')}">12345</td>
                     <td class="value value-num passfail" data-th-utext="${#numbers.formatInteger(activity.failCount, 1, 'DEFAULT')}">10001</td>
                     <td class="value value-percent passfail" data-th-attrappend="class=${activity.passCount == activity.executed ? ' allPass' : ' hasFailure'}"
-                                        data-th-with="success=${activity.executed == 0 ? 0.00 : (activity.passCount * 1.0 / activity.executed) * 100}"
-                                        data-th-utext="${#numbers.formatDecimal(success, 1, 2, 'DEFAULT')} + '%'">98.12%</td>
+                        data-th-with="success=${activity.executed == 0 ? 0.00 : (activity.passCount * 1.0 / activity.executed) * 100}"
+                        data-th-utext="${#numbers.formatDecimal(success, 1, 2, 'DEFAULT')} + '%'">98.12%</td>
                 </tr>
                 </th:block>
                 </th:block>
@@ -289,6 +303,7 @@
             <div class="container">
                 <div class="caption">
                     <div class="caption-title" data-th-utext="${screenRecordingSet.value.file}">video.mp4</div>
+                    <a href="#top" class="top-link"><i class="fas fa-chevron-up"></i></a>
                     <div class="caption-meta">
                         <a class="link-to-result" data-th-href="${'javascript:scrollToElement(\'[id=\\\'' + screenRecordingSet.value.filename + '.xlsx\\\']\');'}" title="navigate to corresponding execution result"><i class="fas fa-link"></i></a>
                         <span class="meta-title">script</span>
@@ -316,12 +331,17 @@
         <i class="fas fa-plus-square" onclick="showSection(this)" title="restore this section"></i>
     </div>
 
-    <div class="section-title">Web Service Logs</div>
+    <div class="section-title">Web Service Analysis</div>
 
     <div class="canHide" id="all-wsLogs">
         <div class="summary-container" data-th-if="${wsLogs.summary}" data-th-with="wsSummary=${wsLogs.summary}">
             <div class="caption">
-                <a data-th-href="${'logs/' + wsSummary.filename}" class="caption-title" data-th-utext="${'<i class=\'fas fa-file-download\'></i>' + wsSummary.filename}" target="_blank" title="click to download this log">nexial-ws-20211006_123456.log</a>
+                <a data-th-href="${'logs/' + wsSummary.filename}"
+                   class="caption-title"
+                   data-th-utext="${'<i class=\'fas fa-file-download\'></i>' + wsSummary.filename}"
+                   target="_blank"
+                   title="click to download this log">nexial-ws-20211006_123456.log</a>
+                <a href="#top" class="top-link"><i class="fas fa-chevron-up"></i></a>
                 <div class="caption-meta">
                     <span class="meta-title">calls</span>
                     <span class="meta-value" data-th-utext="${wsSummary.total}">1</span>
@@ -359,8 +379,32 @@
             </table>
         </div>
 
+        <div class="wsDetail-filter">
+            <div class="wsDetail-filter-method">
+                <span class="wsDetail-filter-title">Filter by method:</span>
+                <span onClick="toggleWsDisplay(this)" class="wsDetail-filter-button method-GET">GET</span>
+                <span onClick="toggleWsDisplay(this)" class="wsDetail-filter-button method-POST">POST</span>
+                <span onClick="toggleWsDisplay(this)" class="wsDetail-filter-button method-PATCH">PATCH</span>
+                <span onClick="toggleWsDisplay(this)" class="wsDetail-filter-button method-PUT">PUT</span>
+                <span onClick="toggleWsDisplay(this)" class="wsDetail-filter-button method-DELETE">DELETE</span>
+                <span onClick="toggleWsDisplay(this)" class="wsDetail-filter-button method-HEAD">HEAD</span>
+            </div>
+            <div class="wsDetail-filter-returnCode">
+                <span class="wsDetail-filter-title">Filter by return code:</span>
+                <span onClick="toggleWsDisplay(this)" class="wsDetail-filter-button returnCode-200">200</span>
+                <span onClick="toggleWsDisplay(this)" class="wsDetail-filter-button returnCode-201">201</span>
+                <span onClick="toggleWsDisplay(this)" class="wsDetail-filter-button returnCode-202">202</span>
+                <span onClick="toggleWsDisplay(this)" class="wsDetail-filter-button returnCode-204">204</span>
+                <span onClick="toggleWsDisplay(this)" class="wsDetail-filter-button returnCode-207">207</span>
+                <span onClick="toggleWsDisplay(this)" class="wsDetail-filter-button returnCode-2xx">2xx</span>
+                <span onClick="toggleWsDisplay(this)" class="wsDetail-filter-button returnCode-3xx">3xx</span>
+                <span onClick="toggleWsDisplay(this)" class="wsDetail-filter-button returnCode-400">4xx</span>
+                <span onClick="toggleWsDisplay(this)" class="wsDetail-filter-button returnCode-5xx">5xx</span>
+            </div>
+        </div>
+
         <th:block data-th-if="${wsLogs.details}" data-th-each="wsDetail : ${wsLogs.details}">
-            <div class="container wsDetail">
+        <div class="container wsDetail" data-th-attrappend="class=${' wsMethod-' + wsDetail.method + ' wsReturn-' + wsDetail.returnCode}">
                 <div class="caption">
                     <div class="caption-title">
                         <span data-th-class="${'method method-' + wsDetail.method}" data-th-utext="${wsDetail.method}"></span>
@@ -396,7 +440,6 @@
                 <textarea class="wsDetail-content" data-th-id="${wsDetail.file.name}" data-th-utext="${wsDetail.content}"></textarea>
             </div>
         </th:block>
-
     </div>
 </div>
 
@@ -431,8 +474,11 @@
       $(document).ready(function () {
         $('#wsSummaryTable').DataTable(
           {
+            lengthMenu: [ 10, 50, 100, "All" ],
+            fixedHeader: true,
             columnDefs: [
-              {targets: [0, 1, 2, 3], className: 'dt-body-nowrap'},
+              {targets: [0, 1, 2], className: 'dt-body-nowrap'},
+              {targets: [4], className: 'dt-body-nowrap wsSummary-url'},
               {targets: [7, 8], className: 'dt-body-center'},
               {targets: [3, 6, 9, 10, 11], className: 'dt-body-right'}
             ]

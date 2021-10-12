@@ -87,6 +87,7 @@ public class ExecutionSummary {
         (int) (CELL_WIDTH_MULTIPLIER * 10), // total fail
         (int) (CELL_WIDTH_MULTIPLIER * 10)); // success rate
     protected static final String REGEX_LINKABLE_DATA = "^(http|/[0-9A-Za-z/_]+|[A-Za-z]\\:\\\\|\\\\\\\\.+).+\\|.+$";
+    private static final int STEP_LENGTH = 5;
     private String name;
     private ExecutionLevel executionLevel;
     private String scriptFile;
@@ -461,7 +462,7 @@ public class ExecutionSummary {
         text.append(formatLabel("Time Span")).append(formatValue(DateUtility.formatLongDate(startTime) + " - " +
                                                                  DateUtility.formatLongDate(endTime)));
         text.append(formatLabel("Duration")).append(formatValue(DateUtility.formatStopWatchTime(endTime - startTime)));
-        text.append(formatLabel("Steps")).append(formatValue(StringUtils.leftPad(totalSteps + "", 4, " ")));
+        text.append(formatLabel("Steps")).append(formatValue(StringUtils.leftPad(totalSteps + "", STEP_LENGTH, " ")));
         text.append(formatLabel("Executed")).append(formatStat(executed, totalSteps));
         text.append(formatLabel("PASS")).append(formatStat(passCount, totalSteps));
         text.append(formatLabel("FAIL")).append(formatStat(failCount, totalSteps));
@@ -545,7 +546,7 @@ public class ExecutionSummary {
         map.put("duration", ExecutionSummary.formatValue(DateUtility.formatStopWatchTime(summary.endTime -
                                                                                          summary.startTime)));
         map.put("scenario passed", ExecutionSummary.formatValue(summary.resolveTotalScenariosPassed()));
-        map.put("total steps", ExecutionSummary.formatValue(StringUtils.leftPad(summary.totalSteps + "", 4, " ")));
+        map.put("total steps", ExecutionSummary.formatValue(StringUtils.leftPad(summary.totalSteps + "", STEP_LENGTH, " ")));
         map.put("executed steps", ExecutionSummary.formatStat(summary.executed, summary.totalSteps));
         map.put("passed", ExecutionSummary.formatStat(summary.passCount, summary.totalSteps));
         map.put("failed", ExecutionSummary.formatStat(summary.failCount, summary.totalSteps));
@@ -781,7 +782,7 @@ public class ExecutionSummary {
     protected static String formatValue(String value) { return StringUtils.defaultString(value) + lineSeparator(); }
 
     protected static String formatStat(int actual, int total) {
-        return formatValue(StringUtils.leftPad("" + actual, 4, " "),
+        return formatValue(StringUtils.leftPad("" + actual, STEP_LENGTH, " "),
                            MessageFormat.format(RATE_FORMAT, total < 1 ? 0 : ((double) actual / total)));
     }
 
