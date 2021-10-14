@@ -17,16 +17,8 @@
 
 package org.nexial.core;
 
-import java.awt.*;
-import java.io.File;
-import java.io.IOException;
-import java.math.RoundingMode;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.List;
-import java.util.*;
-import javax.validation.constraints.NotNull;
-
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import org.apache.commons.cli.Options;
 import org.apache.commons.collections4.ListUtils;
 import org.apache.commons.collections4.MapUtils;
@@ -47,11 +39,19 @@ import org.nexial.core.model.TestProject;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.ExecUtils;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
+import java.awt.*;
+import java.io.File;
+import java.io.IOException;
+import java.math.RoundingMode;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.List;
+import java.util.*;
+import javax.validation.constraints.NotNull;
 
 import static java.awt.Color.*;
-import static java.awt.image.BufferedImage.*;
+import static java.awt.image.BufferedImage.TYPE_INT_ARGB;
+import static java.awt.image.BufferedImage.TYPE_INT_RGB;
 import static java.io.File.separator;
 import static java.math.RoundingMode.*;
 import static javax.naming.Context.*;
@@ -1585,17 +1585,21 @@ public final class NexialConst {
         public static final String WS_BASIC_NAMESPACE = NS_WS + "basic.";
         public static final String WS_BASIC_PWD = registerSysVar(WS_BASIC_NAMESPACE + "password");
         public static final String WS_BASIC_USER = registerSysVar(WS_BASIC_NAMESPACE + "user");
+
         public static final String WS_DIGEST_NAMESPACE = NS_WS + "digest.";
         public static final String WS_DIGEST_NONCE = registerSysVar(WS_DIGEST_NAMESPACE + "nonce");
         public static final String WS_DIGEST_REALM = registerSysVar(WS_DIGEST_NAMESPACE + "realm");
         public static final String WS_DIGEST_PWD = registerSysVar(WS_DIGEST_NAMESPACE + "password");
         public static final String WS_DIGEST_USER = registerSysVar(WS_DIGEST_NAMESPACE + "user");
+
         public static final String WS_PROXY_PWD = registerSysVar(NS_WS + "proxyPassword");
         public static final String WS_PROXY_USER = registerSysVar(NS_WS + "proxyUser");
         public static final String WS_PROXY_PORT = registerSysVar(NS_WS + "proxyPort");
         public static final String WS_PROXY_HOST = registerSysVar(NS_WS + "proxyHost");
         public static final String WS_PROXY_REQUIRED = registerSysVar(NS_WS + "proxyRequired");
+
         public static final String WS_REQ_HEADER_PREFIX = NS_WS + "header.";
+
         public static final String WS_LOG_SUMMARY = registerSysVar(NS_WS + "logSummary", false);
         public static final String WS_LOG_DETAIL = registerSysVar(NS_WS + "logDetail", false);
         public static final String WS_REQ_FILE_AS_RAW = registerSysVar(NS_WS + "requestPayloadAsRaw", false);
@@ -1627,6 +1631,10 @@ public final class NexialConst {
         public static final String WS_MULTIPART_MODE = registerSysVar(NS_WS + "multipart.spec", "standard");
         public static final String WS_MULTIPART_CHARSET = registerSysVar(NS_WS + "multipart.charset");
         public static final String WS_ALL_HEADERS = "ALL";
+
+        // upload
+        public static final String WS_UPLOAD_METHOD = registerSysVar(NS_WS + "upload.method", "POST");
+        public static final String WS_UPLOAD_MULTIPART = registerSysVar(NS_WS + "upload.multipart", true);
 
         // oauth
         public static final String OAUTH_CLIENT_ID = "client_id";

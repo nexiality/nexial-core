@@ -25,9 +25,11 @@ import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.lang3.math.NumberUtils;
+import org.nexial.commons.utils.FileUtil;
 import org.nexial.commons.utils.TextUtils;
 import org.nexial.commons.utils.web.URLEncodingUtils;
 import org.nexial.core.ExecutionThread;
@@ -668,8 +670,51 @@ public class WsCommand extends BaseCommand {
         @NotNull OutputResolver outputResolver = newOutputResolver(body, false);
 
         try {
+            // the content is expected to be in the form of "key=value\nkey=value\n..."
             String content = outputResolver.getContent();
-            Response response = client.postMultipart(url, content, fileParams);
+
+            Map<String, String> params = TextUtils.toMap(content, "\n", "=");
+
+            // need to decide whether to use POST or PUT
+            String uploadMethod = "POST";
+            if (params.containsKey(WS_UPLOAD_METHOD)) {
+                uploadMethod = StringUtils.upperCase(StringUtils.trim(params.get(WS_UPLOAD_METHOD)));
+                params.remove(WS_UPLOAD_METHOD);
+            }
+
+            // need to decide whether to use multipart or not
+            boolean isMultipart = true;
+            if (params.containsKey(WS_UPLOAD_MULTIPART)) {
+                String multipartFlag = StringUtils.trim(params.get(WS_UPLOAD_MULTIPART));
+                isMultipart = BooleanUtils.toBoolean(multipartFlag);
+                params.remove(WS_UPLOAD_MULTIPART);
+            }
+
+            content = TextUtils.toString(params, "\n", "=");
+
+            Response response = null;
+            switch (uploadMethod) {
+                case "POST": {
+                    if (isMultipart) {
+                        response = client.postMultipart(url, content, fileParams);
+                    } else {
+                        response = client.post(url, extractUploadContent(params.get(fileParams)));
+                    }
+                    break;
+                }
+                case "PUT": {
+                    if (isMultipart) {
+                        response = client.putMultipart(url, content, fileParams);
+                    } else {
+                        response = client.putWithPayload(url, extractUploadContent(params.get(fileParams)), null);
+                    }
+                    break;
+                }
+                default: {
+                    throw new IllegalArgumentException("Unsupported HTTP Method for upload: " + uploadMethod);
+                }
+            }
+
             context.setData(var, response);
             return StepResult.success("Successfully invoked web service '" + hideAuthDetails(url) + "'");
         } catch (IOException e) {
@@ -677,6 +722,15 @@ public class WsCommand extends BaseCommand {
         } finally {
             addDetailLogLink(client);
         }
+    }
+
+    private byte[] extractUploadContent(String file) throws IOException {
+        if (StringUtils.isBlank(file)) { throw new IllegalArgumentException("upload file not specified!"); }
+        if (!FileUtil.isFileReadable(file, 1)) {
+            throw new IllegalArgumentException("specified upload file is not readable or does not exist");
+        }
+
+        return FileUtils.readFileToByteArray(new File(file));
     }
 
     protected Response resolveResponseObject(String var) throws ClassCastException {

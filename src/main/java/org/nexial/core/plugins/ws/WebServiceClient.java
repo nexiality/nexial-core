@@ -17,21 +17,6 @@
 
 package org.nexial.core.plugins.ws;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.InetAddress;
-import java.net.MalformedURLException;
-import java.net.SocketException;
-import java.net.URL;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
-import javax.annotation.Nullable;
-import javax.validation.constraints.NotNull;
-
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
@@ -56,11 +41,7 @@ import org.apache.http.conn.routing.HttpRoute;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.impl.auth.BasicScheme;
 import org.apache.http.impl.auth.DigestScheme;
-import org.apache.http.impl.client.BasicAuthCache;
-import org.apache.http.impl.client.BasicCredentialsProvider;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClientBuilder;
-import org.apache.http.impl.client.HttpClients;
+import org.apache.http.impl.client.*;
 import org.apache.http.impl.conn.DefaultProxyRoutePlanner;
 import org.apache.http.impl.nio.client.HttpAsyncClientBuilder;
 import org.apache.http.protocol.HttpContext;
@@ -75,6 +56,21 @@ import org.nexial.core.model.TestStep;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.OutputFileUtils;
 import org.nexial.core.variable.Syspath;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.InetAddress;
+import java.net.MalformedURLException;
+import java.net.SocketException;
+import java.net.URL;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
+import javax.annotation.Nullable;
+import javax.validation.constraints.NotNull;
 
 import static java.io.File.separator;
 import static org.nexial.core.NexialConst.DEF_CHARSET;
@@ -185,6 +181,11 @@ public class WebServiceClient {
     }
 
     @NotNull
+    public Response putMultipart(String url, String payload, String fileParams) throws IOException {
+        return invokeRequest(toPutMultipartRequest(url, payload, fileParams));
+    }
+
+    @NotNull
     public Response graphql(String url, byte[] payload) throws IOException {
         return invokeRequest(new GraphQLRequest(resolveContextForRequest(), url, null, payload));
     }
@@ -240,7 +241,7 @@ public class WebServiceClient {
     @NotNull
     public Response putWithPayload(String url, byte[] payload, Map<String, Object> headers) throws IOException {
         PutRequest request = new PutRequest(resolveContextForRequest(), url, null, payload);
-        request.setHeaders(headers);
+        if (MapUtils.isNotEmpty(headers)) { request.setHeaders(headers); }
         return invokeRequest(request);
     }
 
@@ -252,6 +253,14 @@ public class WebServiceClient {
     @NotNull
     public PostMultipartRequest toPostMultipartRequest(String url, String payload, String fileParams) {
         PostMultipartRequest request = new PostMultipartRequest(resolveContextForRequest());
+        request.setUrl(url);
+        request.setPayload(payload, StringUtils.split(fileParams, context.getTextDelim()));
+        return request;
+    }
+
+    @NotNull
+    public PutMultipartRequest toPutMultipartRequest(String url, String payload, String fileParams) {
+        PutMultipartRequest request = new PutMultipartRequest(resolveContextForRequest());
         request.setUrl(url);
         request.setPayload(payload, StringUtils.split(fileParams, context.getTextDelim()));
         return request;
@@ -433,8 +442,7 @@ public class WebServiceClient {
             appendLog(details, "Request Time    : ", DateUtility.formatLogDate(requestTimeMs));
             appendLog(details, "Request URL     : ", url);
             appendLog(details, "Request Method  : ", http.getMethod());
-            appendLog(details, "Request Headers : ",
-                      headers);
+            appendLog(details, "Request Headers : ", headers);
             if (requestWithBody && contentLength > 0) {
                 appendLog(details, "Request Body    : ",
                           contentLength + " bytes. " +
@@ -708,7 +716,7 @@ public class WebServiceClient {
         BasicAuthCache authCache = new BasicAuthCache();
         authCache.put(target, new BasicScheme());
 
-        // Add AuthCache to the execution execution
+        // Add AuthCache to the execution
         HttpClientContext httpContext = HttpClientContext.create();
         httpContext.setAuthCache(authCache);
         return httpContext;
@@ -772,7 +780,7 @@ public class WebServiceClient {
         AuthCache authCache = new BasicAuthCache();
         authCache.put(digestTarget, digestAuth);
 
-        // Add AuthCache to the execution execution
+        // Add AuthCache to the execution
         HttpClientContext httpContext = HttpClientContext.create();
         httpContext.setAuthCache(authCache);
         return httpContext;
