@@ -128,11 +128,11 @@ object ExecUtils {
         System.setProperty(SCRIPT_REF_PREFIX + RUNTIME_ARGS, runtimeArgs)
         System.setProperty("execution.$RUNTIME_ARGS", runtimeArgs.replace(" -", "\n-").trim())
 
-        val argsList = ManagementFactory.getRuntimeMXBean().inputArguments.stream()
+        val argsList = ManagementFactory.getRuntimeMXBean().inputArguments
             .filter { arg ->
                 arg.startsWith("-D") &&
                 IGNORED_CLI_OPT.none { StringUtils.startsWith(StringUtils.substring(arg, 2), it) }
-            }.toList()
+            }
         if (CollectionUtils.isNotEmpty(argsList)) {
             System.setProperty(SCRIPT_REF_PREFIX + JAVA_OPT, argsList.joinToString(separator = getDefault(TEXT_DELIM)!!))
             System.setProperty("execution.$JAVA_OPT", argsList.joinToString(separator = "\n"))
