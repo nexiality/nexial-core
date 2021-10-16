@@ -17,6 +17,7 @@
 
 package org.nexial.core.utils
 
+import org.apache.commons.collections4.CollectionUtils
 import org.apache.commons.lang3.StringUtils
 import org.apache.commons.lang3.SystemUtils.*
 import org.nexial.commons.proc.ProcessInvoker
@@ -32,7 +33,6 @@ import java.io.IOException
 import java.lang.management.ManagementFactory
 import java.util.*
 import java.util.jar.Manifest
-import java.util.stream.Collectors
 
 object ExecUtils {
 
@@ -124,14 +124,19 @@ object ExecUtils {
      */
     @JvmStatic
     fun collectCliProps(args: Array<String>) {
-        System.setProperty(SCRIPT_REF_PREFIX + RUNTIME_ARGS, args.joinToString(" "))
+        val runtimeArgs = args.joinToString(" ")
+        System.setProperty(SCRIPT_REF_PREFIX + RUNTIME_ARGS, runtimeArgs)
+        System.setProperty("execution.$RUNTIME_ARGS", runtimeArgs.replace(" -", "\n-").trim())
 
         val argsList = ManagementFactory.getRuntimeMXBean().inputArguments.stream()
             .filter { arg ->
                 arg.startsWith("-D") &&
                 IGNORED_CLI_OPT.none { StringUtils.startsWith(StringUtils.substring(arg, 2), it) }
-            }.collect(Collectors.joining(getDefault(TEXT_DELIM)!!))
-        if (argsList.isNotBlank()) System.setProperty(SCRIPT_REF_PREFIX + JAVA_OPT, argsList)
+            }.toList()
+        if (CollectionUtils.isNotEmpty(argsList)) {
+            System.setProperty(SCRIPT_REF_PREFIX + JAVA_OPT, argsList.joinToString(separator = getDefault(TEXT_DELIM)!!))
+            System.setProperty("execution.$JAVA_OPT", argsList.joinToString(separator = "\n"))
+        }
     }
 
     @JvmStatic

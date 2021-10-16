@@ -57,7 +57,7 @@ import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.excel.Excel.MIN_EXCEL_FILE_SIZE;
 import static org.nexial.core.excel.ExcelConfig.*;
 import static org.nexial.core.model.ExecutionSummary.ExecutionLevel.*;
-import static org.nexial.core.utils.ExecUtils.NEXIAL_MANIFEST;
+import static org.nexial.core.utils.ExecUtils.*;
 
 /**
  * serves as the summary of a test execution, which can be scoped into:
@@ -541,12 +541,15 @@ public class ExecutionSummary {
         Map<String, String> map = new LinkedHashMap<>();
         map.put("run from", ExecutionSummary.formatValue(summary.runHost, summary.runHostOs));
         map.put("run user", ExecutionSummary.formatValue(summary.runUser));
-        map.put("time span", ExecutionSummary.formatValue(DateUtility.formatLongDate(summary.startTime) + " - " +
-                                                          DateUtility.formatLongDate(summary.endTime)));
-        map.put("duration", ExecutionSummary.formatValue(DateUtility.formatStopWatchTime(summary.endTime -
-                                                                                         summary.startTime)));
+        map.put("time span", ExecutionSummary.formatValue(
+            DateUtility.formatLongDate(summary.startTime) + " - " + DateUtility.formatLongDate(summary.endTime)));
+        map.put("start time", ExecutionSummary.formatValue(DateUtility.formatLongDate(summary.startTime)));
+        map.put("end time", ExecutionSummary.formatValue(DateUtility.formatLongDate(summary.endTime)));
+        map.put("duration", ExecutionSummary.formatValue(DateUtility.formatStopWatchTime(
+            summary.endTime - summary.startTime)));
         map.put("scenario passed", ExecutionSummary.formatValue(summary.resolveTotalScenariosPassed()));
-        map.put("total steps", ExecutionSummary.formatValue(StringUtils.leftPad(summary.totalSteps + "", STEP_LENGTH, " ")));
+        map.put("total steps", ExecutionSummary.formatValue(StringUtils.leftPad(
+            summary.totalSteps + "", STEP_LENGTH, " ")));
         map.put("executed steps", ExecutionSummary.formatStat(summary.executed, summary.totalSteps));
         map.put("passed", ExecutionSummary.formatStat(summary.passCount, summary.totalSteps));
         map.put("failed", ExecutionSummary.formatStat(summary.failCount, summary.totalSteps));
@@ -576,6 +579,12 @@ public class ExecutionSummary {
         }
 
         if (allLogs.length() != 0) { map.put("log", StringUtils.trim(allLogs.toString())); }
+
+        String runtimeArgs = System.getProperty("execution." + RUNTIME_ARGS);
+        if (StringUtils.isNotBlank(runtimeArgs)) { map.put(RUNTIME_ARGS, runtimeArgs); }
+
+        String javaOpt = System.getProperty("execution." + JAVA_OPT);
+        if (StringUtils.isNotBlank(javaOpt)) { map.put(JAVA_OPT, javaOpt); }
 
         return map;
     }
@@ -782,8 +791,7 @@ public class ExecutionSummary {
     protected static String formatValue(String value) { return StringUtils.defaultString(value) + lineSeparator(); }
 
     protected static String formatStat(int actual, int total) {
-        return formatValue(StringUtils.leftPad("" + actual, STEP_LENGTH, " "),
-                           MessageFormat.format(RATE_FORMAT, total < 1 ? 0 : ((double) actual / total)));
+        return formatValue("" + actual, MessageFormat.format(RATE_FORMAT, total < 1 ? 0 : ((double) actual / total)));
     }
 
     protected static String formatDuration(long elapsedTime) {

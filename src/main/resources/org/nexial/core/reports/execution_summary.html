@@ -54,76 +54,100 @@
     <table id="execMeta" class="execMeta" cellpadding="4" cellspacing="3">
         <tbody>
         <tr>
-            <td nowrap="nowrap" class="execLabel">run from</td>
-            <th class="execValue" data-th-utext="${execution.get('run from')}">HOSTNAME (HOST OS)</th>
-            <td nowrap="nowrap" class="execLabel">run user</td>
-            <th class="execValue" data-th-utext="${execution.get('run user')}">USER_NAME</th>
+            <td class="section-header section-env"><i class="fas fa-laptop-code"></i></td>
+            <td class="section-detail detail-env">
+                <div class="execValue">
+                    <div class="execLabel">run from</div>
+                    <div class="content" style="text-align:left; margin-top:-5px;" data-th-utext="${execution.get('run from')}">HOSTNAME (HOST OS)</div>
+                </div>
+                <div class="execValue">
+                    <div class="execLabel">run user</div>
+                    <div class="content" data-th-utext="${execution.get('run user')}">USER_NAME</div>
+                </div>
+                <div class="execValue">
+                    <div class="execLabel">nexial version</div>
+                    <div class="content" data-th-utext="${execution.get('nexial version')}">Nexial 1.8.162</div>
+                </div>
+                <div class="execValue">
+                    <div class="execLabel">java version</div>
+                    <div class="content" data-th-utext="${execution.get('java version')}">1.8.0_181</div>
+                </div>
+            </td>
         </tr>
         <tr>
-            <td nowrap="nowrap" class="execLabel">nexial version</td>
-            <th class="execValue" data-th-utext="${execution.get('nexial version')}">Nexial 1.8.162</th>
-            <td nowrap="nowrap" class="execLabel">java version</td>
-            <th class="execValue" data-th-utext="${execution.get('java version')}">1.8.0_181</th>
+            <td rowspan="1" class="section-header section-time"><i class="fas fa-clock"></i></td>
+            <td class="section-detail detail-time">
+                <div class="execValue">
+                    <div class="execLabel">starts on</div>
+                    <div class="content" data-th-utext="${execution.get('start time')}">10/30/2018 01:31:39</div>
+                </div>
+                <div class="execValue">
+                    <div class="execLabel">ends on</div>
+                    <div class="content" data-th-utext="${execution.get('end time')}">10/30/2018 01:31:39</div>
+                </div>
+                <div class="execValue">
+                    <div class="execLabel">duration</div>
+                    <div class="content" data-th-utext="${execution.get('duration')}">00:01:29.693</div>
+                </div>
+            </td>
         </tr>
         <tr>
-            <td nowrap="nowrap" class="execLabel">time span</td>
-            <th class="execValue" data-th-utext="${execution.get('time span')}">10/30/2018 01:31:39 - 10/30/2018 01:33:09</th>
-            <td nowrap="nowrap" class="execLabel">duration</td>
-            <th class="execValue" data-th-utext="${execution.get('duration')}">00:01:29.693</th>
+            <td class="section-header section-exec"><i class="fas fa-cogs"></i></td>
+            <td class="section-detail detail-exec">
+                <div class="execValue">
+                    <div class="execLabel">Scenario Passed</div>
+                    <div class="content" data-th-utext="${execution.get('scenario passed')}">4 / 5</div>
+                </div>
+                <div class="execValue">
+                    <div class="execLabel">Total Steps</div>
+                    <div class="content" data-th-utext="${execution.get('total steps')}">94</div>
+                </div>
+                <div class="execValue">
+                    <div class="execLabel">Executed Steps</div>
+                    <div class="content" data-th-utext="${execution.get('executed steps')}">96 (102.13%)</div>
+                </div>
+                <div class="execValue execValuePass">
+                    <div class="execLabel">Passed</div>
+                    <div class="content" data-th-utext="${execution.get('passed')}">95 (101.06%)</div>
+                </div>
+                <div class="execValue" data-th-attrappend="class=${execution.get('executed steps') == execution.get('passed') ? '' : ' execValueFail'}">
+                    <div class="execLabel">Failed</div>
+                    <div class="content" data-th-utext="${execution.get('failed')}">1 (1.06%)</div>
+                </div>
+            </td>
         </tr>
         <tr>
-            <td nowrap="nowrap" class="execLabel">scenario passed</td>
-            <th class="execValue" data-th-utext="${execution.get('scenario passed')}">1 / 1</th>
-            <td nowrap="nowrap" class="execLabel">supplemental</td>
-            <th:block data-th-if="${hasSupplemental}">
-                <th class="execValue">
-                    <th:block data-th-if="${screenRecordings}">
-                        <a href="#recordings" class="supplemental-link">Screen Recordings</a>&nbsp;&nbsp;
-                    </th:block>
-                    <th:block data-th-if="${wsLogs}">
-                        <a href="#wsLogs" class="supplemental-link">Web Service Analysis</a>&nbsp;&nbsp;
-                    </th:block>
-                </th>
-            </th:block>
-            <th:block data-th-unless="${hasSupplemental}">
-                <td>Learn more about <a href="https://nexiality.github.io/documentation/userguide/ImprovingExecutionReport.html">the supplemental output</a></td>
-            </th:block>
-        </tr>
-        <tr>
-            <td nowrap="nowrap" class="execLabel">total steps</td>
-            <th class="execValue" colspan="3"><pre data-th-utext="${execution.get('total steps')}"> 63</pre></th>
-        </tr>
-        <tr>
-            <td nowrap="nowrap" class="execLabel">executed steps</td>
-            <th class="execValue" colspan="3"><pre data-th-utext="${execution.get('executed steps')}"> 63 (100%)</pre></th>
-        </tr>
-        <tr>
-            <td nowrap="nowrap" class="execLabel">passed</td>
-            <th class="execValue" colspan="3" ><pre data-th-utext="${execution.get('passed')}"> 63 (100%)</pre></th>
-        </tr>
-        <tr>
-            <td nowrap="nowrap" class="execLabel">failed</td>
-            <th class="execValue" colspan="3" data-th-attrappend="class=${execution.get('executed steps') == execution.get('passed') ? '' : ' execValueFail'}"><pre data-th-utext="${execution.get('failed')}"> 0 (0.00%)</pre></th>
-        </tr>
-        <tr>
-            <td nowrap="nowrap" class="execLabel">log</td>
-            <th class="execValue execLog" colspan="3">
-                <th:block data-th-if="#{logs}" data-th-each="log : ${logs}">
-                    <a data-th-href="${log.value}" target="_nexial_link" data-th-utext="${log.key}">log file</a>&nbsp;&nbsp;
-                </th:block>
-            </th>
-        </tr>
-        <tr>
-            <td nowrap="nowrap" class="execLabel">runtime args</td>
-            <th class="execValue" colspan="3"  data-th-utext="${summary.referenceData.get('runtime args')}">-script /Users/me/project/artifact/script/myscript.xlsx -scenario Job_CRUD</th>
-        </tr>
-        <tr data-th-if="${summary.referenceData.get('JAVA_OPT')}">
-            <td nowrap="nowrap" class="execLabel">JAVA_OPT</td>
-            <th class="execValue" colspan="3" data-th-utext="${summary.referenceData.get('JAVA_OPT')}">-Dnexial.generateOutput=TRUE -Dnexial.outputToCloud=TRUE</th>
-        </tr>
-        <tr data-th-if="${browser_metrics_html}">
-            <td nowrap="nowrap" class="execLabel">browser metrics</td>
-            <th class="execValue" colspan="3"><a data-th-href="${browser_metrics_html}">Browser Metrics</a></th>
+            <td rowspan="2" class="section-header section-ref"><i class="fas fa-file-invoice"></i></td>
+            <td class="section-detail detail-ref">
+                <div class="execValue exec-supplemental">
+                    <div class="execLabel">Analysis</div>
+                    <div class="links">
+                        <th:block data-th-if="${hasSupplemental}">
+                            <th:block data-th-if="${screenRecordings}"><a href="#recordings" class="supplemental-link">Screen Recordings</a></th:block>
+                            <th:block data-th-if="${wsLogs}"><a href="#wsLogs" class="supplemental-link">Web Service/API</a></th:block>
+                        </th:block>
+                        <th:block data-th-unless="${hasSupplemental}">
+                            Learn more about
+                            <a href="https://nexiality.github.io/documentation/userguide/ImprovingExecutionReport.html">
+                                Post-Execution Analysis
+                            </a>
+                        </th:block>
+                        <th:block data-th-if="${browser_metrics_html}"><a data-th-href="${browser_metrics_html}">Browser Metrics</a></th:block>
+                    </div>
+                </div>
+                <div class="execValue execLog">
+                    <div class="execLabel">Logs</div>
+                    <th:block data-th-if="#{logs}" data-th-each="log : ${logs}"><a data-th-href="${log.value}" target="_nexial_link" data-th-utext="${log.key}">log file</a><br/></th:block>
+                </div>
+                <div class="execValue execArgs" data-th-if="${execution.get('runtime args')}">
+                    <div class="execLabel">Runtime Args</div>
+                    <pre data-th-utext="${execution.get('runtime args')}">-plan C:\projects\demos\notes\artifact\plan\notes-plan.xlsx</pre>
+                </div>
+                <div class="execValue execArgs" data-th-if="${execution.get('JAVA_OPT')}">
+                    <div class="execLabel">JAVA_OPT</div>
+                    <pre data-th-utext="${execution.get('JAVA_OPT')}">-Dnexial.generateOutput=TRUE -Dnexial.outputToCloud=TRUE</pre>
+                </div>
+            </td>
         </tr>
         </tbody>
     </table>
@@ -331,7 +355,7 @@
         <i class="fas fa-plus-square" onclick="showSection(this)" title="restore this section"></i>
     </div>
 
-    <div class="section-title">Web Service Analysis</div>
+    <div class="section-title">Web Service/API</div>
 
     <div class="canHide" id="all-wsLogs">
         <div class="summary-container" data-th-if="${wsLogs.summary}" data-th-with="wsSummary=${wsLogs.summary}">
