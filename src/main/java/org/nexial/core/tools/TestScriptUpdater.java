@@ -18,8 +18,6 @@
 package org.nexial.core.tools;
 
 import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.DefaultParser;
-import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.IterableUtils;
@@ -52,7 +50,7 @@ import static java.io.File.separator;
 import static org.nexial.core.CommandConst.*;
 import static org.nexial.core.NexialConst.Data.SHEET_SYSTEM;
 import static org.nexial.core.NexialConst.ExitStatus.RC_BAD_CLI_ARGS;
-import static org.nexial.core.NexialConst.NL;
+import static org.nexial.core.NexialConst.Project.BATCH_EXT;
 import static org.nexial.core.NexialConst.Project.COMMAND_JSON_FILE_NAME;
 import static org.nexial.core.NexialConst.RB;
 import static org.nexial.core.excel.ExcelConfig.*;
@@ -86,16 +84,12 @@ public class TestScriptUpdater {
     public void setTargetFiles(List<File> targetFiles) { this.targetFiles = targetFiles; }
 
     protected static TestScriptUpdater newInstance(String[] args) {
-        try {
-            TestScriptUpdater updater = new TestScriptUpdater();
-            updater.parseCLIOptions(new DefaultParser().parse(cmdOptions, args));
-            return updater;
-        } catch (Exception e) {
-            System.err.println(NL + "ERROR: " + e.getMessage() + NL);
-            HelpFormatter formatter = new HelpFormatter();
-            formatter.printHelp(TestScriptUpdater.class.getName(), cmdOptions, true);
-            return null;
-        }
+        CommandLine cmd = CliUtils.getCommandLine("nexial-script-update." + BATCH_EXT, args, cmdOptions);
+        if (cmd == null) { return null; }
+
+        TestScriptUpdater updater = new TestScriptUpdater();
+        updater.parseCLIOptions(cmd);
+        return updater;
     }
 
     protected void parseCLIOptions(CommandLine cmd) {

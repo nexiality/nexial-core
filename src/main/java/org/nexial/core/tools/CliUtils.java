@@ -68,7 +68,7 @@ final public class CliUtils {
         try {
             return new DefaultParser().parse(cmdOptions, args);
         } catch (ParseException e) {
-            System.err.println("Error parsing commandline options: " + e.getMessage());
+            System.out.println("Error parsing commandline options: " + e.getMessage());
             System.out.println();
             formatter.printHelp(name, cmdOptions, true);
             System.out.println();

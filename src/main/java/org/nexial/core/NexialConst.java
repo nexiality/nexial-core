@@ -1046,6 +1046,7 @@ public final class NexialConst {
         public static final String NEXIAL_INSTALLER_MIN_VERSION = "1.4.5";
         public static final String PROJECT_CACHE_LOCATION = USER_NEXIAL_HOME + "projectCache" + separator;
         public static final String BROWSER_META_CACHE_PATH = USER_NEXIAL_HOME + "browser-meta.json";
+        public static final String BATCH_EXT = (IS_OS_WINDOWS ? "cmd" : "sh");
 
         private Project() { }
 
@@ -2130,7 +2131,8 @@ public final class NexialConst {
     }
 
     public static boolean isKnownTextContentType(String contentType) {
-        if (StringUtils.isBlank(contentType) || StringUtils.containsAny(contentType, "stream", "bin", "octet") ||
+        if (StringUtils.isBlank(contentType) ||
+            StringUtils.containsAny(contentType, "stream", "bin", "octet") ||
             StringUtils.startsWithAny(contentType, "audio", "font", "image", "video")) {
             return false;
         }

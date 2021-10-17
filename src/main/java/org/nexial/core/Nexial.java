@@ -17,15 +17,6 @@
 
 package org.nexial.core;
 
-import java.io.File;
-import java.io.IOException;
-import java.security.Security;
-import java.text.MessageFormat;
-import java.util.*;
-import java.util.stream.Collectors;
-import javax.annotation.Nullable;
-import javax.validation.constraints.NotNull;
-
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.HelpFormatter;
@@ -57,6 +48,15 @@ import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.ExecUtils;
 import org.nexial.core.utils.InputFileUtils;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
+
+import java.io.File;
+import java.io.IOException;
+import java.security.Security;
+import java.text.MessageFormat;
+import java.util.*;
+import java.util.stream.Collectors;
+import javax.annotation.Nullable;
+import javax.validation.constraints.NotNull;
 
 import static java.io.File.separator;
 import static java.lang.System.lineSeparator;
@@ -1100,7 +1100,7 @@ public class Nexial {
     protected static void usage() {
         System.out.println();
         HelpFormatter formatter = new HelpFormatter();
-        formatter.printHelp(Nexial.class.getName(), OPTIONS, true);
+        formatter.printHelp("nexial." + BATCH_EXT, OPTIONS, true);
         System.out.println();
     }
 

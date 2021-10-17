@@ -17,6 +17,18 @@
 
 package org.nexial.core.tools;
 
+import com.google.gson.JsonObject;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.Options;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.CharUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.nexial.commons.utils.DateUtility;
+import org.nexial.core.utils.CheckUtils;
+import org.nexial.core.utils.ConsoleUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.File;
 import java.io.IOException;
 import java.sql.Timestamp;
@@ -28,21 +40,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import org.apache.commons.cli.*;
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.CharUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.nexial.commons.utils.DateUtility;
-import org.nexial.core.utils.CheckUtils;
-import org.nexial.core.utils.ConsoleUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.google.gson.JsonObject;
-
 import static java.io.File.separator;
 import static org.nexial.core.NexialConst.GSON;
-import static org.nexial.core.NexialConst.NL;
+import static org.nexial.core.NexialConst.Project.BATCH_EXT;
 import static org.nexial.core.tools.CliConst.OPT_VERBOSE;
 import static org.nexial.core.tools.CliUtils.newArgOption;
 
@@ -104,8 +104,8 @@ public class DesktopXpathUpdater {
         String[] xpaths = StringUtils.split(xpath, "/*");
         List<String> newXpaths = new ArrayList<>();
 
-        for (int i = 0; i < xpaths.length; i++) {
-            String newXpath = xpaths[i];
+        for (String value : xpaths) {
+            String newXpath = value;
             // considering the attribute @AutomationId could be the unique identifier, so removing @ControlType
             if (newXpath.contains("@AutomationId")) {
                 String regex1 = "\\[.*?(@AutomationId='.+')(\\s+and\\s+@ControlType='.+').*?]";
@@ -137,22 +137,6 @@ public class DesktopXpathUpdater {
         return xpath;
     }
 
-    protected void parseCLIOptions(String[] args) {
-        initOptions();
-
-        CommandLineParser parser = new DefaultParser();
-        CommandLine cmd;
-        try {
-            cmd = parser.parse(cmdOptions, args);
-        } catch (ParseException e) {
-            throw new RuntimeException("Unable to parse commandline options: " + e.getMessage());
-        }
-
-        verbose = (cmd.hasOption("v"));
-
-        parseCLIOptions(cmd);
-    }
-
     protected void update() {
         int counter = 0;
         for (File targetFile : targetFiles) {
@@ -179,15 +163,14 @@ public class DesktopXpathUpdater {
 
     private static DesktopXpathUpdater newInstance(String[] args) {
         DesktopXpathUpdater updater = new DesktopXpathUpdater();
-        try {
-            updater.parseCLIOptions(args);
-            return updater;
-        } catch (Exception e) {
-            System.err.println(NL + "ERROR: " + e.getMessage() + NL);
-            HelpFormatter formatter = new HelpFormatter();
-            formatter.printHelp(DesktopXpathUpdater.class.getName(), updater.cmdOptions, true);
-            return null;
-        }
+        updater.initOptions();
+
+        CommandLine cmd = CliUtils.getCommandLine("nexial-desktop-xpath-update." + BATCH_EXT, args, updater.cmdOptions);
+        if (cmd == null) { throw new RuntimeException("Unable to parse commandline options"); }
+
+        updater.verbose = (cmd.hasOption("v"));
+        updater.parseCLIOptions(cmd);
+        return updater;
     }
 
     private boolean backupTargetFile(File targetFile) {

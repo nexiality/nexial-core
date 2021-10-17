@@ -17,14 +17,7 @@
 
 package org.nexial.core.tools;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.Comparator;
-import java.util.List;
-
 import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.DefaultParser;
-import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -34,9 +27,14 @@ import org.nexial.commons.utils.FileUtil.LineFilter;
 import org.nexial.commons.utils.TextUtils;
 import org.springframework.util.CollectionUtils;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.Comparator;
+import java.util.List;
+
 import static org.nexial.core.NexialConst.DEF_FILE_ENCODING;
 import static org.nexial.core.NexialConst.ExitStatus.RC_BAD_CLI_ARGS;
-import static org.nexial.core.NexialConst.NL;
+import static org.nexial.core.NexialConst.Project.BATCH_EXT;
 
 public class LogFileParser {
     private static final String PIPE_SEP = "|";
@@ -118,16 +116,12 @@ public class LogFileParser {
     }
 
     private static LogFileParser newInstance(String[] args) {
-        try {
-            LogFileParser parser = new LogFileParser();
-            parser.parseCLIOptions(new DefaultParser().parse(cmdOptions, args));
-            return parser;
-        } catch (Exception e) {
-            System.err.println(NL + "ERROR: " + e.getMessage() + NL);
-            HelpFormatter formatter = new HelpFormatter();
-            formatter.printHelp(LogFileParser.class.getName(), cmdOptions, true);
-            return null;
-        }
+        CommandLine cmd = CliUtils.getCommandLine("nexial-log-parser." + BATCH_EXT, args, cmdOptions);
+        if (cmd == null) { return null; }
+
+        LogFileParser parser = new LogFileParser();
+        parser.parseCLIOptions(cmd);
+        return parser;
     }
 
     private void logFileParser() throws Exception {

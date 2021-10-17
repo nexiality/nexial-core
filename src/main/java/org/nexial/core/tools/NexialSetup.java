@@ -23,14 +23,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.nexial.commons.utils.FileUtil;
 import org.nexial.core.excel.ext.CipherHelper;
 
-import javax.crypto.Cipher;
-import javax.crypto.spec.SecretKeySpec;
-import javax.tools.JavaCompiler;
-import javax.tools.JavaCompiler.CompilationTask;
-import javax.tools.JavaFileObject;
-import javax.tools.StandardJavaFileManager;
-import javax.tools.ToolProvider;
-import javax.validation.constraints.NotNull;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -43,12 +35,21 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
+import javax.crypto.Cipher;
+import javax.crypto.spec.SecretKeySpec;
+import javax.tools.JavaCompiler;
+import javax.tools.JavaCompiler.CompilationTask;
+import javax.tools.JavaFileObject;
+import javax.tools.StandardJavaFileManager;
+import javax.tools.ToolProvider;
+import javax.validation.constraints.NotNull;
 
 import static java.util.jar.Attributes.Name.MANIFEST_VERSION;
 import static javax.crypto.Cipher.ENCRYPT_MODE;
 import static org.nexial.commons.utils.FileUtil.addToJar;
 import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.NexialConst.ExitStatus.*;
+import static org.nexial.core.NexialConst.Project.BATCH_EXT;
 import static org.nexial.core.tools.CliUtils.newArgOption;
 import static org.nexial.core.utils.ExecUtils.BIN_SCRIPT_EXT;
 
@@ -128,8 +129,8 @@ public final class NexialSetup {
         Security.setProperty("crypto.policy", "unlimited");
 
         try {
-            CommandLineParser parser = new DefaultParser();
-            CommandLine cmd = parser.parse(cmdOptions, args);
+            CommandLine cmd = CliUtils.getCommandLine("nexial-setup." + BATCH_EXT, args, cmdOptions);
+            if (cmd == null) { System.exit(RC_BAD_CLI_ARGS); }
 
             final String dataFilePath = cmd.getOptionValue(OPT_DATA_FILE);
             checkValidFilePath(dataFilePath);
@@ -188,11 +189,6 @@ public final class NexialSetup {
                                "> to keep it out of prying eyes." + NL +
                                "> You can zip up " + System.getenv(ENV_NEXIAL_HOME) + " for distribution." + NL +
                                NL);
-        } catch (ParseException e) {
-            System.err.println(NL + "ERROR: " + e.getMessage() + NL);
-            HelpFormatter formatter = new HelpFormatter();
-            formatter.printHelp(NexialSetup.class.getName(), cmdOptions, true);
-            System.exit(RC_BAD_CLI_ARGS);
         } catch (Exception e) {
             displayExceptionDetails(e);
         } finally {
