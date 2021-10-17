@@ -406,12 +406,12 @@ public class SwaggerTestScriptGenerator {
      * @return true/false based on whether the header initialization added or not.
      */
     private static SwaggerActivity newSetupActivity(String headerName, String headerValue) {
-        SwaggerStep securityStep = createStep("Set up", "Set up HTTP headers.",
+        SwaggerStep securityStep = createStep("set up", "Set up HTTP headers.",
                                               CMD_TYPE_WS, COMMAND_HEADER, headerName,
                                               generateNexialVariablePlaceHolderString(headerValue));
 
         SwaggerActivity activity = new SwaggerActivity();
-        activity.setName("Set up");
+        activity.setName("set up");
         activity.setSteps(new ArrayList<SwaggerStep>() {{ add(securityStep); }});
         return activity;
     }
@@ -422,10 +422,10 @@ public class SwaggerTestScriptGenerator {
      * @return {@link SwaggerActivity} which does the cleanup activity.
      */
     private static SwaggerActivity newCleanupActivity() {
-        SwaggerStep cleanAuthHeader = createStep("Tear Down", "clear HTTP headers.", CMD_TYPE_WS, COMMAND_CLEAR_HEADER,
+        SwaggerStep cleanAuthHeader = createStep("tear down", "clear HTTP headers.", CMD_TYPE_WS, COMMAND_CLEAR_HEADER,
                                                  WS_ALL_HEADERS);
         SwaggerActivity activity = new SwaggerActivity();
-        activity.setName("Tear Down");
+        activity.setName("tear down");
         activity.setSteps(new ArrayList<SwaggerStep>() {{ add(cleanAuthHeader); }});
         return activity;
     }
