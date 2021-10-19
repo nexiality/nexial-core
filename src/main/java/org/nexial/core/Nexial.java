@@ -17,6 +17,15 @@
 
 package org.nexial.core;
 
+import java.io.File;
+import java.io.IOException;
+import java.security.Security;
+import java.text.MessageFormat;
+import java.util.*;
+import java.util.stream.Collectors;
+import javax.annotation.Nullable;
+import javax.validation.constraints.NotNull;
+
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.HelpFormatter;
@@ -48,15 +57,6 @@ import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.ExecUtils;
 import org.nexial.core.utils.InputFileUtils;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
-
-import java.io.File;
-import java.io.IOException;
-import java.security.Security;
-import java.text.MessageFormat;
-import java.util.*;
-import java.util.stream.Collectors;
-import javax.annotation.Nullable;
-import javax.validation.constraints.NotNull;
 
 import static java.io.File.separator;
 import static java.lang.System.lineSeparator;
@@ -791,7 +791,7 @@ public class Nexial {
                 if (i == lastUse) { launcherThread.setLastScript(true); }
                 if (MapUtils.isNotEmpty(intraExecution)) { launcherThread.setIntraExecutionData(intraExecution); }
 
-                ConsoleUtils.log(runId, msgPrefix + "new thread started");
+                ConsoleUtils.log(runId, msgPrefix + NEW_THREAD_STARTED);
                 launcherThread.start();
 
                 if (exec.isSerialMode()) {
@@ -800,7 +800,7 @@ public class Nexial {
                             debugThread(runId, msgPrefix + "awaits execution thread to complete...");
                             Thread.sleep(LAUNCHER_THREAD_COMPLETION_WAIT_MS);
                         } else {
-                            ConsoleUtils.log(runId, msgPrefix + "now completed");
+                            ConsoleUtils.log(runId, msgPrefix + NOW_COMPLETED);
                             // pass the post-execution state of data to the next execution
                             intraExecution = launcherThread.getIntraExecutionData();
                             summary.addNestSummary(launcherThread.getExecutionSummary());

@@ -17,6 +17,10 @@
 
 package org.nexial.core.model;
 
+import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
@@ -30,15 +34,12 @@ import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.FlowControlUtils;
 import org.openqa.selenium.WebDriverException;
 
-import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-import java.util.List;
-
 import static org.apache.commons.lang3.builder.ToStringStyle.SIMPLE_STYLE;
 import static org.nexial.core.CommandConst.CMD_SECTION;
 import static org.nexial.core.NexialConst.Data.FAIL_FAST;
 import static org.nexial.core.NexialConst.Data.REPEAT_UNTIL_LOOP_INDEX;
 import static org.nexial.core.NexialConst.Exec.FAIL_COUNT;
+import static org.nexial.core.NexialConst.LogMessage.MSG_LOOP_COMPLETED;
 import static org.nexial.core.NexialConst.MSG_FAIL;
 import static org.nexial.core.NexialConst.MSG_PASS;
 import static org.nexial.core.NexialConst.*;
@@ -126,7 +127,7 @@ public class CommandRepeater {
                         // first command is always an assertion.
                         // if this command PASS, then we've reached the condition to exit the loop
                         if (succeed) {
-                            result = StepResult.success("repeat-until execution completed");
+                            result = StepResult.success(MSG_LOOP_COMPLETED);
                             return result;
                         } else {
                             // else failure means continue... no sweat
