@@ -320,14 +320,16 @@
         <i class="fas fa-plus-square" onclick="showSection(this)" title="restore this section"></i>
     </div>
 
-    <div class="section-title">Screen Recordings</div>
+    <div class="section-title">
+        Screen Recordings
+        <a href="#top" class="top-link"><i class="fas fa-chevron-up"></i></a>
+    </div>
 
     <div class="canHide" id="all-recordings">
         <th:block data-th-each="screenRecordingSet : ${screenRecordings}">
             <div class="container">
                 <div class="caption">
                     <div class="caption-title" data-th-utext="${screenRecordingSet.value.file}">video.mp4</div>
-                    <a href="#top" class="top-link"><i class="fas fa-chevron-up"></i></a>
                     <div class="caption-meta">
                         <a class="link-to-result" data-th-href="${'javascript:scrollToElement(\'[id=\\\'' + screenRecordingSet.value.filename + '.xlsx\\\']\');'}" title="navigate to corresponding execution result"><i class="fas fa-link"></i></a>
                         <span class="meta-title">script</span>
@@ -355,7 +357,10 @@
         <i class="fas fa-plus-square" onclick="showSection(this)" title="restore this section"></i>
     </div>
 
-    <div class="section-title">Web Service/API</div>
+    <div class="section-title">
+        Web Service/API
+        <a href="#top" class="top-link"><i class="fas fa-chevron-up"></i></a>
+    </div>
 
     <div class="canHide" id="all-wsLogs">
         <div class="summary-container" data-th-if="${wsLogs.summary}" data-th-with="wsSummary=${wsLogs.summary}">
@@ -365,7 +370,6 @@
                    data-th-utext="${'<i class=\'fas fa-file-download\'></i>' + wsSummary.filename}"
                    target="_blank"
                    title="click to download this log">nexial-ws-20211006_123456.log</a>
-                <a href="#top" class="top-link"><i class="fas fa-chevron-up"></i></a>
                 <div class="caption-meta">
                     <span class="meta-title">calls</span>
                     <span class="meta-value" data-th-utext="${wsSummary.total}">1</span>

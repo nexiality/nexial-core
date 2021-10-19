@@ -24,7 +24,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.nexial.commons.utils.FileUtil;
 import org.nexial.commons.utils.TextUtils;
-import org.nexial.core.NexialConst.PolyMatcher;
 import org.nexial.core.ShutdownAdvisor;
 import org.nexial.core.excel.Excel.Worksheet;
 import org.nexial.core.model.ExecutionContext;
@@ -55,9 +54,6 @@ import org.openqa.selenium.interactions.Actions;
 import org.openqa.selenium.support.ui.FluentWait;
 import org.openqa.selenium.winium.WiniumDriver;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-import javax.validation.constraints.NotNull;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
@@ -67,6 +63,9 @@ import java.time.Duration;
 import java.util.List;
 import java.util.*;
 import java.util.stream.Collectors;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import javax.validation.constraints.NotNull;
 
 import static java.io.File.separator;
 import static java.lang.Integer.MAX_VALUE;
@@ -1465,7 +1464,7 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
         TableData tableData = table.fetch(NumberUtils.toInt(row), NumberUtils.toInt(row));
         String actual = tableData.getCell(column);
 
-        if (!PolyMatcher.isPolyMatcher(contains)) { return assertContains(actual, contains); }
+        if (!TextUtils.isPolyMatcher(contains)) { return assertContains(actual, contains); }
 
         String textForDisplay = context.truncateForDisplay(actual);
         if (TextUtils.polyMatch(actual, contains)) {

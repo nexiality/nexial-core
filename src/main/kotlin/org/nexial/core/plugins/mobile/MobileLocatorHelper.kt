@@ -24,7 +24,7 @@ import org.apache.commons.lang3.StringUtils
 import org.apache.commons.lang3.math.NumberUtils
 import org.nexial.commons.utils.RegexUtils
 import org.nexial.commons.utils.TextUtils
-import org.nexial.core.NexialConst.PolyMatcher.*
+import org.nexial.commons.utils.TextUtils.*
 import org.nexial.core.NexialConst.RB
 import org.nexial.core.plugins.mobile.MobileType.ANDROID
 import org.nexial.core.plugins.mobile.MobileType.IOS
@@ -336,7 +336,7 @@ class MobileLocatorHelper(private val mobileService: MobileService) {
                 "starts-with(${lower(attribute, valueLower)},'$valueLower')"
             }
 
-            StringUtils.startsWith(value, END)              ->
+            StringUtils.startsWith(value, END) ->
                 "ends-with(@$attribute,${normalizeText(value, after = END)})"
 
             StringUtils.startsWith(value, END_ANY_CASE)     -> {
@@ -345,10 +345,10 @@ class MobileLocatorHelper(private val mobileService: MobileService) {
                 "ends-with(${lower(attribute, valueLower)},'$valueLower')"
             }
 
-            StringUtils.startsWith(value, LENGTH)           ->
+            StringUtils.startsWith(value, LENGTH) ->
                 "string-length(@$attribute)=${normalizeText(value, after = LENGTH)}"
 
-            StringUtils.startsWith(value, EXACT)            -> "@$attribute=${normalizeText(value, after = EXACT)}"
+            StringUtils.startsWith(value, EXACT) -> "@$attribute=${normalizeText(value, after = EXACT)}"
 
             else                                            ->
                 "@$attribute=${normalizeXpathText(value)}"

@@ -92,4 +92,7 @@ object JsLib {
 
     @JvmStatic
     fun useJQuery() = "!!window.jQuery"
+
+    @JvmStatic
+    fun getCssValue(property:String) = "return window.getComputedStyle(arguments[0]).getPropertyValue('$property')"
 }

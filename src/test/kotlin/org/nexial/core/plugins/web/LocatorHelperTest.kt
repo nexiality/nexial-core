@@ -19,6 +19,7 @@ package org.nexial.core.plugins.web
 
 import org.junit.After
 import org.junit.Assert
+import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
 
@@ -36,21 +37,21 @@ class LocatorHelperTest {
     @Test
     @Throws(Exception::class)
     fun testResolveFilteringXPath() {
-        Assert.assertEquals("//*[ends-with(@class,'nxl2') and text()='Save' and contains(@id,'save')]",
+        assertEquals("//*[ends-with(@class,'nxl2') and text()='Save' and contains(@id,'save')]",
                             subject.resolveFilteringXPath("class=nxl2*\ntext()=Save\nid=*save*"))
 
-        Assert.assertEquals("//*[ends-with(@class,'nxl2') and text()='Save' and contains(@id,'save')]",
+        assertEquals("//*[ends-with(@class,'nxl2') and text()='Save' and contains(@id,'save')]",
                             subject.resolveFilteringXPath("@class=nxl2*|text()=Save\n" + "@id=*save*"))
 
-        Assert.assertEquals("//*[ends-with(@class,'nxl2') and text()='Save' and contains(@id,'save')]",
+        assertEquals("//*[ends-with(@class,'nxl2') and text()='Save' and contains(@id,'save')]",
                             subject.resolveFilteringXPath("@class=nxl2*|text()=Save\r\n@id=*save*"))
 
-        Assert.assertEquals("//*[starts-with(@class,'cntri') and contains(text(),'Save') and @enabled='true']",
+        assertEquals("//*[starts-with(@class,'cntri') and contains(text(),'Save') and @enabled='true']",
                             subject.resolveFilteringXPath("@class=*cntri|text()=*Save*\r\n@enabled=true"))
 
-        Assert.assertEquals("//*[@id='IF1']", subject.resolveFilteringXPath("id=IF1"))
+        assertEquals("//*[@id='IF1']", subject.resolveFilteringXPath("id=IF1"))
 
-        Assert.assertEquals("//*[@id='IF1' and @class='entry-title post-title' and @name='TestName']",
+        assertEquals("//*[@id='IF1' and @class='entry-title post-title' and @name='TestName']",
                             subject.resolveFilteringXPath("id=IF1\nclass=entry-title post-title\nname=TestName"))
     }
 
@@ -58,19 +59,19 @@ class LocatorHelperTest {
     @Throws(Exception::class)
     fun testNormalizeXpathText() {
         // basic
-        Assert.assertEquals(LocatorHelper.normalizeXpathText(""), "''")
-        Assert.assertEquals(LocatorHelper.normalizeXpathText(null), "''")
-        Assert.assertEquals(LocatorHelper.normalizeXpathText("Hello"), "'Hello'")
-        Assert.assertEquals(LocatorHelper.normalizeXpathText("Hello Jimmy Johnson"), "'Hello Jimmy Johnson'")
+        assertEquals(LocatorHelper.normalizeXpathText(""), "''")
+        assertEquals(LocatorHelper.normalizeXpathText(null), "''")
+        assertEquals(LocatorHelper.normalizeXpathText("Hello"), "'Hello'")
+        assertEquals(LocatorHelper.normalizeXpathText("Hello Jimmy Johnson"), "'Hello Jimmy Johnson'")
 
         // quotes
-        Assert.assertEquals(LocatorHelper.normalizeXpathText("Bob's Pizza"), "concat('Bob',\"'\",'s Pizza')")
-        Assert.assertEquals(LocatorHelper.normalizeXpathText("Review \"Cardholder\"'s Enrollments"),
+        assertEquals(LocatorHelper.normalizeXpathText("Bob's Pizza"), "concat('Bob',\"'\",'s Pizza')")
+        assertEquals(LocatorHelper.normalizeXpathText("Review \"Cardholder\"'s Enrollments"),
                             "concat('Review ','\"','Cardholder','\"',\"'\",'s Enrollments')")
-        Assert.assertEquals(LocatorHelper.normalizeXpathText("'Special K'"), "concat(\"'\",'Special K',\"'\")")
-        Assert.assertEquals(LocatorHelper.normalizeXpathText("New's \"flash\""),
+        assertEquals(LocatorHelper.normalizeXpathText("'Special K'"), "concat(\"'\",'Special K',\"'\")")
+        assertEquals(LocatorHelper.normalizeXpathText("New's \"flash\""),
                             "concat('New',\"'\",'s ','\"','flash','\"')")
-        Assert.assertEquals(LocatorHelper.normalizeXpathText(" 'Final' \"Space\" "),
+        assertEquals(LocatorHelper.normalizeXpathText(" 'Final' \"Space\" "),
                             "concat(' ',\"'\",'Final',\"'\",' ','\"','Space','\"',' ')")
     }
 
@@ -78,15 +79,15 @@ class LocatorHelperTest {
     @Throws(Exception::class)
     fun testFixBadXpath() {
         Assert.assertNull(LocatorHelper.fixBadXpath(null))
-        Assert.assertEquals("", LocatorHelper.fixBadXpath(""))
-        Assert.assertEquals("/", LocatorHelper.fixBadXpath("/"))
-        Assert.assertEquals("//", LocatorHelper.fixBadXpath("//"))
-        Assert.assertEquals("//", LocatorHelper.fixBadXpath(".//"))
-        Assert.assertEquals("//", LocatorHelper.fixBadXpath(" .//"))
-        Assert.assertEquals("//", LocatorHelper.fixBadXpath("    .//"))
-        Assert.assertEquals("(//", LocatorHelper.fixBadXpath("(//"))
-        Assert.assertEquals("(//", LocatorHelper.fixBadXpath("(.//"))
-        Assert.assertEquals("(//", LocatorHelper.fixBadXpath("( .//"))
-        Assert.assertEquals("(//", LocatorHelper.fixBadXpath("( .//"))
+        assertEquals("", LocatorHelper.fixBadXpath(""))
+        assertEquals("/", LocatorHelper.fixBadXpath("/"))
+        assertEquals("//", LocatorHelper.fixBadXpath("//"))
+        assertEquals("//", LocatorHelper.fixBadXpath(".//"))
+        assertEquals("//", LocatorHelper.fixBadXpath(" .//"))
+        assertEquals("//", LocatorHelper.fixBadXpath("    .//"))
+        assertEquals("(//", LocatorHelper.fixBadXpath("(//"))
+        assertEquals("(//", LocatorHelper.fixBadXpath("(.//"))
+        assertEquals("(//", LocatorHelper.fixBadXpath("( .//"))
+        assertEquals("(//", LocatorHelper.fixBadXpath("( .//"))
     }
 }

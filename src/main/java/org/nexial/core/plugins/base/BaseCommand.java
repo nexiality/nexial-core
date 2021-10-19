@@ -22,7 +22,6 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
-import org.jetbrains.annotations.Nullable;
 import org.nexial.commons.utils.*;
 import org.nexial.core.ExecutionThread;
 import org.nexial.core.TokenReplacementException;
@@ -34,7 +33,10 @@ import org.nexial.core.plugins.image.ImageCaptionHelper;
 import org.nexial.core.plugins.image.ImageCaptionHelper.CaptionModel;
 import org.nexial.core.plugins.ws.WsCommand;
 import org.nexial.core.tools.CommandDiscovery;
-import org.nexial.core.utils.*;
+import org.nexial.core.utils.ClipboardUtils;
+import org.nexial.core.utils.ConsoleUtils;
+import org.nexial.core.utils.ExecUtils;
+import org.nexial.core.utils.OutputFileUtils;
 import org.nexial.core.variable.Syspath;
 
 import java.awt.image.BufferedImage;
@@ -446,7 +448,7 @@ public class BaseCommand implements NexialCommand {
         // now make 'expected' organized as expected - but applying case-insensitive sort
         expected.sort(CASE_INSENSITIVE_SORT);
 
-        if (CheckUtils.toBoolean(descending)) { Collections.reverse(expected); }
+        if (toBoolean(descending)) { Collections.reverse(expected); }
 
         // string comparison to determine if both the actual (displayed) list and sorted list is the same
         return assertEqual(expected.toString(), actual.toString());
@@ -464,13 +466,24 @@ public class BaseCommand implements NexialCommand {
                StepResult.fail("EXPECTS non-empty data found empty data instead.");
     }
 
-    protected StepResult polyAssertEqual(String expected, String actual) {
+    public boolean assertPolyMatcher(String expected, String actual) {
+        expected = adjustForComparison(expected);
+        actual = adjustForComparison(actual);
         assertTrue(NL + displayForCompare("expected", expected, "actual", actual), polyMatch(actual, expected));
-        return StepResult.success(displayAssertionResult(context, true, expected, actual));
+        return true;
+    }
+
+    protected StepResult polyAssertEqual(String expected, String actual) {
+        boolean matched = assertPolyMatcher(expected, actual);
+        if (matched) {
+            return StepResult.success(displayAssertionResult(context, true, expected, actual));
+        } else {
+            return StepResult.fail(displayAssertionResult(context, true, expected, actual));
+        }
     }
 
     public StepResult assertEqual(String expected, String actual) {
-        assertEquals(handleSpecialMarkers(expected), handleSpecialMarkers(actual));
+        assertEquals(expected, actual);
         return StepResult.success(displayAssertionResult(context, true, expected, actual));
     }
 
@@ -480,7 +493,7 @@ public class BaseCommand implements NexialCommand {
      */
     public StepResult assertMatch(String text, String regex) {
         requiresNotBlank(regex, "invalid regex", regex);
-        boolean matched = PolyMatcher.isPolyMatcher(regex) ?
+        boolean matched = isPolyMatcher(regex) ?
                           polyMatch(text, regex) :
                           RegexUtils.isExact(text, regex, true);
         return new StepResult(matched,
@@ -488,15 +501,16 @@ public class BaseCommand implements NexialCommand {
                               null);
     }
 
-    @Nullable
-    protected String handleSpecialMarkers(String value) {
-        return context.isNullValue(value) ? null :
-               context.isEmptyValue(value) ? "" :
-               context.isBlankValue(value) ? " " : value;
-    }
-
     public StepResult assertNotEqual(String expected, String actual) {
-        assertNotEquals(handleSpecialMarkers(expected), handleSpecialMarkers(actual));
+        actual = adjustForComparison(actual);
+        expected = adjustForComparison(expected);
+        if (expected == null) {
+            // both should be null
+            assertFalse(NL + "expected=null " + NL + "actual  =" + actual, actual == null);
+        } else {
+            if (expected.equals(actual)) { fail(NL + displayForCompare("expected", expected, "actual", actual)); }
+        }
+
         return StepResult.success(displayAssertionResult(context, false, expected, actual));
     }
 
@@ -581,7 +595,7 @@ public class BaseCommand implements NexialCommand {
         List<String> actualList = toList(array2, delim, false);
         requiresNotEmpty(actualList, "ACTUAL array is empty", array2);
 
-        if (!CheckUtils.toBoolean(exactOrder)) {
+        if (!toBoolean(exactOrder)) {
             Collections.sort(expectedList);
             Collections.sort(actualList);
         }
@@ -605,14 +619,14 @@ public class BaseCommand implements NexialCommand {
         String delim = context.getTextDelim();
 
         List<String> list = toList(array, delim, false);
-        if (CollectionUtils.isEmpty(list)) { CheckUtils.fail("'array' cannot be parsed: " + array); }
+        if (CollectionUtils.isEmpty(list)) { fail("'array' cannot be parsed: " + array); }
 
         List<String> expectedList = toList(expected, delim, false)
             .stream()
             .distinct()
             .collect(Collectors.toList());
 
-        if (CollectionUtils.isEmpty(expectedList)) { CheckUtils.fail("'expected' cannot be parsed: " + expected); }
+        if (CollectionUtils.isEmpty(expectedList)) { fail("'expected' cannot be parsed: " + expected); }
 
         if (context.isVerbose()) {
             ConsoleUtils.log("asserting that array (size " + list.size() + ") " + list + " contains " + expectedList);
@@ -644,7 +658,7 @@ public class BaseCommand implements NexialCommand {
             .distinct()
             .collect(Collectors.toList());
         if (CollectionUtils.isEmpty(unexpectedList)) {
-            CheckUtils.fail("'unexpected' cannot be parsed: " + unexpected);
+            fail("'unexpected' cannot be parsed: " + unexpected);
         }
 
         // all items in `expectedList` is removed due to match against `list`, then all items in `expected` matched
@@ -1210,20 +1224,7 @@ public class BaseCommand implements NexialCommand {
         }
     }
 
-    protected void assertTrue(String message, boolean condition) { if (!condition) { CheckUtils.fail(message); } }
-
-    /** Asserts that two objects are not the same (compares using .equals()) */
-    protected void assertNotEquals(Object expected, Object actual) {
-        if (expected == null) {
-            // both should be null
-            assertFalse(NL + "expected=null " + NL + "actual  =" + actual, actual == null);
-            return;
-        }
-
-        if (expected.equals(actual)) {
-            CheckUtils.fail(NL + displayForCompare("expected", expected, "actual", actual));
-        }
-    }
+    protected void assertTrue(String message, boolean condition) { if (!condition) { fail(message); } }
 
     protected void assertTrue(boolean condition) { assertTrue(null, condition); }
 
@@ -1232,9 +1233,9 @@ public class BaseCommand implements NexialCommand {
     protected void assertFalse(boolean condition) { assertTrue(null, !condition); }
 
     /** Asserts that two booleans are not the same */
-    protected void assertNotEquals(boolean expected, boolean actual) {
-        assertNotEquals(Boolean.valueOf(expected), Boolean.valueOf(actual));
-    }
+    // protected void assertNotEquals(boolean expected, boolean actual) {
+    //     assertNotEquals(Boolean.valueOf(expected), Boolean.valueOf(actual));
+    // }
 
     protected void verifyFalse(String description, boolean b) {
         description = StringUtils.isNotBlank(description) ? description : "";
@@ -1275,14 +1276,14 @@ public class BaseCommand implements NexialCommand {
 
     protected Method getCommandMethod(String command, String... params) {
         if (StringUtils.isBlank(command)) {
-            CheckUtils.fail("Unknown command " + command);
+            fail("Unknown command " + command);
             return null;
         }
 
         String methodName = StringUtils.substringBefore(StringUtils.substringBefore(command, "("), ".");
 
         if (!commandMethods.containsKey(methodName)) {
-            CheckUtils.fail("Unknown command " + command);
+            fail("Unknown command " + command);
             return null;
         }
 
@@ -1294,7 +1295,7 @@ public class BaseCommand implements NexialCommand {
         int expectedParamCount = m.getParameterCount();
         if (actualParamCount == expectedParamCount) { return m; }
 
-        CheckUtils.fail("MISMATCHED parameters - " + getTarget() + "." + methodName +
+        fail("MISMATCHED parameters - " + getTarget() + "." + methodName +
                         " EXPECTS " + expectedParamCount + " but found " + actualParamCount);
         return null;
     }
@@ -1408,22 +1409,34 @@ public class BaseCommand implements NexialCommand {
         return FALSE;
     }
 
-    protected static boolean assertEqualsInternal(String expected, String actual) {
-        if (expected == null && actual == null) { return true; }
-        if (expected != null && actual == null) { return false; }
-        if (expected == null && actual != null) { return false; }
+    protected static String adjustForComparison(String text) {
+        if (text == null) { return null; }
 
         ExecutionContext context = ExecutionThread.get();
-        if (context.isTextMatchUseTrim()) {
-            expected = StringUtils.trim(expected);
-            actual = StringUtils.trim(actual);
-        }
+        if (context.isNullValue(text)) { return null; }
+        if (context.isEmptyValue(text)) { return ""; }
+        if (context.isBlankValue(text)) { return " "; }
 
-        expected = StringUtils.replaceChars(expected, (char) 160, ' ');
-        expected = StringUtils.replaceChars(expected, (char) 255, ' ');
-        actual = StringUtils.replaceChars(actual, (char) 160, ' ');
-        actual = StringUtils.replaceChars(actual, (char) 255, ' ');
+        if (context.isTextMatchUseTrim()) { text = StringUtils.trim(text); }
 
+        // special characters (non-printable)
+        text = StringUtils.replaceChars(text, (char) 160, ' ');
+        text = StringUtils.replaceChars(text, (char) 255, ' ');
+
+        if (isPolyMatcher(text)) { return text; }
+
+        if (context.isTextMatchCaseInsensitive()) { return StringUtils.lowerCase(text); }
+
+        return text;
+    }
+
+    protected static boolean assertEqualsInternal(String expected, String actual) {
+        expected = adjustForComparison(expected);
+        actual = adjustForComparison(actual);
+
+        if (expected == null) { return actual == null; } else if (actual == null) { return false; }
+
+        ExecutionContext context = ExecutionThread.get();
         if (context.isTextMatchAsNumber()) {
             boolean isExpectedANumber = false;
             BigDecimal expectedBD = null;
@@ -1454,11 +1467,6 @@ public class BaseCommand implements NexialCommand {
                 }
             }
             // ELSE: so one of them is not a number... moving on
-        }
-
-        if (context.isTextMatchCaseInsensitive()) {
-            expected = StringUtils.lowerCase(expected);
-            actual = StringUtils.lowerCase(actual);
         }
 
         boolean equals = seleniumEquals(expected, actual);

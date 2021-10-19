@@ -28,7 +28,6 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.ExecutionThread;
-import org.nexial.core.NexialConst.PolyMatcher;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.model.StepResult;
 import org.nexial.core.plugins.desktop.TableData.TableRow;
@@ -41,13 +40,13 @@ import org.openqa.selenium.Rectangle;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.interactions.Actions;
 
-import javax.annotation.Nonnull;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import javax.annotation.Nonnull;
 
 import static org.nexial.core.NexialConst.NL;
 import static org.nexial.core.SystemVariables.getDefaultBool;
@@ -781,7 +780,7 @@ public class DesktopTable extends DesktopElement {
                                         .filter(Objects::nonNull)
                                         .map(row -> {
                                             String data = row.get(pos);
-                                            return !PolyMatcher.isPolyMatcher(data) ?
+                                            return !TextUtils.isPolyMatcher(data) ?
                                                    matchCellFormat(column, data) : data;
                                         })
                                         .collect(Collectors.toList());
@@ -848,7 +847,7 @@ public class DesktopTable extends DesktopElement {
         for (String expectedValue : expected) {
             if (StringUtils.isEmpty(expectedValue)) { continue; }
 
-            if (PolyMatcher.isPolyMatcher(expectedValue)) {
+            if (TextUtils.isPolyMatcher(expectedValue)) {
                 if (!TextUtils.polyMatch(actual, expectedValue)) {
                     ConsoleUtils.log("EXPECTED value '" + expectedValue + "' is NOT poly-matched in " + actual);
                     return false;

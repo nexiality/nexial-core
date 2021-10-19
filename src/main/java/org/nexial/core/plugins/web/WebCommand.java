@@ -117,6 +117,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     protected boolean logToBrowser;
     protected ClientPerformanceCollector clientPerfCollector;
     protected UserStackAPI userstack;
+    protected CssHelper css;
 
     @Override
     public Browser getBrowser() { return browser; }
@@ -149,6 +150,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         ws.init(context);
 
         locatorHelper = new LocatorHelper(this);
+        css = new CssHelper(this);
 
         long browserStabilityWaitMs = deriveBrowserStabilityWaitMs(context);
         if (context.isVerbose()) { log("default browser stability wait time is " + browserStabilityWaitMs + " ms"); }
@@ -1179,83 +1181,11 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     }
 
     public StepResult assertCssNotPresent(String locator, String property) {
-        requiresNotBlank(property, "invalid css property", property);
-
-        String actual = getCssValue(locator, property);
-        return StringUtils.isEmpty(actual) ?
-               StepResult.success("No CSS property '" + property + "' found, as EXPECTED") :
-               StepResult.fail("CSS property '" + property + "' (" + actual + ") found with UNEXPECTED value '" +
-                               actual + "'");
-    }
-
-    protected static boolean isRGBA(String color) { return RegexUtils.isExact(color, REGEX_IS_RGBA); }
-
-    protected static boolean isHexColor(String color) {
-        return RegexUtils.isExact(StringUtils.lowerCase(color), REGEX_IS_HEX_COLOR);
-    }
-
-    protected static String convertToRGBA(String value) {
-        if (StringUtils.isEmpty(value) ||
-            StringUtils.equalsIgnoreCase(StringUtils.deleteWhitespace(value), RGBA_TRANSPARENT2) ||
-            StringUtils.equalsIgnoreCase(value, "transparent")) {
-            return RGBA_TRANSPARENT;
-        }
-
-        if (isHexColor(value)) {
-            value = StringUtils.lowerCase(StringUtils.removeStart(value, "#"));
-            int red = 0;
-            int green = 0;
-            int blue = 0;
-            if (value.length() == 3) {
-                red = Integer.parseInt(StringUtils.repeat(value.charAt(0), 2), 16);
-                green = Integer.parseInt(StringUtils.repeat(value.charAt(1), 2), 16);
-                blue = Integer.parseInt(StringUtils.repeat(value.charAt(2), 2), 16);
-            } else if (value.length() == 6) {
-                System.out.println("" + StringUtils.substring(value, 0, 2) + "=" +
-                                   Integer.parseInt(StringUtils.substring(value, 0, 2), 16));
-                red = Integer.parseInt(StringUtils.substring(value, 0, 2), 16);
-                green = Integer.parseInt(StringUtils.substring(value, 2, 4), 16);
-                blue = Integer.parseInt(StringUtils.substring(value, 4, 6), 16);
-            }
-
-            return "rgba(" + red + ", " + green + ", " + blue + ", 1)";
-        }
-
-        // no idea...
-        return value;
+        return css.assertCssNotPresent(locator, property);
     }
 
     public StepResult assertCssPresent(String locator, String property, String value) {
-        requiresNotBlank(property, "invalid css property", property);
-
-        String actual = getCssValue(locator, property);
-        boolean isColorProperty = isRGBA(actual);
-        boolean isTransparent = isColorProperty && StringUtils.equals(actual, RGBA_TRANSPARENT);
-
-        if (context.isVerbose()) {
-            log("CSS property '" + property + "' for locator '" + locator + "' is " + actual +
-                ". Color property? " + isColorProperty + (isTransparent ? " Transparent? true" : ""));
-        }
-
-        if (isColorProperty) {
-            String expectedColor = convertToRGBA(context.isNullOrEmptyValue(value) ? "" : value);
-            boolean colorMatched = StringUtils.equals(actual, expectedColor);
-            return new StepResult(colorMatched,
-                                  "Expected value " + value + " of CSS property '" + property + "'" +
-                                  (colorMatched ? " semantically MATCHED " : " DOES NOT match ") + actual,
-                                  null);
-        }
-
-        if (StringUtils.isEmpty(actual) && StringUtils.isEmpty(value)) {
-            return StepResult.success("no value found for CSS property '" + property + "' as EXPECTED");
-        }
-
-        value = StringUtils.lowerCase(StringUtils.trim(value));
-
-        return StringUtils.equals(actual, value) ?
-               StepResult.success("CSS property '" + property + "' contains EXPECTED value") :
-               StepResult.fail("CSS property '" + property + "' (" + actual + ") DOES NOT contain expected value: '" +
-                               value + "'");
+        return css.assertCssPresent(locator, property, value);
     }
 
     public StepResult assertVisible(String locator) {
@@ -1662,7 +1592,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         return StepResult.success("opened URL " + hideAuthDetails(urlBasic));
     }
 
-    private long getPollWaitMs() { return context.getIntConfig("web", profile, POLL_WAIT_MS); }
+    protected long getPollWaitMs() { return context.getIntConfig("web", profile, POLL_WAIT_MS); }
 
     public StepResult openIgnoreTimeout(String url) {
         requiresNotBlank(url, "invalid URL", url);
@@ -2169,10 +2099,9 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     }
 
     protected void updateCssAttribute(List<WebElement> targets, String attribute, String value) {
-        jsExecutor.executeScript("arguments[0].forEach(" +
-                                 "function(elem,index) { elem.style." + attribute + " = '" + value + "'; }" +
-                                 ");",
-                                 targets);
+        jsExecutor.executeScript(
+            "arguments[0].forEach(function(elem,index) { elem.style." + attribute + " = '" + value + "'; });",
+            targets);
     }
 
     protected List<WebElement> findCssMatchingElements(String attribute, String value) {
@@ -2841,12 +2770,6 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         } catch (Throwable e) {
             return StepResult.fail("Error determining horizontal scrollbar at '" + locator + "': " + e.getMessage());
         }
-    }
-
-    protected String getCssValue(String locator, String property) {
-        WebElement element = findElement(locator);
-        if (element == null) { throw new NoSuchElementException("Element NOT found via '" + locator + "'"); }
-        return StringUtils.lowerCase(StringUtils.trim(element.getCssValue(property)));
     }
 
     /**

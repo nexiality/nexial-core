@@ -277,31 +277,9 @@ public final class NexialConst {
     }
 
     public static class PolyMatcher {
-        public static final List<String> MATCHES = new ArrayList<>();
-        public static final String CONTAIN = register("CONTAIN:");
-        public static final String CONTAIN_ANY_CASE = register("CONTAIN_ANY_CASE:");
-        public static final String START = register("START:");
-        public static final String START_ANY_CASE = register("START_ANY_CASE:");
-        public static final String END = register("END:");
-        public static final String END_ANY_CASE = register("END_ANY_CASE:");
-        public static final String REGEX = register(REGEX_PREFIX);
-        public static final String EXACT = register("EXACT:");
-        public static final String EMPTY = register("EMPTY:");
-        public static final String BLANK = register("BLANK:");
-        public static final String LENGTH = register("LENGTH:");
-        public static final String NUMERIC = register("NUMERIC:");
-        public static final String REGEX_NUMERIC_COMPARE = "^\\s*([><=!]+)\\s*([\\d\\-\\.]+)\\s*$";
 
         private PolyMatcher() { }
 
-        private static String register(String keyword) {
-            MATCHES.add(keyword);
-            return keyword;
-        }
-
-        public static boolean isPolyMatcher(String text) {
-            return MATCHES.stream().anyMatch(match -> StringUtils.startsWith(text, match));
-        }
     }
 
     // Macro Flex var prefix
@@ -2004,10 +1982,25 @@ public final class NexialConst {
         public static final String SELENIUM_IE_LOG_LEVEL = "webdriver.ie.driver.loglevel";
         public static final String SELENIUM_IE_LOG_LOGFILE = "webdriver.ie.driver.logfile";
         public static final String SELENIUM_IE_SILENT = "webdriver.ie.driver.silent";
+
+        // css
         public static final String RGBA_TRANSPARENT = "rgba(0, 0, 0, 0)";
         public static final String RGBA_TRANSPARENT2 = "rgba(0,0,0,0)";
-        public static final String REGEX_IS_RGBA = "rgba\\([0-9,\\ ]+\\)";
+        // e.g. rgba(1,23, 456, 0.95)
+        // public static final String REGEX_IS_RGBA = "rgba\\([0-9,\\ ]+\\)";
+        public static final String REGEX_IS_RGBA = "rgba\\(" +
+                                                   "\\s*([0-9]{1,3})\\s*\\," +
+                                                   "\\s*([0-9]{1,3})\\s*\\," +
+                                                   "\\s*([0-9]{1,3})\\s*\\," +
+                                                   "\\s*([0-9\\.]+)\\s*" +
+                                                   "\\)";
+        public static final String REGEX_IS_RGB = "rgb\\(" +
+                                                   "\\s*([0-9]{1,3})\\s*\\," +
+                                                   "\\s*([0-9]{1,3})\\s*\\," +
+                                                   "\\s*([0-9]{1,3})\\s*" +
+                                                   "\\)";
         public static final String REGEX_IS_HEX_COLOR = "^#([0-9a-f]{3}|[0-9a-f]{6})$";
+        public static final String OPT_COMPUTED_CSS = registerSysVar(NS_WEB + "useComputedCss", false);
 
         // framework support
         public static final String OPT_IS_REACT = registerSysVar(NS_WEB + "useReact", false);

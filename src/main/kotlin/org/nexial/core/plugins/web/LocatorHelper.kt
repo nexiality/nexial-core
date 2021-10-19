@@ -24,7 +24,7 @@ import org.apache.commons.lang3.StringUtils
 import org.nexial.commons.utils.JRegexUtils
 import org.nexial.commons.utils.RegexUtils
 import org.nexial.commons.utils.TextUtils
-import org.nexial.core.NexialConst.PolyMatcher.*
+import org.nexial.commons.utils.TextUtils.*
 import org.nexial.core.NexialConst.RB
 import org.nexial.core.model.NexialFilterList
 import org.nexial.core.model.StepResult
@@ -32,12 +32,17 @@ import org.nexial.core.plugins.web.LocatorHelper.InnerValueType.TEXT
 import org.nexial.core.plugins.web.LocatorHelper.InnerValueType.VALUE
 import org.nexial.core.utils.CheckUtils
 import org.nexial.core.utils.OutputFileUtils.CASE_INSENSITIVE_SORT
-import org.openqa.selenium.By
-import org.openqa.selenium.WebElement
+import org.openqa.selenium.*
+import org.openqa.selenium.NoSuchElementException
+import org.openqa.selenium.support.ui.FluentWait
+import java.time.Duration
 import java.util.*
+import java.util.function.Function
 import java.util.stream.Collectors
 
 class LocatorHelper internal constructor(private val delegator: WebCommand) {
+    private val contextLogger = delegator.context.logger
+
     private enum class InnerValueType {
         TEXT, VALUE
     }
@@ -103,7 +108,7 @@ class LocatorHelper internal constructor(private val delegator: WebCommand) {
                 val elemText = "normalize-space(text())"
                 return By.xpath(
                     (if (relative) "." else "") +
-                    if (isPolyMatcher(text)) {
+                    if (TextUtils.isPolyMatcher(text)) {
                         when {
                             StringUtils.startsWith(text, REGEX)            ->
                                 throw IllegalArgumentException(
@@ -191,6 +196,56 @@ class LocatorHelper internal constructor(private val delegator: WebCommand) {
                 return values().first { type -> type.prefix == prefix }
             }
         }
+    }
+
+    fun findElement(locator: String): WebElement = findElement(locator, delegator.isHighlightEnabled)
+
+    internal fun findElement(locator: String, withHighlight: Boolean): WebElement {
+        delegator.ensureReady()
+
+        val by = findBy(locator)
+        val pollWaitMs = delegator.pollWaitMs
+        val useExplicitWait = delegator.useExplicitWait()
+        val driver = delegator.driver
+
+        return try {
+            val target =
+                if (useExplicitWait)
+                    newFluentWait(pollWaitMs)
+                        .withMessage("find element via locator $locator")
+                        .until<WebElement>(Function { findElement(it!!, by) })
+                else
+                    findElement(driver, by)
+            if (withHighlight && target.isDisplayed) delegator.highlight(target)
+            target
+        } catch (e: TimeoutException) {
+            val err = "Timed out while looking for web element(s) that match '" + locator + "'; " +
+                      "nexial.pollWaitMs=" + pollWaitMs
+            log(err)
+            throw NoSuchElementException(err)
+        }
+    }
+
+    fun findElement(driver: WebDriver, by: By): WebElement {
+        delegator.alert.preemptiveDismissAlert()
+        return driver.findElement(by)
+    }
+
+    fun toElement(locator: String) =
+        findElement(locator) ?: throw NoSuchElementException("element not found via '${locator}'")
+
+    internal fun newFluentWait() = newFluentWait(delegator.pollWaitMs)
+
+    internal fun newFluentWait(waitMs: Long) = newFluentWait(delegator.driver, waitMs)
+
+    internal fun newFluentWait(driver: WebDriver, waitMs: Long) =
+        FluentWait<WebDriver?>(driver)
+            .withTimeout(Duration.ofMillis(waitMs))
+            .pollingEvery(Duration.ofMillis(25))
+            .ignoring(NotFoundException::class.java, StaleElementReferenceException::class.java)
+
+    internal fun log(message: String) {
+        contextLogger?.log(delegator, message)
     }
 
     fun findBy(locator: String) = findBy(locator, false)

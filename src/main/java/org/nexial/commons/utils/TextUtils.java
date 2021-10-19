@@ -17,17 +17,6 @@
 
 package org.nexial.commons.utils;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.lang.reflect.Array;
-import java.math.BigDecimal;
-import java.util.*;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.Collectors;
-import javax.annotation.Nullable;
-import javax.validation.constraints.NotNull;
-
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.IterableUtils;
 import org.apache.commons.collections4.MapUtils;
@@ -39,13 +28,23 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.nexial.core.utils.ConsoleUtils;
 
-import static java.awt.event.KeyEvent.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.lang.reflect.Array;
+import java.math.BigDecimal;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
+import javax.annotation.Nullable;
+import javax.validation.constraints.NotNull;
+
+import static java.awt.event.KeyEvent.CHAR_UNDEFINED;
 import static java.lang.Character.UnicodeBlock.SPECIALS;
 import static java.lang.System.lineSeparator;
 import static org.nexial.commons.utils.TextUtils.CleanNumberStrategy.CSV;
 import static org.nexial.commons.utils.TextUtils.CleanNumberStrategy.OCTAL;
 import static org.nexial.core.NexialConst.*;
-import static org.nexial.core.NexialConst.PolyMatcher.*;
 
 /**
  * @author Mike Liu
@@ -76,6 +75,22 @@ public final class TextUtils {
                                                                                     "\t = ");
     private static final int TO_STRING_KEY_LENGTH = 14;
 
+    // polymatcher
+    private static final List<String> MATCHES = new ArrayList<>();
+    public static final String CONTAIN = registerPolyMatcherKeyword("CONTAIN:");
+    public static final String CONTAIN_ANY_CASE = registerPolyMatcherKeyword("CONTAIN_ANY_CASE:");
+    public static final String START = registerPolyMatcherKeyword("START:");
+    public static final String START_ANY_CASE = registerPolyMatcherKeyword("START_ANY_CASE:");
+    public static final String END = registerPolyMatcherKeyword("END:");
+    public static final String END_ANY_CASE = registerPolyMatcherKeyword("END_ANY_CASE:");
+    public static final String REGEX = registerPolyMatcherKeyword(REGEX_PREFIX);
+    public static final String EXACT = registerPolyMatcherKeyword("EXACT:");
+    public static final String EMPTY = registerPolyMatcherKeyword("EMPTY:");
+    public static final String BLANK = registerPolyMatcherKeyword("BLANK:");
+    public static final String LENGTH = registerPolyMatcherKeyword("LENGTH:");
+    public static final String NUMERIC = registerPolyMatcherKeyword("NUMERIC:");
+    public static final String REGEX_NUMERIC_COMPARE = "^\\s*([><=!]+)\\s*([\\d\\-\\.]+)\\s*$";
+
     /** retrieve string before the first whitespace character found in {@literal text} */
     public static String substringBeforeWhitespace(String text) { return substringOnWhitespace(text, true); }
 
@@ -96,6 +111,11 @@ public final class TextUtils {
 
         if (pos == -1) { return ""; }
         return before ? StringUtils.substring(text, 0, pos) : StringUtils.substring(text, pos + 1);
+    }
+
+    private static String registerPolyMatcherKeyword(String keyword) {
+        MATCHES.add(keyword);
+        return keyword;
     }
 
     /**
@@ -1387,6 +1407,10 @@ public final class TextUtils {
         text = StringUtils.replace(text, "\\\"", "\"");
         text = StringUtils.replace(text, "\\\\", "\\");
         return text;
+    }
+
+    public static boolean isPolyMatcher(String text) {
+        return MATCHES.stream().anyMatch(match -> StringUtils.startsWith(text, match));
     }
 
     /** check if one of the items of {@code actual} would poly-match against the specified {@code expected}. */
