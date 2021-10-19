@@ -22,9 +22,21 @@ import org.junit.Assert
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
+import org.nexial.core.model.ExecutionContext
+import org.nexial.core.model.MockExecutionContext
 
 class LocatorHelperTest {
-    internal val subject: LocatorHelper = LocatorHelper(WebCommand())
+    internal val mockContext = MockExecutionContext(true)
+    internal val delegator:WebCommand
+    internal val subject: LocatorHelper
+
+    init {
+        delegator= object : WebCommand() {
+            override fun getContext(): ExecutionContext = mockContext
+        }
+
+        subject = LocatorHelper(delegator)
+    }
 
     @Before
     fun init() {

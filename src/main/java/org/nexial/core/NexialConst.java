@@ -276,12 +276,6 @@ public final class NexialConst {
         public static final ResourceBundle Tools = Messages.subset("Tools");
     }
 
-    public static class PolyMatcher {
-
-        private PolyMatcher() { }
-
-    }
-
     // Macro Flex var prefix
     public static final String MACRO_FLEX_PREFIX = "MACRO::";
 
