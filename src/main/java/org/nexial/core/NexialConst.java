@@ -17,8 +17,16 @@
 
 package org.nexial.core;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
+import java.awt.*;
+import java.io.File;
+import java.io.IOException;
+import java.math.RoundingMode;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.List;
+import java.util.*;
+import javax.validation.constraints.NotNull;
+
 import org.apache.commons.cli.Options;
 import org.apache.commons.collections4.ListUtils;
 import org.apache.commons.collections4.MapUtils;
@@ -39,19 +47,11 @@ import org.nexial.core.model.TestProject;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.ExecUtils;
 
-import java.awt.*;
-import java.io.File;
-import java.io.IOException;
-import java.math.RoundingMode;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.List;
-import java.util.*;
-import javax.validation.constraints.NotNull;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
 import static java.awt.Color.*;
-import static java.awt.image.BufferedImage.TYPE_INT_ARGB;
-import static java.awt.image.BufferedImage.TYPE_INT_RGB;
+import static java.awt.image.BufferedImage.*;
 import static java.io.File.separator;
 import static java.math.RoundingMode.*;
 import static javax.naming.Context.*;
@@ -679,6 +679,22 @@ public final class NexialConst {
         public static final String ERROR_LOG = "Error log: ";
         public static final String SCREENSHOT_CAPTURED_LOG = "output/screenshot captured to file ";
         public static final String CURRENT_SCRIPT = "current script";
+
+        public static final String NEXIAL_CORE = "nexial-core";
+        public static final String ENDING = "ENDING";
+        public static final String STEP_START_SYMBOL = "|#";
+        public static final String SYMBOL_DOUBLE_COLON = "::";
+        public static final String HYPHEN_WITH_SPACE = " - ";
+        public static final String NEW_THREAD_STARTED = "new thread started";
+        public static final String NOW_COMPLETED = "now completed";
+        public static final String LOOP_START = "entering loop #";
+        public static final String MSG_MACRO_SUCCESS = "Macro successfully executed";
+        public static final String MSG_MACRO_END = MSG_REPEAT_UNTIL + "loop terminating due to break-loop condition";
+        public static final String MSG_EVALUATING_FLOW_CONTROL = "evaluating flow control:";
+        public static final String MSG_LOOP_COMPLETED = "repeat-until execution completed";
+        public static final String MSG_LOOP_PASS = MSG_PASS + MSG_LOOP_COMPLETED;
+        public static final String MSG_LOOP_PROCEED = "loop proceeds";
+        public static final String MSG_ALL_THREAD_TERMINATED = "all execution thread(s) have terminated";
     }
 
     public static final class Iteration {
@@ -1588,6 +1604,8 @@ public final class NexialConst {
         public static final String CONTENT_TYPE_CHARSET = "charset=";
         public static final String WS_SOAP_CONTENT_TYPE = "text/xml;" + CONTENT_TYPE_CHARSET + "UTF-8";
         public static final String WS_JSON_CONTENT_TYPE = "application/json";
+        public static final String WS_XML_CONTENT_TYPE = "application/xml";
+        public static final String WS_OCTET_STREAM_CONTENT_TYPE = "application/octet-stream";
         public static final String WS_JSON_CONTENT_TYPE2 = WS_JSON_CONTENT_TYPE + ";" + CONTENT_TYPE_CHARSET + "UTF-8";
         public static final String WS_FORM_CONTENT_TYPE = "application/x-www-form-urlencoded";
         // corresponds to the various multipart header settings supported by Apache HttpClient

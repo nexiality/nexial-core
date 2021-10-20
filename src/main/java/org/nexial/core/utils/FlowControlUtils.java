@@ -17,6 +17,8 @@
 
 package org.nexial.core.utils;
 
+import java.util.Map;
+
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -28,10 +30,9 @@ import org.nexial.core.model.StepResult;
 import org.nexial.core.model.TestStep;
 import org.nexial.core.plugins.desktop.DesktopNotification;
 
-import java.util.Map;
-
 import static org.apache.commons.lang3.SystemUtils.IS_OS_WINDOWS;
 import static org.nexial.core.NexialConst.Data.REPEAT_UNTIL_LOOP_IN;
+import static org.nexial.core.NexialConst.LogMessage.MSG_EVALUATING_FLOW_CONTROL;
 import static org.nexial.core.NexialConst.MSG_ABORT;
 import static org.nexial.core.model.FlowControl.Directive.*;
 import static org.nexial.core.plugins.desktop.DesktopNotification.NotificationLevel.warn;
@@ -194,7 +195,7 @@ public final class FlowControlUtils {
         }
 
         Directive directive = flowControl.getDirective();
-        return flowControl.getConditions().isMatched(context, "evaluating flow control:\t" + directive);
+        return flowControl.getConditions().isMatched(context, MSG_EVALUATING_FLOW_CONTROL + "\t" + directive);
     }
 
 }
