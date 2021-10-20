@@ -116,7 +116,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     protected TableHelper tableHelper;
     protected boolean logToBrowser;
     protected ClientPerformanceCollector clientPerfCollector;
-    protected UserStackAPI userstack;
+    protected UserStackAPI userStack;
     protected CssHelper css;
 
     @Override
@@ -125,7 +125,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     @Override
     public void setBrowser(Browser browser) { this.browser = browser; }
 
-    public void setUserstack(UserStackAPI userstack) { this.userstack = userstack; }
+    public void setUserStack(UserStackAPI userStack) { this.userStack = userStack; }
 
     @Override
     public void init(@NotNull ExecutionContext context) {
@@ -647,34 +647,42 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
     @NotNull
     public StepResult waitWhileElementNotPresent(String locator, String waitMs) {
-        requiresNotBlank(locator, "invalid locator", locator);
-        long maxWait = deriveMaxWaitMs(waitMs);
-
-        ensureReady();
-
-        long oldImplicitWaitMs = getPollWaitMs();
-        Timeouts timeouts = driver.manage().timeouts();
-        boolean timeoutChangesEnabled = browser.browserType.isTimeoutChangesEnabled();
-        // if browser supports implicit wait, and we are not using explicit wait (`WEB_ALWAYS_WAIT`), then
-        // we'll change timeout's implicit wait time
-        if (timeoutChangesEnabled) { timeouts.implicitlyWait(maxWait, MILLISECONDS); }
-
-        FluentWait<WebDriver> waiter = newFluentWait(maxWait);
         boolean found = false;
-
         try {
-            Object target = waiter.until(driver -> driver.findElements(locatorHelper.findBy(locator)));
-            found = target == null;
+            found = !IterableUtils.isEmpty(locatorHelper.fluentFindElements(locator, waitMs));
         } catch (WebDriverException e) {
             // it's ok to have timeout or web driver exception; it's a PASS
-        } finally {
-            if (timeoutChangesEnabled) { timeouts.implicitlyWait(oldImplicitWaitMs, MILLISECONDS); }
         }
 
+        // requiresNotBlank(locator, "invalid locator", locator);
+        // long maxWait = deriveMaxWaitMs(waitMs);
+        //
+        // ensureReady();
+        //
+        // long oldImplicitWaitMs = getPollWaitMs();
+        // Timeouts timeouts = driver.manage().timeouts();
+        // boolean timeoutChangesEnabled = browser.browserType.isTimeoutChangesEnabled();
+        // // if browser supports implicit wait, and we are not using explicit wait (`WEB_ALWAYS_WAIT`), then
+        // // we'll change timeout's implicit wait time
+        // if (timeoutChangesEnabled) { timeouts.implicitlyWait(maxWait, MILLISECONDS); }
+        //
+        // FluentWait<WebDriver> waiter = newFluentWait(maxWait);
+        // boolean found = false;
+        //
+        // try {
+        //     Object target = waiter.until(driver -> driver.findElements(locatorHelper.findBy(locator)));
+        //     found = target == null;
+        // } catch (WebDriverException e) {
+        //     // it's ok to have timeout or web driver exception; it's a PASS
+        // } finally {
+        //     if (timeoutChangesEnabled) { timeouts.implicitlyWait(oldImplicitWaitMs, MILLISECONDS); }
+        // }
+
+        // not found means the target element is not found within `waitMs` time
         if (!found) {
             return StepResult.success("Element by locator '%s' is NOT present within the last %s ms", locator, waitMs);
         } else {
-            return StepResult.fail("Element by locator '%s' is found within %s ms", locator, maxWait);
+            return StepResult.fail("Element by locator '%s' is found within %s ms", locator, waitMs);
         }
     }
 
@@ -740,8 +748,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
         long maxWait = deriveMaxWaitMs(waitMs);
         By by = locatorHelper.findBy(locator);
-        boolean outcome = waitForCondition(maxWait, object ->
-        {
+        boolean outcome = waitForCondition(maxWait, object -> {
             WebElement elem = driver.findElement(by);
             return elem != null && !elem.isEnabled();
         });
@@ -2490,7 +2497,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
         if (browserMeta == null) {
             // go get it
-            browserMeta = userstack.detectAsBrowserMeta(ua);
+            browserMeta = userStack.detectAsBrowserMeta(ua);
             updateBrowserMetaCache(ua, (BrowserMeta) browserMeta);
         }
 
@@ -3078,19 +3085,18 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     // }
 
     protected List<WebElement> findElements(WebDriver driver, By by) {
-        alert.preemptiveDismissAlert();
-        return driver.findElements(by);
+        return locatorHelper.findElements(driver, by);
+        // alert.preemptiveDismissAlert();
+        // return driver.findElements(by);
     }
 
     protected WebElement findElement(WebDriver driver, By by) {
-        alert.preemptiveDismissAlert();
-        return driver.findElement(by);
+        return locatorHelper.findElement(driver, by);
+        // alert.preemptiveDismissAlert();
+        // return driver.findElement(by);
     }
 
-    protected int getElementCount(String locator) {
-        List<WebElement> elements = findElements(locator);
-        return CollectionUtils.isEmpty(elements) ? 0 : elements.size();
-    }
+    protected int getElementCount(String locator) { return IterableUtils.size(findElements(locator)); }
 
     protected boolean isElementNotPresent(String locator, long maxWaitMs) {
         ensureReady();
@@ -3111,48 +3117,45 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     protected boolean isElementPresent(String locator) { return findElement(locator) != null; }
 
     protected List<WebElement> findElements(String locator) {
-        ensureReady();
-        By by = locatorHelper.findBy(locator);
-        long pollWaitMs = getPollWaitMs();
-        try {
-            return useExplicitWait() ?
-                   newFluentWait(pollWaitMs).withMessage("find element(s) via locator " + locator)
-                                            .until(driver -> findElements(driver, by)) :
-                   findElements(driver, by);
-        } catch (TimeoutException e) {
-            String err = "Timed out while looking for web element(s) that match '" + locator + "'; " +
-                         "${nexial.pollWaitMs}=" + pollWaitMs;
-            log(err);
-            return null;
-        } catch (NoSuchElementException e) {
-            return null;
-        }
+        return locatorHelper.findElements(locator);
+        // ensureReady();
+        // By by = locatorHelper.findBy(locator);
+        // long pollWaitMs = getPollWaitMs();
+        // try {
+        //     return useExplicitWait() ?
+        //            newFluentWait(pollWaitMs).withMessage("find element(s) via locator " + locator)
+        //                                     .until(driver -> findElements(driver, by)) :
+        //            findElements(driver, by);
+        // } catch (TimeoutException e) {
+        //     log("Timed out while looking for web element(s) that match '" + locator + "'; " +
+        //         "nexial.pollWaitMs=" + pollWaitMs);
+        //     return null;
+        // } catch (NoSuchElementException e) {
+        //     return null;
+        // }
     }
 
     protected WebElement findElement(String locator) {
-        ensureReady();
-        By by = locatorHelper.findBy(locator);
-        long pollWaitMs = getPollWaitMs();
-        try {
-            WebElement target = useExplicitWait() ?
-                                newFluentWait(pollWaitMs).withMessage("find element via locator " + locator)
-                                                         .until(driver -> findElement(driver, by)) :
-                                findElement(driver, by);
-            if (isHighlightEnabled() && target != null && target.isDisplayed()) { highlight(target); }
-            return target;
-        } catch (TimeoutException e) {
-            String err = "Timed out while looking for web element(s) that match '" + locator + "'; " +
-                         "nexial.pollWaitMs=" + pollWaitMs;
-            log(err);
-            throw new NoSuchElementException(err);
-        }
+        return locatorHelper.findElement(locator);
+        // ensureReady();
+        // By by = locatorHelper.findBy(locator);
+        // long pollWaitMs = getPollWaitMs();
+        // try {
+        //     WebElement target = useExplicitWait() ?
+        //                         newFluentWait(pollWaitMs).withMessage("find element via locator " + locator)
+        //                                                  .until(driver -> findElement(driver, by)) :
+        //                         findElement(driver, by);
+        //     if (isHighlightEnabled() && target != null && target.isDisplayed()) { highlight(target); }
+        //     return target;
+        // } catch (TimeoutException e) {
+        //     String err = "Timed out while looking for web element(s) that match '" + locator + "'; " +
+        //                  "nexial.pollWaitMs=" + pollWaitMs;
+        //     log(err);
+        //     throw new NoSuchElementException(err);
+        // }
     }
 
-    protected WebElement toElement(String locator) {
-        WebElement element = findElement(locator);
-        if (element == null) { throw new NoSuchElementException("element not found via '" + locator + "'."); }
-        return element;
-    }
+    protected WebElement toElement(String locator) { return locatorHelper.toElement(locator); }
 
     protected boolean isIENativeMode() {
         ensureReady();

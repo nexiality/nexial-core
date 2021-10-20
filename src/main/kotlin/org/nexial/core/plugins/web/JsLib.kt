@@ -94,5 +94,16 @@ object JsLib {
     fun useJQuery() = "!!window.jQuery"
 
     @JvmStatic
-    fun getCssValue(property:String) = "return window.getComputedStyle(arguments[0]).getPropertyValue('$property')"
+    fun getComputedCssValue(property: String) =
+        "return window.getComputedStyle(arguments[0]).getPropertyValue('$property')"
+
+    @JvmStatic
+    fun toHexColor(colorName: String) =
+        "let canvas = document.createElement('canvas'); " +
+        "let ctx = canvas.getContext('2d'); " +
+        "ctx.fillStyle = '" + colorName + "'; " +
+        "let hexColor = ctx.fillStyle; " +
+        "delete canvas; " +
+        "return hexColor;"
+
 }

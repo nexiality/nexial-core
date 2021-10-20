@@ -79,7 +79,6 @@ import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
 
 import static java.io.File.separator;
-import static java.lang.System.lineSeparator;
 import static org.apache.commons.lang3.SystemUtils.IS_OS_WINDOWS;
 import static org.apache.commons.lang3.SystemUtils.USER_NAME;
 import static org.nexial.commons.utils.EnvUtils.enforceUnixEOL;
@@ -899,9 +898,6 @@ public class ExecutionContext {
         text = treatCommonValueShorthand(text);
         if (text == null) { return null; }
 
-        // for portability
-        text = StringUtils.replace(text, EOL, lineSeparator());
-
         // pre-first pass  ;-)
         // substitute crypt value
         text = handleCryptValue(text);
@@ -959,8 +955,8 @@ public class ExecutionContext {
                 continue;
             }
 
-            if (NON_DISPLAYABLE_REPLACEMENTS.containsKey(value.toString())) {
-                text = StringUtils.replace(text, tokenized, NON_DISPLAYABLE_REPLACEMENTS.get(value.toString()));
+            if (NON_PRINTABLE_REPLACEMENTS.containsKey(value.toString())) {
+                text = StringUtils.replace(text, tokenized, NON_PRINTABLE_REPLACEMENTS.get(value.toString()));
                 continue;
             }
 

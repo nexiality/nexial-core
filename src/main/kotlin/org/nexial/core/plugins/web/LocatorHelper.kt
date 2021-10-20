@@ -30,13 +30,16 @@ import org.nexial.core.model.NexialFilterList
 import org.nexial.core.model.StepResult
 import org.nexial.core.plugins.web.LocatorHelper.InnerValueType.TEXT
 import org.nexial.core.plugins.web.LocatorHelper.InnerValueType.VALUE
-import org.nexial.core.utils.CheckUtils
+import org.nexial.core.utils.CheckUtils.fail
+import org.nexial.core.utils.CheckUtils.requiresNotBlank
 import org.nexial.core.utils.OutputFileUtils.CASE_INSENSITIVE_SORT
 import org.openqa.selenium.*
 import org.openqa.selenium.NoSuchElementException
+import org.openqa.selenium.WebDriver.Timeouts
 import org.openqa.selenium.support.ui.FluentWait
 import java.time.Duration
 import java.util.*
+import java.util.concurrent.TimeUnit.MILLISECONDS
 import java.util.function.Function
 import java.util.stream.Collectors
 
@@ -177,7 +180,7 @@ class LocatorHelper internal constructor(private val delegator: WebCommand) {
         companion object {
             fun build(locator: String, relative: Boolean): By {
                 if (StringUtils.isBlank(locator)) {
-                    CheckUtils.fail("invalid locator: $locator")
+                    fail("invalid locator: $locator")
                     throw IllegalArgumentException("null/blank locator is not allowed!")
                 }
 
@@ -231,8 +234,62 @@ class LocatorHelper internal constructor(private val delegator: WebCommand) {
         return driver.findElement(by)
     }
 
-    fun toElement(locator: String) =
-        findElement(locator) ?: throw NoSuchElementException("element not found via '${locator}'")
+    fun toElement(locator: String) = findElement(locator)
+                                     ?: throw NoSuchElementException("element not found via '${locator}'")
+
+    protected fun findElements(locator: String): List<WebElement>? {
+        delegator.ensureReady()
+
+        val by: By = findBy(locator)
+        val pollWaitMs: Long = delegator.pollWaitMs
+        val useExplicitWait = delegator.useExplicitWait()
+        val driver = delegator.driver
+
+        return try {
+            if (useExplicitWait)
+                newFluentWait(pollWaitMs)
+                    .withMessage("find element(s) via locator $locator")
+                    .until(Function { findElements(it!!, by) })
+            else
+                findElements(driver, by)
+        } catch (e: TimeoutException) {
+            log("Timed out while looking for web element(s) that match '$locator'; nexial.pollWaitMs=$pollWaitMs")
+            null
+        } catch (e: NoSuchElementException) {
+            null
+        }
+    }
+
+    protected fun findElements(driver: WebDriver, by: By): List<WebElement>? {
+        delegator.alert.preemptiveDismissAlert()
+        return driver.findElements(by)
+    }
+
+    protected fun fluentFindElements(locator:String, waitMs:String): List<WebElement>? {
+        requiresNotBlank(locator, "invalid locator", locator)
+
+        delegator.ensureReady()
+
+        val driver = delegator.driver
+        val browser = delegator.browser
+
+        val maxWait = delegator.deriveMaxWaitMs(waitMs)
+        val oldImplicitWaitMs: Long = delegator.pollWaitMs
+        val timeouts: Timeouts = driver.manage().timeouts()
+        val timeoutChangesEnabled = browser.browserType.isTimeoutChangesEnabled
+        // if browser supports implicit wait, and we are not using explicit wait (`WEB_ALWAYS_WAIT`), then
+        // we'll change timeout's implicit wait time
+        // if browser supports implicit wait, and we are not using explicit wait (`WEB_ALWAYS_WAIT`), then
+        // we'll change timeout's implicit wait time
+        if (timeoutChangesEnabled) timeouts.implicitlyWait(maxWait, MILLISECONDS)
+
+        return try {
+            val by = findBy(locator)
+            newFluentWait(maxWait).until { it!!.findElements(by) }
+        } finally {
+            if (timeoutChangesEnabled) timeouts.implicitlyWait(oldImplicitWaitMs, MILLISECONDS)
+        }
+    }
 
     internal fun newFluentWait() = newFluentWait(delegator.pollWaitMs)
 
@@ -244,9 +301,7 @@ class LocatorHelper internal constructor(private val delegator: WebCommand) {
             .pollingEvery(Duration.ofMillis(25))
             .ignoring(NotFoundException::class.java, StaleElementReferenceException::class.java)
 
-    internal fun log(message: String) {
-        contextLogger?.log(delegator, message)
-    }
+    internal fun log(message: String) = contextLogger?.log(delegator, message)
 
     fun findBy(locator: String) = findBy(locator, false)
 
@@ -362,7 +417,7 @@ class LocatorHelper internal constructor(private val delegator: WebCommand) {
     fun assertValueOrder(locator: String?, descending: String?) = assertOrder(locator, VALUE, descending)
 
     private fun assertOrder(locator: String?, valueType: InnerValueType, descending: String?): StepResult {
-        CheckUtils.requiresNotBlank(locator, "invalid locator", locator)
+        requiresNotBlank(locator, "invalid locator", locator)
 
         val matches = delegator.findElements(locator)
         if (CollectionUtils.isEmpty(matches)) return StepResult.fail("No matches found, hence no order can be asserted")
@@ -399,7 +454,7 @@ class LocatorHelper internal constructor(private val delegator: WebCommand) {
     }
 
     private fun assertCount(locator: String, text: String, count: String, exact: Boolean): StepResult {
-        CheckUtils.requiresNotBlank(text, "invalid text", text)
+        requiresNotBlank(text, "invalid text", text)
 
         val countInt = delegator.toPositiveInt(count, "count")
         val matches = delegator.findElements(locator)

@@ -30,7 +30,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static org.nexial.core.NexialConst.Data.NON_DISPLAYABLE_REPLACEMENTS;
+import static org.nexial.core.NexialConst.Data.NON_PRINTABLE_REPLACEMENTS;
 import static org.nexial.core.NexialConst.Data.NULL;
 import static org.nexial.core.variable.ExpressionConst.*;
 
@@ -274,7 +274,7 @@ public class ExpressionParser {
             text = StringUtils.replace(text, subst.getValue(), replacement);
         }
 
-        if (NON_DISPLAYABLE_REPLACEMENTS.containsKey(text)) { return NON_DISPLAYABLE_REPLACEMENTS.get(text); }
+        if (NON_PRINTABLE_REPLACEMENTS.containsKey(text)) { return NON_PRINTABLE_REPLACEMENTS.get(text); }
         if (StringUtils.equals(text, NULL)) { return null; }
         return text;
     }

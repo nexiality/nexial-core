@@ -326,7 +326,7 @@
             <bean class="org.nexial.core.plugins.ssh.SshCommand"/>
         </entry>
         <entry key="web">
-            <bean class="org.nexial.core.plugins.web.WebCommand" p:userstack-ref="userstack"/>
+            <bean class="org.nexial.core.plugins.web.WebCommand" p:userStack-ref="userstack"/>
         </entry>
         <entry key="webmail">
             <bean class="org.nexial.core.plugins.web.WebMailCommand" p:webmailers-ref="webmailers"/>

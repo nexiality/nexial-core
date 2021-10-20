@@ -53,6 +53,7 @@ import java.util.*;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.imageio.ImageIO;
 import javax.validation.constraints.NotNull;
 
@@ -1236,7 +1237,6 @@ public class BaseCommand implements NexialCommand {
     // protected void assertNotEquals(boolean expected, boolean actual) {
     //     assertNotEquals(Boolean.valueOf(expected), Boolean.valueOf(actual));
     // }
-
     protected void verifyFalse(String description, boolean b) {
         description = StringUtils.isNotBlank(description) ? description : "";
         if (!b) {
@@ -1296,7 +1296,7 @@ public class BaseCommand implements NexialCommand {
         if (actualParamCount == expectedParamCount) { return m; }
 
         fail("MISMATCHED parameters - " + getTarget() + "." + methodName +
-                        " EXPECTS " + expectedParamCount + " but found " + actualParamCount);
+             " EXPECTS " + expectedParamCount + " but found " + actualParamCount);
         return null;
     }
 
@@ -1409,10 +1409,12 @@ public class BaseCommand implements NexialCommand {
         return FALSE;
     }
 
-    protected static String adjustForComparison(String text) {
-        if (text == null) { return null; }
+    @Nullable
+    protected static String adjustForComparison(String text) { return adjustForComparison(text, ExecutionThread.get()); }
 
-        ExecutionContext context = ExecutionThread.get();
+    @Nullable
+    protected static String adjustForComparison(String text, ExecutionContext context) {
+        if (text == null) { return null; }
         if (context.isNullValue(text)) { return null; }
         if (context.isEmptyValue(text)) { return ""; }
         if (context.isBlankValue(text)) { return " "; }

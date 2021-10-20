@@ -398,13 +398,9 @@ public final class NexialConst {
 
     //screen recording
     public static final class Recording {
-        public enum Types {
-            mp4,avi
-        }
+        public enum Types { mp4, avi }
 
-        public enum Autostarts {
-            none,execution,script,scenario
-        }
+        public enum Autostarts { none, execution, script, scenario }
 
         public static final String RECORDER_TYPE = registerSysVar(NAMESPACE + "screenRecorder", mp4.name());
         public static final String RECORDING_ENABLED = registerSysVar(NAMESPACE + "recordingEnabled", true);
@@ -590,12 +586,13 @@ public final class NexialConst {
         public static final String BLANK = "(blank)";
         public static final String TAB = "(tab)";
         public static final String EOL = "(eol)";
-        public static final String REGEX_ONLY_NON_DISPLAYABLES = "(\\(blank\\)|\\(empty\\)|\\(tab\\)|\\(eol\\))+";
-        public static final Map<String, String> NON_DISPLAYABLE_REPLACEMENTS = TextUtils.toMap("=",
-                                                                                               EMPTY + "=",
-                                                                                               BLANK + "= ",
-                                                                                               TAB + "=\t",
-                                                                                               EOL + "=\n");
+        public static final String REGEX_ONLY_NON_PRINTABLE = "(\\(blank\\)|\\(empty\\)|\\(tab\\)|\\(eol\\))+";
+        public static final Map<String, String> NON_PRINTABLE_REPLACEMENTS = TextUtils.toMap("=",
+                                                                                             EMPTY + "=",
+                                                                                             BLANK + "= ",
+                                                                                             TAB + "=\t",
+                                                                                             EOL + "=\n");
+
         public static final String CMD_PROFILE_SEP = "::";
         public static final String CMD_PROFILE_DEFAULT = "DEFAULT";
 
@@ -1989,10 +1986,10 @@ public final class NexialConst {
                                                    "\\s*([0-9\\.]+)\\s*" +
                                                    "\\)";
         public static final String REGEX_IS_RGB = "rgb\\(" +
-                                                   "\\s*([0-9]{1,3})\\s*\\," +
-                                                   "\\s*([0-9]{1,3})\\s*\\," +
-                                                   "\\s*([0-9]{1,3})\\s*" +
-                                                   "\\)";
+                                                  "\\s*([0-9]{1,3})\\s*\\," +
+                                                  "\\s*([0-9]{1,3})\\s*\\," +
+                                                  "\\s*([0-9]{1,3})\\s*" +
+                                                  "\\)";
         public static final String REGEX_IS_HEX_COLOR = "^#([0-9a-f]{3}|[0-9a-f]{6})$";
         public static final String OPT_COMPUTED_CSS = registerSysVar(NS_WEB + "useComputedCss", false);
 
@@ -2171,8 +2168,8 @@ public final class NexialConst {
         String[] text1 = new String[]{text};
 
         // only `EMPTY`, `BLANK`, `TAB` or `NL` or combination of these are found
-        if (RegexUtils.match(text1[0], REGEX_ONLY_NON_DISPLAYABLES)) {
-            NON_DISPLAYABLE_REPLACEMENTS.forEach(
+        if (RegexUtils.match(text1[0], REGEX_ONLY_NON_PRINTABLE)) {
+            NON_PRINTABLE_REPLACEMENTS.forEach(
                 (shorthand, replacement) -> text1[0] = StringUtils.replace(text1[0], shorthand, replacement));
         }
 
