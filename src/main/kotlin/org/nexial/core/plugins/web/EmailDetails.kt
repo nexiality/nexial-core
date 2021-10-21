@@ -17,6 +17,7 @@ import java.time.LocalDateTime
  *  * Content([EmailDetails.content]) of the Email
  *  * HTML content([EmailDetails.html]) of the Email
  *  * links([EmailDetails.links]) in the Email
+ *  * link([EmailDetails.link]) in the Email
  *  * attachments ([EmailDetails.attachmentMap]) of the email.
  *
  */
@@ -38,7 +39,9 @@ data class EmailDetails(
             extractLinks()
         }
 
-    var links: Set<String>? = null
+    internal var link: ListOrderedMap<String, String>? = ListOrderedMap()
+    internal var links: MutableList<String> = mutableListOf()
+    internal var labels: MutableList<String> = mutableListOf()
 
     init {
         extractLinks()
@@ -50,13 +53,28 @@ data class EmailDetails(
     }
 
     fun getAttachments(): List<String> = attachmentMap.keys.toList()
+    fun getLinks(): List<String> = links
+    fun getLink(): ListOrderedMap<String, String> = link!!
 
     private fun extractLinks() {
-        if (StringUtils.isNotEmpty(html))
+        if (StringUtils.isNotEmpty(html)) {
             links = Jsoup.parse(removeConditionalComments(html!!))
                 .getElementsByAttribute("href")
                 .map { it.attr("href") }
-                .toSet()
+                .filter { it.startsWith("https://") || it.startsWith("http://") }.toMutableList()
+
+            val parse = Jsoup.parse(removeConditionalComments(html!!))
+            val urls = parse.select("a[href]")
+            for (url in urls) {
+                val key = url.text().trim()
+                if (key.isNotEmpty() && !key.startsWith("http://") && !key.startsWith("https://")) {
+                    if (!link!!.contains(key)) {
+                        link?.put(key, url.attr("href"))
+                    }
+                    labels.add(key)
+                }
+            }
+        }
     }
 
     private fun removeConditionalComments(html: String): String {
@@ -70,13 +88,15 @@ data class EmailDetails(
 
     override fun toString(): String {
         return "id         =$id\n" +
-               "subject    =$subject\n" +
-               "from       =$from\n" +
-               "to         =$to\n" +
-               "time       =$time\n" +
-               "content    =$content\n" +
-               "html       =$html\n" +
-               "links      =$links\n" +
-               "attachments=${getAttachments()}"
+            "subject    =$subject\n" +
+            "from       =$from\n" +
+            "to         =$to\n" +
+            "time       =$time\n" +
+            "content    =$content\n" +
+            "html       =$html\n" +
+            "link      =$link\n" +
+            "links      =$links\n" +
+            "labels      =$labels\n" +
+            "attachments=${getAttachments()}"
     }
 }

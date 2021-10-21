@@ -37,6 +37,7 @@ import org.nexial.core.utils.JsonUtils
 import java.net.URI
 import java.time.Instant
 import java.time.ZoneId
+import java.util.regex.Pattern
 
 
 /**
@@ -48,7 +49,6 @@ class Mailinator : WebMailer() {
     private val url = "https://www.mailinator.com/v4/public/inboxes.jsp?to=%s"
     private val urlGetMail = "https://www.mailinator.com/fetch_public?msgid=%s"
     private val urlDeleteMail = "https://www.mailinator.com/delete_public?msgid=%s"
-    private var isV4 = url.contains("/v4/")
     private val labelSubject = "Subject"
 
     // private val timeFormat = "EEE MMM dd yyyy HH:mm:ss zZ"
@@ -134,6 +134,7 @@ class Mailinator : WebMailer() {
                 .toLocalDateTime())
 
         val parts = JsonUtils.toJSONArray(JSONPath.find(jsonObject, "data.parts"))
+        var messageBody = parts.getJSONObject(0).getString("body")
         if (parts.length() == 1) {
             val part = parts.getJSONObject(0)
             val contentBody = part.getString("body")
@@ -150,7 +151,7 @@ class Mailinator : WebMailer() {
         } else {
             for (i in 0 until parts.length()) {
                 val part = parts.getJSONObject(i)
-                val headers = part.getJSONObject("headers") ?: continue
+                val headers = part.optJSONObject("headers") ?: continue
                 val contentBody = part.getString("body")
                 if (headers.has("content-type")) {
                     if (headers.getString("content-type").contains("html")) {
@@ -163,13 +164,45 @@ class Mailinator : WebMailer() {
             }
         }
 
-        val clickableLinks = JSONPath.find(jsonObject, "data.clickablelinks")
-        if (clickableLinks != null) {
-            val links = JsonUtils.toJSONArray(clickableLinks)
-            if (links != null && links.length() > 0) email.links = links.map { it.toString() }.toSet()
-        }
+        email.links = getUrlLinks(messageBody)
 
+        if (email.labels.size > 0) {
+            email.link?.clear()
+            for (label in email.labels) {
+                val result = getUrl(label, messageBody)
+                val url = if (result.isNotEmpty()) "http" + StringUtils.substringBefore(
+                    StringUtils.substringAfter(result, "<http"),
+                    ">"
+                ) else StringUtils.EMPTY
+
+                if (StringUtils.isNotEmpty(url)) {
+                    if (!email.link!!.contains(label)) {
+                        email.link?.put(label, url)
+                    }
+                    messageBody = StringUtils.substringAfter(messageBody, result)
+                }
+            }
+        }
         return email
+    }
+
+    private fun getUrlLinks(messageBody: String?): MutableList<String> {
+        val urlLinks: MutableList<String> = mutableListOf()
+        val pattern = Pattern.compile("(http|https).*?(\\s+|>)")
+        val matcher = pattern.matcher(messageBody)
+        while (matcher.find()) {
+            urlLinks.add(matcher.group().trim('>').trim())
+        }
+        return urlLinks
+    }
+
+    private fun getUrl(label: String?, messageBody: String?): String {
+        val pattern = Pattern.compile("$label\\s+<(http|https):.*?>")
+        val matcher = pattern.matcher(messageBody)
+        while (matcher.find()) {
+            return matcher.group()
+        }
+        return StringUtils.EMPTY
     }
 
     private fun openEmailListingPage(web: WebCommand, profile: WebMailProfile) {
