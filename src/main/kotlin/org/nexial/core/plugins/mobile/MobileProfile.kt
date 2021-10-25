@@ -17,15 +17,17 @@
 
 package org.nexial.core.plugins.mobile
 
+import io.appium.java_client.remote.MobileCapabilityType.APP
 import io.appium.java_client.remote.MobileCapabilityType.PLATFORM_NAME
 import org.apache.commons.collections4.MapUtils
 import org.apache.commons.lang3.BooleanUtils
 import org.apache.commons.lang3.StringUtils
+import org.nexial.commons.utils.RegexUtils
 import org.nexial.core.NexialConst.Mobile.*
 import org.nexial.core.NexialConst.RB
 import org.nexial.core.model.ExecutionContext
-import org.nexial.core.plugins.mobile.MobileType.ANDROID
-import org.nexial.core.plugins.mobile.MobileType.IOS
+import org.nexial.core.plugins.browserstack.BrowserStackHelper
+import org.nexial.core.plugins.mobile.MobileType.*
 import java.io.File.separator
 
 class MobileProfile(context: ExecutionContext, val profile: String) {
@@ -60,15 +62,20 @@ class MobileProfile(context: ExecutionContext, val profile: String) {
 
         context.updateProfileConfig(COMMAND, profile, config)
 
-        mobileType = MobileType.valueOf(config.remove(CONF_TYPE)!!.uppercase())
+        val regexDelim = "[@\\-/]"
+        mobileType = MobileType.valueOf(RegexUtils.replace(config.remove(CONF_TYPE)!!, regexDelim, "_").uppercase())
         for (key in mobileType.requiredConfig) {
             if (!config.containsKey(key))
                 throw IllegalArgumentException(RB.Mobile.text("missing.config", "$profile.$key"))
         }
 
+        // autofill for browserstack integration
+        if (mobileType.isBrowserStack()) BrowserStackHelper.enrichConfiguration(context, config)
+
         appId = when (mobileType) {
-            ANDROID -> config[CONF_APP_ID] ?: config[CONF_APP_PACKAGE] ?: ""
-            IOS -> config[CONF_BUNDLE_ID] ?: ""
+            ANDROID                                -> config[CONF_APP_ID] ?: config[CONF_APP_PACKAGE] ?: ""
+            IOS                                    -> config[CONF_BUNDLE_ID] ?: ""
+            ANDROID_BROWSERSTACK, IOS_BROWSERSTACK -> config[APP] ?: config[CONF_APP_ID] ?: ""
         }
 
         // appium driver only accepts orientation as UPPERCASE
@@ -77,10 +84,10 @@ class MobileProfile(context: ExecutionContext, val profile: String) {
             // if (mobileType.isAndroid()) config["androidNaturalOrientation"] = "true"
         }
 
-        val serverConfig = context.getDataByPrefix(StringUtils.appendIfMissing(profile, ".") + "${CONF_SERVER}.")
+        val serverConfig = config.filterKeys { it.startsWith("$CONF_SERVER.") }
         serverConfig.forEach {
-            config.remove("${CONF_SERVER}.${it.key}")
-            this.serverConfig[it.key] = it.value
+            config.remove(it.key)
+            this.serverConfig[it.key.substringAfter("$CONF_SERVER.")] = it.value
         }
 
         logFile = if (BooleanUtils.toBoolean(this.serverConfig.remove(CONF_SERVER_LOGGING)))
@@ -125,6 +132,7 @@ $ adb shell getprop ro.build.version.release
     return deviceName;
 }
         */
+
         this.geoLocation = config.remove(CONF_GEO_LOC)
 
         this.config[PLATFORM_NAME] = mobileType.platformName

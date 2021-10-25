@@ -34,6 +34,7 @@ import org.nexial.core.ShutdownAdvisor;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.plugins.CanTakeScreenshot;
 import org.nexial.core.plugins.ForcefulTerminate;
+import org.nexial.core.plugins.browserstack.BrowserStackHelper;
 import org.nexial.core.plugins.external.ExternalCommand;
 import org.nexial.core.spi.NexialExecutionEvent;
 import org.nexial.core.spi.NexialListenerFactory;
@@ -55,14 +56,14 @@ import org.openqa.selenium.remote.DesiredCapabilities;
 import org.openqa.selenium.safari.SafariDriver;
 import org.openqa.selenium.safari.SafariOptions;
 
-import javax.annotation.Nonnull;
-import javax.validation.constraints.NotNull;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import javax.annotation.Nonnull;
+import javax.validation.constraints.NotNull;
 
 import static java.io.File.separator;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -134,7 +135,7 @@ public class Browser implements ForcefulTerminate {
     };
 
     protected boolean isMobile;
-    protected BrowserStackHelper browserstackHelper;
+    protected BrowserStackHelper browserStackHelper;
     protected CrossBrowserTestingHelper cbtHelper;
 
     protected boolean shutdownStarted;
@@ -221,7 +222,7 @@ public class Browser implements ForcefulTerminate {
 
     public boolean isPageSourceSupported() { return pageSourceSupported; }
 
-    public BrowserStackHelper getBrowserstackHelper() { return browserstackHelper; }
+    public BrowserStackHelper getBrowserStackHelper() { return browserStackHelper; }
 
     public CrossBrowserTestingHelper getCbtHelper() { return cbtHelper; }
 
@@ -420,10 +421,10 @@ public class Browser implements ForcefulTerminate {
             if (agent instanceof WebCommand) { context.clearScreenshotAgent(); }
         }
 
-        if (browserstackHelper != null) {
+        if (browserStackHelper != null) {
             log("Terminating local agent...");
-            browserstackHelper.terminateLocal();
-            browserstackHelper = null;
+            browserStackHelper.terminateLocal();
+            browserStackHelper = null;
         }
 
         if (cbtHelper != null) {
@@ -1088,11 +1089,11 @@ public class Browser implements ForcefulTerminate {
     }
 
     protected WebDriver initBrowserStack() {
-        browserstackHelper = new BrowserStackHelper(context);
-        WebDriver webDriver = browserstackHelper.initWebDriver();
+        browserStackHelper = new BrowserStackHelper(context);
+        WebDriver webDriver = browserStackHelper.initWebDriver();
 
-        isMobile = browserstackHelper.isMobile();
-        pageSourceSupported = browserstackHelper.isPageSourceSupported();
+        isMobile = browserStackHelper.isMobile();
+        pageSourceSupported = browserStackHelper.isPageSourceSupported();
         // browserVersion = browserstack.getBrowserVersion();
 
         postInit(webDriver);
@@ -1128,7 +1129,7 @@ public class Browser implements ForcefulTerminate {
         if (isRunChromeEmbedded() ||
             isRunElectron() ||
             isMobile() ||
-            (isRunBrowserStack() && browserstackHelper.browser == safari) ||
+            (isRunBrowserStack() && browserStackHelper.browser == safari) ||
             (isRunCrossBrowserTesting() && cbtHelper.browser == safari)) {
             return;
         }
@@ -1172,7 +1173,7 @@ public class Browser implements ForcefulTerminate {
         if (window == null) { return; }
 
         boolean runningSafari = isRunSafari() ||
-                                (isRunBrowserStack() && browserstackHelper.browser == safari) ||
+                                (isRunBrowserStack() && browserStackHelper.browser == safari) ||
                                 (isRunCrossBrowserTesting() && cbtHelper.browser == safari);
 
         Point position = null;

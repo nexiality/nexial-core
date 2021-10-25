@@ -185,7 +185,11 @@ public class TextTransformer<T extends TextDataType> extends Transformer<T> {
     }
 
     public ListDataType list(T data, String delim) {
-        if (data == null || StringUtils.isEmpty(data.getValue()) || StringUtils.isEmpty(delim)) { return null; }
+        if (data == null || StringUtils.isEmpty(data.getValue())) { return null; }
+        if (StringUtils.isEmpty(delim)) {
+            ExecutionContext context = ExecutionThread.get();
+            delim = context == null ? getDefault(TEXT_DELIM) : context.getTextDelim();
+        }
         return new ListDataType(data.getValue(), fixControlChars(delim));
     }
 

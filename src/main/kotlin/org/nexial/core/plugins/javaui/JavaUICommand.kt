@@ -56,6 +56,8 @@ class JavaUICommand : BaseCommand(), CanTakeScreenshot {
 
     override fun takeScreenshot(testStep: TestStep): String = OutputFileUtils.generateScreenCaptureFilename(testStep)
 
+    override fun readyToTakeScreenshot() = getProfile() != null && resolveConfig(getProfile()).jubula != null
+
     override fun generateScreenshotFilename(testStep: TestStep?): String? {
         if (testStep == null || !isScreenshotEnabled) return null
 

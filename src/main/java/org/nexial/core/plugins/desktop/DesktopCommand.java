@@ -159,6 +159,9 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
         return postScreenshot(testStep, file);
     }
 
+    @Override
+    public boolean readyToTakeScreenshot() { return (IS_OS_WINDOWS && winiumDriver != null) || getApp() != null; }
+
     protected File screenshot(String targetFile, WebElement element) {
         // also generate `OPT_LAST_SCREENSHOT_NAME` var in context
         File imageFile = ScreenshotUtils.saveScreenshot(getDriver(), targetFile, BoundingRectangle.asRectangle(element));

@@ -16,15 +16,17 @@
 package org.nexial.core.plugins.web
 
 import org.apache.commons.lang3.StringUtils
-import org.nexial.core.NexialConst.*
+import org.nexial.core.NexialConst.BrowserType
 import org.nexial.core.NexialConst.CloudWebTesting.*
+import org.nexial.core.NexialConst.CrossBrowserTesting
 import org.nexial.core.model.ExecutionContext
 import org.nexial.core.model.ExecutionEvent
 import org.nexial.core.model.ExecutionEvent.*
 import org.nexial.core.model.ExecutionSummary
+import org.nexial.core.plugins.browserstack.BrowserStack
+import org.nexial.core.plugins.browserstack.BrowserStackHelper
 import org.nexial.core.utils.ConsoleUtils
 import org.openqa.selenium.WebDriver
-import org.openqa.selenium.remote.RemoteWebDriver
 
 abstract class CloudWebTestingPlatform protected constructor(protected var context: ExecutionContext) {
     var os: String? = null
@@ -74,10 +76,6 @@ abstract class CloudWebTestingPlatform protected constructor(protected var conte
 
     abstract fun initWebDriver(): WebDriver
 
-    protected fun saveSessionId(driver: RemoteWebDriver) {
-        context.addScriptReferenceData(SESSION_ID, driver.sessionId.toString())
-    }
-
     protected abstract fun terminateLocal()
 
     companion object {
@@ -121,16 +119,20 @@ abstract class CloudWebTestingPlatform protected constructor(protected var conte
             }
         }
 
-        @JvmStatic
-        protected fun getSessionId(context: ExecutionContext): String? {
-            val sessionId = context.gatherScriptReferenceData()[SESSION_ID]
-            if (StringUtils.isBlank(sessionId)) {
-                ConsoleUtils.error(
-                        "Unable to report execution status since session id is blank or cannot be retrieved.")
-                return null
-            }
-            return sessionId
-        }
+        // protected fun saveSessionId(driver: RemoteWebDriver) {
+        //     context.addScriptReferenceData(Web.SESSION_ID, driver.sessionId.toString())
+        // }
+
+        // @JvmStatic
+        // protected fun getSessionId(context: ExecutionContext): String? {
+        //     val sessionId = context.gatherScriptReferenceData()[Web.SESSION_ID]
+        //     if (StringUtils.isBlank(sessionId)) {
+        //         ConsoleUtils.error(
+        //                 "Unable to report execution status since session id is blank or cannot be retrieved.")
+        //         return null
+        //     }
+        //     return sessionId
+        // }
 
         @JvmStatic
         protected fun formatStatusDescription(summary: ExecutionSummary): String {

@@ -17,16 +17,8 @@
 
 package org.nexial.core;
 
-import java.awt.*;
-import java.io.File;
-import java.io.IOException;
-import java.math.RoundingMode;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.List;
-import java.util.*;
-import javax.validation.constraints.NotNull;
-
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import org.apache.commons.cli.Options;
 import org.apache.commons.collections4.ListUtils;
 import org.apache.commons.collections4.MapUtils;
@@ -47,11 +39,19 @@ import org.nexial.core.model.TestProject;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.ExecUtils;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
+import java.awt.*;
+import java.io.File;
+import java.io.IOException;
+import java.math.RoundingMode;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.List;
+import java.util.*;
+import javax.validation.constraints.NotNull;
 
 import static java.awt.Color.*;
-import static java.awt.image.BufferedImage.*;
+import static java.awt.image.BufferedImage.TYPE_INT_ARGB;
+import static java.awt.image.BufferedImage.TYPE_INT_RGB;
 import static java.io.File.separator;
 import static java.math.RoundingMode.*;
 import static javax.naming.Context.*;
@@ -268,6 +268,7 @@ public final class NexialConst {
         public static final ResourceBundle Fatal = Messages.subset("Fatal");
         public static final ResourceBundle Mailer = Messages.subset("Mailer");
         public static final ResourceBundle Mobile = Messages.subset("Mobile");
+        public static final ResourceBundle BrowserStack = Messages.subset("BrowserStack");
         public static final ResourceBundle PolyMatcher = Messages.subset("PolyMatcher");
         public static final ResourceBundle Recorder = Messages.subset("Recorder");
         public static final ResourceBundle RepeatUntil = Messages.subset("RepeatUntil");
@@ -1682,9 +1683,7 @@ public final class NexialConst {
     }
 
     public static class CloudWebTesting {
-        public static final String BASE_PROTOCOL = "http://";
-
-        public static final String SESSION_ID = "sessionId";
+        public static final String BASE_PROTOCOL = "https://";
 
         public static final String SCOPE_ITERATION = "iteration";
         public static final String SCOPE_SCRIPT = "script";
@@ -1700,41 +1699,9 @@ public final class NexialConst {
         public static boolean isValidReportScope(ExecutionEvent scope) { return SUPPORTED_SCOPES.contains(scope); }
     }
 
-    // browserstack
-    public static final class BrowserStack extends CloudWebTesting {
-        public static final String BASE_URL = "@hub.browserstack.com/wd/hub";
-        public static final String SESSION_URL =
-            "https://${username}:${automatekey}@api.browserstack.com/automate/sessions/${sessionId}.json";
-
-        private static final String NS = NAMESPACE + "browserstack.";
-
-        public static final String KEY_USERNAME = registerSysVar(NS + "username");
-        public static final String AUTOMATEKEY = registerSysVar(NS + "automatekey");
-
-        public static final String KEY_BROWSER = registerSysVar(NS + "browser");
-        public static final String KEY_BROWSER_VER = registerSysVar(NS + "browser.version");
-        public static final String KEY_DEBUG = registerSysVar(NS + "debug", true);
-        public static final String KEY_RESOLUTION = registerSysVar(NS + "resolution");
-        public static final String KEY_BUILD_NUM = registerSysVar(NS + "app.buildnumber");
-        public static final String KEY_ENABLE_LOCAL = registerSysVar(NS + "enablelocal", false);
-        public static final String KEY_OS = registerSysVar(NS + "os");
-        public static final String KEY_OS_VER = registerSysVar(NS + "os.version");
-        public static final String KEY_TERMINATE_LOCAL = registerSysVar(NS + "terminatelocal", true);
-
-        public static final String KEY_CAPTURE_CRASH = registerSysVar(NS + "captureCrash");
-
-        // status report
-        public static final String KEY_STATUS_SCOPE = registerSysVar(NS + "reportStatus");
-
-        private BrowserStack() { }
-
-        // reference by enclosing class to force initialization (possibly prior to any reference at runtime)
-        static void init() { }
-    }
-
     public static final class CrossBrowserTesting extends CloudWebTesting {
         public static final String BASE_URL = "@hub.crossbrowsertesting.com:80/wd/hub";
-        public static final String SESSION_URL = "http://crossbrowsertesting.com/api/v3/selenium/${seleniumTestId}";
+        public static final String SESSION_URL = "https://crossbrowsertesting.com/api/v3/selenium/${session}";
 
         public static final String NS = "cbt.";
 
@@ -2015,6 +1982,8 @@ public final class NexialConst {
         public static final String OPT_IS_REACT = registerSysVar(NS_WEB + "useReact", false);
         public static final String OPT_IS_ANGULAR = registerSysVar(NS_WEB + "useAngular", false);
 
+        public static final String SESSION_ID = "sessionId";
+
         private Web() { }
 
         // reference by enclosing class to force initialization (possibly prior to any reference at runtime)
@@ -2071,6 +2040,13 @@ public final class NexialConst {
         public static final String APPIUM_LOG = "appium.log";
 
         protected static final String SCRIPT_EXT = (IS_OS_WINDOWS ? ".bat" : "");
+
+        public static final String PLATFORM_ANDROID = "Android";
+        public static final String PLATFORM_IOS = "iOS";
+        public static final String PLATFORM_BROWSERSTACK = "BROWSERSTACK";
+
+        public static final String DRIVER_UIAUTOMATOR2 = "UiAutomator2";
+        public static final String DRIVER_XCUITEST = "XCUITest";
 
         public static final class Android {
             public static final String RESOURCE_BASE =
@@ -2241,7 +2217,6 @@ public final class NexialConst {
         Rdbms.init();
         Ws.init();
         Web.init();
-        NexialConst.BrowserStack.init();
         NexialConst.CrossBrowserTesting.init();
         Pdf.init();
         ImageCaption.init();

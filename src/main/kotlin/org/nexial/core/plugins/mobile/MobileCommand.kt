@@ -74,8 +74,7 @@ import org.nexial.core.plugins.mobile.MobileLocatorHelper.Companion.regexOneOfLo
 import org.nexial.core.plugins.mobile.MobileLocatorHelper.Companion.scriptPressButton
 import org.nexial.core.plugins.mobile.MobileLocatorHelper.Companion.scrollableLocator
 import org.nexial.core.plugins.mobile.MobileLocatorHelper.Companion.scrollableLocator2
-import org.nexial.core.plugins.mobile.MobileType.ANDROID
-import org.nexial.core.plugins.mobile.MobileType.IOS
+import org.nexial.core.plugins.mobile.MobileType.*
 import org.nexial.core.plugins.web.LocatorHelper.Companion.toLocatorString
 import org.nexial.core.plugins.web.WebDriverExceptionHelper.resolveErrorMessage
 import org.nexial.core.utils.CheckUtils.*
@@ -95,6 +94,7 @@ import java.time.Duration
 import java.util.*
 import java.util.function.Function
 import kotlin.math.absoluteValue
+import kotlin.math.ceil
 import kotlin.math.max
 
 // https://github.com/appium/appium-base-driver/blob/master/lib/protocol/routes.js#L345
@@ -125,6 +125,8 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
         filename = context.project.screenCaptureDir + separator + filename
         return postScreenshot(testStep, ScreenshotUtils.saveScreenshot(mobileService.driver, filename))
     }
+
+    override fun readyToTakeScreenshot() = mobileService != null
 
     override fun generateScreenshotFilename(testStep: TestStep): String =
         OutputFileUtils.generateScreenCaptureFilename(testStep)
@@ -263,10 +265,13 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
             StepResult.fail("element '$locator' is visible, which is NOT as expected")
 
     fun assertTextPresent(locator: String, text: String): StepResult =
-        if (findElements(locator).any { TextUtils.polyMatch(it.text, text) })
-            StepResult.success("Element of '${locator}' contains text matching '${text}'")
+        if (findElements(locator).any {
+                ConsoleUtils.log("asserting element text '${it.text}' against '${text}'")
+                TextUtils.polyMatch(it.text, text)
+            })
+            StepResult.success("The text of '${locator}' matched '${text}'")
         else
-            StepResult.fail("Element of '${locator}' DOES NOT contains text matching '${text}'")
+            StepResult.fail("The text of'${locator}' DOES NOT match '${text}'")
 
     fun saveText(`var`: String, locator: String): StepResult {
         requiresValidAndNotReadOnlyVariableName(`var`)
@@ -357,8 +362,9 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
         val assertText = !context.isNullOrEmptyOrBlankValue(text)
         val mobileService = getMobileService()
         return when (mobileService.profile.mobileType) {
-            ANDROID -> throw IllegalArgumentException("This command is not supported on Android device")
-            IOS     -> {
+            ANDROID, ANDROID_BROWSERSTACK ->
+                throw IllegalArgumentException("This command is not supported on Android device")
+            IOS, IOS_BROWSERSTACK         -> {
                 isElementPresent(
                     "$iosAlertLocator//*[@type='XCUIElementTypeStaticText'" +
                     if (assertText) " and ${MobileLocatorHelper.resolveFilter("value", text)}]" else "]"
@@ -373,8 +379,8 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
 
         val mobileService = getMobileService()
         return when (mobileService.profile.mobileType) {
-            ANDROID -> StepResult.fail("This command is not supported on Android device")
-            IOS     -> {
+            ANDROID, ANDROID_BROWSERSTACK -> StepResult.fail("This command is not supported on Android device")
+            IOS, IOS_BROWSERSTACK         -> {
                 val alertOption = "$iosAlertLocator//*[@type='XCUIElementTypeButton' and " +
                                   "${MobileLocatorHelper.resolveFilter("label", option)}]"
                 if (isElementPresent(alertOption)) {
@@ -396,8 +402,8 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
 
         val mobileService = getMobileService()
         return when (mobileService.profile.mobileType) {
-            ANDROID -> StepResult.fail("This command is not supported on Android device")
-            IOS     -> {
+            ANDROID, ANDROID_BROWSERSTACK -> StepResult.fail("This command is not supported on Android device")
+            IOS, IOS_BROWSERSTACK         -> {
                 val alertMessages = findElements("$iosAlertLocator//*[@type='XCUIElementTypeStaticText']")
                 if (CollectionUtils.isEmpty(alertMessages)) StepResult.fail("No alert dialog found")
 
@@ -410,7 +416,7 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
     fun clearNotification(): StepResult {
         val mobileService = getMobileService()
         return when (mobileService.profile.mobileType) {
-            ANDROID -> {
+            ANDROID, ANDROID_BROWSERSTACK -> {
                 val driver = mobileService.driver
                 (driver as AndroidDriver).openNotifications()
 
@@ -431,7 +437,7 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
                 StepResult.success("All notifications cleared")
             }
             // probably doesn't work...
-            IOS     -> StepResult.fail("This command is not supported on iOS device")
+            IOS, IOS_BROWSERSTACK         -> StepResult.fail("This command is not supported on iOS device")
         }
     }
 
@@ -449,10 +455,15 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
 
     private fun tap(target: MobileElement, postTabWaitMs: Long) {
         val mobileService = getMobileService()
-        toTouchAction(mobileService)
-            .tap(TapOptions.tapOptions().withElement(ElementOption.element(target)))
-            .perform()
+
+        val coordinate = ElementOption.element(target).withCoordinates(offsetToMiddleOf(target))
+        toTouchAction(mobileService).tap(TapOptions.tapOptions().withElement(coordinate)).perform()
         if (postTabWaitMs > MIN_WAIT_MS) waitFor(postTabWaitMs.toInt())
+    }
+
+    private fun offsetToMiddleOf(target: MobileElement): Point {
+        val size = target.size
+        return Point(ceil(size.width.toDouble() / 2).toInt(), ceil(size.height.toDouble() / 2).toInt())
     }
 
     private fun longTap(target: MobileElement, holdTime: Long) {
@@ -469,8 +480,8 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
 
     private fun toTouchAction(mobileService: MobileService) =
         when (mobileService.profile.mobileType) {
-            ANDROID -> AndroidTouchAction(mobileService.driver)
-            IOS     -> IOSTouchAction(mobileService.driver)
+            ANDROID, ANDROID_BROWSERSTACK -> AndroidTouchAction(mobileService.driver)
+            IOS, IOS_BROWSERSTACK         -> IOSTouchAction(mobileService.driver)
         }
 
     /** partially supports polymatcher */
@@ -895,8 +906,8 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
     }
 
     fun home() = when (getMobileService().profile.mobileType) {
-        ANDROID -> keyPress(HOME.code)
-        IOS     -> launchApp("com.apple.springboard")
+        ANDROID, ANDROID_BROWSERSTACK -> keyPress(HOME.code)
+        IOS, IOS_BROWSERSTACK         -> launchApp("com.apple.springboard")
     }
 
     fun back() = keyPress(BACK.code)
@@ -904,8 +915,8 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
     fun forward() = executeCommand("forward")
 
     fun recentApps() = when (getMobileService().profile.mobileType) {
-        ANDROID -> keyPress(APP_SWITCH.code)
-        IOS     -> {
+        ANDROID, ANDROID_BROWSERSTACK -> keyPress(APP_SWITCH.code)
+        IOS, IOS_BROWSERSTACK         -> {
             val pressHome = mapOf("name" to "home")
             val driver = getMobileService().driver
             driver.executeScript(scriptPressButton, pressHome)
@@ -939,7 +950,7 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
         val profileName = mobileService.profile.profile
 
         return when (mobileService.profile.mobileType) {
-            ANDROID -> {
+            ANDROID, ANDROID_BROWSERSTACK -> {
                 // 1. click on the dropdown to display the options
                 val (select, _) = findElement(locator)
                 val currentSelectValue = select.text
@@ -1000,7 +1011,7 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
                     }
                 }
             }
-            IOS     -> {
+            IOS, IOS_BROWSERSTACK         -> {
                 // 1. find the select element / check if intended value is already selected
                 val (select, _) = findElement(locator)
                 val currentSelection = select.getAttribute("value")
@@ -1150,25 +1161,26 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
         val extProcEnv = mapOf(WORKING_DIRECTORY to mobileScriptPath)
 
         val script = mobileScriptPath + when (mobileType) {
-            ANDROID -> "${SCRIPT_COPY_TO_ANDROID}${if (IS_OS_WINDOWS) "cmd" else "sh"}"
-            IOS     -> SCRIPT_COPY_TO_IOS
+            ANDROID, ANDROID_BROWSERSTACK -> "${SCRIPT_COPY_TO_ANDROID}${if (IS_OS_WINDOWS) "cmd" else "sh"}"
+            IOS, IOS_BROWSERSTACK         -> SCRIPT_COPY_TO_IOS
         }
         if (!FileUtil.isFileExecutable(script)) throw RuntimeException(RB.Mobile.text("script.notExecutable", script))
 
         val outcome = when (mobileType) {
-            ANDROID -> {
+            ANDROID, ANDROID_BROWSERSTACK -> {
                 // adb push *file* /storage/emulated/0/Download/
                 if (IS_OS_WINDOWS)
                     ProcessInvoker.invoke(WIN32_CMD, listOf("/C", script, file, folder.removePrefix("/")), extProcEnv)
                 else
                     ProcessInvoker.invoke(script, listOf(file, folder.removePrefix("/")), extProcEnv)
             }
-            IOS     -> {
+            IOS, IOS_BROWSERSTACK         -> {
                 // check file extension (only .png, .jpg, .mp4, .gif, .wbem
                 if (!SUPPORTED_COPY_FILE_EXT.contains(StringUtils.lowerCase(StringUtils.substringAfterLast(file, "."))))
                     throw IllegalArgumentException(RB.Mobile.text("ext.notSupported", file))
                 ProcessInvoker.invoke(script, listOf(file), extProcEnv)
             }
+            // todo: browserstack profile needs to use BS api
         }
 
         return if (outcome.exitStatus != 0) {
@@ -1398,8 +1410,8 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
                 false
             else {
                 when (getMobileService().profile.mobileType) {
-                    ANDROID -> BooleanUtils.toBoolean(element.getAttribute("displayed"))
-                    IOS     -> {
+                    ANDROID, ANDROID_BROWSERSTACK -> BooleanUtils.toBoolean(element.getAttribute("displayed"))
+                    IOS, IOS_BROWSERSTACK         -> {
                         // special case for image: check either itself or parent for visibility
                         if (StringUtils.equals(element.getAttribute("type"), "XCUIElementTypeImage"))
                             BooleanUtils.toBoolean(element.getAttribute("visible")) ||
@@ -1509,10 +1521,7 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
         when (val driver = getMobileService().driver) {
             is AndroidDriver -> driver.isDeviceLocked
             is IOSDriver     -> driver.isDeviceLocked
-            else             -> {
-                val response = driver.execute("isLocked")
-                BooleanUtils.toBoolean(Objects.toString(response.value, ""))
-            }
+            else             -> BooleanUtils.toBoolean(Objects.toString(driver.execute("isLocked").value, ""))
         }
 
     private fun hideKeyboard(tryHarder: Boolean) =

@@ -155,6 +155,9 @@ object CommandConst {
     val autoFillParamCommands = listOf(
         "base.macroFlex",
 
+        "browserstack.saveUploadApps",
+        "browserstack.uploadApp",
+
         "desktop.saveAllTableRows",
         "desktop.saveTableRows",
         "desktop.saveTableRowsRange",

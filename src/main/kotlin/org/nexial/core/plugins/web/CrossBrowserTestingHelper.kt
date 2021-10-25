@@ -35,6 +35,7 @@ import org.nexial.core.model.ExecutionSummary
 import org.nexial.core.plugins.web.WebDriverHelper.Companion.newInstance
 import org.nexial.core.plugins.ws.WsCommand
 import org.nexial.core.utils.ConsoleUtils
+import org.nexial.core.utils.WebDriverUtils
 import org.openqa.selenium.MutableCapabilities
 import org.openqa.selenium.WebDriver
 import org.openqa.selenium.WebDriverException
@@ -77,7 +78,7 @@ class CrossBrowserTestingHelper(context: ExecutionContext) : CloudWebTestingPlat
         return try {
             val url = "$BASE_PROTOCOL${URLEncodingUtils.encodeAuth(username)}:$authKey$BASE_URL"
             val driver = RemoteWebDriver(URL(url), capabilities)
-            saveSessionId(driver)
+            WebDriverUtils.saveSessionId(context, driver)
             driver
         } catch (e: MalformedURLException) {
             throw RuntimeException("Unable to initialize CrossBrowserTesting session: ${e.message}", e)
@@ -206,8 +207,8 @@ class CrossBrowserTestingHelper(context: ExecutionContext) : CloudWebTestingPlat
             context.setData(WS_BASIC_USER, context.getStringData(NS + KEY_USERNAME))
             context.setData(WS_BASIC_PWD, context.getStringData(NS + KEY_AUTHKEY))
 
-            val sessionId = getSessionId(context) ?: return
-            val statusApi = StringUtils.replace(SESSION_URL, "\${seleniumTestId}", sessionId)
+            val sessionId = WebDriverUtils.getSessionId(context) ?: return
+            val statusApi = StringUtils.replace(SESSION_URL, "{session}", sessionId)
 
             val wsCommand = context.findPlugin("ws") as? WsCommand ?: return
             try {

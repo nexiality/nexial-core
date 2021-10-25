@@ -26,8 +26,7 @@ import org.nexial.commons.utils.RegexUtils
 import org.nexial.commons.utils.TextUtils
 import org.nexial.commons.utils.TextUtils.*
 import org.nexial.core.NexialConst.RB
-import org.nexial.core.plugins.mobile.MobileType.ANDROID
-import org.nexial.core.plugins.mobile.MobileType.IOS
+import org.nexial.core.plugins.mobile.MobileType.*
 import org.nexial.core.plugins.web.LocatorHelper.Companion.normalizeXpathText
 import org.nexial.core.utils.CheckUtils.requiresInteger
 import org.nexial.core.utils.CheckUtils.requiresPositiveNumber
@@ -202,8 +201,10 @@ class MobileLocatorHelper(private val mobileService: MobileService) {
                 throw IllegalArgumentException(RB.Mobile.text("invalid.nearby", specs))
 
             val parts = mutableListOf("@enabled='true'")
-            if (mobileType.isAndroid()) parts.add("@displayed='true'")
-            else if (mobileType.isIOS()) parts.add("@visible='true'")
+            when {
+                mobileType.isAndroid() -> parts.add("@displayed='true'")
+                mobileType.isIOS()     -> parts.add("@visible='true'")
+            }
 
             // aggressively trim off extraneous leading/trailing spaces
             val ancestorBuilder = StringBuilder()
@@ -301,14 +302,16 @@ class MobileLocatorHelper(private val mobileService: MobileService) {
         }
 
         internal fun resolveTextFilter(mobileType: MobileType, text: String) = when (mobileType) {
-            ANDROID -> resolveFilter("text", text)
-            IOS     -> resolveFilter("label", text) +
-                       " or (contains(${lower("type", "text")},'text') and ${resolveFilter("value", text)})"
+            ANDROID, ANDROID_BROWSERSTACK -> resolveFilter("text", text)
+            IOS, IOS_BROWSERSTACK         ->
+                resolveFilter("label", text) +
+                " or (contains(${lower("type", "text")},'text') and ${resolveFilter("value", text)})"
         }
 
-        internal fun resolveLinkTextFilter(mobileType: MobileType, text: String) = when (mobileType) {
-            ANDROID -> resolveFilter("text", text)
-            IOS     -> resolveFilter("label", text)
+        internal fun resolveLinkTextFilter(mobileType: MobileType, text: String) = when {
+            mobileType.isAndroid() -> resolveFilter("text", text)
+            mobileType.isIOS()     -> resolveFilter("label", text)
+            else                   -> throw IllegalArgumentException("Mobile type '${mobileType}' is not supported")
         }
 
         internal fun resolveFilter(attribute: String, value: String) = when {
@@ -336,7 +339,7 @@ class MobileLocatorHelper(private val mobileService: MobileService) {
                 "starts-with(${lower(attribute, valueLower)},'$valueLower')"
             }
 
-            StringUtils.startsWith(value, END) ->
+            StringUtils.startsWith(value, END)              ->
                 "ends-with(@$attribute,${normalizeText(value, after = END)})"
 
             StringUtils.startsWith(value, END_ANY_CASE)     -> {
@@ -345,10 +348,10 @@ class MobileLocatorHelper(private val mobileService: MobileService) {
                 "ends-with(${lower(attribute, valueLower)},'$valueLower')"
             }
 
-            StringUtils.startsWith(value, LENGTH) ->
+            StringUtils.startsWith(value, LENGTH)           ->
                 "string-length(@$attribute)=${normalizeText(value, after = LENGTH)}"
 
-            StringUtils.startsWith(value, EXACT) -> "@$attribute=${normalizeText(value, after = EXACT)}"
+            StringUtils.startsWith(value, EXACT)            -> "@$attribute=${normalizeText(value, after = EXACT)}"
 
             else                                            ->
                 "@$attribute=${normalizeXpathText(value)}"

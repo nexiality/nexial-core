@@ -598,13 +598,16 @@ public class TestStep extends TestStepManifest {
 
         // screenshot agent is registered at the start of a test step (only web or desktop command would qualify)
         CanTakeScreenshot agent = context.findCurrentScreenshotAgent();
-        if (agent == null) { return null; }
+        if (agent == null || !agent.readyToTakeScreenshot()) {
+            ConsoleUtils.log(RB.Commons.text("screenshot.cancelled"));
+            return null;
+        }
 
         // screenshot failure shouldn't cause exception to offset execution pass/fail percentage
         try {
             String screenshotPath = agent.takeScreenshot(this);
             if (StringUtils.isBlank(screenshotPath)) {
-                error("Unable to capture screenshot - " + result.getMessage());
+                error("Unable to capture screenshot: " + result.getMessage());
                 return null;
             }
 

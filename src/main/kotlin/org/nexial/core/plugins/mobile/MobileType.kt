@@ -18,13 +18,39 @@
 package org.nexial.core.plugins.mobile
 
 import io.appium.java_client.remote.MobileCapabilityType.*
-import org.nexial.core.NexialConst.Mobile.CONF_APP_ACTIVITY
-import org.nexial.core.NexialConst.Mobile.CONF_APP_PACKAGE
+import org.nexial.core.NexialConst.Mobile.*
+import org.nexial.core.plugins.browserstack.BrowserStack.AUTOMATE_KEY
+import org.nexial.core.plugins.browserstack.BrowserStack.USERNAME
 
 enum class MobileType(val platformName: String, val automationName: String, val requiredConfig: List<String>) {
-    IOS("iOS", "XCUITest", listOf(DEVICE_NAME, PLATFORM_VERSION, UDID)),
-    ANDROID("Android", "UiAutomator2", listOf(DEVICE_NAME, PLATFORM_VERSION, UDID, CONF_APP_PACKAGE, CONF_APP_ACTIVITY));
 
-    fun isAndroid() = platformName == "Android"
-    fun isIOS() = platformName == "iOS"
+    ANDROID(PLATFORM_ANDROID, DRIVER_UIAUTOMATOR2,
+            listOf(DEVICE_NAME,
+                   PLATFORM_VERSION,
+                   UDID,
+                   CONF_APP_PACKAGE,
+                   CONF_APP_ACTIVITY)),
+    IOS(PLATFORM_IOS, DRIVER_XCUITEST,
+        listOf(DEVICE_NAME,
+               PLATFORM_VERSION,
+               UDID)),
+
+    ANDROID_BROWSERSTACK(PLATFORM_ANDROID, DRIVER_UIAUTOMATOR2,
+                         listOf(DEVICE_NAME,
+                                PLATFORM_VERSION,
+                                CONF_APP_PACKAGE,
+                                CONF_APP_ACTIVITY,
+                                USERNAME,
+                                AUTOMATE_KEY)),
+    IOS_BROWSERSTACK(PLATFORM_IOS,
+                     DRIVER_XCUITEST,
+                     listOf(DEVICE_NAME,
+                            PLATFORM_VERSION,
+                            USERNAME,
+                            AUTOMATE_KEY)),
+    ;
+
+    fun isAndroid() = platformName == PLATFORM_ANDROID
+    fun isIOS() = platformName == PLATFORM_IOS
+    fun isBrowserStack() = this.name.contains(PLATFORM_BROWSERSTACK)
 }

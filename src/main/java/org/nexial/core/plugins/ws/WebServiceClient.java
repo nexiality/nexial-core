@@ -129,6 +129,12 @@ public class WebServiceClient {
         return this;
     }
 
+    @NotNull
+    public WebServiceClient setContentType(String contentType) {
+        priorityConfigs.put(WS_CONTENT_TYPE, contentType);
+        return this;
+    }
+
     public void setVerbose(boolean verbose) { this.verbose = verbose; }
 
     @NotNull
@@ -254,6 +260,9 @@ public class WebServiceClient {
     public PostMultipartRequest toPostMultipartRequest(String url, String payload, String fileParams) {
         PostMultipartRequest request = new PostMultipartRequest(resolveContextForRequest());
         request.setUrl(url);
+        if (priorityConfigs.containsKey(WS_CONTENT_TYPE)) {
+            request.addHeaderIfNotSpecified(WS_CONTENT_TYPE, priorityConfigs.get(WS_CONTENT_TYPE));
+        }
         request.setPayload(payload, StringUtils.split(fileParams, context.getTextDelim()));
         return request;
     }

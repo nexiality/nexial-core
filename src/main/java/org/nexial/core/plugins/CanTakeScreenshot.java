@@ -27,4 +27,6 @@ public interface CanTakeScreenshot {
     String takeScreenshot(TestStep testStep);
 
     String generateScreenshotFilename(TestStep testStep);
+
+    boolean readyToTakeScreenshot();
 }

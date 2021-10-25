@@ -25,8 +25,19 @@ public class HeadlessFunctionTests extends ExcelBasedTests {
 
     @Test
     public void testFormat() throws Exception {
-        ExecutionSummary executionSummary = testViaExcel("unitTest_function.xlsx");
+        ExecutionSummary executionSummary = testViaExcel("unitTest_function.xlsx", "format");
         assertPassFail(executionSummary, "format", TestOutcomeStats.allPassed());
+    }
+
+    @Test
+    public void testDate() throws Exception {
+        ExecutionSummary executionSummary = testViaExcel("unitTest_function.xlsx", "date");
         assertPassFail(executionSummary, "date", TestOutcomeStats.allPassed());
+    }
+
+    @Test
+    public void testProjectFile() throws Exception {
+        ExecutionSummary executionSummary = testViaExcel("unitTest_function.xlsx", "projectfile");
+        assertPassFail(executionSummary, "projectfile", TestOutcomeStats.allPassed());
     }
 }

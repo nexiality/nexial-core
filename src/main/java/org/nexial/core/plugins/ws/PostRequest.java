@@ -61,7 +61,7 @@ public class PostRequest extends Request implements Serializable {
 
     @Override
     public String toString() {
-        return super.toString() + "; " + this.getClass().getSimpleName() + (
+        return super.toString() + "; " + this.getClass().getSimpleName() + " " + (
             payload != null ? "{payload='" + payload + "'}" :
             payloadBytes != null ? "{payload as bytes, length=" + payloadBytes.length + "}" :
             "no payload"

@@ -37,10 +37,14 @@ import org.nexial.commons.utils.FileUtil
 import org.nexial.core.NexialConst.Data.WIN32_CMD
 import org.nexial.core.NexialConst.Mobile.*
 import org.nexial.core.NexialConst.RB
+import org.nexial.core.plugins.browserstack.BrowserStackHelper
 import org.nexial.core.plugins.mobile.MobileType.ANDROID
 import org.nexial.core.plugins.mobile.MobileType.IOS
+import org.nexial.core.plugins.web.WebDriverExceptionHelper
 import org.nexial.core.utils.ConsoleUtils
+import org.openqa.selenium.WebDriverException
 import org.openqa.selenium.remote.DesiredCapabilities
+import org.openqa.selenium.remote.SessionId
 import java.io.File
 import java.io.File.separator
 import java.net.URL
@@ -108,13 +112,13 @@ class MobileService(val profile: MobileProfile, val remoteUrl: String?) {
                                          "nativeWebTap", "safariAllowPopups", "safariIgnoreFraudWarning",
                                          "safariOpenLinksInBackground", "keepKeyChains", "showIOSLog",
                                          "enableAsyncExecuteFromHttps", "skipLogCapture", "skipLogCapture",
-                                         "noReset", "restart", "useNewWDA"
-    )
+                                         "noReset", "restart", "useNewWDA")
 
     private var appiumUrl: URL
     internal val driver: AppiumDriver<MobileElement>
     internal var appiumService: AppiumDriverLocalService? = null
     internal val locatorHelper: MobileLocatorHelper
+    internal var sessionId: SessionId?
 
     constructor(profile: MobileProfile) : this(profile, null)
 
@@ -130,9 +134,9 @@ class MobileService(val profile: MobileProfile, val remoteUrl: String?) {
             profile.mobileType.isIOS()     -> IOSDriver(appiumUrl, newCapabilities())
             else                           -> AppiumDriver(appiumUrl, newCapabilities())
         }
-        if (profile.implicitWaitMs > MIN_WAIT_MS) {
+        if (profile.implicitWaitMs > MIN_WAIT_MS)
             driver.manage().timeouts().implicitlyWait(profile.implicitWaitMs, MILLISECONDS)
-        }
+        sessionId = driver.sessionId
 
         locatorHelper = MobileLocatorHelper(this)
     }
@@ -145,13 +149,19 @@ class MobileService(val profile: MobileProfile, val remoteUrl: String?) {
         if (driver.sessionId != null) {
             try {
                 driver.closeApp()
+            } catch (e: WebDriverException) {
+                ConsoleUtils.error(RB.Mobile.text("error.closeApp", WebDriverExceptionHelper.resolveErrorMessage(e)))
             } catch (e: Exception) {
                 ConsoleUtils.error(RB.Mobile.text("error.closeApp", e.message))
+            } finally {
+                sessionId = null
             }
         }
 
         try {
             driver.quit()
+        } catch (e: WebDriverException) {
+            ConsoleUtils.error(RB.Mobile.text("error.shutdown", WebDriverExceptionHelper.resolveErrorMessage(e)))
         } catch (e: Exception) {
             ConsoleUtils.error(RB.Mobile.text("error.shutdown", e.message))
         }
@@ -242,32 +252,40 @@ class MobileService(val profile: MobileProfile, val remoteUrl: String?) {
     }
 
     private fun newCapabilities(): DesiredCapabilities {
+        val config = profile.config
         val caps = DesiredCapabilities()
+        val mobileType = profile.mobileType
 
         safeSetCap(caps,
                    NEW_COMMAND_TIMEOUT,
-                   if (profile.config.containsKey(NEW_COMMAND_TIMEOUT)) profile.config[NEW_COMMAND_TIMEOUT]
+                   if (config.containsKey(NEW_COMMAND_TIMEOUT)) config[NEW_COMMAND_TIMEOUT]
                    else profile.sessionTimeoutMs / 1000)
 
         safeSetCap(caps,
                    AUTOMATION_NAME,
-                   if (profile.config.containsKey(AUTOMATION_NAME)) profile.config[AUTOMATION_NAME]
-                   else profile.mobileType.automationName)
+                   if (config.containsKey(AUTOMATION_NAME)) config[AUTOMATION_NAME]
+                   else mobileType.automationName)
 
         safeSetCap(caps,
                    PRINT_PAGE_SOURCE_ON_FIND_FAILURE,
-                   if (profile.config.containsKey(PRINT_PAGE_SOURCE_ON_FIND_FAILURE))
-                       BooleanUtils.toBoolean(profile.config[PRINT_PAGE_SOURCE_ON_FIND_FAILURE])
+                   if (config.containsKey(PRINT_PAGE_SOURCE_ON_FIND_FAILURE))
+                       BooleanUtils.toBoolean(config[PRINT_PAGE_SOURCE_ON_FIND_FAILURE])
                    else false)
+        caps.setCapability("realMobile", true)
 
         if (profile.hideKeyboard) {
             caps.setCapability(UNICODE_KEYBOARD, true)
             caps.setCapability(RESET_KEYBOARD, true)
         }
 
-        handleOptionalIntentArguments(caps)
+        when {
+            mobileType.isAndroid()      -> handleOptionalIntentArguments(caps)
+            mobileType.isIOS()          -> caps.setCapability("nativeWebTap", true)
+            mobileType.isBrowserStack() -> BrowserStackHelper.addMobileCapabilities(profile, caps, config)
+        }
 
-        profile.config.map { safeSetCap(caps, it.key, it.value) }
+        config.map { safeSetCap(caps, it.key, it.value) }
+
         return caps
     }
 

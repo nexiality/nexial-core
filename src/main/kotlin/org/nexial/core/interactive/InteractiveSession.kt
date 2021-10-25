@@ -237,6 +237,8 @@ data class InteractiveSession(val context: ExecutionContext) {
         clearActivities()
         clearSteps()
 
+        context.clearScreenshotAgent()
+
         // collect activities and steps for the specified scenario
         val worksheet = excel!!.worksheet(scenario)
         val lastCommandRow = worksheet.findLastDataRow(ADDR_COMMAND_START)

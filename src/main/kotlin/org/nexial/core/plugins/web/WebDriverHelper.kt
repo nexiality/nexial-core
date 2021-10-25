@@ -37,6 +37,7 @@ import org.nexial.core.NexialConst.Data.WIN32_CMD
 import org.nexial.core.NexialConst.Web.OPT_FORCE_IE_32
 import org.nexial.core.SystemVariables.getDefaultBool
 import org.nexial.core.model.ExecutionContext
+import org.nexial.core.plugins.browserstack.BrowserStackLocalHelper
 import org.nexial.core.plugins.ws.WebServiceClient
 import org.nexial.core.plugins.xml.XmlCommand
 import org.nexial.core.utils.ConsoleUtils
@@ -940,42 +941,6 @@ class IEDriverHelper(context: ExecutionContext) : WebDriverHelper(context) {
         this.driverLocation = newConfigHome
         config.home = newConfigHome
         return StringUtils.appendIfMissing(File(newConfigHome).absolutePath, separator) + config.baseName + ".exe"
-    }
-}
-
-class BrowserStackLocalHelper(context: ExecutionContext) : WebDriverHelper(context) {
-    override fun resolveLocalDriverPath(): String {
-        return StringUtils.appendIfMissing(File(context.replaceTokens(config.home)).absolutePath, separator) +
-                config.baseName + if (IS_OS_WINDOWS) ".exe" else ""
-    }
-
-    @Throws(IOException::class)
-    override fun resolveDriverManifest(pollForUpdates: Boolean): WebDriverManifest {
-        val (manifest: WebDriverManifest, hasDriver) = initManifestAndCheckDriver()
-
-        // never check is turned on and we already have a driver, so just keep this one
-        if (manifest.neverCheck && hasDriver) return manifest
-
-        if (pollForUpdates && manifest.lastChecked + config.checkFrequency > System.currentTimeMillis()) {
-            // we still have time.. no need to check now
-            return manifest
-        }
-        // else, need to check online, poll online for newer driver
-
-        val env = when {
-            IS_OS_WINDOWS -> "win32"
-            IS_OS_LINUX -> "linux-x64"
-            IS_OS_MAC -> "darwin-x64"
-            else -> throw IllegalArgumentException("OS $OS_NAME not supported for $browserType")
-        }
-
-        val downloadUrl = "${config.checkUrlBase}/${config.baseName}-$env.zip"
-        ConsoleUtils.log("[BrowserStackLocal] derived download URL as $downloadUrl")
-
-        manifest.driverUrl = downloadUrl
-        manifest.lastChecked = System.currentTimeMillis()
-
-        return manifest
     }
 }
 

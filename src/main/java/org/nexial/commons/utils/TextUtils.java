@@ -677,6 +677,7 @@ public final class TextUtils {
         return StringUtils.replaceEach(text, INLINE_UNFRIENDLY_TEXT, INLINE_BR);
     }
 
+    @Nullable
     public static String substringBetweenFirstPair(String text, String open, String close, boolean includeSep) {
         if (StringUtils.isBlank(text)) { return null; }
         if (StringUtils.isEmpty(open)) { return null; }
@@ -700,6 +701,7 @@ public final class TextUtils {
      * </pre>
      * <code >b</code> would be "mary had a ";
      */
+    @Nullable
     public static String substringBetweenFirstPair(String text, String open, String close) {
         return substringBetweenFirstPair(text, open, close, false);
     }

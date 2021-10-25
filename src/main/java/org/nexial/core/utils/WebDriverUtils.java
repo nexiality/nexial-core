@@ -20,9 +20,11 @@ package org.nexial.core.utils;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.nexial.commons.utils.TextUtils;
+import org.nexial.core.model.ExecutionContext;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.interactions.Actions;
+import org.openqa.selenium.remote.RemoteWebDriver;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -30,6 +32,7 @@ import java.util.Stack;
 
 import static org.nexial.core.NexialConst.CTRL_KEY_END;
 import static org.nexial.core.NexialConst.CTRL_KEY_START;
+import static org.nexial.core.NexialConst.Web.SESSION_ID;
 import static org.openqa.selenium.Keys.*;
 
 public final class WebDriverUtils {
@@ -140,6 +143,20 @@ public final class WebDriverUtils {
         // release all the keys
         actions = addReleaseControlKeys(actions, null, controlKeys);
         return actions;
+    }
+
+    public static String getSessionId(ExecutionContext context) {
+        Map<String, String> scriptRefs = context.gatherScriptReferenceData();
+        String sessionId = scriptRefs.get(SESSION_ID);
+        if (StringUtils.isBlank(sessionId)) {
+            ConsoleUtils.error("Unable to report execution status since session id is blank or cannot be retrieved.");
+            return null;
+        }
+        return sessionId;
+    }
+
+    public static void saveSessionId(ExecutionContext context, RemoteWebDriver driver) {
+        context.addScriptReferenceData(SESSION_ID, driver.getSessionId().toString());
     }
 
     private static Map<String, CharSequence> initControlKeyMapping() {

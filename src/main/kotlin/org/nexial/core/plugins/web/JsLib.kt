@@ -72,13 +72,13 @@ object JsLib {
     fun isTrue(jsObject: Any?) = jsObject != null && StringUtils.equals(jsObject.toString(), "true")
 
     private const val isCheckboxOrRadio =
-        "(arguments[0].hasAttribute('type','checkbox') || arguments[0].hasAttribute('type','radio')"
+        "(arguments[0].hasAttribute('type','checkbox') || arguments[0].hasAttribute('type','radio'))"
 
     @JvmStatic
-    fun check() = "if ($isCheckboxOrRadio) && !arguments[0].checked) { arguments[0].click(); }"
+    fun check() = "if ($isCheckboxOrRadio && !arguments[0].checked) { arguments[0].click(); }"
 
     @JvmStatic
-    fun uncheck() = "if ($isCheckboxOrRadio) && arguments[0].checked) { arguments[0].click(); }"
+    fun uncheck() = "if ($isCheckboxOrRadio && arguments[0].checked) { arguments[0].click(); }"
 
     @JvmStatic
     fun useReact() = "!!document.React || !!document.querySelector('[data-reactroot], [data-reactid], [class^=react]');"
@@ -106,4 +106,6 @@ object JsLib {
         "delete canvas; " +
         "return hexColor;"
 
+    @JvmStatic
+    fun isDisabled() = "return arguments[0] && arguments[0].disabled;"
 }

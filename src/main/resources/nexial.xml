@@ -243,6 +243,9 @@
         <entry key="base">
             <bean class="org.nexial.core.plugins.base.BaseCommand"/>
         </entry>
+        <entry key="browserstack">
+            <bean class="org.nexial.core.plugins.browserstack.BrowserStackCommand"/>
+        </entry>
         <entry key="csv">
             <bean class="org.nexial.core.plugins.io.CsvCommand"/>
         </entry>

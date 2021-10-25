@@ -433,12 +433,12 @@ public class ExecutionContext {
         return getBooleanConfig("web", currentCommandProfiles.get("web"), OPT_DELAY_BROWSER);
     }
 
+    @NotNull
     public MobileService getMobileService(String profile) {
         profile = StringUtils.defaultIfEmpty(profile, CMD_PROFILE_DEFAULT);
         MobileService mobileService = mobileServices.get(profile);
         if (mobileService == null) {
-            MobileProfile mobileProfile = new MobileProfile(this, profile);
-            mobileService = new MobileService(mobileProfile);
+            mobileService = new MobileService(new MobileProfile(this, profile));
             mobileServices.put(profile, mobileService);
 
             // (2021/07/29, automike): added scenarioRef to mark the mobile device in use
@@ -1983,7 +1983,7 @@ public class ExecutionContext {
             f = new Function();
             f.parse(token);
 
-            errorPrefix += " with " + ArrayUtils.getLength(f.parameters) + " parameter(s) - ";
+            errorPrefix += "with " + ArrayUtils.getLength(f.parameters) + " parameter(s) - ";
 
             return Objects.toString(MethodUtils.invokeExactMethod(f.function, f.operation, f.parameters), "");
         } catch (IllegalArgumentException e) {

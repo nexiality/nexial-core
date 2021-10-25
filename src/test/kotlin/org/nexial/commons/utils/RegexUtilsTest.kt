@@ -33,6 +33,12 @@ class RegexUtilsTest {
         val fixture2 = "Invalid input for Federal EIN '0000051801'. [2005"
         val actual2 = RegexUtils.replace(fixture2, "(.+)\\[([\\d]{1,4})\\]", "$1|$2")
         assertEquals("Invalid input for Federal EIN '0000051801'. [2005", actual2)
+
+        val regex = "[@\\-/]"
+        assertEquals("android_browserstack", RegexUtils.replace("android@browserstack", regex, "_"))
+        assertEquals("android_browserstack", RegexUtils.replace("android-browserstack", regex, "_"))
+        assertEquals("android_browserstack", RegexUtils.replace("android/browserstack", regex, "_"))
+        assertEquals("android_browserstack", RegexUtils.replace("android_browserstack", regex, "_"))
     }
 
     @Test

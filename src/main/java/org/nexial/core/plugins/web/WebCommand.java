@@ -750,7 +750,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         By by = locatorHelper.findBy(locator);
         boolean outcome = waitForCondition(maxWait, object -> {
             WebElement elem = driver.findElement(by);
-            return elem != null && !elem.isEnabled();
+            return elem != null && isElementDisabled(elem);
         });
 
         if (outcome) {
@@ -825,7 +825,8 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         }
 
         try {
-            if (!element.isEnabled() || !element.isDisplayed()) {
+            boolean disabled = isElementDisabled(element);
+            if (disabled) {
                 return StepResult.success("Element '%s' found to be disabled as expected", locator);
             } else {
                 return StepResult.fail("Element '%s' is NOT disabled", locator);
@@ -2206,6 +2207,9 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         return postScreenshot(testStep, screenshotFile);
     }
 
+    @Override
+    public boolean readyToTakeScreenshot() { return browser != null && driver != null; }
+
     /**
      * use UserStack API to save browser info/version as data variable
      */
@@ -2596,7 +2600,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     }
 
     protected void resizeSafariAfterOpen() {
-        if ((browser.isRunBrowserStack() && browser.getBrowserstackHelper().browser == safari) ||
+        if ((browser.isRunBrowserStack() && browser.getBrowserStackHelper().browser == safari) ||
             (browser.isRunCrossBrowserTesting() && browser.getCbtHelper().browser == safari)) {
             if (!context.getBooleanData(SAFARI_RESIZED, getDefaultBool(SAFARI_RESIZED))) {
                 // time to resize it now
@@ -2681,6 +2685,14 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         }
 
         return true;
+    }
+
+    private boolean isElementDisabled(WebElement element) {
+        return !element.isEnabled() ||
+               !element.isDisplayed() ||
+               BooleanUtils.toBoolean(Objects.toString(jsExecutor.executeScript(JsLib.isDisabled(), element), "")) ||
+               StringUtils.contains(
+                   Objects.toString(jsExecutor.executeScript(JsLib.getComputedCssValue("pointer-events")), ""), "none");
     }
 
     protected boolean isCheckbox(WebElement element, String locator, boolean checkstate) {
