@@ -21,6 +21,7 @@ import org.nexial.core.NexialConst.*
 import org.nexial.core.NexialConst.Mobile.CONF_SERVER
 import org.nexial.core.NexialConst.Mobile.CONF_SERVER_URL
 import org.nexial.core.SystemVariables.registerSysVar
+import org.nexial.core.plugins.browserstack.BrowserStack.AUTOMATE_KEY
 import org.nexial.core.plugins.browserstack.BrowserStack.Url.HUB
 
 object BrowserStack : CloudWebTesting() {
@@ -75,7 +76,7 @@ object BrowserStack : CloudWebTesting() {
     val KEY_STATUS_SCOPE = registerSysVar(NAMESPACE + NS + "reportStatus")
 
     // context name prefix
-    const val PREFIX = "$NAMESPACE$NS-profile."
+    const val PREFIX = "${NAMESPACE}browserstack-profile."
 
     // special System variable for browserstack integration
     val ENABLE_BROWSERSTACK_INTEGRATION = registerSysVar("$NAMESPACE$NS.enableIntegration", false)
@@ -83,9 +84,10 @@ object BrowserStack : CloudWebTesting() {
 }
 
 class BrowserStackConfig(profile: String, config: Map<String, String>) {
-    val user = config["user"] ?: throw IllegalArgumentException(RB.BrowserStack.text("missing.config", profile, "user"))
-    val automateKey = config["key"]
-                      ?: throw IllegalArgumentException(RB.BrowserStack.text("missing.config", profile, "key"))
+    val user = config[BrowserStack.USERNAME]
+               ?: throw IllegalArgumentException(RB.BrowserStack.text("missing.config", profile, BrowserStack.USERNAME))
+    val automateKey = config[AUTOMATE_KEY]
+                      ?: throw IllegalArgumentException(RB.BrowserStack.text("missing.config", profile, AUTOMATE_KEY))
     val hubUrl = config["$CONF_SERVER.$CONF_SERVER_URL"] ?: HUB
     val useBrowser = config["browser"] != null || config["browserName"] != null
     val useMobile = config["deviceName"] != null

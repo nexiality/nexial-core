@@ -28,12 +28,14 @@ import org.nexial.core.NexialConst.CloudWebTesting.BASE_PROTOCOL
 import org.nexial.core.NexialConst.Mobile.*
 import org.nexial.core.NexialConst.RB
 import org.nexial.core.NexialConst.Web.BROWSER_WINDOW_SIZE
-import org.nexial.core.NexialConst.Ws.*
+import org.nexial.core.NexialConst.Ws.WS_CONTENT_TYPE
+import org.nexial.core.NexialConst.Ws.WS_JSON_CONTENT_TYPE
 import org.nexial.core.SystemVariables
 import org.nexial.core.model.ExecutionContext
 import org.nexial.core.model.ExecutionSummary
 import org.nexial.core.plugins.browserstack.BrowserStack.APP_PREFIX
 import org.nexial.core.plugins.browserstack.BrowserStack.AUTOMATEKEY
+import org.nexial.core.plugins.browserstack.BrowserStack.AUTOMATE_KEY
 import org.nexial.core.plugins.browserstack.BrowserStack.BROWSER
 import org.nexial.core.plugins.browserstack.BrowserStack.BUILD
 import org.nexial.core.plugins.browserstack.BrowserStack.KEY_BROWSER
@@ -50,6 +52,7 @@ import org.nexial.core.plugins.browserstack.BrowserStack.KEY_USERNAME
 import org.nexial.core.plugins.browserstack.BrowserStack.PREFIX
 import org.nexial.core.plugins.browserstack.BrowserStack.PROJECT
 import org.nexial.core.plugins.browserstack.BrowserStack.TEST_NAME
+import org.nexial.core.plugins.browserstack.BrowserStack.USERNAME
 import org.nexial.core.plugins.browserstack.BrowserStack.Url.BASE_URL
 import org.nexial.core.plugins.browserstack.BrowserStack.Url.DELETE_UPLOADED
 import org.nexial.core.plugins.browserstack.BrowserStack.Url.HUB
@@ -409,18 +412,18 @@ class BrowserStackHelper(context: ExecutionContext) : CloudWebTestingPlatform(co
         }
 
         private fun newWebClient(config: BrowserStackConfig, contentType: String) =
-            newWebClient(config).setContentType(contentType)
+            newWebClient(config).addHeader(WS_CONTENT_TYPE, contentType)
 
         private fun newWebClient(config: BrowserStackConfig) =
             WebServiceClient(null)
                 .configureAsQuiet()
                 .disableContextConfiguration()
-                .setPriorityConfiguration(WS_BASIC_USER, config.user)
-                .setPriorityConfiguration(WS_BASIC_PWD, config.automateKey)
+                .withBasicAuth(config.user, config.automateKey)
 
         private fun newBrowserStackConfig(context: ExecutionContext) =
-            BrowserStackConfig("context", mapOf("user" to context.getStringData(KEY_USERNAME),
-                                                "key" to context.getStringData(AUTOMATEKEY)))
+            BrowserStackConfig("context", mapOf(USERNAME to context.getStringData(KEY_USERNAME),
+                                                AUTOMATE_KEY to context.getStringData(AUTOMATEKEY),
+                                                "browser" to context.getStringData(KEY_BROWSER)))
 
         private fun showHttpError(response: Response) =
             "${response.returnCode} ${response.statusText}${lineSeparator()}${response.body}"

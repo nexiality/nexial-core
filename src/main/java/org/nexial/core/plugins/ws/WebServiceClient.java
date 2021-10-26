@@ -69,6 +69,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
 
@@ -88,6 +89,7 @@ public class WebServiceClient {
     protected ExecutionContext context;
     protected boolean verbose = true;
     protected Map<String, String> priorityConfigs = new HashMap<>();
+    protected Map<String, String> priorityHeaders = new HashMap<>();
 
     public WebServiceClient(ExecutionContext context) {
         if (context == null) { context = ExecutionThread.get(); }
@@ -130,8 +132,21 @@ public class WebServiceClient {
     }
 
     @NotNull
-    public WebServiceClient setContentType(String contentType) {
-        priorityConfigs.put(WS_CONTENT_TYPE, contentType);
+    public WebServiceClient addHeader(String name, String value) {
+        priorityHeaders.put(name, value);
+        return this;
+    }
+
+    @NotNull
+    public WebServiceClient withBasicAuth(String username, String password) {
+        priorityConfigs.put(WS_BASIC_USER, username);
+        priorityConfigs.put(WS_BASIC_PWD, password);
+        return this;
+    }
+
+    @NotNull
+    public WebServiceClient withAuthorization(String authorization) {
+        priorityHeaders.put("Authorization", "Bearer " + authorization);
         return this;
     }
 
@@ -139,7 +154,7 @@ public class WebServiceClient {
 
     @NotNull
     public Response get(String url, String queryString) throws IOException {
-        return invokeRequest(new GetRequest(resolveContextForRequest(), url, queryString));
+        return invokeRequest(toGetRequest(url, queryString, null));
     }
 
     /**
@@ -148,21 +163,19 @@ public class WebServiceClient {
      */
     @NotNull
     public Response get(String url, String queryString, Map<String, Object> headers) throws IOException {
-        GetRequest request = new GetRequest(resolveContextForRequest(), url, queryString);
-        request.setHeaders(headers);
-        return invokeRequest(request);
+        return invokeRequest(toGetRequest(url, queryString, headers));
     }
 
     @NotNull
     public Response download(String url, String queryString, String saveTo) throws IOException {
-        GetRequest request = new GetRequest(resolveContextForRequest(), url, queryString);
+        GetRequest request = toGetRequest(url, queryString, null);
         request.setPayloadLocation(saveTo);
         return invokeRequest(request);
     }
 
     @NotNull
     public Response post(String url, String payload) throws IOException {
-        return invokeRequest(new PostRequest(resolveContextForRequest(), url, payload, null));
+        return invokeRequest(toPostRequest(url, payload, null, null));
     }
 
     /**
@@ -171,16 +184,18 @@ public class WebServiceClient {
      */
     @NotNull
     public Response post(String url, String payload, Map<String, Object> headers) throws IOException {
-        PostRequest request = new PostRequest(resolveContextForRequest(), url, payload, null);
-        request.setHeaders(headers);
-        return invokeRequest(request);
+        return invokeRequest(toPostRequest(url, payload, null, headers));
     }
 
     @NotNull
     public Response post(String url, byte[] payload) throws IOException {
-        return invokeRequest(new PostRequest(resolveContextForRequest(), url, null, payload));
+        return invokeRequest(toPostRequest(url, null, payload, null));
     }
 
+    /**
+     * {@literal payload} expected as line-separator list of name=value pairs. {@literal fileParams} is the list of
+     * names (comma-separated) in the {@literal payload} pairs that represent the file(s) to upload via multipart.
+     */
     @NotNull
     public Response postMultipart(String url, String payload, String fileParams) throws IOException {
         return invokeRequest(toPostMultipartRequest(url, payload, fileParams));
@@ -193,77 +208,129 @@ public class WebServiceClient {
 
     @NotNull
     public Response graphql(String url, byte[] payload) throws IOException {
-        return invokeRequest(new GraphQLRequest(resolveContextForRequest(), url, null, payload));
+        return invokeRequest(toGraphQLRequest(url, null, payload));
     }
 
     @NotNull
     public Response graphql(String url, String payload) throws IOException {
-        return invokeRequest(new GraphQLRequest(resolveContextForRequest(), url, payload, null));
+        return invokeRequest(toGraphQLRequest(url, payload, null));
     }
 
     @NotNull
-    public Response head(String url) throws IOException {
-        return invokeRequest(new HeadRequest(resolveContextForRequest(), url, null));
-    }
+    public Response head(String url) throws IOException { return invokeRequest(toHeadRequest(url)); }
 
     @NotNull
     public Response delete(String url, String queryString) throws IOException {
-        return invokeRequest(new DeleteRequest(resolveContextForRequest(), url, queryString));
+        return invokeRequest(toDeleteRequest(url, queryString, null));
     }
-
 
     @NotNull
     public Response delete(String url, String queryString, Map<String, Object> headers) throws IOException {
-        DeleteRequest request = new DeleteRequest(resolveContextForRequest(), url, queryString);
-        request.setHeaders(headers);
-        return invokeRequest(request);
+        return invokeRequest(toDeleteRequest(url, queryString, headers));
     }
 
     @NotNull
     public Response deleteWithPayload(String url, String payload) throws IOException {
-        return invokeRequest(new DeleteWithPayloadRequest(resolveContextForRequest(), url, payload, null));
+        return invokeRequest(toDeleteRequestWithPayload(url, payload, null));
     }
 
     @NotNull
     public Response deleteWithPayload(String url, byte[] payload) throws IOException {
-        return invokeRequest(new DeleteWithPayloadRequest(resolveContextForRequest(), url, null, payload));
+        return invokeRequest(toDeleteRequestWithPayload(url, null, payload));
     }
 
     @NotNull
     public Response patch(String url, String payload) throws IOException {
-        return invokeRequest(new PatchRequest(resolveContextForRequest(), url, payload, null));
+        return invokeRequest(toPatchRequest(url, payload, null));
     }
 
     @NotNull
     public Response patch(String url, byte[] payload) throws IOException {
-        return invokeRequest(new PatchRequest(resolveContextForRequest(), url, null, payload));
+        return invokeRequest(toPatchRequest(url, null, payload));
     }
 
     @NotNull
     public Response put(String url, String payload) throws IOException {
-        return invokeRequest(new PutRequest(resolveContextForRequest(), url, payload, null));
-    }
-
-    @NotNull
-    public Response putWithPayload(String url, byte[] payload, Map<String, Object> headers) throws IOException {
-        PutRequest request = new PutRequest(resolveContextForRequest(), url, null, payload);
-        if (MapUtils.isNotEmpty(headers)) { request.setHeaders(headers); }
-        return invokeRequest(request);
+        return invokeRequest(toPutRequest(url, payload, null, null));
     }
 
     @NotNull
     public Response put(String url, byte[] payload) throws IOException {
-        return invokeRequest(new PutRequest(resolveContextForRequest(), url, null, payload));
+        return invokeRequest(toPutRequest(url, null, payload, null));
+    }
+
+    @NotNull
+    public Response putWithPayload(String url, byte[] payloadBytes, Map<String, Object> headers) throws IOException {
+        return invokeRequest(toPutRequest(url, null, payloadBytes, headers));
+    }
+
+    @Nonnull
+    protected GetRequest toGetRequest(String url, String queryString, Map<String, Object> headers) {
+        GetRequest request = new GetRequest(resolveContextForRequest(), url, queryString);
+        if (MapUtils.isNotEmpty(headers)) { request.setHeaders(headers); }
+        if (MapUtils.isNotEmpty(priorityHeaders)) { priorityHeaders.forEach(request::addHeaderIfNotSpecified); }
+        return request;
+    }
+
+    @Nonnull
+    protected PostRequest toPostRequest(String url, String payload, byte[] payloadBytes, Map<String, Object> headers) {
+        PostRequest request = new PostRequest(resolveContextForRequest(), url, payload, payloadBytes);
+        if (MapUtils.isNotEmpty(headers)) { request.setHeaders(headers); }
+        if (MapUtils.isNotEmpty(priorityHeaders)) { priorityHeaders.forEach(request::addHeaderIfNotSpecified); }
+        return request;
     }
 
     @NotNull
     public PostMultipartRequest toPostMultipartRequest(String url, String payload, String fileParams) {
         PostMultipartRequest request = new PostMultipartRequest(resolveContextForRequest());
         request.setUrl(url);
-        if (priorityConfigs.containsKey(WS_CONTENT_TYPE)) {
-            request.addHeaderIfNotSpecified(WS_CONTENT_TYPE, priorityConfigs.get(WS_CONTENT_TYPE));
-        }
+        if (MapUtils.isNotEmpty(priorityHeaders)) { priorityHeaders.forEach(request::addHeaderIfNotSpecified); }
         request.setPayload(payload, StringUtils.split(fileParams, context.getTextDelim()));
+        return request;
+    }
+
+    @Nonnull
+    protected GraphQLRequest toGraphQLRequest(String url, String payload, byte[] payloadBytes) {
+        GraphQLRequest request = new GraphQLRequest(resolveContextForRequest(), url, payload, payloadBytes);
+        if (MapUtils.isNotEmpty(priorityHeaders)) { priorityHeaders.forEach(request::addHeaderIfNotSpecified); }
+        return request;
+    }
+
+    @Nonnull
+    protected HeadRequest toHeadRequest(String url) {
+        HeadRequest request = new HeadRequest(resolveContextForRequest(), url, null);
+        if (MapUtils.isNotEmpty(priorityHeaders)) { priorityHeaders.forEach(request::addHeaderIfNotSpecified); }
+        return request;
+    }
+
+    @Nonnull
+    protected DeleteRequest toDeleteRequest(String url, String queryString, Map<String, Object> headers) {
+        DeleteRequest request = new DeleteRequest(resolveContextForRequest(), url, queryString);
+        if (MapUtils.isNotEmpty(headers)) { request.setHeaders(headers); }
+        if (MapUtils.isNotEmpty(priorityHeaders)) { priorityHeaders.forEach(request::addHeaderIfNotSpecified); }
+        return request;
+    }
+
+    @Nonnull
+    protected DeleteWithPayloadRequest toDeleteRequestWithPayload(String url, String payload, byte[] payloadBytes) {
+        DeleteWithPayloadRequest request =
+            new DeleteWithPayloadRequest(resolveContextForRequest(), url, payload, payloadBytes);
+        if (MapUtils.isNotEmpty(priorityHeaders)) { priorityHeaders.forEach(request::addHeaderIfNotSpecified); }
+        return request;
+    }
+
+    @Nonnull
+    protected PatchRequest toPatchRequest(String url, String payload, byte[] payloadBytes) {
+        PatchRequest request = new PatchRequest(resolveContextForRequest(), url, payload, payloadBytes);
+        if (MapUtils.isNotEmpty(priorityHeaders)) { priorityHeaders.forEach(request::addHeaderIfNotSpecified); }
+        return request;
+    }
+
+    @Nonnull
+    private PutRequest toPutRequest(String url, String payload, byte[] payloadBytes, Map<String, Object> headers) {
+        PutRequest request = new PutRequest(resolveContextForRequest(), url, payload, payloadBytes);
+        if (MapUtils.isNotEmpty(headers)) { request.setHeaders(headers); }
+        if (MapUtils.isNotEmpty(priorityHeaders)) { priorityHeaders.forEach(request::addHeaderIfNotSpecified); }
         return request;
     }
 
@@ -271,13 +338,15 @@ public class WebServiceClient {
     public PutMultipartRequest toPutMultipartRequest(String url, String payload, String fileParams) {
         PutMultipartRequest request = new PutMultipartRequest(resolveContextForRequest());
         request.setUrl(url);
+        if (MapUtils.isNotEmpty(priorityHeaders)) { priorityHeaders.forEach(request::addHeaderIfNotSpecified); }
         request.setPayload(payload, StringUtils.split(fileParams, context.getTextDelim()));
         return request;
     }
 
     @NotNull
     public static String hideAuthDetails(RequestLine requestLine) {
-        return requestLine.getMethod() + " " + hideAuthDetails(requestLine.getUri()) + " " +
+        return requestLine.getMethod() + " " +
+               hideAuthDetails(requestLine.getUri()) + " " +
                requestLine.getProtocolVersion();
     }
 
