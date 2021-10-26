@@ -278,11 +278,9 @@ class MobileService(val profile: MobileProfile, val remoteUrl: String?) {
             caps.setCapability(RESET_KEYBOARD, true)
         }
 
-        when {
-            mobileType.isAndroid()      -> handleOptionalIntentArguments(caps)
-            mobileType.isIOS()          -> caps.setCapability("nativeWebTap", true)
-            mobileType.isBrowserStack() -> BrowserStackHelper.addMobileCapabilities(profile, caps, config)
-        }
+        if (mobileType.isAndroid()) handleOptionalIntentArguments(caps)
+        if (mobileType.isIOS()) caps.setCapability("nativeWebTap", true)
+        if (mobileType.isBrowserStack()) BrowserStackHelper.addMobileCapabilities(profile, caps, config)
 
         config.map { safeSetCap(caps, it.key, it.value) }
 

@@ -462,7 +462,7 @@ class BrowserStackHelper(context: ExecutionContext) : CloudWebTestingPlatform(co
 
             if (!config.containsKey(TEST_NAME)) config[TEST_NAME] =
                 if (execDef != null && execDef.testScript != null)
-                    File(execDef.testScript).name
+                    File(execDef.testScript).name.substringBeforeLast(".")
                 else
                     context.currentScenario
 
@@ -472,6 +472,22 @@ class BrowserStackHelper(context: ExecutionContext) : CloudWebTestingPlatform(co
         fun addMobileCapabilities(profile: MobileProfile,
                                   caps: DesiredCapabilities,
                                   config: MutableMap<String, String>) {
+
+            // appId is required for browserstack integration
+            // accept either:
+            //      bs://9fg0rt...
+            //      MyCustomId
+            if (config.containsKey(APP)) {
+                caps.setCapability(APP, config.remove(APP)!!)
+            } else if (config.containsKey(CONF_APP_ID)) {
+                caps.setCapability(APP, config.remove(CONF_APP_ID)!!)
+            } else {
+                throw IllegalArgumentException(RB.BrowserStack.text("missing.appOrAppId", profile.profile))
+            }
+
+            caps.setCapability("browserstack.user", config.remove(BrowserStack.USERNAME))
+            caps.setCapability("browserstack.key", config.remove(BrowserStack.AUTOMATE_KEY))
+
             caps.setCapability("project", config.remove(PROJECT))
             caps.setCapability("build", config.remove(BUILD))
             caps.setCapability("name", config.remove(TEST_NAME))
@@ -488,18 +504,6 @@ class BrowserStackHelper(context: ExecutionContext) : CloudWebTestingPlatform(co
             if (profile.geoLocation != null) caps.setCapability("browserstack.gpsLocation", profile.geoLocation)
 
             caps.setCapability("browserstack.acceptInsecureCerts", true)
-
-            // appId is required for browserstack integration
-            // accept either:
-            //      bs://9fg0rt...
-            //      MyCustomId
-            if (config.containsKey(APP)) {
-                caps.setCapability(APP, config.remove(APP)!!)
-            } else if (config.containsKey(CONF_APP_ID)) {
-                caps.setCapability(APP, config.remove(CONF_APP_ID)!!)
-            } else {
-                throw IllegalArgumentException(RB.BrowserStack.text("missing.appOrAppId", profile.profile))
-            }
         }
     }
 }

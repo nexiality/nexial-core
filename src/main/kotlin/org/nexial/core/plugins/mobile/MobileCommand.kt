@@ -152,12 +152,13 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
 
         mobileService = context.getMobileService(profile)
 
-        val appId = mobileService!!.profile.appId
+        val profileConfig = mobileService!!.profile
+        val appId = profileConfig.appId
         if (StringUtils.isNotBlank(appId)) {
             val driver = mobileService!!.driver
             val appState = driver.queryAppState(appId)
             if (appState == NOT_INSTALLED) throw IllegalArgumentException(RB.Mobile.text("missing.app", appId))
-            if (appState != RUNNING_IN_FOREGROUND) launchApp(appId)
+            if (!profileConfig.mobileType.isBrowserStack() && appState != RUNNING_IN_FOREGROUND) launchApp(appId)
         }
 
         return StepResult.success()
