@@ -444,6 +444,13 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
         String previousMenuContainer = "Menu";
         String[] menuItems = StringUtils.split(menu, context.getTextDelim());
         for (String item : menuItems) {
+            // support keystrokes
+            if (TextUtils.isBetween(item, "{", "}")) {
+                // keystrokes found
+                NativeInputHelper.typeKeys(Collections.singletonList(item));
+                continue;
+            }
+
             xpath += "/*[@ControlType='ControlType.Menu'";
             if (StringUtils.isNotBlank(previousMenuContainer)) { xpath += " and @Name='" + previousMenuContainer + "'";}
             xpath += "]";
