@@ -127,7 +127,10 @@ class CssHelper(private val delegator: WebCommand) {
     fun getCssValue(locator: String, property: String): String {
         requiresNotBlank(property, "invalid css property", property)
         val element = locatorHelper.findElement(locator, false)
-        return (element.getCssValue(property) ?: "").trim().lowercase()
+        return if (element == null)
+            ""
+        else
+            (element.getCssValue(property) ?: "").trim().lowercase()
     }
 
     internal fun toColor(colorValue: String): Color? {

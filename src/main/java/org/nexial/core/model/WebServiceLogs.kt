@@ -91,7 +91,17 @@ class WebServiceDetailLog(
         val lines = content.split("\n")
         this.url = extractValue(lines, "Request URL")
         this.method = extractValue(lines, "Request Method")
-        this.returnCode = extractValue(lines, "Return Code").toInt()
+        this.returnCode = resolveReturnCode(lines)
+    }
+
+    private fun resolveReturnCode(lines: List<String>): Int {
+        val returnCode = extractValue(lines, "Return Code")
+        return if (StringUtils.isNotBlank(returnCode))
+            returnCode.toInt()
+        else {
+            val exception = extractValue(lines, "Exception")
+            if (StringUtils.isNotBlank(exception)) 500 else 503
+        }
     }
 
     private fun extractValue(lines: List<String>, startWith: String) =

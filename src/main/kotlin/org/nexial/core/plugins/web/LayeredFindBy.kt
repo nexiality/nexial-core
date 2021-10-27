@@ -47,12 +47,13 @@ class LayeredFindBy(val locators: List<String>) : By(), Serializable {
 
         if (CollectionUtils.isEmpty(childFindBy)) return matches
 
-        return matches.map { container ->
-            if (childFindBy.size == 1) {
-                findElements(container, childFindBy[0], listOf())
-            } else {
-                findElements(container, childFindBy[0], childFindBy.drop(1))
-            }
+        return matches.mapNotNull { container ->
+            (
+                if (childFindBy.size == 1)
+                    findElements(container, childFindBy[0], listOf())
+                else
+                    findElements(container, childFindBy[0], childFindBy.drop(1))
+            ).filterNotNull()
         }.flatten().toMutableList()
     }
 

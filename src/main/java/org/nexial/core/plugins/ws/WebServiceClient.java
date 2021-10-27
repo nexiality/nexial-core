@@ -535,13 +535,17 @@ public class WebServiceClient {
         if (context == null) { return; }
         if (e == null) { return; }
 
-        String error = ExceptionUtils.getRootCauseMessage(e);
+        String error = ExceptionUtils.getMessage(e);
         ConsoleUtils.error(error);
 
         TestStep testStep = context.getCurrentTestStep();
 
         if (shouldLogDetail()) {
             StringBuilder details = new StringBuilder();
+            // added for clarity... even though with exception there really isn't any return code nor status text
+            // this will help with execution summary report
+            appendLog(details, "Return Code     : ", 500);
+            appendLog(details, "Status Text     : ", error);
             appendLog(details, "ERROR           : ", error);
             appendLog(details, "Exception       : ", ExceptionUtils.getStackTrace(e));
             writeDetailLog(testStep, details.toString());

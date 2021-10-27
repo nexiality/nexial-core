@@ -201,9 +201,9 @@ class LocatorHelper internal constructor(private val delegator: WebCommand) {
         }
     }
 
-    fun findElement(locator: String): WebElement = findElement(locator, delegator.isHighlightEnabled)
+    fun findElement(locator: String) = findElement(locator, delegator.isHighlightEnabled)
 
-    internal fun findElement(locator: String, withHighlight: Boolean): WebElement {
+    internal fun findElement(locator: String, withHighlight: Boolean): WebElement? {
         delegator.ensureReady()
 
         val by = findBy(locator)
@@ -216,10 +216,10 @@ class LocatorHelper internal constructor(private val delegator: WebCommand) {
                 if (useExplicitWait)
                     newFluentWait(pollWaitMs)
                         .withMessage("find element via locator $locator")
-                        .until<WebElement>(Function { findElement(it!!, by) })
+                        .until<WebElement> { findElement(it!!, by) }
                 else
                     findElement(driver, by)
-            if (withHighlight && target.isDisplayed) delegator.highlight(target)
+            if (withHighlight && target != null && target.isDisplayed) delegator.highlight(target)
             target
         } catch (e: TimeoutException) {
             val err = "Timed out while looking for web element(s) that match '" + locator + "'; " +
@@ -229,13 +229,13 @@ class LocatorHelper internal constructor(private val delegator: WebCommand) {
         }
     }
 
-    fun findElement(driver: WebDriver, by: By): WebElement {
+    fun findElement(driver: WebDriver, by: By): WebElement? {
         delegator.alert.preemptiveDismissAlert()
         return driver.findElement(by)
     }
 
-    fun toElement(locator: String) = findElement(locator)
-                                     ?: throw NoSuchElementException("element not found via '${locator}'")
+    fun toElement(locator: String) =
+        findElement(locator) ?: throw NoSuchElementException("element not found via '${locator}'")
 
     protected fun findElements(locator: String): List<WebElement>? {
         delegator.ensureReady()
