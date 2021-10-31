@@ -78,7 +78,6 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import javax.imageio.ImageIO;
 import javax.validation.constraints.NotNull;
 
@@ -1304,9 +1303,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     public StepResult clickByLabel(String label) { return clickByLabelAndWait(label, ""); }
 
     public StepResult clickByLabelAndWait(String label, String waitMs) {
-        String xpath = LocatorHelper.resolveLabelXpath(label);
-        StepResult result = assertOneMatch(xpath);
-        return result.failed() ? result : clickAndWait(xpath, waitMs);
+        return clickAndWait(LocatorHelper.resolveLabelXpath(label), waitMs);
     }
 
     public StepResult clickOffset(String locator, String x, String y) {
@@ -2915,7 +2912,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         ConsoleUtils.log("clicked -> " + jsExecutor.executeScript("arguments[0].click(); return true;", element));
     }
 
-    @Nullable
+    @NotNull
     protected WebElement findFirstMatchedElement(String locator) {
         WebElement element;
         try {
@@ -3128,44 +3125,9 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
     protected boolean isElementPresent(String locator) { return findElement(locator) != null; }
 
-    protected List<WebElement> findElements(String locator) {
-        return locatorHelper.findElements(locator);
-        // ensureReady();
-        // By by = locatorHelper.findBy(locator);
-        // long pollWaitMs = getPollWaitMs();
-        // try {
-        //     return useExplicitWait() ?
-        //            newFluentWait(pollWaitMs).withMessage("find element(s) via locator " + locator)
-        //                                     .until(driver -> findElements(driver, by)) :
-        //            findElements(driver, by);
-        // } catch (TimeoutException e) {
-        //     log("Timed out while looking for web element(s) that match '" + locator + "'; " +
-        //         "nexial.pollWaitMs=" + pollWaitMs);
-        //     return null;
-        // } catch (NoSuchElementException e) {
-        //     return null;
-        // }
-    }
+    protected List<WebElement> findElements(String locator) { return locatorHelper.findElements(locator); }
 
-    protected WebElement findElement(String locator) {
-        return locatorHelper.findElement(locator);
-        // ensureReady();
-        // By by = locatorHelper.findBy(locator);
-        // long pollWaitMs = getPollWaitMs();
-        // try {
-        //     WebElement target = useExplicitWait() ?
-        //                         newFluentWait(pollWaitMs).withMessage("find element via locator " + locator)
-        //                                                  .until(driver -> findElement(driver, by)) :
-        //                         findElement(driver, by);
-        //     if (isHighlightEnabled() && target != null && target.isDisplayed()) { highlight(target); }
-        //     return target;
-        // } catch (TimeoutException e) {
-        //     String err = "Timed out while looking for web element(s) that match '" + locator + "'; " +
-        //                  "nexial.pollWaitMs=" + pollWaitMs;
-        //     log(err);
-        //     throw new NoSuchElementException(err);
-        // }
-    }
+    protected WebElement findElement(String locator) { return locatorHelper.findElement(locator); }
 
     protected WebElement toElement(String locator) { return locatorHelper.toElement(locator); }
 
@@ -3689,11 +3651,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     }
 
     private boolean isElementVisible(WebElement element) {
-        if (element == null || !element.isDisplayed()) {
-            return false;
-        } else {
-            return isTrue(jsExecutor.executeScript(JsLib.isVisible(), element));
-        }
+        return element != null && element.isDisplayed() && isTrue(jsExecutor.executeScript(JsLib.isVisible(), element));
     }
 
     protected StepResult saveTextSubstring(String var, String locator, String delimStart, String delimEnd) {
