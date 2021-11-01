@@ -78,14 +78,16 @@ class CrossBrowserTestingHelper(context: ExecutionContext) : CloudWebTestingPlat
         isPageSourceSupported = false
 
         val useSecure = context.getBooleanData(OPT_SECURE_BROWSERSTACK, getDefaultBool(OPT_SECURE_BROWSERSTACK))
-        val url = "${if (useSecure) BASE_PROTOCOL else BASE_PROTOCOL2}${URLEncodingUtils.encodeAuth(username)}:$authKey$BASE_URL"
+        val protocol = if (useSecure) BASE_PROTOCOL else BASE_PROTOCOL2
+        val url = "$protocol${URLEncodingUtils.encodeAuth(username)}:$authKey$BASE_URL"
 
         return try {
+            ConsoleUtils.log("connecting to CBT via $protocol$BASE_URL")
             val driver = RemoteWebDriver(URL(url), capabilities)
             WebDriverUtils.saveSessionId(context, driver)
             driver
         } catch (e: MalformedURLException) {
-            throw RuntimeException("Unable to initialize CrossBrowserTesting session: ${e.message}", e)
+            throw RuntimeException("Unable to connect to CrossBrowserTesting: ${e.message}", e)
         } catch (e: WebDriverException) {
             throw RuntimeException("Unable to initialize CrossBrowserTesting session: ${e.message}", e)
         }

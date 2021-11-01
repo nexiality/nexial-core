@@ -156,7 +156,9 @@ public final class WebDriverUtils {
     }
 
     public static void saveSessionId(ExecutionContext context, RemoteWebDriver driver) {
-        context.addScriptReferenceData(SESSION_ID, driver.getSessionId().toString());
+        String sessionId = driver.getSessionId().toString();
+        ConsoleUtils.log("saving webdriver sessionId '" + sessionId + "' to script-ref '" + SESSION_ID + "'");
+        context.addScriptReferenceData(SESSION_ID, sessionId);
     }
 
     private static Map<String, CharSequence> initControlKeyMapping() {

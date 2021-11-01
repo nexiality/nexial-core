@@ -1701,7 +1701,7 @@ public final class NexialConst {
     }
 
     public static final class CrossBrowserTesting extends CloudWebTesting {
-        public static final String BASE_URL = "@hub.crossbrowsertesting.com:80/wd/hub";
+        public static final String BASE_URL = "@hub.crossbrowsertesting.com/wd/hub";
         private static final String SESSION_URL_SUFFIX = "crossbrowsertesting.com/api/v3/selenium/${session}";
         public static final String SESSION_URL = BASE_PROTOCOL + SESSION_URL_SUFFIX;
         public static final String SESSION_URL2 = BASE_PROTOCOL2 + SESSION_URL_SUFFIX;
