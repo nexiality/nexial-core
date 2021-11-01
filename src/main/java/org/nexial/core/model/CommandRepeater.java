@@ -17,10 +17,6 @@
 
 package org.nexial.core.model;
 
-import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-import java.util.List;
-
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
@@ -33,6 +29,10 @@ import org.nexial.core.plugins.web.WebDriverExceptionHelper;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.FlowControlUtils;
 import org.openqa.selenium.WebDriverException;
+
+import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.apache.commons.lang3.builder.ToStringStyle.SIMPLE_STYLE;
 import static org.nexial.core.CommandConst.CMD_SECTION;
@@ -147,7 +147,7 @@ public class CommandRepeater {
                         // if (result.failed()) {
                         if (result.isError()) {
                             // we are done, can't pretend everything's fine
-                            if (shouldFailFast(context, testStep)) { return result; }
+                            if (shouldFailFast(context, testStep) || context.isEndImmediate()) { return result; }
                             // else , fail-fast not in effect, so we push on
                         }
                         // else, continues on
@@ -190,6 +190,7 @@ public class CommandRepeater {
                                                      Math.max(context.getIntData(FAIL_COUNT), 0) +
                                                      " in execution. Error found in " +
                                                      ExecutionLogger.toHeader(testStep) + ": " + result.getMessage());
+                                if (context.isEndImmediate() || context.isFailImmediate()) { return result; }
                             }
                         }
                     }
@@ -265,7 +266,7 @@ public class CommandRepeater {
         String error = resolveRootCause(e);
         logError(context, testStep, error);
 
-        if (shouldFailFast(context, testStep)) { return StepResult.fail(error); }
+        if (shouldFailFast(context, testStep) || context.isEndImmediate()) { return StepResult.fail(error); }
 
         // else, fail-fast not in effect, so we push on
         return null;

@@ -102,7 +102,7 @@ class MacroExecutor(private val initialTestStep: TestStep, val macro: Macro,
             val result = execute(testStep)
 
             if (result == null) {
-                // just to be safe  for upcoming macros
+                // just to be safe for upcoming macros
                 updateOutputToContext()
                 return StepResult.fail("Unable to execute step ${testStep.commandFQN}")
             }
