@@ -1616,6 +1616,8 @@ public class ExecutionContext {
         String crypt = RegexUtils.firstMatches(text, REGEX_CRYPT);
         while (StringUtils.isNotBlank(crypt)) {
             String decrypt = CellTextReader.getText(crypt);
+            // decryption failed?
+            if (StringUtils.equals(crypt, decrypt)) { return text; }
             if (StringUtils.isNotBlank(decrypt)) {
                 text = StringUtils.replace(text, crypt, decrypt);
                 crypt = RegexUtils.firstMatches(text, REGEX_CRYPT);
