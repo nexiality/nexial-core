@@ -25,12 +25,15 @@ import org.apache.commons.text.WordUtils
 import org.nexial.commons.proc.RuntimeUtils
 import org.nexial.core.NexialConst.BrowserType.*
 import org.nexial.core.NexialConst.CloudWebTesting.BASE_PROTOCOL
+import org.nexial.core.NexialConst.CloudWebTesting.BASE_PROTOCOL2
 import org.nexial.core.NexialConst.Mobile.*
 import org.nexial.core.NexialConst.RB
 import org.nexial.core.NexialConst.Web.BROWSER_WINDOW_SIZE
+import org.nexial.core.NexialConst.Web.OPT_SECURE_BROWSERSTACK
 import org.nexial.core.NexialConst.Ws.WS_CONTENT_TYPE
 import org.nexial.core.NexialConst.Ws.WS_JSON_CONTENT_TYPE
 import org.nexial.core.SystemVariables
+import org.nexial.core.SystemVariables.getDefaultBool
 import org.nexial.core.model.ExecutionContext
 import org.nexial.core.model.ExecutionSummary
 import org.nexial.core.plugins.browserstack.BrowserStack.APP_PREFIX
@@ -56,6 +59,7 @@ import org.nexial.core.plugins.browserstack.BrowserStack.USERNAME
 import org.nexial.core.plugins.browserstack.BrowserStack.Url.BASE_URL
 import org.nexial.core.plugins.browserstack.BrowserStack.Url.DELETE_UPLOADED
 import org.nexial.core.plugins.browserstack.BrowserStack.Url.HUB
+import org.nexial.core.plugins.browserstack.BrowserStack.Url.HUB2
 import org.nexial.core.plugins.browserstack.BrowserStack.Url.LIST_BROWSER
 import org.nexial.core.plugins.browserstack.BrowserStack.Url.LIST_DEVICES
 import org.nexial.core.plugins.browserstack.BrowserStack.Url.LIST_UPLOADED
@@ -118,9 +122,11 @@ class BrowserStackHelper(context: ExecutionContext) : CloudWebTestingPlatform(co
 
         isPageSourceSupported = false
 
+        val useSecure = context.getBooleanData(OPT_SECURE_BROWSERSTACK, getDefaultBool(OPT_SECURE_BROWSERSTACK))
+        val url = "${if (useSecure) BASE_PROTOCOL else BASE_PROTOCOL2}$username:$automateKey${BASE_URL}"
+
         return try {
-            val driver =
-                RemoteWebDriver(URL("$BASE_PROTOCOL$username:$automateKey${BASE_URL}"), capabilities)
+            val driver = RemoteWebDriver(URL(url), capabilities)
             WebDriverUtils.saveSessionId(context, driver)
 
             // safari's usually a bit slower to come up...
@@ -406,6 +412,11 @@ class BrowserStackHelper(context: ExecutionContext) : CloudWebTestingPlatform(co
             val config1 = context.getDataByPrefix(StringUtils.appendIfMissing(profile, "."))
             if (config1.isEmpty()) throw IllegalArgumentException(RB.BrowserStack.text("missing.config", profile, "*"))
 
+            if (!config1.containsKey("$CONF_SERVER.$CONF_SERVER_URL")) {
+                val useSecure = context.getBooleanData(OPT_SECURE_BROWSERSTACK, getDefaultBool(OPT_SECURE_BROWSERSTACK))
+                config1["$CONF_SERVER.$CONF_SERVER_URL"] = if (useSecure) HUB else HUB2
+            }
+
             val newConfig = BrowserStackConfig(profile, config1)
             context.setData(key, newConfig)
             return newConfig
@@ -420,10 +431,15 @@ class BrowserStackHelper(context: ExecutionContext) : CloudWebTestingPlatform(co
                 .disableContextConfiguration()
                 .withBasicAuth(config.user, config.automateKey)
 
-        private fun newBrowserStackConfig(context: ExecutionContext) =
-            BrowserStackConfig("context", mapOf(USERNAME to context.getStringData(KEY_USERNAME),
-                                                AUTOMATE_KEY to context.getStringData(AUTOMATEKEY),
-                                                "browser" to context.getStringData(KEY_BROWSER)))
+        private fun newBrowserStackConfig(context: ExecutionContext): BrowserStackConfig {
+            val useSecure = context.getBooleanData(OPT_SECURE_BROWSERSTACK, getDefaultBool(OPT_SECURE_BROWSERSTACK))
+            return BrowserStackConfig("context", mapOf(
+                USERNAME to context.getStringData(KEY_USERNAME),
+                AUTOMATE_KEY to context.getStringData(AUTOMATEKEY),
+                "browser" to context.getStringData(KEY_BROWSER),
+                "$CONF_SERVER.$CONF_SERVER_URL" to if (useSecure) HUB else HUB2
+            ))
+        }
 
         private fun showHttpError(response: Response) =
             "${response.returnCode} ${response.statusText}${lineSeparator()}${response.body}"

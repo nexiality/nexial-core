@@ -28,8 +28,10 @@ import org.nexial.core.NexialConst.CrossBrowserTesting.*
 import org.nexial.core.NexialConst.Data.BUILD_NO
 import org.nexial.core.NexialConst.Data.SCRIPT_REF_PREFIX
 import org.nexial.core.NexialConst.Web
+import org.nexial.core.NexialConst.Web.OPT_SECURE_BROWSERSTACK
 import org.nexial.core.NexialConst.Ws.WS_BASIC_PWD
 import org.nexial.core.NexialConst.Ws.WS_BASIC_USER
+import org.nexial.core.SystemVariables.getDefaultBool
 import org.nexial.core.model.ExecutionContext
 import org.nexial.core.model.ExecutionSummary
 import org.nexial.core.plugins.web.WebDriverHelper.Companion.newInstance
@@ -75,8 +77,10 @@ class CrossBrowserTestingHelper(context: ExecutionContext) : CloudWebTestingPlat
         }
         isPageSourceSupported = false
 
+        val useSecure = context.getBooleanData(OPT_SECURE_BROWSERSTACK, getDefaultBool(OPT_SECURE_BROWSERSTACK))
+        val url = "${if (useSecure) BASE_PROTOCOL else BASE_PROTOCOL2}${URLEncodingUtils.encodeAuth(username)}:$authKey$BASE_URL"
+
         return try {
-            val url = "$BASE_PROTOCOL${URLEncodingUtils.encodeAuth(username)}:$authKey$BASE_URL"
             val driver = RemoteWebDriver(URL(url), capabilities)
             WebDriverUtils.saveSessionId(context, driver)
             driver
@@ -207,8 +211,9 @@ class CrossBrowserTestingHelper(context: ExecutionContext) : CloudWebTestingPlat
             context.setData(WS_BASIC_USER, context.getStringData(NS + KEY_USERNAME))
             context.setData(WS_BASIC_PWD, context.getStringData(NS + KEY_AUTHKEY))
 
+            val useSecure = context.getBooleanData(OPT_SECURE_BROWSERSTACK, getDefaultBool(OPT_SECURE_BROWSERSTACK))
             val sessionId = WebDriverUtils.getSessionId(context) ?: return
-            val statusApi = StringUtils.replace(SESSION_URL, "{session}", sessionId)
+            val statusApi = StringUtils.replace(if (useSecure) SESSION_URL else SESSION_URL2, "{session}", sessionId)
 
             val wsCommand = context.findPlugin("ws") as? WsCommand ?: return
             try {

@@ -27,7 +27,8 @@ import org.nexial.core.plugins.browserstack.BrowserStack.Url.HUB
 object BrowserStack : CloudWebTesting() {
     object Url {
         const val BASE_URL = "@hub.browserstack.com/wd/hub"
-        const val HUB = "https://hub-cloud.browserstack.com/wd/hub"
+        const val HUB = "${BASE_PROTOCOL}hub-cloud.browserstack.com/wd/hub"
+        const val HUB2 = "${BASE_PROTOCOL2}hub-cloud.browserstack.com/wd/hub"
 
         // browserstack specific APIs
         private const val APP_AUTOMATE_API_BASE = "https://api-cloud.browserstack.com/app-automate"

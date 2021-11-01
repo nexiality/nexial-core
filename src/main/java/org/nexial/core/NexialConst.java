@@ -1684,6 +1684,7 @@ public final class NexialConst {
 
     public static class CloudWebTesting {
         public static final String BASE_PROTOCOL = "https://";
+        public static final String BASE_PROTOCOL2 = "http://";
 
         public static final String SCOPE_ITERATION = "iteration";
         public static final String SCOPE_SCRIPT = "script";
@@ -1701,11 +1702,12 @@ public final class NexialConst {
 
     public static final class CrossBrowserTesting extends CloudWebTesting {
         public static final String BASE_URL = "@hub.crossbrowsertesting.com:80/wd/hub";
-        public static final String SESSION_URL = "https://crossbrowsertesting.com/api/v3/selenium/${session}";
+        private static final String SESSION_URL_SUFFIX = "crossbrowsertesting.com/api/v3/selenium/${session}";
+        public static final String SESSION_URL = BASE_PROTOCOL + SESSION_URL_SUFFIX;
+        public static final String SESSION_URL2 = BASE_PROTOCOL2 + SESSION_URL_SUFFIX;
 
         public static final String NS = "cbt.";
 
-        // https://help.crossbrowsertesting.com/selenium-testing/tutorials/crossbrowsertesting-automation-capabilities/
         public static final String REFERENCE_URL =
             "https://help.crossbrowsertesting.com/selenium-testing/tutorials/crossbrowsertesting-automation-capabilities/";
 
@@ -1981,6 +1983,8 @@ public final class NexialConst {
         // framework support
         public static final String OPT_IS_REACT = registerSysVar(NS_WEB + "useReact", false);
         public static final String OPT_IS_ANGULAR = registerSysVar(NS_WEB + "useAngular", false);
+        public static final String OPT_SECURE_BROWSERSTACK = registerSysVar(NS_WEB + "secureBrowserStack", true);
+        public static final String OPT_SECURE_CBT = registerSysVar(NS_WEB + "secureCrossBrowserTesting", true);
 
         public static final String SESSION_ID = "sessionId";
 
