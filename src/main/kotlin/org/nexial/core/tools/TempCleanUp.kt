@@ -34,7 +34,6 @@ import org.nexial.core.utils.ConsoleUtils
 import org.nexial.core.utils.IOFilePathFilter
 import java.io.File
 import java.io.File.separator
-import java.io.UncheckedIOException
 import java.util.*
 import java.util.Calendar.HOUR
 
@@ -62,9 +61,11 @@ object TempCleanUp {
         return cmd
     }
 
-    fun cleanTempFiles(verbose: Boolean) {
+    fun cleanTempFiles(verbose: Boolean) = cleanTempFiles(verbose, 24)
+
+    fun cleanTempFiles(verbose: Boolean, keepSinceHours: Int) {
         val cal = Calendar.getInstance()
-        cal.add(HOUR, -24)
+        cal.add(HOUR, -1 * keepSinceHours)
         val oneDayAgo = cal.time
 
         try {
@@ -78,7 +79,7 @@ object TempCleanUp {
                 if (verbose) log("delete", dir.absolutePath)
                 if (!FileUtils.deleteQuietly(dir)) ConsoleUtils.error("unable to delete directory: ${dir.absolutePath}")
             }
-        } catch (e: UncheckedIOException) {
+        } catch (e: Throwable) {
             ConsoleUtils.error("Unable to read or delete temp files from $TEMP, will try again later: " +
                                ExceptionUtils.getRootCauseMessage(e))
         }

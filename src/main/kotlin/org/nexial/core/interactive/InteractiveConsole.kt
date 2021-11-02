@@ -34,17 +34,15 @@ import org.nexial.commons.utils.EnvUtils.getHostName
 import org.nexial.commons.utils.RegexUtils
 import org.nexial.commons.utils.ResourceUtils
 import org.nexial.commons.utils.TextUtils
-import org.nexial.core.interactive.InteractiveConsole.Commands.ALL_STEP
+import org.nexial.core.interactive.InteractiveConsole.Commands.CLEAR_TEMP
 import org.nexial.core.interactive.InteractiveConsole.Commands.EXIT
 import org.nexial.core.interactive.InteractiveConsole.Commands.HELP
 import org.nexial.core.interactive.InteractiveConsole.Commands.INSPECT
 import org.nexial.core.interactive.InteractiveConsole.Commands.OPEN_DATA
 import org.nexial.core.interactive.InteractiveConsole.Commands.OPEN_SCRIPT
+import org.nexial.core.interactive.InteractiveConsole.Commands.OUTPUT
 import org.nexial.core.interactive.InteractiveConsole.Commands.RELOAD_ALL
-import org.nexial.core.interactive.InteractiveConsole.Commands.RELOAD_DATA
 import org.nexial.core.interactive.InteractiveConsole.Commands.RELOAD_MENU
-import org.nexial.core.interactive.InteractiveConsole.Commands.RELOAD_PROJPROP
-import org.nexial.core.interactive.InteractiveConsole.Commands.RELOAD_SCRIPT
 import org.nexial.core.interactive.InteractiveConsole.Commands.RUN
 import org.nexial.core.interactive.InteractiveConsole.Commands.SET_ACTIVITY
 import org.nexial.core.interactive.InteractiveConsole.Commands.SET_DATA
@@ -74,24 +72,20 @@ open class InteractiveConsole {
         const val SET_ITER = "4"
         const val SET_ACTIVITY = "5"
         const val SET_STEPS = "6"
-        const val RELOAD_SCRIPT = "7"
-        const val RELOAD_DATA = "8"
-        const val RELOAD_PROJPROP = "9"
         const val RELOAD_ALL = "L"
-        const val TOGGLE_RECORDING = "C"
-
         const val RELOAD_MENU = "R"
         const val RUN = "X"
         const val INSPECT = "I"
-        const val ALL_STEP = "A"
+        const val TOGGLE_RECORDING = "C"
+        const val CLEAR_TEMP = "T"
         const val OPEN_SCRIPT = "S"
         const val OPEN_DATA = "D"
+        const val OUTPUT = "O"
         const val HELP = "H"
         const val EXIT = "Q"
     }
 
     companion object {
-
         private const val HDR_EXECUTED = "${META_START}Executed$META_END"
         private const val HDR_SESSION = "${META_START}Session $META_END"
         private const val HDR_SCRIPT = "${META_START}Script  $META_END"
@@ -102,9 +96,9 @@ open class InteractiveConsole {
         private const val HDR_EXCEPTION = "${META_START}ERROR   $META_END"
 
         // private val SUB1_START = StringUtils.repeat(" ", HDR_ACTIVITY.length)
-        private val SUB1_START = "  "
+        private const val SUB1_START = "  "
         private const val SUB2_END = ": "
-        private const val CMD_START = "  "
+        private const val CMD_START = "   "
         private const val CMD_END = " "
         private const val FILLER = '~'
 
@@ -150,21 +144,21 @@ open class InteractiveConsole {
             printMenu(CMD_START, DIGIT, "$SET_ITER <iteration>${CMD_END}assign iteration")
             printMenu(CMD_START, DIGIT, "$SET_ACTIVITY <activity> ${CMD_END}assign activities; clears assigned steps")
             printMenu(CMD_START, DIGIT, "$SET_STEPS <step>     ${CMD_END}assign steps; clears assigned activities")
-            printMenu(CMD_START, DIGIT, "$RELOAD_SCRIPT            ${CMD_END}reload assigned test script")
-            printMenu(CMD_START, DIGIT, "$RELOAD_DATA            ${CMD_END}reload assigned data file")
-            printMenu(CMD_START, DIGIT, "$RELOAD_PROJPROP            ${CMD_END}reload project.properties (if any)")
-            printMenu(CMD_START, UPPERCASE, "$RELOAD_ALL            ${CMD_END}reload test script, data file and project.properties (if any)")
-            printMenu(CMD_START, UPPERCASE, "$TOGGLE_RECORDING            ${CMD_END}start/stop desktop recording")
+            printMenu("", UPPERCASE, "re($RELOAD_ALL)oad        ${CMD_END}reload test script, data file and project.properties (if any)")
             printMenu("${CMD_START}action       $CMD_END", UPPERCASE,
-                      StringUtils.rightPad("${RELOAD_MENU}eload menu", 15),
+                      StringUtils.rightPad("${RELOAD_MENU}efresh menu", 16),
                       StringUtils.rightPad("e${RUN}ecute", 18),
-                      StringUtils.rightPad("${INSPECT}nspect", 12),
-                      StringUtils.rightPad("${ALL_STEP}ll steps", 12))
+                      StringUtils.rightPad("${INSPECT}nspect", 15),
+                      StringUtils.rightPad("re${TOGGLE_RECORDING}ord", 10),
+                      StringUtils.rightPad("clear ${CLEAR_TEMP}emp files", 20),
+            )
             printMenu("$CMD_START             $CMD_END", UPPERCASE,
-                      StringUtils.rightPad("${OPEN_SCRIPT}cript open", 15),
+                      StringUtils.rightPad("${OPEN_SCRIPT}cript open", 16),
                       StringUtils.rightPad("${OPEN_DATA}ata file open", 18),
-                      StringUtils.rightPad("${HELP}elp", 12),
-                      StringUtils.rightPad("${EXIT}uit", 12))
+                      StringUtils.rightPad("${OUTPUT}utput path", 15),
+                      StringUtils.rightPad("${HELP}elp", 10),
+                      StringUtils.rightPad("${EXIT}uit", 20),
+            )
             printConsoleHeaderBottom(out, FILLER)
         }
 
@@ -244,8 +238,6 @@ open class InteractiveConsole {
             tokens["cmd.iteration"] = SET_ITER
             tokens["cmd.activity"] = SET_ACTIVITY
             tokens["cmd.steps"] = SET_STEPS
-            tokens["cmd.reloadscript"] = RELOAD_SCRIPT
-            tokens["cmd.reloaddata"] = RELOAD_DATA
             tokens["cmd.reloadmenu"] = RELOAD_MENU
             tokens["cmd.inspect"] = INSPECT
             tokens["cmd.execute"] = RUN
@@ -277,23 +269,19 @@ open class InteractiveConsole {
             printHeaderLine(out, "$CMD_START$SET_ITER <iteration>$CMD_END", resolveContent("command.iteration", tokens))
             printHeaderLine(out, "$CMD_START$SET_ACTIVITY <activity> $CMD_END", resolveContent("command.activity", tokens))
             printHeaderLine(out, "$CMD_START$SET_STEPS <step>     $CMD_END", resolveContent("command.steps", tokens))
-            printHeaderLine(out, "$CMD_START$RELOAD_SCRIPT            $CMD_END", resolveContent("command.reloadscript", tokens))
-            printHeaderLine(out, "$CMD_START$RELOAD_DATA            $CMD_END", resolveContent("command.reloaddata", tokens))
-            printHeaderLine(out, "$CMD_START$RELOAD_PROJPROP            $CMD_END", resolveContent("command.reloadprojprop", tokens))
-            printHeaderLine(out, "$CMD_START$RELOAD_ALL            $CMD_END", resolveContent("command.reloadall", tokens))
-            printHeaderLine(out, "$CMD_START$TOGGLE_RECORDING            $CMD_END", resolveContent("command.togglerecording", tokens))
-            printHeaderLine(out, " ($RELOAD_MENU)eload      $CMD_END", resolveContent("command.reloadmenu", tokens))
-            printHeaderLine(out, "e($RUN)ecute      $CMD_END", resolveContent("command.run", tokens))
-            printHeaderLine(out, " ($INSPECT)nspect     $CMD_END", resolveContent("command.inspect", tokens))
-            printHeaderLine(out, " ($ALL_STEP)ll steps   $CMD_END", resolveContent("command.allstep", tokens))
-            printHeaderLine(out, " ($OPEN_SCRIPT)cript open $CMD_END", resolveContent("command.openscript", tokens))
-            printHeaderLine(out, " ($OPEN_DATA)ata file...$CMD_END", resolveContent("command.opendata", tokens))
-            printHeaderLine(out, " ($HELP)elp        $CMD_END", resolveContent("command.help", tokens))
-            printHeaderLine(out, " ($EXIT)uit        $CMD_END", resolveContent("command.exit", tokens))
+            printHeaderLine(out, "re($RELOAD_ALL)oad        $CMD_END", resolveContent("command.reloadall", tokens))
+            printHeaderLine(out, "  ($RELOAD_MENU)efresh menu$CMD_END", resolveContent("command.reloadmenu", tokens))
+            printHeaderLine(out, " e($RUN)ecute      $CMD_END", resolveContent("command.run", tokens))
+            printHeaderLine(out, "  ($INSPECT)nspect     $CMD_END", resolveContent("command.inspect", tokens))
+            printHeaderLine(out, "re(${TOGGLE_RECORDING})ord        $CMD_END", resolveContent("command.togglerecording", tokens))
+            printHeaderLine(out, "  (${CLEAR_TEMP})emp files  $CMD_END", resolveContent("command.cleartemp", tokens))
+            printHeaderLine(out, "  ($OPEN_SCRIPT)cript open $CMD_END", resolveContent("command.openscript", tokens))
+            printHeaderLine(out, "  ($OPEN_DATA)ata file...$CMD_END", resolveContent("command.opendata", tokens))
+            printHeaderLine(out, "  ($OUTPUT)utput path $CMD_END", resolveContent("command.openoutput", tokens))
+            printHeaderLine(out, "  ($HELP)elp        $CMD_END", resolveContent("command.help", tokens))
+            printHeaderLine(out, "  ($EXIT)uit        $CMD_END", resolveContent("command.exit", tokens))
 
             printConsoleHeaderBottom(out, FILLER)
-            println()
-            println()
         }
 
         private fun printMenu(prefix: String, menuIdentifier: MenuIdentifier, vararg menus: String) {

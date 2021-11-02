@@ -35,17 +35,15 @@ import org.nexial.core.NexialConst.Iteration.ITERATION
 import org.nexial.core.NexialConst.Project.appendLog
 import org.nexial.core.excel.Excel
 import org.nexial.core.excel.ExcelStyleHelper
-import org.nexial.core.interactive.InteractiveConsole.Commands.ALL_STEP
+import org.nexial.core.interactive.InteractiveConsole.Commands.CLEAR_TEMP
 import org.nexial.core.interactive.InteractiveConsole.Commands.EXIT
 import org.nexial.core.interactive.InteractiveConsole.Commands.HELP
 import org.nexial.core.interactive.InteractiveConsole.Commands.INSPECT
 import org.nexial.core.interactive.InteractiveConsole.Commands.OPEN_DATA
 import org.nexial.core.interactive.InteractiveConsole.Commands.OPEN_SCRIPT
+import org.nexial.core.interactive.InteractiveConsole.Commands.OUTPUT
 import org.nexial.core.interactive.InteractiveConsole.Commands.RELOAD_ALL
-import org.nexial.core.interactive.InteractiveConsole.Commands.RELOAD_DATA
 import org.nexial.core.interactive.InteractiveConsole.Commands.RELOAD_MENU
-import org.nexial.core.interactive.InteractiveConsole.Commands.RELOAD_PROJPROP
-import org.nexial.core.interactive.InteractiveConsole.Commands.RELOAD_SCRIPT
 import org.nexial.core.interactive.InteractiveConsole.Commands.RUN
 import org.nexial.core.interactive.InteractiveConsole.Commands.SET_ACTIVITY
 import org.nexial.core.interactive.InteractiveConsole.Commands.SET_DATA
@@ -57,6 +55,7 @@ import org.nexial.core.interactive.InteractiveConsole.Commands.TOGGLE_RECORDING
 import org.nexial.core.model.*
 import org.nexial.core.model.ExecutionSummary.ExecutionLevel
 import org.nexial.core.model.ExecutionSummary.ExecutionLevel.*
+import org.nexial.core.tools.TempCleanUp
 import org.nexial.core.utils.ConsoleUtils
 import org.nexial.core.utils.ExecUtils
 import java.io.File
@@ -147,23 +146,23 @@ class NexialInteractive {
                     }
                 }
 
-                RELOAD_SCRIPT    -> {
-                    System.setProperty(ITERATION, session.iteration.toString())
-                    session.reloadTestScript()
-                    InteractiveConsole.showMenu(session)
-                }
+                // RELOAD_SCRIPT    -> {
+                //     System.setProperty(ITERATION, session.iteration.toString())
+                //     session.reloadTestScript()
+                //     InteractiveConsole.showMenu(session)
+                // }
 
-                RELOAD_DATA      -> {
-                    System.setProperty(ITERATION, session.iteration.toString())
-                    session.reloadDataFile()
-                    InteractiveConsole.showMenu(session)
-                }
+                // RELOAD_DATA      -> {
+                //     System.setProperty(ITERATION, session.iteration.toString())
+                //     session.reloadDataFile()
+                //     InteractiveConsole.showMenu(session)
+                // }
 
-                RELOAD_PROJPROP  -> {
-                    System.setProperty(ITERATION, session.iteration.toString())
-                    session.reloadProjectProperties()
-                    InteractiveConsole.showMenu(session)
-                }
+                // RELOAD_PROJPROP  -> {
+                //     System.setProperty(ITERATION, session.iteration.toString())
+                //     session.reloadProjectProperties()
+                //     InteractiveConsole.showMenu(session)
+                // }
 
                 RELOAD_ALL       -> {
                     System.setProperty(ITERATION, session.iteration.toString())
@@ -187,16 +186,17 @@ class NexialInteractive {
                     InteractiveConsole.showMenu(session)
                 }
 
-                ALL_STEP         -> {
-                    session.useAllActivities()
-                    InteractiveConsole.showMenu(session)
-                }
+                // ALL_STEP         -> {
+                //     session.useAllActivities()
+                //     InteractiveConsole.showMenu(session)
+                // }
 
                 OPEN_SCRIPT      -> {
                     if (StringUtils.isBlank(session.script)) {
                         error("No valid test script assigned")
                     } else {
                         Excel.openExcel(File(session.script!!))
+                        InteractiveConsole.showMenu(session)
                     }
                 }
 
@@ -205,11 +205,28 @@ class NexialInteractive {
                         error("No valid data file assigned")
                     } else {
                         Excel.openExcel(File(session.dataFile!!))
+                        InteractiveConsole.showMenu(session)
+                    }
+                }
+
+                OUTPUT           -> {
+                    val output = System.getProperty(OPT_OUT_DIR)
+                    if (StringUtils.isNotBlank(output)) {
+                        ExecUtils.openFileNoWait(output)
+                        InteractiveConsole.showMenu(session)
+                    } else {
+                        error("Unable to determine output directory. Perhaps no execution has been performed thus far?")
                     }
                 }
 
                 TOGGLE_RECORDING -> {
                     toggleRecording(session)
+                    InteractiveConsole.showMenu(session)
+                }
+
+                CLEAR_TEMP       -> {
+                    ConsoleUtils.log("Scanning fo Nexial-generated temp files to purge...")
+                    TempCleanUp.cleanTempFiles(verbose = true, 1)
                     InteractiveConsole.showMenu(session)
                 }
 
