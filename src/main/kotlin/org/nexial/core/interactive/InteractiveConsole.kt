@@ -98,7 +98,7 @@ open class InteractiveConsole {
         // private val SUB1_START = StringUtils.repeat(" ", HDR_ACTIVITY.length)
         private const val SUB1_START = "  "
         private const val SUB2_END = ": "
-        private const val CMD_START = "   "
+        private const val CMD_START = "  "
         private const val CMD_END = " "
         private const val FILLER = '~'
 
@@ -144,7 +144,7 @@ open class InteractiveConsole {
             printMenu(CMD_START, DIGIT, "$SET_ITER <iteration>${CMD_END}assign iteration")
             printMenu(CMD_START, DIGIT, "$SET_ACTIVITY <activity> ${CMD_END}assign activities; clears assigned steps")
             printMenu(CMD_START, DIGIT, "$SET_STEPS <step>     ${CMD_END}assign steps; clears assigned activities")
-            printMenu("", UPPERCASE, "re($RELOAD_ALL)oad        ${CMD_END}reload test script, data file and project.properties (if any)")
+            printMenu("", UPPERCASE, "re${RELOAD_ALL}oad         ${CMD_END}reload test script, data file and project.properties")
             printMenu("${CMD_START}action       $CMD_END", UPPERCASE,
                       StringUtils.rightPad("${RELOAD_MENU}efresh menu", 16),
                       StringUtils.rightPad("e${RUN}ecute", 18),
