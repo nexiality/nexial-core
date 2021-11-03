@@ -50,7 +50,7 @@ object JsLib {
                                   "document.body.appendChild(a);"
 
     @JvmStatic
-    fun clearValue() = jsNoArgReturn + 
+    fun clearValue() = jsNoArgReturn +
                        " if (arguments[0].setAttribute) { arguments[0].setAttribute('value', ''); } " +
                        "arguments[0].value = '';"
 
@@ -85,6 +85,54 @@ object JsLib {
     @JvmStatic
     fun highlight(exec: JavascriptExecutor, js: () -> String, vararg arguments: Any?): Any? =
         exec.executeScript(js(), arguments)
+
+    @JvmStatic
+    fun highlight(changes: Map<String, String>, waitMs: Int): String {
+        if (changes.isEmpty()) return ""
+
+        var part1 = ""
+        var part2 = ""
+        var onTimeout = ""
+
+        changes.forEach { (key, value) ->
+            if (StringUtils.isNotBlank(key)) {
+                val cssProp = key.trim()
+                val cssValue = value.trim()
+
+                part1 += "let _$cssProp=elem.style.$cssProp||''; "
+
+                // handle successive highlight that overlaps with JS timeout event
+                part2 += """
+                if (_$cssProp && _$cssProp === '$cssValue') {
+                    elem.style.removeProperty('$cssProp');
+                    _$cssProp = '';
+                } else {
+                    elem.style.$cssProp='$cssValue';
+                }
+                """.trimIndent()
+
+                onTimeout += """
+                elem.style.$cssProp=_$cssProp;
+                """.trimIndent()
+            }
+        }
+
+        return """
+        var elem = arguments[0];
+        let _style=elem.attributes['style']||'';
+        """.trimIndent() +
+               part1 +
+               part2 + """
+        setTimeout(function() {
+            if (_style === '') {
+                elem.removeAttribute('style');
+            } else {
+        """.trimIndent() +
+               onTimeout + """
+            } 
+        }, $waitMs);
+               """.trimIndent();
+    }
 
     @JvmStatic
     fun isTrue(jsObject: Any?) = jsObject != null && StringUtils.equals(jsObject.toString(), "true")

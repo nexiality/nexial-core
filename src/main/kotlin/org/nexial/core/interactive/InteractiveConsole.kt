@@ -34,6 +34,7 @@ import org.nexial.commons.utils.EnvUtils.getHostName
 import org.nexial.commons.utils.RegexUtils
 import org.nexial.commons.utils.ResourceUtils
 import org.nexial.commons.utils.TextUtils
+import org.nexial.core.interactive.InteractiveConsole.Commands.AUTORUN
 import org.nexial.core.interactive.InteractiveConsole.Commands.CLEAR_TEMP
 import org.nexial.core.interactive.InteractiveConsole.Commands.EXIT
 import org.nexial.core.interactive.InteractiveConsole.Commands.HELP
@@ -78,6 +79,7 @@ open class InteractiveConsole {
         const val INSPECT = "I"
         const val TOGGLE_RECORDING = "C"
         const val CLEAR_TEMP = "T"
+        const val AUTORUN = "A"
         const val OPEN_SCRIPT = "S"
         const val OPEN_DATA = "D"
         const val OUTPUT = "O"
@@ -146,18 +148,19 @@ open class InteractiveConsole {
             printMenu(CMD_START, DIGIT, "$SET_STEPS <step>     ${CMD_END}assign steps; clears assigned activities")
             printMenu("", UPPERCASE, "re${RELOAD_ALL}oad         ${CMD_END}reload test script, data file and project.properties")
             printMenu("${CMD_START}action       $CMD_END", UPPERCASE,
-                      StringUtils.rightPad("${RELOAD_MENU}efresh menu", 16),
-                      StringUtils.rightPad("e${RUN}ecute", 18),
-                      StringUtils.rightPad("${INSPECT}nspect", 15),
-                      StringUtils.rightPad("re${TOGGLE_RECORDING}ord", 10),
-                      StringUtils.rightPad("clear ${CLEAR_TEMP}emp files", 20),
+                      StringUtils.rightPad("${RELOAD_MENU}efresh menu", 15),
+                      StringUtils.rightPad("e${RUN}ecute", 17),
+                      StringUtils.rightPad("${INSPECT}nspect", 14),
+                      StringUtils.rightPad("re${TOGGLE_RECORDING}ord desktop", 19),
+                      StringUtils.rightPad("${AUTORUN}utorun", 10),
             )
             printMenu("$CMD_START             $CMD_END", UPPERCASE,
-                      StringUtils.rightPad("${OPEN_SCRIPT}cript open", 16),
-                      StringUtils.rightPad("${OPEN_DATA}ata file open", 18),
-                      StringUtils.rightPad("${OUTPUT}utput path", 15),
-                      StringUtils.rightPad("${HELP}elp", 10),
-                      StringUtils.rightPad("${EXIT}uit", 20),
+                      StringUtils.rightPad("${OPEN_SCRIPT}cript open", 15),
+                      StringUtils.rightPad("${OPEN_DATA}ata file open", 17),
+                      StringUtils.rightPad("${OUTPUT}utput path", 14),
+                      StringUtils.rightPad("clear ${CLEAR_TEMP}emp files", 19),
+                      StringUtils.rightPad("${HELP}elp", 8),
+                      StringUtils.rightPad("${EXIT}uit", 5),
             )
             printConsoleHeaderBottom(out, FILLER)
         }
@@ -274,10 +277,11 @@ open class InteractiveConsole {
             printHeaderLine(out, " e($RUN)ecute      $CMD_END", resolveContent("command.run", tokens))
             printHeaderLine(out, "  ($INSPECT)nspect     $CMD_END", resolveContent("command.inspect", tokens))
             printHeaderLine(out, "re(${TOGGLE_RECORDING})ord        $CMD_END", resolveContent("command.togglerecording", tokens))
-            printHeaderLine(out, "  (${CLEAR_TEMP})emp files  $CMD_END", resolveContent("command.cleartemp", tokens))
+            printHeaderLine(out, "  (${AUTORUN})utorun     $CMD_END", resolveContent("command.autorun", tokens))
             printHeaderLine(out, "  ($OPEN_SCRIPT)cript open $CMD_END", resolveContent("command.openscript", tokens))
             printHeaderLine(out, "  ($OPEN_DATA)ata file...$CMD_END", resolveContent("command.opendata", tokens))
             printHeaderLine(out, "  ($OUTPUT)utput path $CMD_END", resolveContent("command.openoutput", tokens))
+            printHeaderLine(out, "  (${CLEAR_TEMP})emp files  $CMD_END", resolveContent("command.cleartemp", tokens))
             printHeaderLine(out, "  ($HELP)elp        $CMD_END", resolveContent("command.help", tokens))
             printHeaderLine(out, "  ($EXIT)uit        $CMD_END", resolveContent("command.exit", tokens))
 

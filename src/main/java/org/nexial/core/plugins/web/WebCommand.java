@@ -1940,7 +1940,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         if (TextUtils.polyMatch(url, search)) {
             return StepResult.success("Current URL matched the specified search '%s'", search);
         } else {
-            return StepResult.fail("Current URL DID NOT matched the specified search '%s'", search);
+            return StepResult.fail("Current URL DID NOT match the specified search '%s'", search);
         }
     }
 
@@ -2971,7 +2971,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
             ConsoleUtils.log("double-clicking '" + locator + "'...");
             scrollIntoView(element);
             highlight(element);
-            
+
             boolean useJS = context.getBooleanConfig(getTarget(), getProfile(), FORCE_JS_DBLCLICK);
             if (useJS) {
                 if (BooleanUtils.toBoolean(Objects.toString(jsExecutor.executeScript(JsLib.doubleClick(), element)))) {
@@ -3520,22 +3520,24 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
                 int waitMs = context.getIntConfig(getTarget(), getProfile(), HIGHLIGHT_WAIT_MS);
                 String highlight = context.getStringConfig(getTarget(), getProfile(), HIGHLIGHT_STYLE);
                 if (StringUtils.isNotBlank(highlight)) {
-                    StringBuilder turnOn = new StringBuilder("var elem = arguments[0];");
-                    StringBuilder turnOff = new StringBuilder("setTimeout(function() { ");
-                    Map<String, String> highlightSettings = TextUtils.toMap(highlight.trim(), ";", ":");
-                    highlightSettings.keySet().forEach(key -> {
-                        if (StringUtils.isNotBlank(key)) {
-                            String prop = key.trim();
-                            turnOn.append("let _").append(prop).append("=elem.style.").append(prop).append("||'';")
-                                  .append("elem.style.").append(prop).append("='")
-                                  .append(StringUtils.trim(highlightSettings.get(key))).append("';");
-                            turnOff.append("elem.style.").append(prop).append("=_").append(prop).append(";");
-                        }
-                    });
+                    jsExecutor.executeScript(JsLib.highlight(TextUtils.toMap(highlight.trim(), ";", ":"), waitMs),
+                                             element);
 
-                    turnOff.append(" }, ").append(waitMs).append(");");
-
-                    jsExecutor.executeScript(turnOn + "\n" + turnOff, element);
+                    // StringBuilder turnOn = new StringBuilder("var elem = arguments[0];");
+                    // StringBuilder turnOff = new StringBuilder("setTimeout(function() { ");
+                    // highlightSettings.keySet().forEach(key -> {
+                    //     if (StringUtils.isNotBlank(key)) {
+                    //         String prop = key.trim();
+                    //         turnOn.append("let _").append(prop).append("=elem.style.").append(prop).append("||'';")
+                    //               .append("elem.style.").append(prop).append("='")
+                    //               .append(StringUtils.trim(highlightSettings.get(key))).append("';");
+                    //         turnOff.append("elem.style.").append(prop).append("=_").append(prop).append(";");
+                    //     }
+                    // });
+                    //
+                    // turnOff.append(" }, ").append(waitMs).append(");");
+                    //
+                    // jsExecutor.executeScript(turnOn + "\n" + turnOff, element);
                 }
             }
         } catch (WebDriverException e) {

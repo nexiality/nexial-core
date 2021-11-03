@@ -35,6 +35,7 @@ import org.nexial.core.NexialConst.Iteration.ITERATION
 import org.nexial.core.NexialConst.Project.appendLog
 import org.nexial.core.excel.Excel
 import org.nexial.core.excel.ExcelStyleHelper
+import org.nexial.core.interactive.InteractiveConsole.Commands.AUTORUN
 import org.nexial.core.interactive.InteractiveConsole.Commands.CLEAR_TEMP
 import org.nexial.core.interactive.InteractiveConsole.Commands.EXIT
 import org.nexial.core.interactive.InteractiveConsole.Commands.HELP
@@ -67,6 +68,7 @@ class NexialInteractive {
     private val tmpComma = "~~!@!~~"
     private val rangeSeparator = "-"
     private val listSeparator = ","
+    private var autoRun = false
 
     fun startSession() {
         // start of test suite (one per test plan in execution)
@@ -129,10 +131,15 @@ class NexialInteractive {
                 }
 
                 SET_ACTIVITY     -> {
+                    // steps can be range (dash) or comma-separated
                     if (StringUtils.isBlank(argument)) {
                         error("No activity assigned")
                     } else {
                         session.assignActivities(TextUtils.replaceItems(toSteps(argument), tmpComma, ","))
+                        if (autoRun) {
+                            execute(session)
+                            InteractiveConsole.showMenu(session)
+                        }
                     }
                 }
 
@@ -143,6 +150,10 @@ class NexialInteractive {
                     } else {
                         session.steps = toSteps(argument)
                         session.clearActivities()
+                        if (autoRun) {
+                            execute(session)
+                            InteractiveConsole.showMenu(session)
+                        }
                     }
                 }
 
@@ -221,6 +232,17 @@ class NexialInteractive {
 
                 TOGGLE_RECORDING -> {
                     toggleRecording(session)
+                    InteractiveConsole.showMenu(session)
+                }
+
+                AUTORUN          -> {
+                    autoRun = !autoRun
+                    if (autoRun)
+                        ConsoleUtils.log("Autorun ENABLED: Nexial Interactive will automatically execute after steps" +
+                                         " are specified via Option 5 or 6.")
+                    else
+                        ConsoleUtils.log("Autorun DISABLED: Use Option X to execute specified steps.")
+                        
                     InteractiveConsole.showMenu(session)
                 }
 
