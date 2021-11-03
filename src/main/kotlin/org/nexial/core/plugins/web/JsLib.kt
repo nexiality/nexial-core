@@ -1,9 +1,28 @@
+/*
+ * Copyright 2012-2021 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * 	http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
+
 package org.nexial.core.plugins.web
 
 import org.apache.commons.lang3.StringUtils
 import org.openqa.selenium.JavascriptExecutor
 
 object JsLib {
+    private const val jsNoArgReturnFalse = "if (!arguments || !arguments[0]) { return false; } "
+    private const val jsNoArgReturn = "if (!arguments || !arguments[0]) { return; } "
 
     @JvmStatic
     fun isVisible() = "var style = window.getComputedStyle(arguments[0]);" +
@@ -30,6 +49,11 @@ object JsLib {
                                   "a.href = \"" + url + "\";" +
                                   "document.body.appendChild(a);"
 
+    @JvmStatic
+    fun clearValue() = jsNoArgReturn + 
+                       " if (arguments[0].setAttribute) { arguments[0].setAttribute('value', ''); } " +
+                       "arguments[0].value = '';"
+
     // @JvmStatic
     // fun scrollLeft(pixel: String) = "arguments[0].scrollBy($pixel,0)"
     //
@@ -41,12 +65,6 @@ object JsLib {
 
     @JvmStatic
     fun windowScrollBy(xOffset: String, yOffset: String) = "window.scrollBy($xOffset,$yOffset)"
-
-    @JvmStatic
-    fun clearValue() = "if (arguments && arguments[0]) {" +
-                       "  if (arguments[0].setAttribute) { arguments[0].setAttribute('value', ''); }" +
-                       "  arguments[0].value = '';" +
-                       "}"
 
     @JvmStatic
     fun scrollIntoView() = "if (arguments[0]) {" +
@@ -98,6 +116,17 @@ object JsLib {
         "return window.getComputedStyle(arguments[0]).getPropertyValue('$property')"
 
     @JvmStatic
+    fun findCssMatchingElements(attribute: String, value: String) =
+        "var targets = Array(); " +
+        "document.querySelectorAll(\"*\").forEach(function(elem, index) {" +
+        "   if (elem.style.$attribute === '$value' || " +
+        "       window.getComputedStyle(elem).getPropertyValue(\"$attribute\") === '$value') {" +
+        "       targets.push(elem);" +
+        "   }" +
+        "});" +
+        "return targets;"
+
+    @JvmStatic
     fun toHexColor(colorName: String) =
         "let canvas = document.createElement('canvas'); " +
         "let ctx = canvas.getContext('2d'); " +
@@ -108,4 +137,51 @@ object JsLib {
 
     @JvmStatic
     fun isDisabled() = "return arguments[0] && arguments[0].disabled;"
+
+    @JvmStatic
+    fun click() = "$jsNoArgReturnFalse arguments[0].click(); return true;"
+
+    @JvmStatic
+    fun doubleClick() =
+        jsNoArgReturnFalse +
+        "var evt  = document.createEvent('MouseEvents');" +
+        "evt.initEvent('dblclick', true, true);" +
+        "return arguments[0].dispatchEvent(evt);"
+
+    @JvmStatic
+    fun hasHScrollbar() = "return document.documentElement.clientWidth < document.documentElement.scrollWidth"
+
+    @JvmStatic
+    fun hasVScrollbar() = "return document.documentElement.clientHeight < document.documentElement.scrollHeight"
+
+    @JvmStatic
+    fun mouseOut() = "$jsNoArgReturn arguments[0].mouseout();"
+
+    @JvmStatic
+    fun userAgent() = "return navigator.userAgent;"
+
+    @JvmStatic
+    fun removeAttr() = "if (arguments && arguments.length > 1) arguments[0].removeAttribute(arguments[1])"
+
+    @JvmStatic
+    fun updateAttr() = "if (arguments && arguments.length > 2) arguments[0].setAttribute(arguments[1], arguments[2])"
+
+    @JvmStatic
+    fun updateAttr(attribute: String, value: String) =
+        "arguments[0].forEach(function(elem,index) { elem.style.$attribute = '$value'; });"
+
+    object LocalStorage {
+        @JvmStatic
+        fun getValue(key: String) = "return window.localStorage.getItem('$key')"
+
+        @JvmStatic
+        fun remove(key: String) = "window.localStorage.removeItem('$key');"
+
+        @JvmStatic
+        fun update(key: String, value: String) =
+            "window.localStorage.setItem('$key','${StringUtils.replace(value, "'", "\\'")}');"
+
+        @JvmStatic
+        fun clear() = "window.localStorage.clear();"
+    }
 }

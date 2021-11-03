@@ -391,7 +391,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     public StepResult selectDropdown(String locator, String optLocator, String optText) {
         requiresNotBlank(locator, "Invalid locator for dropdown element", locator);
         requiresNotBlank(optLocator, "Invalid locator for option elements", optLocator);
-        requiresNotEmpty(optText, "Invalid option text text", optText);
+        requiresNotEmpty(optText, "Invalid option text", optText);
 
         try {
             // step 1: click on dropdown to activate option list
@@ -1442,9 +1442,6 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         WebElement elem = toElement(locator);
         if (StringUtils.isBlank(elem.getText())) { return StepResult.fail("Element found without text to select."); }
 
-        // String id = elem.getAttribute("id");
-        // if (StringUtils.isBlank(id)) { return StepResult.fail("Element found without 'id'; REQUIRED"); }
-
         jsExecutor.executeScript(JsLib.selectText(), elem);
         return StepResult.success("selected text at '" + locator + "'");
     }
@@ -1609,8 +1606,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         long maxLoadTime = context.getIntData(WEB_PAGE_LOAD_WAIT_MS, getDefaultInt(WEB_PAGE_LOAD_WAIT_MS));
 
         url = validateUrl(url);
-        String linkToUrl = JsLib.createLink(url);
-        jsExecutor.executeScript(linkToUrl);
+        jsExecutor.executeScript(JsLib.createLink(url));
 
         WebElement elemA = findElement("css=a");
         elemA.click();
@@ -1958,7 +1954,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
     public StepResult clearLocalStorage() {
         ensureReady();
-        jsExecutor.executeScript("window.localStorage.clear();");
+        jsExecutor.executeScript(JsLib.LocalStorage.clear());
         return StepResult.success("browser's local storage cleared");
     }
 
@@ -1967,11 +1963,9 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
         ensureReady();
         if (StringUtils.isBlank(value)) {
-            jsExecutor.executeScript("window.localStorage.removeItem('" + key + "');");
+            jsExecutor.executeScript(JsLib.LocalStorage.remove(key));
         } else {
-            jsExecutor.executeScript("window.localStorage.setItem('" + key + "','" +
-                                     StringUtils.replace(value, "'", "\\'") +
-                                     "');");
+            jsExecutor.executeScript(JsLib.LocalStorage.update(key, value));
         }
         return StepResult.success("browser's local storage updated");
     }
@@ -1981,7 +1975,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         requiresNotBlank(key, "local storage key must not be null");
 
         ensureReady();
-        Object response = jsExecutor.executeScript("return window.localStorage.getItem('" + key + "')");
+        Object response = jsExecutor.executeScript(JsLib.LocalStorage.getValue(key));
         context.setData(var, response);
         return StepResult.success("browser's local storage (" + key + ") stored to " + var + " as " + response);
     }
@@ -2104,21 +2098,11 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     }
 
     protected void updateCssAttribute(List<WebElement> targets, String attribute, String value) {
-        jsExecutor.executeScript(
-            "arguments[0].forEach(function(elem,index) { elem.style." + attribute + " = '" + value + "'; });",
-            targets);
+        jsExecutor.executeScript(JsLib.updateAttr(attribute, value), targets);
     }
 
     protected List<WebElement> findCssMatchingElements(String attribute, String value) {
-        Object returnObject = jsExecutor.executeScript(
-            "var targets = Array(); " +
-            "document.querySelectorAll(\"*\").forEach(function(elem, index) { " +
-            "   if (elem.style." + attribute + " === '" + value + "' || " +
-            "       window.getComputedStyle(elem).getPropertyValue(\"" + attribute + "\") === '" + value + "') { " +
-            "       targets.push(elem); " +
-            "   }" +
-            "});" +
-            "return targets;");
+        Object returnObject = jsExecutor.executeScript(JsLib.findCssMatchingElements(attribute, value));
         if (returnObject == null) { return null; }
 
         if (returnObject instanceof List) { return (List<WebElement>) returnObject; }
@@ -2402,9 +2386,9 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         if (element == null) { return StepResult.fail("No element via locator '" + locator + "'"); }
 
         if (StringUtils.isEmpty(value)) {
-            jsExecutor.executeScript("arguments[0].removeAttribute(arguments[1])", element, attrName);
+            jsExecutor.executeScript(JsLib.removeAttr(), element, attrName);
         } else {
-            jsExecutor.executeScript("arguments[0].setAttribute(arguments[1], arguments[2])", element, attrName, value);
+            jsExecutor.executeScript(JsLib.updateAttr(), element, attrName, value);
         }
         return StepResult.success(attrName + " with value " + value + " updated successfully for '" + locator + "'");
     }
@@ -2491,7 +2475,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
             return;
         }
 
-        String ua = Objects.toString(jsExecutor.executeScript("return navigator.userAgent;"));
+        String ua = Objects.toString(jsExecutor.executeScript(JsLib.userAgent()));
         if (StringUtils.isBlank(ua)) { return; }
 
         browserMeta = loadBrowserMetaCache(ua);
@@ -2736,7 +2720,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
     protected StepResult mouseOut(String locator) {
         ensureReady();
-        jsExecutor.executeScript("arguments[0].mouseout();", toElement(locator));
+        jsExecutor.executeScript(JsLib.mouseOut(), toElement(locator));
 
         //selenium.fireEvent(locator, "blur");
         // work as of 2.26.0
@@ -2751,15 +2735,14 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
             boolean exists;
             // special treatment for body tag
             if (StringUtils.equalsIgnoreCase(element.getTagName(), "body")) {
-                exists = BooleanUtils.toBoolean(Objects.toString(jsExecutor.executeScript(
-                    "document.documentElement.clientHeight < document.documentElement.scrollHeight")));
+                exists = BooleanUtils.toBoolean(Objects.toString(jsExecutor.executeScript(JsLib.hasVScrollbar())));
             } else {
                 exists = NumberUtils.toInt(element.getAttribute("clientHeight")) <
                          NumberUtils.toInt(element.getAttribute("scrollHeight"));
             }
 
             boolean result = failIfExists != exists;
-            String msg = "vertical scrollbar " + (exists ? "exists" : "does not exists") + " at '" + locator + "'";
+            String msg = "vertical scrollbar " + (exists ? "exists" : "does not exist") + " at '" + locator + "'";
             return new StepResult(result, msg, null);
         } catch (Throwable e) {
             return StepResult.fail("Error determining vertical scrollbar at '" + locator + "': " + e.getMessage());
@@ -2773,15 +2756,14 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
             boolean exists;
             // special treatment for body tag
             if (StringUtils.equalsIgnoreCase(element.getTagName(), "body")) {
-                exists = BooleanUtils.toBoolean(Objects.toString(jsExecutor.executeScript(
-                    "return document.documentElement.clientWidth < document.documentElement.scrollWidth")));
+                exists = BooleanUtils.toBoolean(Objects.toString(jsExecutor.executeScript(JsLib.hasHScrollbar())));
             } else {
                 exists = NumberUtils.toInt(element.getAttribute("clientWidth")) <
                          NumberUtils.toInt(element.getAttribute("scrollWidth"));
             }
 
             boolean result = failIfExists != exists;
-            String msg = "horizontal scrollbar " + (exists ? "exists" : "does not exists") + " at '" + locator + "'";
+            String msg = "horizontal scrollbar " + (exists ? "exists" : "does not exist") + " at '" + locator + "'";
             return new StepResult(result, msg, null);
         } catch (Throwable e) {
             return StepResult.fail("Error determining horizontal scrollbar at '" + locator + "': " + e.getMessage());
@@ -2909,7 +2891,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     protected void jsClick(WebElement element) {
         ConsoleUtils.log("click target via JS, @id=" + element.getAttribute("id"));
         scrollIntoView(element);
-        ConsoleUtils.log("clicked -> " + jsExecutor.executeScript("arguments[0].click(); return true;", element));
+        ConsoleUtils.log("clicked -> " + jsExecutor.executeScript(JsLib.click(), element));
     }
 
     @NotNull
@@ -2989,8 +2971,18 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
             ConsoleUtils.log("double-clicking '" + locator + "'...");
             scrollIntoView(element);
             highlight(element);
-            new Actions(driver).moveToElement(element).doubleClick(element).build().perform();
-            return StepResult.success("double-clicked on web element '" + locator + "'");
+            
+            boolean useJS = context.getBooleanConfig(getTarget(), getProfile(), FORCE_JS_DBLCLICK);
+            if (useJS) {
+                if (BooleanUtils.toBoolean(Objects.toString(jsExecutor.executeScript(JsLib.doubleClick(), element)))) {
+                    return StepResult.success("successfully JS double-clicked on web element '" + locator + "'");
+                } else {
+                    return StepResult.success("FAILED to JS double-clicked on web element '" + locator + "'");
+                }
+            } else {
+                new Actions(driver).moveToElement(element).doubleClick(element).build().perform();
+                return StepResult.success("double-clicked on web element '" + locator + "'");
+            }
         } catch (IllegalArgumentException e) {
             return StepResult.fail(e.getMessage());
         } catch (WebDriverException e) {

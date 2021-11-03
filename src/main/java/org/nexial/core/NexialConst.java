@@ -1876,6 +1876,7 @@ public final class NexialConst {
 
         // various browser behavior/settings
         public static final String FORCE_JS_CLICK = registerSysVar(NS_BROWSER + ".forceJSClick", false);
+        public static final String FORCE_JS_DBLCLICK = registerSysVar(NS_BROWSER + ".forceJSDoubleClick", false);
         public static final String BROWSER_ACCEPT_INVALID_CERTS =
             registerSysVar(NS_BROWSER + ".acceptInsecureCerts", false);
         public static final String BROWSER_POST_CLOSE_WAIT = registerSysVar(NS_BROWSER + ".postCloseWaitMs", 2000);
