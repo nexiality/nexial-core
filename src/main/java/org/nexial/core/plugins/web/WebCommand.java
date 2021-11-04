@@ -3520,24 +3520,8 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
                 int waitMs = context.getIntConfig(getTarget(), getProfile(), HIGHLIGHT_WAIT_MS);
                 String highlight = context.getStringConfig(getTarget(), getProfile(), HIGHLIGHT_STYLE);
                 if (StringUtils.isNotBlank(highlight)) {
-                    jsExecutor.executeScript(JsLib.highlight(TextUtils.toMap(highlight.trim(), ";", ":"), waitMs),
-                                             element);
-
-                    // StringBuilder turnOn = new StringBuilder("var elem = arguments[0];");
-                    // StringBuilder turnOff = new StringBuilder("setTimeout(function() { ");
-                    // highlightSettings.keySet().forEach(key -> {
-                    //     if (StringUtils.isNotBlank(key)) {
-                    //         String prop = key.trim();
-                    //         turnOn.append("let _").append(prop).append("=elem.style.").append(prop).append("||'';")
-                    //               .append("elem.style.").append(prop).append("='")
-                    //               .append(StringUtils.trim(highlightSettings.get(key))).append("';");
-                    //         turnOff.append("elem.style.").append(prop).append("=_").append(prop).append(";");
-                    //     }
-                    // });
-                    //
-                    // turnOff.append(" }, ").append(waitMs).append(");");
-                    //
-                    // jsExecutor.executeScript(turnOn + "\n" + turnOff, element);
+                    String js = JsLib.highlight(TextUtils.toMap(highlight.trim(), ";", ":"), waitMs);
+                    jsExecutor.executeScript(js, element);
                 }
             }
         } catch (WebDriverException e) {

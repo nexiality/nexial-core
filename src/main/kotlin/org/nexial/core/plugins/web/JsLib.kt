@@ -102,36 +102,25 @@ object JsLib {
                 part1 += "let _$cssProp=elem.style.$cssProp||''; "
 
                 // handle successive highlight that overlaps with JS timeout event
-                part2 += """
-                if (_$cssProp && _$cssProp === '$cssValue') {
-                    elem.style.removeProperty('$cssProp');
-                    _$cssProp = '';
-                } else {
-                    elem.style.$cssProp='$cssValue';
-                }
-                """.trimIndent()
+                part2 += "if (_$cssProp && _$cssProp == '$cssValue') { " +
+                         "  elem.style.removeProperty('$cssProp'); " +
+                         "  _$cssProp=''; " +
+                         "} else { " +
+                         "  elem.style.$cssProp='$cssValue'; " +
+                         "} "
 
-                onTimeout += """
-                elem.style.$cssProp=_$cssProp;
-                """.trimIndent()
+                onTimeout += "elem.style.$cssProp=_$cssProp; "
             }
         }
 
-        return """
-        var elem = arguments[0];
-        let _style=elem.attributes['style']||'';
-        """.trimIndent() +
+        return "var elem = arguments[0]; " +
+               "let _style=elem.attributes['style']||''; " +
                part1 +
-               part2 + """
-        setTimeout(function() {
-            if (_style === '') {
-                elem.removeAttribute('style');
-            } else {
-        """.trimIndent() +
-               onTimeout + """
-            } 
-        }, $waitMs);
-               """.trimIndent();
+               part2 + 
+               "setTimeout(function() { " + 
+               "    if (_style === '') { elem.removeAttribute('style'); } " +
+               "    else { " + onTimeout + " } " +
+               "}, $waitMs);"
     }
 
     @JvmStatic
