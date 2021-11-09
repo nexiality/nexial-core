@@ -1928,7 +1928,7 @@ public final class NexialConst {
         // web element highlight
         public static final String NS_HIGHLIGHT = NS_WEB + "highlight";
         public static final String OPT_DEBUG_HIGHLIGHT = registerSysVar(NS_HIGHLIGHT, false);
-        public static final String HIGHLIGHT_STYLE = registerSysVar(NS_HIGHLIGHT + ".style", 
+        public static final String HIGHLIGHT_STYLE = registerSysVar(NS_HIGHLIGHT + ".style",
                                                                     "background:rgba(249, 243, 83, 0.914);");
         public static final String HIGHLIGHT_WAIT_MS = registerSysVar(NS_HIGHLIGHT + ".waitMs", 250);
         public static final String OPT_DEBUG_HIGHLIGHT_OLD = registerSysVar(NAMESPACE + "highlight", false);

@@ -48,7 +48,7 @@ public class WebDataType extends ExpressionDataType<String> {
 
         @Override
         public String toString() {
-            return "\t{operation=" + operation + "}\t{result=" + result + "}\t{error=" + error + "}";
+            return "{result=\"" + result + "\"} {error=\"" + error + "\"} {operation=" + operation + "}";
         }
     }
 

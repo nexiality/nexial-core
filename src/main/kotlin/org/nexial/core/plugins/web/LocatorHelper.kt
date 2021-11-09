@@ -114,17 +114,13 @@ class LocatorHelper internal constructor(private val delegator: WebCommand) {
                     if (TextUtils.isPolyMatcher(text)) {
                         when {
                             StringUtils.startsWith(text, REGEX)            ->
-                                throw IllegalArgumentException(
-                                    RB.PolyMatcher.text("notSupported.REGEX", locator))
+                                throw IllegalArgumentException(RB.PolyMatcher.text("notSupported.REGEX", locator))
                             StringUtils.startsWith(text, NUMERIC)          ->
-                                throw IllegalArgumentException(
-                                    RB.PolyMatcher.text("notSupported.NUMERIC", locator))
+                                throw IllegalArgumentException(RB.PolyMatcher.text("notSupported.NUMERIC", locator))
                             StringUtils.startsWith(text, END)              ->
-                                throw IllegalArgumentException(
-                                    RB.PolyMatcher.text("notSupported.END", locator))
+                                throw IllegalArgumentException(RB.PolyMatcher.text("notSupported.END", locator))
                             StringUtils.startsWith(text, END_ANY_CASE)     ->
-                                throw IllegalArgumentException(
-                                    RB.PolyMatcher.text("notSupported.END_ANY_CASE", locator))
+                                throw IllegalArgumentException(RB.PolyMatcher.text("notSupported.END_ANY_CASE", locator))
 
                             StringUtils.startsWith(text, CONTAIN)          ->
                                 "//*[contains($elemText,${normalizeXpathText(text.substringAfter(CONTAIN))})]"

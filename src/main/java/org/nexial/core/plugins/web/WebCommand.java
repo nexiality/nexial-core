@@ -95,6 +95,7 @@ import static org.nexial.core.NexialConst.Web.*;
 import static org.nexial.core.SystemVariables.*;
 import static org.nexial.core.plugins.base.ComparisonFormatter.displayForCompare;
 import static org.nexial.core.plugins.web.JsLib.isTrue;
+import static org.nexial.core.plugins.web.WebCommand.AssertionType.*;
 import static org.nexial.core.plugins.ws.WebServiceClient.hideAuthDetails;
 import static org.nexial.core.utils.CheckUtils.*;
 import static org.openqa.selenium.Keys.TAB;
@@ -117,6 +118,10 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     protected ClientPerformanceCollector clientPerfCollector;
     protected UserStackAPI userStack;
     protected CssHelper css;
+
+    protected static enum AssertionType {
+        PRESENT, ABSENT, VISIBLE, HIDDEN, ENABLED, DISABLED;
+    }
 
     @Override
     public Browser getBrowser() { return browser; }
@@ -488,7 +493,16 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
      * "LoginForm" is custom prefix. ".locator" is the required suffix.
      */
     @NotNull
-    public StepResult assertElementsPresent(String prefix) {
+    public StepResult assertElementsPresent(String prefix) { return assertElements(prefix, PRESENT); }
+
+    @NotNull
+    public StepResult assertElementsVisible(String prefix) { return assertElements(prefix, VISIBLE); }
+
+    @NotNull
+    public StepResult assertElementsEnabled(String prefix) { return assertElements(prefix, ENABLED); }
+
+    @NotNull
+    protected StepResult assertElements(String prefix, AssertionType assertionType) {
         requiresNotBlank(prefix, "Invalid prefix", prefix);
 
         Map<String, String> locators = context.getDataByPrefix(prefix);
@@ -512,23 +526,38 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
             String message = "[" + name + "] ";
 
             try {
-                StepResult isPresent = assertElementPresent(locator);
-                if (isPresent.isSuccess()) {
-                    message += "found via '" + locator + "'";
+                boolean matched = false;
+                switch (assertionType) {
+                    case PRESENT: {
+                        matched = assertElementPresent(locator).isSuccess();
+                        message += (matched ? "" : "NOT ") + "found via '" + locator + "'";
+                        break;
+                    }
+                    case VISIBLE: {
+                        matched = isVisible(locator);
+                        message += "is " + (matched ? "" : "NOT ") + "visible as '" + locator + "'";
+                        break;
+                    }
+                    case ENABLED: {
+                        matched = isEnabled(locatorHelper.findBy(locator));
+                        message += "is " + (matched ? "" : "NOT ") + "enabled as '" + locator + "'";
+                        break;
+                    }
+                    default: {
+                        throw new IllegalArgumentException("assertion " + assertionType.name() + " not implemented");
+                    }
+                }
+
+                if (matched) {
                     ConsoleUtils.log(runId, message);
                 } else {
                     found = false;
-                    // no need to log since `assertElementPresent()` already does
-                    // message += "NOT FOUND via '" + locator + "'";
-                    // ConsoleUtils.error(runId, message);
                 }
             } catch (WebDriverException e) {
                 found = false;
+                message += "NOT FOUND via '" + locator + "': " + WebDriverExceptionHelper.resolveErrorMessage(e);
                 // NoSuchElementException already logged from `findElement()`, called from `assertElementPresent()`
-                if (!(e instanceof NoSuchElementException)) {
-                    message += "NOT FOUND via '" + locator + "': " + WebDriverExceptionHelper.resolveErrorMessage(e);
-                    ConsoleUtils.error(runId, message);
-                }
+                if (!(e instanceof NoSuchElementException)) { ConsoleUtils.error(runId, message); }
             } catch (Throwable e) {
                 found = false;
                 message += "NOT FOUND via '" + locator + "': " + e.getMessage();
@@ -690,7 +719,6 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
         long maxWait = deriveMaxWaitMs(waitMs);
         boolean outcome = isElementVisible(locator, maxWait);
-
         if (outcome) {
             return StepResult.success("Element by locator '" + locator + "' is visible");
         } else {
@@ -703,12 +731,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
         long maxWait = deriveMaxWaitMs(waitMs);
         By by = locatorHelper.findBy(locator);
-        boolean outcome = waitForCondition(maxWait, object -> {
-            WebElement elem = driver.findElement(by);
-            if (elem == null) { return false; }
-            if (!elem.isDisplayed()) { return true; }
-            return isTrue(jsExecutor.executeScript(JsLib.isHidden(), elem));
-        });
+        boolean outcome = waitForCondition(maxWait, object -> { return isHidden(by); });
 
         String prefix = "Element by locator '" + locator + "' ";
         if (!outcome) {
@@ -730,11 +753,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
         long maxWait = deriveMaxWaitMs(waitMs);
         By by = locatorHelper.findBy(locator);
-        boolean outcome = waitForCondition(maxWait, object -> {
-            WebElement elem = driver.findElement(by);
-            return elem != null && elem.isEnabled();
-        });
-
+        boolean outcome = waitForCondition(maxWait, object -> { return isEnabled(by); });
         if (outcome) {
             return StepResult.success("Element by locator '" + locator + "' is enabled");
         } else {
@@ -747,16 +766,30 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
         long maxWait = deriveMaxWaitMs(waitMs);
         By by = locatorHelper.findBy(locator);
-        boolean outcome = waitForCondition(maxWait, object -> {
-            WebElement elem = driver.findElement(by);
-            return elem != null && isElementDisabled(elem);
-        });
-
+        boolean outcome = waitForCondition(maxWait, object -> { return isDisabled(by); });
         if (outcome) {
             return StepResult.success("Element by locator '" + locator + "' is disabled");
         } else {
             return StepResult.fail("Element by locator '" + locator + "' is NOT disabled within " + maxWait + "ms");
         }
+    }
+
+    @Nonnull
+    private Object isHidden(By by) {
+        WebElement elem = driver.findElement(by);
+        if (elem == null) { return false; }
+        if (!elem.isDisplayed()) { return true; }
+        return isTrue(jsExecutor.executeScript(JsLib.isHidden(), elem));
+    }
+
+    private boolean isEnabled(By by) {
+        WebElement elem = driver.findElement(by);
+        return elem != null && elem.isEnabled();
+    }
+
+    private boolean isDisabled(By by) {
+        WebElement elem = driver.findElement(by);
+        return elem != null && isElementDisabled(elem);
     }
 
     public StepResult waitForElementsPresent(String locators) {
@@ -1193,6 +1226,18 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
     public StepResult assertCssPresent(String locator, String property, String value) {
         return css.assertCssPresent(locator, property, value);
+    }
+    
+    public StepResult saveCssValue(String var, String locator, String property) {
+        assertVarPresent(var);
+        String cssValue = css.deriveCssValue(locator, property);
+        if (StringUtils.isEmpty(cssValue)) {
+            context.removeData(var);
+            return StepResult.success("No CSS value found for '" + property + "' on '" + locator + "'");
+        } else {
+            context.setData(var, cssValue);
+            return StepResult.success("CSS value for '" + property + "' on '" + locator + "' saved to '" + var + "'");
+        }
     }
 
     public StepResult assertVisible(String locator) {

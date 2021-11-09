@@ -98,29 +98,26 @@ object JsLib {
             if (StringUtils.isNotBlank(key)) {
                 val cssProp = key.trim()
                 val cssValue = value.trim()
+                val oldPropName = "_" + StringUtils.replace(cssProp, "-", "")
 
-                part1 += "let _$cssProp=elem.style.$cssProp||''; "
+                part1 += "let $oldPropName=getComputedStyle(elem)['$cssProp']||'' ;"
 
                 // handle successive highlight that overlaps with JS timeout event
-                part2 += "if (_$cssProp && _$cssProp == '$cssValue') { " +
+                part2 += "if ($oldPropName && $oldPropName.indexOf('$cssValue') !== -1) { " +
                          "  elem.style.removeProperty('$cssProp'); " +
-                         "  _$cssProp=''; " +
+                         "  $oldPropName=''; " +
                          "} else { " +
-                         "  elem.style.$cssProp='$cssValue'; " +
+                         "  elem.style.setProperty('$cssProp','$cssValue'); " +
                          "} "
 
-                onTimeout += "elem.style.$cssProp=_$cssProp; "
+                onTimeout += "elem.style.setProperty('$cssProp',$oldPropName); "
             }
         }
 
         return "var elem = arguments[0]; " +
-               "let _style=elem.attributes['style']||''; " +
                part1 +
-               part2 + 
-               "setTimeout(function() { " + 
-               "    if (_style === '') { elem.removeAttribute('style'); } " +
-               "    else { " + onTimeout + " } " +
-               "}, $waitMs);"
+               part2 +
+               "setTimeout(function() { " + onTimeout + " }, $waitMs);"
     }
 
     @JvmStatic

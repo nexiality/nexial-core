@@ -328,6 +328,9 @@
         <entry key="ssh">
             <bean class="org.nexial.core.plugins.ssh.SshCommand"/>
         </entry>
+        <entry key="tn5250">
+            <bean class="org.nexial.core.plugins.tn5250.Tn5250Command"/>
+        </entry>
         <entry key="web">
             <bean class="org.nexial.core.plugins.web.WebCommand" p:userStack-ref="userstack"/>
         </entry>

@@ -61,7 +61,7 @@ class CssHelper(private val delegator: WebCommand) {
     //         StepResult.fail("CSS property '$property' value '$actual' DOES NOT match EXPECTED value '$expected'")
     // }
 
-    fun assertCssPresent(locator: String, property: String, value: String): StepResult? {
+    fun deriveCssValue(locator: String, property: String): String {
         val context = delegator.context
         val useComputedCss = context.getBooleanData(OPT_COMPUTED_CSS, getDefaultBool(OPT_COMPUTED_CSS))
         // if (useComputedCss) return assertCssValue(locator, property, value)
@@ -69,8 +69,13 @@ class CssHelper(private val delegator: WebCommand) {
         // 1. use selenium or js to get css value
         val actual = if (useComputedCss) getCssValue(locator, property) else getComputedCssValue(locator, property)
 
-        val verbose = context.isVerbose
-        if (verbose) contextLogger.log(delegator, "derive CSS property '$property' for '$locator': '$actual'")
+        if (context.isVerbose) contextLogger.log(delegator, "derive CSS property '$property' for '$locator': '$actual'")
+
+        return actual
+    }
+
+    fun assertCssPresent(locator: String, property: String, value: String): StepResult? {
+        val actual = deriveCssValue(locator, property)
 
         // 2. CHECK: don't care about the actual value, just the presence of a value
         if (StringUtils.equals(value, "*") && StringUtils.isEmpty(actual))
@@ -93,6 +98,7 @@ class CssHelper(private val delegator: WebCommand) {
                               ?: return StepResult.fail("EXPECTS CSS '$property' as color value, " +
                                                         "but found '$actual' instead")
 
+            val verbose = delegator.context.isVerbose
             if (verbose) contextLogger.log(delegator,
                                            "Comparing expected color '$colorExpected' against actual '$colorActual'")
 

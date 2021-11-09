@@ -182,8 +182,7 @@ public class WebTransformer<T extends WebDataType> extends Transformer<T> {
         csv.setDelim(delim);
         csv.parse();
 
-        Result res = new Result("fetchAsCsv(" + CollectionUtil.toString(list, delim) + ")", "PASS", null);
-        store(data, true, res);
+        store(data, true, new Result("fetchAsCsv(" + CollectionUtil.toString(list, delim) + ")", "PASS", null));
 
         return csv;
     }
