@@ -1,9 +1,6 @@
 package org.nexial.core.plugins.web
 
 import org.apache.commons.collections4.map.ListOrderedMap
-import org.apache.commons.lang3.StringUtils
-import org.jsoup.Jsoup
-import org.nexial.commons.utils.RegexUtils
 import java.time.LocalDateTime
 
 /**
@@ -30,61 +27,17 @@ data class EmailDetails(
 ) {
     internal val attachmentMap = ListOrderedMap<String, String>()
     var content: String? = null
-        internal set(value) {
-            field = value
-        }
+        internal set
+
     var html: String? = null
-        internal set(value) {
-            field = value
-            extractLinks()
-        }
+        internal set
 
-    internal var link: ListOrderedMap<String, String>? = ListOrderedMap()
+    internal var link: ListOrderedMap<String, String> = ListOrderedMap()
     internal var links: MutableList<String> = mutableListOf()
-    internal var labels: MutableList<String> = mutableListOf()
-
-    init {
-        extractLinks()
-    }
-
-    internal fun addAttachment(attachment: String) {
-        val attachmentName = attachment.replace('\\', '/').substringAfterLast(delimiter = "/")
-        attachmentMap[attachmentName] = attachment
-    }
 
     fun getAttachments(): List<String> = attachmentMap.keys.toList()
     fun getLinks(): List<String> = links
-    fun getLink(): ListOrderedMap<String, String> = link!!
-
-    private fun extractLinks() {
-        if (StringUtils.isNotEmpty(html)) {
-            links = Jsoup.parse(removeConditionalComments(html!!))
-                .getElementsByAttribute("href")
-                .map { it.attr("href") }
-                .filter { it.startsWith("https://") || it.startsWith("http://") }.toMutableList()
-
-            val parse = Jsoup.parse(removeConditionalComments(html!!))
-            val urls = parse.select("a[href]")
-            for (url in urls) {
-                val key = url.text().trim()
-                if (key.isNotEmpty() && !key.startsWith("http://") && !key.startsWith("https://")) {
-                    if (!link!!.contains(key)) {
-                        link?.put(key, url.attr("href"))
-                    }
-                    labels.add(key)
-                }
-            }
-        }
-    }
-
-    private fun removeConditionalComments(html: String): String {
-        var replaced = html
-        while (StringUtils.contains(replaced, "<!--[if ") || StringUtils.contains(replaced, "<![endif]-->")) {
-            replaced = RegexUtils.removeMatches(replaced, "\\<\\!\\-\\-\\[if\\ .+\\].*\\>")
-            replaced = StringUtils.remove(replaced, "<![endif]-->")
-        }
-        return replaced
-    }
+    fun getLink(): ListOrderedMap<String, String> = link
 
     override fun toString(): String {
         return "id         =$id\n" +
@@ -96,7 +49,6 @@ data class EmailDetails(
             "html       =$html\n" +
             "link      =$link\n" +
             "links      =$links\n" +
-            "labels      =$labels\n" +
             "attachments=${getAttachments()}"
     }
 }

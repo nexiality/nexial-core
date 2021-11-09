@@ -38,7 +38,7 @@ class TemporaryMail : WebMailer() {
     private val mailSuffix = "@temporary-mail.net"
 
     override fun search(context: ExecutionContext, profile: WebMailProfile, searchCriteria: String, duration: Long):
-            Set<String?> {
+        Set<String?> {
         val wsClient = WebServiceClient(null).configureAsQuiet().disableContextConfiguration()
 
         val inboxUrl = apiBase + profile.inbox
@@ -51,7 +51,8 @@ class TemporaryMail : WebMailer() {
         return JsonUtils.toJSONArray(response.body).map { mail ->
             if (mail !is JSONObject) "" else {
                 val receivedDate = LocalDateTime.from(
-                        DateTimeFormatter.ofPattern(dateTimeFormat).parse(mail.getString("date").trim()))
+                    DateTimeFormatter.ofPattern(dateTimeFormat).parse(mail.getString("date").trim())
+                )
                 val receivedMillis = receivedDate.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
                 val minutesAgo = (System.currentTimeMillis() - receivedMillis) / 1000 / 60
                 if (minutesAgo > duration) "" else {
@@ -60,8 +61,10 @@ class TemporaryMail : WebMailer() {
                         val id = mail.getString("id")
                         val contentResponse = wsClient.get("$inboxUrl/$id", "")
                         if (contentResponse.returnCode < 200 || contentResponse.returnCode > 299) {
-                            ConsoleUtils.log("Unable to retrieve email $id from ${profile.inbox}: " +
-                                             contentResponse.statusText)
+                            ConsoleUtils.log(
+                                "Unable to retrieve email $id from ${profile.inbox}: " +
+                                    contentResponse.statusText
+                            )
                             ""
                         } else {
                             val contentJson = JsonUtils.toJSONObject(contentResponse.body)
@@ -71,12 +74,14 @@ class TemporaryMail : WebMailer() {
                                 subject = subject,
                                 from = retrieveFrom(contentJson),
                                 to = "${mail.getString("mailbox")}$mailSuffix",
-                                time = receivedDate)
+                                time = receivedDate
+                            )
                             email.content = cleanMailContent(contentJson.getJSONObject("body").getString("text"))
                             email.html = contentJson.getJSONObject("body").getString("html")
                             contentJson.getJSONArray("attachments")
                                 .map { (it as JSONObject).getString("filename") }
-                                .forEach { email.addAttachment(it) }
+                                .forEach { addAttachment(it, email) }
+                            extractLinks(email)
 
                             context.setData(deriveEmailContentVar(profile, email.id), email)
                             email.id

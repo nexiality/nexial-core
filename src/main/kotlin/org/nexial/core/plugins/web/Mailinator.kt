@@ -165,22 +165,31 @@ class Mailinator : WebMailer() {
         }
 
         email.links = getUrlLinks(messageBody)
+        val htmlBody = email.html?.let { removeConditionalComments(it) }
 
-        if (email.labels.size > 0) {
-            email.link?.clear()
-            for (label in email.labels) {
-                val result = getUrl(label, messageBody)
-                val url = if (result.isNotEmpty()) "http" + StringUtils.substringBefore(
-                    StringUtils.substringAfter(result, "<http"),
-                    ">"
-                ) else StringUtils.EMPTY
+        val parse = Jsoup.parse(htmlBody)
+        val urls = parse.select("a[href]")
+        val labels: MutableList<String> = mutableListOf()
 
-                if (StringUtils.isNotEmpty(url)) {
-                    if (!email.link!!.contains(label)) {
-                        email.link?.put(label, url)
-                    }
-                    messageBody = StringUtils.substringAfter(messageBody, result)
+        for (url in urls) {
+            val key = url.text().trim()
+            if (key.isNotEmpty() && !key.startsWith("http://") && !key.startsWith("https://")) {
+                labels.add(key)
+            }
+        }
+
+        for (label in labels) {
+            val result = getUrl(label, messageBody)
+            val url = if (result.isNotEmpty()) "http" + StringUtils.substringBefore(
+                StringUtils.substringAfter(result, "<http"),
+                ">"
+            ) else StringUtils.EMPTY
+
+            if (StringUtils.isNotEmpty(url)) {
+                if (!email.link!!.contains(label)) {
+                    email.link!![label] = url
                 }
+                messageBody = StringUtils.substringAfter(messageBody, result)
             }
         }
         return email

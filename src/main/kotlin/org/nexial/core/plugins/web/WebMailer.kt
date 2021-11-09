@@ -19,6 +19,8 @@ package org.nexial.core.plugins.web
 
 import org.apache.commons.lang3.StringUtils
 import org.apache.commons.lang3.StringUtils.EMPTY
+import org.jsoup.Jsoup
+import org.nexial.commons.utils.RegexUtils
 import org.nexial.core.NexialConst.NAMESPACE
 import org.nexial.core.NexialConst.Web.WEB_PAGE_LOAD_WAIT_MS
 import org.nexial.core.NexialConst.WebMail.WEBMAIL_TEMPORARYMAIL
@@ -49,8 +51,10 @@ abstract class WebMailer {
      * @return [StepResult.success] or [StepResult.fail] based on whether the emails
      * related information are extracted or not.
      */
-    abstract fun search(context: ExecutionContext, profile: WebMailProfile, searchCriteria: String,
-                        duration: Long): Set<String?>?
+    abstract fun search(
+        context: ExecutionContext, profile: WebMailProfile, searchCriteria: String,
+        duration: Long
+    ): Set<String?>?
 
     /**
      * Extracts the value of the [EmailDetails] matching the search criteria associated with a specific
@@ -97,11 +101,13 @@ abstract class WebMailer {
      * @throws IllegalArgumentException if there is no attachment with the file name specified.
      * @throws RuntimeException if the file download fails.
      */
-    open fun attachment(context: ExecutionContext, profile: WebMailProfile, id: String, attachment: String,
-                        saveTo: String) {
+    open fun attachment(
+        context: ExecutionContext, profile: WebMailProfile, id: String, attachment: String,
+        saveTo: String
+    ) {
         val email = context.getObjectData(deriveEmailContentVar(profile, id), EmailDetails::class.java)
         val index = email?.getAttachments()?.indexOf(attachment)
-                    ?: throw IllegalArgumentException("There is no attachment named $attachment in email $id.")
+            ?: throw IllegalArgumentException("There is no attachment named $attachment in email $id.")
         val attachmentName = email.attachmentMap[attachment]
 
         val url = "${deriveBaseUrl(profile)}/${profile.inbox}/${id}/${index}/${attachmentName}"
@@ -168,4 +174,38 @@ abstract class WebMailer {
                 .map { line -> StringUtils.trim(line) }
                 .filter { line -> StringUtils.isNotEmpty(line) }
                 .joinToString("\n")
+
+    protected fun extractLinks(email: EmailDetails) {
+        if (StringUtils.isNotEmpty(email.html)) {
+            email.links = Jsoup.parse(removeConditionalComments(email.html!!))
+                .getElementsByAttribute("href")
+                .map { it.attr("href") }
+                .filter { it.startsWith("https://") || it.startsWith("http://") }.toMutableList()
+
+            val parse = Jsoup.parse(removeConditionalComments(email.html!!))
+            val urls = parse.select("a[href]")
+            for (url in urls) {
+                val key = url.text().trim()
+                if (key.isNotEmpty() && !key.startsWith("http://") && !key.startsWith("https://")) {
+                    if (!email.link.contains(key)) {
+                        email.link[key] = url.attr("href")
+                    }
+                }
+            }
+        }
+    }
+
+    protected fun addAttachment(attachment: String, email: EmailDetails) {
+        val attachmentName = attachment.replace('\\', '/').substringAfterLast(delimiter = "/")
+        email.attachmentMap[attachmentName] = attachment
+    }
+
+    protected fun removeConditionalComments(html: String): String {
+        var replaced = html
+        while (StringUtils.contains(replaced, "<!--[if ") || StringUtils.contains(replaced, "<![endif]-->")) {
+            replaced = RegexUtils.removeMatches(replaced, "\\<\\!\\-\\-\\[if\\ .+\\].*\\>")
+            replaced = StringUtils.remove(replaced, "<![endif]-->")
+        }
+        return replaced
+    }
 }
