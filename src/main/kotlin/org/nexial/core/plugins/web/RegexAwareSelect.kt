@@ -21,17 +21,38 @@ import org.nexial.core.utils.ConsoleUtils
 import org.openqa.selenium.By
 import org.openqa.selenium.WebElement
 import org.openqa.selenium.support.ui.Select
-import java.util.function.Consumer
-import java.util.stream.Collectors
 
 class RegexAwareSelect(private val element: WebElement) : Select(element) {
+
+    fun containsOptions(expectedText: List<String>): Boolean {
+        return if (expectedText.isEmpty())
+            true
+        else {
+            val options = element.findElements<WebElement>(By.tagName("option")).map { it.text }
+            if (options.isEmpty()) {
+                ConsoleUtils.log("target SELECT element contains NO child OPTION elements")
+                false
+            } else expectedText.all { expected -> options.firstOrNull { TextUtils.polyMatch(it, expected) } != null }
+        }
+    }
+
+    fun containsNoneOptions(invalidText: List<String>): Boolean {
+        return if (invalidText.isEmpty())
+            true
+        else {
+            val options = element.findElements<WebElement>(By.tagName("option")).map { it.text }
+            if (options.isEmpty()) {
+                ConsoleUtils.log("target SELECT element contains NO child OPTION elements")
+                true
+            } else invalidText.none { expected -> options.firstOrNull { TextUtils.polyMatch(it, expected) } != null }
+        }
+    }
+
     override fun selectByVisibleText(text: String) = handleViaPolyMatch(text, true)
 
     /**
      * Deselect all options that display text matching the argument. That is, when given "Bar" this
      * would deselect an option like:
-     *
-     *
      * &lt;option value="foo"&gt;Bar&lt;/option&gt;
      *
      * @param text The visible text to match against
@@ -46,27 +67,20 @@ class RegexAwareSelect(private val element: WebElement) : Select(element) {
             throw UnsupportedOperationException("You may only deselect options of a multi-select")
 
         val options = element.findElements<WebElement>(By.tagName("option"))
-        if (CollectionUtils.isEmpty(options)) {
+        val matches = if (CollectionUtils.isEmpty(options)) {
             ConsoleUtils.log("target SELECT element contains NO child OPTION elements")
-            return
-        }
+            null
+        } else
+            options.filter { option -> TextUtils.polyMatch(option.text, text) }
 
-        val matches = options.stream()
-            .filter { option: WebElement? -> TextUtils.polyMatch(option!!.text, text) }
-            .collect(Collectors.toList())
+        if (matches == null) return
         if (CollectionUtils.isNotEmpty(matches)) {
-            if (isMultiple) {
-                matches.forEach(Consumer { option: WebElement? -> setSelected(option, select) })
-            } else {
-                setSelected(matches[0], select)
-            }
-            return
-        }
-        ConsoleUtils.log("No text from target SELECT element matches to $text, retrying as normal text")
-        if (select) {
-            super.selectByVisibleText(text)
+            if (isMultiple) matches.forEach { option -> setSelected(option, select) }
+            else setSelected(matches[0], select)
         } else {
-            super.deselectByVisibleText(text)
+            ConsoleUtils.log("No text from target SELECT element matches to $text, retrying as normal text")
+            if (select) super.selectByVisibleText(text)
+            else super.deselectByVisibleText(text)
         }
     }
 
@@ -76,8 +90,8 @@ class RegexAwareSelect(private val element: WebElement) : Select(element) {
      * @param option The option which state needs to be changed
      * @param select Indicates whether the option needs to be selected (true) or deselected (false)
      */
-    private fun setSelected(option: WebElement?, select: Boolean) {
-        val isSelected = option!!.isSelected
+    private fun setSelected(option: WebElement, select: Boolean) {
+        val isSelected = option.isSelected
         if (!isSelected && select || isSelected && !select) option.click()
     }
 }

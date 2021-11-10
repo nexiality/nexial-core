@@ -392,6 +392,38 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         return StepResult.success("deselected '" + array + "' on widgets matching '" + locator + "'");
     }
 
+    /** each "option" specified in 1 line, polymatcher supported */
+    @NotNull
+    public StepResult assertSelectOptionsPresent(String locator, String options) {
+        requiresNotBlank(options, "Invalid options", options);
+
+        // if options is exactly 1 line, then use nexial.textDelim as separator
+        String delim = StringUtils.containsNone(options, "\n") ? context.getTextDelim() : "\n";
+        List<String> optionList = TextUtils.toList(options, delim, true);
+
+        if (getSelectElement(locator).containsOptions(optionList)) {
+            return StepResult.success("Target SELECT element contains all specified options: " + options);
+        } else {
+            return StepResult.fail("Target SELECT element DOES NOT contains all specified options: " + options);
+        }
+    }
+
+    /** each "option" specified in 1 line, polymatcher supported */
+    @NotNull
+    public StepResult assertSelectOptionsAbsent(String locator, String options) {
+        requiresNotBlank(options, "Invalid options", options);
+
+        // if options is exactly 1 line, then use nexial.textDelim as separator
+        String delim = StringUtils.containsNone(options, "\n") ? context.getTextDelim() : "\n";
+        List<String> optionList = TextUtils.toList(options, delim, true);
+
+        if (getSelectElement(locator).containsNoneOptions(optionList)) {
+            return StepResult.success("Target SELECT element contains NONE of the specified options: " + options);
+        } else {
+            return StepResult.fail("Target SELECT element contains ONE OR MORE of the specified options: " + options);
+        }
+    }
+
     @NotNull
     public StepResult selectDropdown(String locator, String optLocator, String optText) {
         requiresNotBlank(locator, "Invalid locator for dropdown element", locator);
@@ -1227,7 +1259,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     public StepResult assertCssPresent(String locator, String property, String value) {
         return css.assertCssPresent(locator, property, value);
     }
-    
+
     public StepResult saveCssValue(String var, String locator, String property) {
         assertVarPresent(var);
         String cssValue = css.deriveCssValue(locator, property);
@@ -3101,7 +3133,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     }
 
     @NotNull
-    protected Select getSelectElement(String locator) {
+    protected RegexAwareSelect getSelectElement(String locator) {
         WebElement element = findElement(locator);
         if (element == null) { throw new NoSuchElementException("element '" + locator + "' not found."); }
         return new RegexAwareSelect(element);
