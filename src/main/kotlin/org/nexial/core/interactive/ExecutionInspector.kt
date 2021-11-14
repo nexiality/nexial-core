@@ -91,7 +91,6 @@ class ExecutionInspector(private val baseCommand: BaseCommand) {
                 ConsoleUtils.error("ERROR on '$input' - ${e.message}")
             }
 
-            println()
             print(inspectPrompt)
             print(prompt)
             input = stdin.nextLine()

@@ -17,18 +17,6 @@
 
 package org.nexial.core.plugins.db;
 
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.sql.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.atomic.AtomicReference;
-import javax.sql.DataSource;
-import javax.validation.constraints.NotNull;
-
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.dbcp2.BasicDataSource;
 import org.apache.commons.lang3.StringUtils;
@@ -46,6 +34,14 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.StatementCallback;
 import org.springframework.jdbc.core.support.JdbcDaoSupport;
+
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.sql.*;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
+import javax.sql.DataSource;
+import javax.validation.constraints.NotNull;
 
 import static java.sql.Types.*;
 import static org.nexial.core.NexialConst.NL;
@@ -69,7 +65,7 @@ public class SimpleExtractionDao extends JdbcDaoSupport {
     protected ExecutionContext context;
 
     protected class JdbcResultExtractor implements ResultSetExtractor<JdbcResult>, StatementCallback<JdbcResult> {
-        private final JdbcResult result;
+        private JdbcResult result;
         private File file;
         private QueryResultExporter exporter;
 
@@ -100,12 +96,11 @@ public class SimpleExtractionDao extends JdbcDaoSupport {
                 return result;
             }
 
-            int rowsAffected = rs.getStatement().getUpdateCount();
-            if (rowsAffected != -1) { result.setRowCount(rowsAffected); }
-
-            if (file == null) { return resultToListOfMap(rs, result); }
-            if (exporter == null) { return resultToCSV(rs, result, file); }
-            return exporter.export(rs, result, file);
+            boolean isRollback = result.getSqlType() != null && result.getSqlType().isRollback();
+            Statement stmt = rs.getStatement();
+            result = processResultSet(stmt, isRollback, result);
+            result = processNestedResults(stmt, isRollback, result);
+            return result;
         }
 
         @Override
@@ -123,18 +118,13 @@ public class SimpleExtractionDao extends JdbcDaoSupport {
             boolean isRollback = result.getSqlType() != null && result.getSqlType().isRollback();
             try {
                 if (stmt.execute(sql)) {
-                    ResultSet rs = stmt.getResultSet();
-
-                    // esp. treatment when there's no resultset to process
-                    if (rs == null || rs.isClosed()) { return processNoResultset(stmt, isRollback); }
-
-                    if (file == null) { return packData(resultToListOfMap(rs, result)); }
-                    if (exporter == null) { return resultToCSV(rs, result, file); }
-                    if (isRollback) { result.setRolledBack(true); }
-                    return exporter.export(rs, result, file);
+                    result = processResultSet(stmt, isRollback, result);
                 } else {
-                    return processNoResultset(stmt, isRollback);
+                    result = processNoResultset(stmt, isRollback, result);
                 }
+
+                result = processNestedResults(stmt, isRollback, result);
+                return result;
             } catch (SQLException | DataAccessException e) {
                 if (context.isVerbose()) { e.printStackTrace(); }
                 result.setError("Error occurred when executing '" + sql + "':" + ExceptionUtils.getRootCauseMessage(e));
@@ -144,7 +134,41 @@ public class SimpleExtractionDao extends JdbcDaoSupport {
             }
         }
 
-        protected JdbcResult processNoResultset(Statement stmt, boolean isRollback) throws SQLException {
+        // handle nested results, if any
+        protected JdbcResult processNestedResults(Statement stmt, boolean isRollback, JdbcResult result)
+            throws SQLException {
+            boolean continueScanning = true;
+            while (continueScanning) {
+                if (stmt.getMoreResults()) {
+                    processResultSet(stmt, isRollback, result.addNewNested());
+                } else {
+                    int updateCount = stmt.getUpdateCount();
+                    if (updateCount == -1) {
+                        continueScanning = false;
+                    } else {
+                        result.addNewNested().setRowCount(updateCount);
+                    }
+                }
+            }
+
+            return result;
+        }
+
+        protected JdbcResult processResultSet(Statement stmt, boolean isRollback, JdbcResult result)
+            throws SQLException {
+            ResultSet rs = stmt.getResultSet();
+
+            // esp. treatment when there's no result set to process
+            if (rs == null || rs.isClosed()) { return processNoResultset(stmt, isRollback, result); }
+            if (file == null) { return packData(resultToListOfMap(rs, result)); }
+            if (exporter == null) { return resultToCSV(rs, result, file); }
+
+            if (isRollback) { result.setRolledBack(true); }
+            return exporter.export(rs, result, file);
+        }
+
+        protected JdbcResult processNoResultset(Statement stmt, boolean isRollback, JdbcResult result)
+            throws SQLException {
             int rowsAffected = stmt.getUpdateCount();
             if (rowsAffected != -1) { result.setRowCount(rowsAffected); }
             if (isRollback) { result.setRolledBack(true); }
@@ -192,7 +216,7 @@ public class SimpleExtractionDao extends JdbcDaoSupport {
             //callStmt.registerOutParameter(2, OracleTypes.CURSOR);
 
             // it seems that calling executeQuery() works better than calling execute()...
-            // extractor.exetractData() will handle situation where only update count is available (no rs)
+            // extractor.extractData() will handle situation where only update count is available (no rs)
             ResultSet rs = callStmt.executeQuery();
             return packData(extractor.extractData(rs));
 
@@ -377,7 +401,12 @@ public class SimpleExtractionDao extends JdbcDaoSupport {
     protected void setAutoCommit(Boolean autoCommit) { this.autoCommit = autoCommit; }
 
     protected Boolean isAutoCommit() {
-        return autoCommit != null ? autoCommit : ((BasicDataSource) getDataSource()).getDefaultAutoCommit();
+        if (autoCommit != null) { return autoCommit; }
+
+        DataSource dataSource = getDataSource();
+        return dataSource instanceof BasicDataSource ? 
+               ((BasicDataSource) dataSource).getDefaultAutoCommit() :
+               Boolean.valueOf(false);
     }
 
     /** @deprecated use {@link CsvExporter} instead */
@@ -390,6 +419,15 @@ public class SimpleExtractionDao extends JdbcDaoSupport {
 
         String recordDelim = "\n";
         String delim = ",";
+        
+        // adjust file name to compensate for nested result set
+        if (result.nestedIndex != -1) {
+            String targetFile = file.getAbsolutePath();
+            targetFile = StringUtils.substringBeforeLast(targetFile, ".") + 
+                         "." + result.nestedIndex + "." + 
+                         StringUtils.substringAfterLast(targetFile, ".");
+            file = new File(targetFile);
+        }
 
         int rowCount = 0;
         try (BufferedOutputStream outputStream = FileUtil.makeOutputStream(file)) {

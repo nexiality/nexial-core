@@ -17,15 +17,15 @@
 
 package org.nexial.core.model;
 
+import org.nexial.commons.utils.FileUtil;
+import org.nexial.core.excel.Excel;
+import org.nexial.core.utils.ConsoleUtils;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import org.nexial.commons.utils.FileUtil;
-import org.nexial.core.excel.Excel;
-import org.nexial.core.utils.ConsoleUtils;
 
 import static org.nexial.core.NexialConst.Data.DEF_OPEN_EXCEL_AS_DUP;
 import static org.nexial.core.excel.Excel.MIN_EXCEL_FILE_SIZE;

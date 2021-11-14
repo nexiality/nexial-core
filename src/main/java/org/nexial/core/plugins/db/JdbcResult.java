@@ -17,17 +17,20 @@
 
 package org.nexial.core.plugins.db;
 
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.collections4.IterableUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.nexial.commons.utils.CollectionUtil;
 import org.nexial.commons.utils.DateUtility;
 import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.plugins.db.SqlComponent.Type;
+
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import static org.nexial.core.NexialConst.DATE_FORMAT_NOW;
 
@@ -43,6 +46,10 @@ public class JdbcResult implements Serializable {
     protected List<Map<String, Object>> data;
     protected boolean rolledBack;
     protected Type sqlType;
+    protected transient int nestedIndex = -1;
+    protected List<JdbcResult> nested;
+    protected transient JdbcResult previous;
+    protected transient JdbcResult next;
 
     public JdbcResult(String sql) {
         this.sql = sql;
@@ -61,19 +68,19 @@ public class JdbcResult implements Serializable {
 
     public String getSql() { return sql; }
 
-    public void setSql(String sql) { this.sql = sql;}
+    public void setSql(String sql) { this.sql = sql; }
 
     public long getStartTime() { return startTime; }
 
-    public void setStartTime(long startTime) { this.startTime = startTime;}
+    public void setStartTime(long startTime) { this.startTime = startTime; }
 
     public long getElapsedTime() { return elapsedTime; }
 
-    public void setElapsedTime(long elapsedTime) { this.elapsedTime = elapsedTime;}
+    public void setElapsedTime(long elapsedTime) { this.elapsedTime = elapsedTime; }
 
     public String getError() { return error; }
 
-    public void setError(String error) { this.error = error;}
+    public void setError(String error) { this.error = error; }
 
     public boolean hasError() { return StringUtils.isNotBlank(error); }
 
@@ -121,23 +128,88 @@ public class JdbcResult implements Serializable {
 
     public void setRolledBack(boolean rolledBack) { this.rolledBack = rolledBack; }
 
+    public boolean hasNested() { return CollectionUtils.isNotEmpty(nested); }
+
+    public int getNestedCount() { return CollectionUtils.size(nested); }
+
+    public JdbcResult nested(String index) {
+        if (!NumberUtils.isDigits(index)) { throw new IllegalArgumentException("Invalid index: " + index); }
+
+        int idx = NumberUtils.toInt(index);
+        int maxIndex = getNestedCount();
+        if (idx < 0 || idx >= maxIndex) { throw new IndexOutOfBoundsException("Index out of range: " + index); }
+
+        return IterableUtils.get(nested, idx);
+    }
+
+    public JdbcResult getNext() { return next; }
+
+    public JdbcResult next() { return getNext(); }
+
+    public JdbcResult getPrevious() { return previous; }
+
+    public JdbcResult previous() { return getPrevious(); }
+
     @Override
     public String toString() {
+        String nestedToString = "";
+        if (CollectionUtils.isNotEmpty(nested)) {
+            nestedToString = "nested=" +
+                             nested.stream()
+                                   .map(result ->
+                                            TextUtils.toList(result.toString(), "\n", true)
+                                                     .stream()
+                                                     .map(line -> "\t" + line)
+                                                     .collect(Collectors.joining("\n")))
+                                   .collect(Collectors.joining());
+        }
         return TextUtils.prettyToString("sql=" + sql,
-                                        "startTime=" + formatStartTime(startTime),
+                                        "startTime=" + formatStartTime(startTime), 
                                         "elapsedTime=" + elapsedTime + " ms",
                                         StringUtils.isNotBlank(error) ? "error=" + error : "",
                                         "rowCount=" + rowCount,
+                                        CollectionUtils.isNotEmpty(columns) ? "columns=" + columns : "",
                                         CollectionUtils.isNotEmpty(data) ? "data=" + data : "",
-                                        isRolledBack() ? "TRANSACTION ROLLBACKED=yes" : "");
+                                        isRolledBack() ? "TRANSACTION ROLLED BACK=yes" : "",
+                                        nestedToString);
+    }
+
+    protected JdbcResult addNewNested() {
+        JdbcResult result = new JdbcResult();
+        result.startTime = this.startTime;
+        result.sql = this.sql;
+        result.elapsedTime = this.elapsedTime;
+        result.error = this.error;
+        result.rolledBack = this.rolledBack;
+        result.sqlType = this.sqlType;
+
+        if (CollectionUtils.isEmpty(nested)) {
+            nested = new ArrayList<>();
+            this.next = result;
+            result.previous = this;
+        } else {
+            JdbcResult lastResult = nested.get(nested.size() - 1);
+            lastResult.next = result;
+            result.previous = lastResult;
+        }
+        result.nestedIndex = nested.size();
+        nested.add(result);
+
+        return result;
     }
 
     protected <T extends JdbcResult> T setTiming(long startTime) {
         this.setStartTime(startTime);
         this.setElapsedTime(System.currentTimeMillis() - startTime);
+
+        if (CollectionUtils.isNotEmpty(nested)) {
+            nested.forEach(result -> {
+                result.startTime = startTime;
+                result.elapsedTime = elapsedTime;
+            });
+        }
         return (T) this;
     }
 
     protected static String formatStartTime(long startTime) { return DateUtility.format(startTime, DATE_FORMAT_NOW); }
-
 }

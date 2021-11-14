@@ -1920,13 +1920,15 @@ public class ExecutionContext {
             if (Map.class.isAssignableFrom(value.getClass())) {
                 newValue = ObjectUtils.defaultIfNull(((Map) value).get(propName), "");
             } else {
-                int index = NumberUtils.toInt(propName);
+                int index = NumberUtils.isDigits(propName) ? NumberUtils.toInt(propName) : -1;
                 if (Collection.class.isAssignableFrom(value.getClass())) {
                     Collection collection = (Collection) value;
-                    newValue = collection.size() > index ?
-                               ObjectUtils.defaultIfNull(IterableUtils.get(collection, index), "") : "";
+                    newValue = index == -1 ? "" : 
+                                         collection.size() > index ? 
+                                         ObjectUtils.defaultIfNull(IterableUtils.get(collection, index), "") : "";
                 } else if (value.getClass().isArray()) {
-                    newValue = ArrayUtils.getLength(value) > index ?
+                    newValue = index == -1 ? "" :
+                               ArrayUtils.getLength(value) > index ? 
                                ObjectUtils.defaultIfNull(Array.get(value, index), "") : "";
                 } else {
                     // object treatment

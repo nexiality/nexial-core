@@ -250,6 +250,7 @@ public class BaseCommand implements NexialCommand {
 
     public StepResult save(String var, String value) {
         requiresValidAndNotReadOnlyVariableName(var);
+        // todo: much better if we can save object rather than text only
         updateDataVariable(var, value);
         return StepResult.success("stored '" + CellTextReader.readValue(value) + "' as ${" + var + "}");
     }

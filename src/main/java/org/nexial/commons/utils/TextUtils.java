@@ -1393,7 +1393,7 @@ public final class TextUtils {
                    String key = StringUtils.substringBefore(pair, "=");
                    String value = StringUtils.substringAfter(pair, "=");
                    return StringUtils.isBlank(key) ?
-                          "" : StringUtils.rightPad(key, TO_STRING_KEY_LENGTH) + "=" + value + delimiter;
+                          "" : StringUtils.rightPad(key, TO_STRING_KEY_LENGTH) + " = " + value + delimiter;
                }).collect(Collectors.joining(""));
     }
 
