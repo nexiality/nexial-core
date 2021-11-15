@@ -17,8 +17,6 @@
 
 package org.nexial.core.tools.swagger;
 
-import java.util.List;
-
 import org.json.JSONObject;
 
 /**
@@ -30,8 +28,8 @@ public class ResponseStepAttributes {
     private String response;
     private String activityName;
     private String responseVariable;
-    private List<String> statusTextVariables;
     private String scenarioName;
+    private String statusTextVar;
 
     public String getPath() {
         return path;
@@ -53,8 +51,8 @@ public class ResponseStepAttributes {
         return responseVariable;
     }
 
-    public List<String> getStatusTextVariables() {
-        return statusTextVariables;
+    public String getStatusTextVar() {
+        return statusTextVar;
     }
 
     public String getScenarioName() {
@@ -69,7 +67,7 @@ public class ResponseStepAttributes {
                ", response='" + response + '\'' +
                ", activityName='" + activityName + '\'' +
                ", responseVariable='" + responseVariable + '\'' +
-               ", statusTextVariables=" + statusTextVariables +
+               ", statusTextVar=" + statusTextVar +
                ", scenarioName='" + scenarioName + '\'' +
                '}';
     }
@@ -98,20 +96,17 @@ public class ResponseStepAttributes {
     }
 
     public ResponseStepAttributes withResponseVariable(String responseVariable) {
-        this.responseVariable =
-        responseVariable;
+        this.responseVariable = responseVariable;
         return this;
     }
 
-    public ResponseStepAttributes withStatusTextVariables(List<String> statusTextVariables) {
-        this.statusTextVariables =
-        statusTextVariables;
+    public ResponseStepAttributes withStatusTextVar(String statusTextVar) {
+        this.statusTextVar = statusTextVar;
         return this;
     }
 
     public ResponseStepAttributes withScenarioName(String scenarioName) {
-        this.scenarioName =
-        scenarioName;
+        this.scenarioName = scenarioName;
         return this;
     }
 }

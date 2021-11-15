@@ -19,7 +19,8 @@ package org.nexial.core.tools;
 
 import static java.io.File.separator;
 import static org.apache.commons.lang3.StringUtils.*;
-import static org.nexial.core.NexialConst.*;
+import static org.nexial.core.NexialConst.DEF_CHARSET;
+import static org.nexial.core.NexialConst.NL;
 import static org.nexial.core.NexialConst.Project.NEXIAL_HOME;
 
 import java.io.File;
@@ -31,6 +32,7 @@ import java.text.MessageFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.SystemUtils;
@@ -40,6 +42,7 @@ import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.nexial.commons.utils.ResourceUtils;
 import org.nexial.core.tools.swagger.*;
+import org.springframework.http.HttpStatus;
 
 /**
  * This class is used to generate the files related to the Swagger script generation like the script, data and binary
@@ -67,8 +70,10 @@ public class SwaggerScriptFilesCreator {
             throws IOException {
         String scriptFile = joinWith(separator, projectDirPath, "artifact", "script",
                                      join(swaggerPrefix, EXCEL_EXTENSION));
-
+        String dataFile = joinWith(separator, projectDirPath, "artifact", "data", join(swaggerPrefix, ".data",
+                                                                                       EXCEL_EXTENSION));
         createScriptFile(contents, new File(scriptFile));
+        addContentToDataFile(new File(dataFile), contents);
         createPropertiesFile(projectDirPath, contents.getDataVariables(), swaggerPrefix);
 
         createBatchFile(projectDirPath, BATCH_FILE_CMD_TEMPLATE, BATCH_FILE_CMD_EXTENSION, swaggerPrefix);
@@ -98,10 +103,11 @@ public class SwaggerScriptFilesCreator {
         System.out.println("\tdata");
         System.out.println(join("\t\t", prefix, ".data", EXCEL_EXTENSION));
         System.out.println(
-                "\t\t" + joinWith(separator, "Swagger", join(prefix, ".", substringAfterLast(swaggerFile, separator))) +
+                "\t\t" + joinWith(separator, prefix, join("swagger", ".", substringAfterLast(swaggerFile, "."))) +
                 " (The Swagger file)");
 
-        System.out.println("\t\t" + joinWith(separator, "Schema", prefix) + " (The Schema folder)");
+        System.out.println("\t\t" + joinWith(separator, prefix, "Schema") + " (The Schema folder)");
+        System.out.println("\t\t" + joinWith(separator, prefix, "payload") + " (The payload folder)");
 
         System.out.println("\tplan");
         System.out.println(join("\t\t", projectName, "-plan", EXCEL_EXTENSION));
@@ -261,8 +267,9 @@ public class SwaggerScriptFilesCreator {
      */
     private void copySwaggerFileToProjectDir(String swaggerPrefix, String swaggerFile, String projectDirPath)
             throws IOException {
-        File swaggerDefinitionsFile = new File(joinWith(separator, projectDirPath, "artifact", "data", "Swagger"),
-                                               join(swaggerPrefix, ".", substringAfterLast(swaggerFile, separator)));
+        File swaggerDefinitionsFile =
+                new File(joinWith(separator, projectDirPath, "artifact", "data", swaggerPrefix),
+                         join("swagger", ".", substringAfterLast(swaggerFile, ".")));
         FileUtils.copyFile(new File(swaggerFile), swaggerDefinitionsFile);
     }
 
@@ -274,8 +281,7 @@ public class SwaggerScriptFilesCreator {
      * @throws IOException in case of File operation failures.
      */
     private void createPropertiesFile(String projectDirPath, SwaggerDataVariables dataVariables,
-                                      String swaggerPrefix)
-            throws IOException {
+                                      String swaggerPrefix) throws IOException {
         File propertiesFile = new File(joinWith(separator,
                                                 removeEnd(projectDirPath, separator), "artifact",
                                                 joinWith(".", "project", swaggerPrefix, "properties")));
@@ -295,36 +301,11 @@ public class SwaggerScriptFilesCreator {
 
         nexialProperties.forEach((x, y) -> lines.add(join(x, "=", y)));
         lines.add(join(NL, "baseUrl=", dataVariables.getBaseUrl()));
-
-        Map<String, List<String>> requestBodyVars = dataVariables.getRequestBodyVars();
-        dataVariables.setRequestBodyVars(getNonEmptyVars(requestBodyVars));
-        requestBodyVars = dataVariables.getRequestBodyVars();
-
-        lines.add(join(NL, "#Request Body Variables"));
-        for (String name : requestBodyVars.keySet()) {
-            for (String var : requestBodyVars.get(name)) {
-                lines.add(join(substringBeforeLast(substringAfter(var, TOKEN_START), TOKEN_END), "="));
-            }
-            lines.add(EMPTY);
-        }
-
-        dataVariables.setCookieParams(getNonEmptyVars(dataVariables.getCookieParams()));
-        addLinesToPropertyFile(lines, dataVariables.getCookieParams(), "# Cookie Variables");
-
-        dataVariables.setPathParams(getNonEmptyVars(dataVariables.getPathParams()));
-        addLinesToPropertyFile(lines, dataVariables.getPathParams(), "# Path Variables");
-
-        dataVariables.setHeaderParams(getNonEmptyVars(dataVariables.getHeaderParams()));
-        addLinesToPropertyFile(lines, dataVariables.getHeaderParams(), "# Header Variables");
-
-        dataVariables.setQueryParams(getNonEmptyVars(dataVariables.getQueryParams()));
-        addLinesToPropertyFile(lines, dataVariables.getQueryParams(), "# Query Parameter Variables");
+        lines.add(join(NL, "payloadBase=", joinWith("/", "$(syspath|data|fullpath)", swaggerPrefix, "payload")));
+        lines.add(join(NL, "schemaBase=", joinWith("/", "$(syspath|data|fullpath)", swaggerPrefix, "Schema")));
 
         dataVariables.setSecurityVars(getNonEmptyVars(dataVariables.getSecurityVars()));
-        addLinesToPropertyFile(lines, dataVariables.getSecurityVars(), "# Authentication Variables");
-
-        dataVariables.setStatusTextVars(getNonEmptyVars(dataVariables.getStatusTextVars()));
-        addLinesToPropertyFile(lines, dataVariables.getStatusTextVars(), "# Status Text Variables");
+        addLinesToPropertyFile(lines, dataVariables.getSecurityVars());
 
         StringBuilder fileContent = new StringBuilder(EMPTY);
         lines.forEach(line -> fileContent.append(line).append(NL));
@@ -370,12 +351,11 @@ public class SwaggerScriptFilesCreator {
     /**
      * Add the comments and variables as lines in the properties file.
      *
-     * @param lines   lines of the properties files.
-     * @param vars    the key value pairs of the properties file.
-     * @param comment the comment section of the properties file.
+     * @param lines lines of the properties files.
+     * @param vars  the key value pairs of the properties file.
      */
-    private void addLinesToPropertyFile(List<String> lines, Map<String, List<String>> vars, String comment) {
-        lines.add(join(NL, comment));
+    private void addLinesToPropertyFile(List<String> lines, Map<String, List<String>> vars) {
+        lines.add(join(NL, "# Authentication Variables"));
         for (String name : vars.keySet()) {
             for (Object var : vars.get(name)) {
                 lines.add(join(var, "="));
@@ -392,23 +372,19 @@ public class SwaggerScriptFilesCreator {
      * @throws IOException in case of File operations failure.
      */
     private void createScriptFile(NexialContents nexialContents, File scriptFile) throws IOException {
-        // Logic for Script File creation.
         FileInputStream file = new FileInputStream(scriptFile);
         XSSFWorkbook scriptWorkBook = new XSSFWorkbook(file);
 
         XSSFSheet sheet;
         int index = scriptWorkBook.getSheetIndex("Scenario");
-
         List<SwaggerScenario> scenarios = nexialContents.getScenarios();
 
-        int scenariosLength = scenarios.size();
-        for (int i = 0; i < scenariosLength; i++) {
-            SwaggerScenario scenario = scenarios.get(i);
+        for (SwaggerScenario scenario : scenarios) {
             String scenarioName = scenario.getName();
             sheet = scriptWorkBook.cloneSheet(index, scenarioName);
 
             sheet.getRow(1).getCell(0)
-                 .setCellValue(scenarios.get(i).getDescription());
+                 .setCellValue(scenario.getDescription());
 
             List<SwaggerActivity> activities = scenario.getActivities();
             int rowCount = 3;
@@ -435,6 +411,58 @@ public class SwaggerScriptFilesCreator {
 
         file.close();
         FileOutputStream os = new FileOutputStream(scriptFile);
+        scriptWorkBook.write(os);
+        scriptWorkBook.close();
+        os.close();
+    }
+
+    /**
+     * Adds the content(variables defined in the scenarioVars) to the data file passed in.
+     *
+     * @param dataFile       the data file to which contents needs to be written.
+     * @param nexialContents the {@link NexialContents}.
+     * @throws IOException in case of File operations failure.
+     */
+    private void addContentToDataFile(File dataFile, NexialContents nexialContents)
+            throws IOException {
+        FileInputStream file = new FileInputStream(dataFile);
+        XSSFWorkbook scriptWorkBook = new XSSFWorkbook(file);
+        int index = scriptWorkBook.getSheetIndex("#default");
+
+        Map<String, List<SwaggerScenarioVars>> scenarioVars = nexialContents.getSwaggerScenarioVarsMap();
+        for (String scenarioName : scenarioVars.keySet()) {
+            XSSFSheet sheet = scriptWorkBook.cloneSheet(index, scenarioName);
+            IntStream.rangeClosed(0, 6).forEach(x -> sheet.removeRow(sheet.getRow(x)));
+
+            int rowCount = 0;
+            for (SwaggerScenarioVars vars : scenarioVars.get(scenarioName)) {
+                String activityName = vars.getActivityName();
+
+                Map<String, String> content = new LinkedHashMap<String, String>() {{
+                    if (isNotEmpty(vars.getJson())) {put(joinWith(".", activityName, "json"), vars.getJson());}
+
+                    String statusText =
+                            HttpStatus.valueOf(Integer.parseInt(activityName.split("\\.")[1])).getReasonPhrase();
+                    put(joinWith(".", activityName, "statusText"), statusText);
+                    put(joinWith(".", activityName, "url"), vars.getUrl());
+                    if (isNotEmpty(vars.getSchema())) {put(joinWith(".", activityName, "schema"), vars.getSchema());}
+                }};
+
+                vars.getCookieParams().forEach(x -> content.put(x, ""));
+                vars.getHeaderParams().forEach(x -> content.put(x, ""));
+                vars.getQueryParams().forEach(x -> content.put(x, ""));
+                vars.getPathParams().forEach(x -> content.put(x, ""));
+
+                for (String key : content.keySet()) {
+                    XSSFRow row = sheet.createRow(rowCount++);
+                    row.createCell(0).setCellValue(key);
+                    row.createCell(1).setCellValue(content.get(key));
+                }
+            }
+        }
+
+        file.close();
+        FileOutputStream os = new FileOutputStream(dataFile);
         scriptWorkBook.write(os);
         scriptWorkBook.close();
         os.close();

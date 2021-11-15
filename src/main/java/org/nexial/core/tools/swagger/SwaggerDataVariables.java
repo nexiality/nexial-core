@@ -28,24 +28,11 @@ import java.util.Map;
  */
 public class SwaggerDataVariables {
     private String baseUrl;
-
-    private Map<String, List<String>> requestBodyVars;
-    private Map<String, List<String>> headerParams;
-    private Map<String, List<String>> queryParams;
-    private Map<String, List<String>> pathParams;
-    private Map<String, List<String>> cookieParams;
-    private Map<String, List<String>> statusTextVars;
     private Map<String, List<String>> securityVars;
 
     public static SwaggerDataVariables getInstance() {
         SwaggerDataVariables data = new SwaggerDataVariables();
-        data.requestBodyVars = new LinkedHashMap<>();
-        data.headerParams    = new LinkedHashMap<>();
-        data.queryParams     = new LinkedHashMap<>();
-        data.pathParams      = new LinkedHashMap<>();
-        data.cookieParams    = new LinkedHashMap<>();
-        data.securityVars    = new LinkedHashMap<>();
-        data.statusTextVars  = new LinkedHashMap<>();
+        data.securityVars = new LinkedHashMap<>();
         return data;
     }
 
@@ -55,54 +42,6 @@ public class SwaggerDataVariables {
 
     public void setBaseUrl(String baseUrl) {
         this.baseUrl = baseUrl;
-    }
-
-    public Map<String, List<String>> getRequestBodyVars() {
-        return requestBodyVars;
-    }
-
-    public void setRequestBodyVars(Map<String, List<String>> requestBodyVars) {
-        this.requestBodyVars = requestBodyVars;
-    }
-
-    public Map<String, List<String>> getHeaderParams() {
-        return headerParams;
-    }
-
-    public void setHeaderParams(Map<String, List<String>> headerParams) {
-        this.headerParams = headerParams;
-    }
-
-    public Map<String, List<String>> getQueryParams() {
-        return queryParams;
-    }
-
-    public void setQueryParams(Map<String, List<String>> queryParams) {
-        this.queryParams = queryParams;
-    }
-
-    public Map<String, List<String>> getPathParams() {
-        return pathParams;
-    }
-
-    public void setPathParams(Map<String, List<String>> pathParams) {
-        this.pathParams = pathParams;
-    }
-
-    public Map<String, List<String>> getCookieParams() {
-        return cookieParams;
-    }
-
-    public void setCookieParams(Map<String, List<String>> cookieParams) {
-        this.cookieParams = cookieParams;
-    }
-
-    public Map<String, List<String>> getStatusTextVars() {
-        return statusTextVars;
-    }
-
-    public void setStatusTextVars(Map<String, List<String>> statusTextVars) {
-        this.statusTextVars = statusTextVars;
     }
 
     public Map<String, List<String>> getSecurityVars() {
@@ -117,12 +56,6 @@ public class SwaggerDataVariables {
     public String toString() {
         return "SwaggerTestScriptData{" +
                "baseUrl='" + baseUrl + '\'' +
-               ", requestBodyVars=" + requestBodyVars +
-               ", headerParams=" + headerParams +
-               ", queryParams=" + queryParams +
-               ", pathParams=" + pathParams +
-               ", cookieParams=" + cookieParams +
-               ", statusTextVars=" + statusTextVars +
                ", securityVars=" + securityVars +
                '}';
     }

@@ -18,6 +18,7 @@
 package org.nexial.core.tools.swagger;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Represents a class which represents the values extracted from the Swagger file used to generated the Nexial script
@@ -28,6 +29,9 @@ import java.util.List;
 public class NexialContents {
     private List<SwaggerScenario> scenarios;
     private SwaggerDataVariables dataVariables;
+    private Map<String, List<SwaggerScenarioVars>> swaggerScenarioVarsMap;
+    private Map<String, String> jsonPayloadFiles;
+    private Map<String, String> schemaFiles;
 
     public List<SwaggerScenario> getScenarios() {
         return scenarios;
@@ -45,11 +49,38 @@ public class NexialContents {
         this.dataVariables = dataVariables;
     }
 
+    public Map<String, List<SwaggerScenarioVars>> getSwaggerScenarioVarsMap() {
+        return swaggerScenarioVarsMap;
+    }
+
+    public void setSwaggerScenarioVarsMap(
+            Map<String, List<SwaggerScenarioVars>> swaggerScenarioVarsMap) {
+        this.swaggerScenarioVarsMap = swaggerScenarioVarsMap;
+    }
+
+    public Map<String, String> getJsonPayloadFiles() {
+        return jsonPayloadFiles;
+    }
+
+    public void setJsonPayloadFiles(Map<String, String> jsonPayloadFiles) {
+        this.jsonPayloadFiles = jsonPayloadFiles;
+    }
+
+    public Map<String, String> getSchemaFiles() {
+        return schemaFiles;
+    }
+
+    public void setSchemaFiles(Map<String, String> schemaFiles) {
+        this.schemaFiles = schemaFiles;
+    }
+
     @Override
     public String toString() {
         return "NexialContents{" +
                "scenarios=" + scenarios +
                ", dataVariables=" + dataVariables +
+               ", swaggerScenarioVarsMap=" + swaggerScenarioVarsMap +
+               ", jsonPayloadFiles=" + jsonPayloadFiles +
                '}';
     }
 }

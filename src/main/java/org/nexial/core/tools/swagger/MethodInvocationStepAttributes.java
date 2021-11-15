@@ -26,6 +26,7 @@ public class MethodInvocationStepAttributes {
     private String activityName;
     private String pathString;
     private String queryParamString;
+    private String response;
 
     public String getMethod() {
         return method;
@@ -57,6 +58,10 @@ public class MethodInvocationStepAttributes {
 
     public String getQueryParamString() {
         return queryParamString;
+    }
+
+    public String getResponse() {
+        return response;
     }
 
 
@@ -104,6 +109,11 @@ public class MethodInvocationStepAttributes {
     public MethodInvocationStepAttributes withQueryParamString(String queryParamString) {
         this.queryParamString =
         queryParamString;
+        return this;
+    }
+
+    public MethodInvocationStepAttributes withResponse(String response) {
+        this.response = response;
         return this;
     }
 }

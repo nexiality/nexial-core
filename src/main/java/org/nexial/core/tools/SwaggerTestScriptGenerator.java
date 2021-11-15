@@ -17,6 +17,25 @@
 
 package org.nexial.core.tools;
 
+import static java.io.File.separator;
+import static org.nexial.core.NexialConst.*;
+import static org.nexial.core.NexialConst.ExitStatus.RC_BAD_CLI_ARGS;
+import static org.nexial.core.NexialConst.ExitStatus.RC_FAILURE_FOUND;
+import static org.nexial.core.NexialConst.Project.BATCH_EXT;
+import static org.nexial.core.NexialConst.Ws.*;
+import static org.nexial.core.excel.ExcelConfig.HEADER_TEST_STEP_DESCRIPTION;
+import static org.nexial.core.tools.CliUtils.newArgOption;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
@@ -26,23 +45,6 @@ import org.json.JSONObject;
 import org.nexial.core.tools.swagger.*;
 import org.nexial.core.utils.JsonUtils;
 import org.yaml.snakeyaml.Yaml;
-
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.util.*;
-
-import static java.io.File.separator;
-import static org.nexial.core.NexialConst.*;
-import static org.nexial.core.NexialConst.ExitStatus.RC_BAD_CLI_ARGS;
-import static org.nexial.core.NexialConst.ExitStatus.RC_FAILURE_FOUND;
-import static org.nexial.core.NexialConst.Project.*;
-import static org.nexial.core.NexialConst.Ws.*;
-import static org.nexial.core.excel.ExcelConfig.HEADER_TEST_STEP_DESCRIPTION;
-import static org.nexial.core.tools.CliUtils.newArgOption;
 
 /**
  * <p>
@@ -93,14 +95,14 @@ public class SwaggerTestScriptGenerator {
 
     private static final List<String> SWAGGER_FILE_EXTENSIONS = Arrays.asList(".json", ".yaml", ".yml");
     private static final List<String> RESERVED_PREFIXES = Arrays.asList("Swagger", "Schema");
-    private static final List<String> NON_STRING_TYPES = Arrays.asList("integer", "number", "boolean", "array");
     private static final String NON_TEXT_MARKER = "###";
 
     private static final Options cmdOptions = initOptions();
     private static final String JSON_SCHEMA_URL = "https://json-schema.org/draft/2019-09/schema";
     private static final String BATCH_NAME = "nexial-swagger." + BATCH_EXT;
     private static final String DEF_SERVER_URL = "http://<DEFINE YOUR BASE URL>";
-    private static final List<String> PARAMS = Arrays.asList("headerParams", "queryParams", "pathParams", "cookieParams");
+    private static final List<String> PARAMS =
+            Arrays.asList("headerParams", "queryParams", "pathParams", "cookieParams");
 
     private static String projectDirPath;
     private static String swaggerPrefix;
@@ -139,7 +141,7 @@ public class SwaggerTestScriptGenerator {
                 try {
                     generateFiles(json, projectDirPath);
                 } catch (IOException e) {
-                    System.err.println("Unable to generate project: " + e.getMessage());
+                    System.err.println("Unable to generate project: " + swaggerPrefix);
                     System.exit(RC_FAILURE_FOUND);
                 }
             }
@@ -165,19 +167,19 @@ public class SwaggerTestScriptGenerator {
      */
     private static void parseCLIOptions(String[] args) {
         CommandLine cmd = CliUtils.getCommandLine(BATCH_NAME, args, cmdOptions);
-        if (cmd == null) { System.exit(RC_BAD_CLI_ARGS); }
+        if (cmd == null) {System.exit(RC_BAD_CLI_ARGS);}
 
         swaggerPrefix = cmd.getOptionValue("p");
         if (swaggerPrefix.length() > PREFIX_MAX_LENGTH) {
             throw new RuntimeException("[prefix] length should not be greater than " + PREFIX_MAX_LENGTH + ".");
         }
-        if (!swaggerPrefix.matches("\\S+")) { throw new RuntimeException("[prefix] should not contain spaces"); }
+        if (!swaggerPrefix.matches("\\S+")) {throw new RuntimeException("[prefix] should not contain spaces");}
 
         if (RESERVED_PREFIXES.stream().anyMatch(x -> x.equalsIgnoreCase(swaggerPrefix))) {
             throw new RuntimeException(
-                "[prefix] '" + swaggerPrefix +
-                "' is not a valid prefix. You cannot use following words as prefix " +
-                RESERVED_PREFIXES + " in uppercase or lowercase.");
+                    "[prefix] '" + swaggerPrefix +
+                    "' is not a valid prefix. You cannot use following words as prefix " +
+                    RESERVED_PREFIXES + " in uppercase or lowercase.");
         }
 
         projectDirPath = StringUtils.removeEnd(cmd.getOptionValue("d"), separator);
@@ -186,7 +188,7 @@ public class SwaggerTestScriptGenerator {
         if (SWAGGER_FILE_EXTENSIONS.stream().noneMatch(swaggerFile::endsWith)) {
             throw new RuntimeException("[file] is of invalid type.Only json and yaml files are supported.");
         }
-        if (!new File(swaggerFile).exists()) { throw new RuntimeException("[file] does not exist."); }
+        if (!new File(swaggerFile).exists()) {throw new RuntimeException("[file] does not exist.");}
     }
 
     /**
@@ -200,14 +202,14 @@ public class SwaggerTestScriptGenerator {
     private static void generateFiles(JSONObject json, String projectDirPath) throws IOException {
         SwaggerScriptFilesCreator filesCreator = new SwaggerScriptFilesCreator();
         boolean filesValid = filesCreator.validateAndGenerateFiles(projectDirPath, swaggerPrefix);
-        if (!filesValid) { System.exit(RC_FAILURE_FOUND); }
+        if (!filesValid) {System.exit(RC_FAILURE_FOUND);}
 
         NexialContents contents = generateNexialContent(json, projectDirPath);
         filesCreator.generateFiles(projectDirPath, contents, swaggerPrefix, swaggerFile);
     }
 
     /**
-     * Generates various Nexial script related content  like parameters, script content, data file content etc.
+     * Generates various Nexial script related content like parameters, script content, data file content etc.
      * out of the Swagger file content, inside the project directory path specified.
      *
      * @param json           the swagger file content
@@ -218,22 +220,42 @@ public class SwaggerTestScriptGenerator {
     private static NexialContents generateNexialContent(JSONObject json, String projectDirPath) throws IOException {
         JSONArray servers = json.optJSONArray("servers");
         String baseUrl = (Objects.isNull(servers) || servers.length() == 0) ? DEF_SERVER_URL : getBaseUrl(servers);
-
-        JSONObject paths = json.optJSONObject("paths");
         JSONObject components = json.optJSONObject("components");
         JSONObject securitySchemes = components != null ? components.optJSONObject("securitySchemes") : null;
+
+        JSONObject paths = json.optJSONObject("paths");
         JSONObject baseSecurity = getBaseSecurity(json.optJSONArray("security"), securitySchemes);
 
         NexialContents nexialContents = new NexialContents();
         List<SwaggerScenario> scenarios = new ArrayList<>();
         nexialContents.setScenarios(scenarios);
+        nexialContents.setSchemaFiles(new HashMap<>());
 
         SwaggerDataVariables dataVariables = SwaggerDataVariables.getInstance();
         nexialContents.setDataVariables(dataVariables);
         dataVariables.setBaseUrl(baseUrl);
 
-        Map<String, List<String>> requestBodyVariables = dataVariables.getRequestBodyVars();
+        JSONObject comp = json.optJSONObject("components");
+        if (comp != null) {
+            JSONObject schemas = comp.optJSONObject("schemas");
+            if (schemas != null) {
+                File dir = new File(
+                        StringUtils.joinWith(separator, projectDirPath, "artifact", "data", swaggerPrefix, "Schema"));
+                dir.mkdirs();
+                for (String schema : schemas.keySet()) {
+                    JSONObject schemaDef = schemas.getJSONObject(schema);
+                    schemaDef.put("$schema", JSON_SCHEMA_URL);
+                    String responseSchemaFile = StringUtils.joinWith(".", schema, RESPONSE_FILE_POSTFIX);
+
+                    File file = new File(StringUtils.joinWith(separator, dir.getPath(), responseSchemaFile));
+                    Files.write(file.toPath(), JsonUtils.beautify(schemaDef.toString()).getBytes());
+                    nexialContents.getSchemaFiles().put(schema, file.toString());
+                }
+            }
+        }
+
         // Iterate over the various paths in the Swagger json.
+        Map<String, List<SwaggerScenarioVars>> scenarioVarMap = new LinkedHashMap<>();
         for (String path : paths.keySet()) {
             JSONArray parentParams = new JSONArray();
             JSONObject methods = paths.optJSONObject(path);
@@ -247,7 +269,12 @@ public class SwaggerTestScriptGenerator {
             // Iterate over various methods like get, put, post etc.
             for (String method : methods.keySet()) {
                 String title = json.optJSONObject("info").optString("title");
-                String scenarioName = getScenarioName(path.equals("/") ? title.replaceAll("\\s", "") : path, method);
+                String pathString = path.equals("/") ? title.replaceAll("\\s", "") : path;
+
+                String scenarioName = getScenarioName(pathString, method, true);
+                String scenarioFullName = getScenarioName(pathString, method, false);
+                scenarioVarMap.put(scenarioName, new ArrayList<>());
+
                 SwaggerScenario scenario = new SwaggerScenario();
                 List<SwaggerActivity> activities = new ArrayList<>();
                 boolean authenticationAdded = false;
@@ -264,13 +291,13 @@ public class SwaggerTestScriptGenerator {
                     JSONObject requestBodyContent = requestBody.optJSONObject("content");
                     if (requestBodyContent.optJSONObject(WS_JSON_CONTENT_TYPE) != null) {
                         requestBodySchema = getJSONSchema(requestBodyContent, components);
-                        contentType = WS_JSON_CONTENT_TYPE;
+                        contentType       = WS_JSON_CONTENT_TYPE;
                     } else if (requestBodyContent.optJSONObject(CONTENT_TYPE_OCTET_STREAM) != null) {
                         contentType = CONTENT_TYPE_OCTET_STREAM;
                     } else {
                         warningMessage = "For the method " + method + ", the Content-Type is neither " +
                                          WS_JSON_CONTENT_TYPE + " or " + CONTENT_TYPE_OCTET_STREAM + ", which are the" +
-                                         " only 2 supported content types at this time. Edit the script accordingly.";
+                                         " only 2 supported content types at this point in time. Edit the script accordingly.";
                     }
                 }
 
@@ -281,37 +308,45 @@ public class SwaggerTestScriptGenerator {
                 String headerName = "";
                 String headerValue = "";
                 for (String response : responses.keySet()) {
+                    SwaggerScenarioVars swaggerScenarioVars = new SwaggerScenarioVars();
+                    String scenarioPrefix = StringUtils.joinWith(".", method.toUpperCase(), response);
+                    swaggerScenarioVars.setActivityName(scenarioPrefix);
+
+                    String scenarioUrl =
+                            "${baseUrl}".concat(replacePathVars(path, StringUtils.joinWith(".", scenarioPrefix, "path",
+                                                                                           "")));
+                    swaggerScenarioVars.setUrl(scenarioUrl);
+
                     SwaggerActivity activity = new SwaggerActivity();
                     String activityName = StringUtils.joinWith(".", method, response);
                     activity.setName(activityName);
-                    String varName = StringUtils.joinWith(".", scenarioName, response);
-
-                    requestBodyVariables.put(varName, new ArrayList<>());
+                    String varName = StringUtils.joinWith(".", scenarioFullName, response);
                     String jsonFile = "";
 
                     if (requestBodySchema != null && components != null) {
-                        String prefix = StringUtils.joinWith(".", scenarioName, response);
-                        JSONObject requestBodyJSON = getRequestBody(components, requestBodySchema, new JSONObject(),
-                                                                    prefix, requestBodyVariables, varName);
+                        String prefix = StringUtils.joinWith(".", scenarioFullName, response);
+                        JSONObject requestBodyJSON
+                                = getRequestBody(components, requestBodySchema, new JSONObject(), prefix);
 
                         if (requestBodyJSON.keySet().size() > 0) {
-                            jsonFile = StringUtils.joinWith(".", scenarioName, response, "json");
+                            jsonFile = StringUtils.joinWith(".", scenarioFullName, response, "json");
                             createRequestJSONFile(projectDirPath, requestBodyJSON, jsonFile);
+                            swaggerScenarioVars.setJson("${payloadBase}/".concat(jsonFile));
                         }
                     }
 
                     JSONArray parameters = methodAttributes.optJSONArray("parameters");
                     JSONObject parameterSchemas = Objects.requireNonNull(components).optJSONObject("parameters");
                     ParameterGenerationAttributes parameterGenerationAttributes =
-                        new ParameterGenerationAttributes().withPath(path)
-                                                           .withMethod(method)
-                                                           .withResponse(response)
-                                                           .withParameters(parameters)
-                                                           .withParentParams(parentParams)
-                                                           .withVarName(varName)
-                                                           .withScenarioName(scenarioName)
-                                                           .withParameterSchemas(parameterSchemas);
-                    JSONObject params = extractParameters(parameterGenerationAttributes, dataVariables);
+                            new ParameterGenerationAttributes().withPath(path)
+                                                               .withMethod(method)
+                                                               .withResponse(response)
+                                                               .withParameters(parameters)
+                                                               .withParentParams(parentParams)
+                                                               .withVarName(varName)
+                                                               .withScenarioName(scenarioFullName)
+                                                               .withParameterSchemas(parameterSchemas);
+                    JSONObject params = extractParameters(parameterGenerationAttributes, swaggerScenarioVars);
 
                     JSONObject responseParameters = getResponseParameters(components, responses, response);
 
@@ -321,12 +356,12 @@ public class SwaggerTestScriptGenerator {
 
                     if (!authenticationAdded && methodSecurity != null) {
                         Map<String, String> securityHeaders =
-                            generateSecurityVariable(methodSecurity, sameAuthentication, scenarioName);
+                                generateSecurityVariable(methodSecurity, sameAuthentication, scenarioFullName);
                         if (securityHeaders != null) {
                             // todo: could there be multiple security headers? if so, how's the code handling such situation?
                             for (String s : securityHeaders.keySet()) {
                                 headerValue = securityHeaders.get(s);
-                                headerName = s;
+                                headerName  = s;
 
                                 Map<String, List<String>> securityVars;
                                 if (sameAuthentication) {
@@ -346,12 +381,11 @@ public class SwaggerTestScriptGenerator {
                         } else {
                             String authScheme = methodSecurity.optString("scheme");
                             String scheme =
-                                StringUtils.isNotEmpty(authScheme) ? authScheme : methodSecurity.optString("type");
-                            activities.add(newPromptStep(activities,
-                                                         "Authentication mechanism " + scheme + " is not supported. " +
-                                                         "Edit the script accordingly.",
-                                                         "Warning",
-                                                         "Unsupported Authentication mechanism."));
+                                    StringUtils.isNotEmpty(authScheme) ? authScheme : methodSecurity.optString("type");
+                            activities.add(newPromptStep(
+                                    "Authentication mechanism " + scheme + " is not supported. " +
+                                    "Edit the script accordingly."
+                                                        ));
                         }
                         authenticationAdded = true;
                     }
@@ -359,21 +393,33 @@ public class SwaggerTestScriptGenerator {
                     StepAttributes attributes = new StepAttributes().withPath(path)
                                                                     .withMethod(method)
                                                                     .withResponseParameters(responseParameters)
-                                                                    .withParams(params)
                                                                     .withRequestJSONBodyFile(jsonFile)
                                                                     .withVarName(varName)
-                                                                    .withScenarioName(scenarioName)
+                                                                    .withParams(params)
+                                                                    .withScenarioName(scenarioFullName)
                                                                     .withWarningMessage(warningMessage)
                                                                     .withContentType(contentType);
-                    activity.setSteps(generateSteps(attributes, dataVariables));
+                    activity.setSteps(generateSteps(attributes, swaggerScenarioVars));
                     activities.add(activity);
+                    scenarioVarMap.get(scenarioName).add(swaggerScenarioVars);
                 }
 
-                if (StringUtils.isNotEmpty(headerName)) { activities.add(newCleanupActivity()); }
+                if (StringUtils.isNotEmpty(headerName)) {activities.add(newCleanupActivity());}
                 scenarios.add(scenario);
+                nexialContents.setSwaggerScenarioVarsMap(scenarioVarMap);
             }
         }
         return nexialContents;
+    }
+
+    private static String replacePathVars(String path, String replacement) {
+        Matcher matcher = Pattern.compile("\\{.*?}").matcher(path);
+        while (matcher.find()) {
+            String group = matcher.group();
+            String match = StringUtils.join("${", replacement, group.substring(1));
+            path = StringUtils.replace(path, group, match);
+        }
+        return path;
     }
 
     /**
@@ -381,19 +427,14 @@ public class SwaggerTestScriptGenerator {
      * Prompt step created earlier is added. This newly created {@link SwaggerActivity} is added to the activities
      * passed in.
      *
-     * @param activities the List of activities to which the activity needs to be added.
-     * @param message    the caution message corresponding to the Prompt Step generated.
-     * @param name       the activity name.
-     * @param desc       the description of the step.
+     * @param message the caution message corresponding to the Prompt Step generated.
      */
-    private static SwaggerActivity newPromptStep(List<SwaggerActivity> activities,
-                                                 String message,
-                                                 String name,
-                                                 String desc) {
+    private static SwaggerActivity newPromptStep(String message) {
         SwaggerActivity activity = new SwaggerActivity();
-        activity.setName(name);
+        activity.setName("Warning");
         activity.setSteps(new ArrayList<SwaggerStep>() {{
-            add(createStep(name, desc, CMD_TYPE_STEP, COMMAND_OBSERVE, message));
+            add(createStep("Warning", "Unsupported Authentication mechanism.", CMD_TYPE_STEP, COMMAND_OBSERVE,
+                           message));
         }});
         return activity;
     }
@@ -412,7 +453,7 @@ public class SwaggerTestScriptGenerator {
 
         SwaggerActivity activity = new SwaggerActivity();
         activity.setName("set up");
-        activity.setSteps(new ArrayList<SwaggerStep>() {{ add(securityStep); }});
+        activity.setSteps(new ArrayList<SwaggerStep>() {{add(securityStep);}});
         return activity;
     }
 
@@ -426,7 +467,7 @@ public class SwaggerTestScriptGenerator {
                                                  WS_ALL_HEADERS);
         SwaggerActivity activity = new SwaggerActivity();
         activity.setName("tear down");
-        activity.setSteps(new ArrayList<SwaggerStep>() {{ add(cleanAuthHeader); }});
+        activity.setSteps(new ArrayList<SwaggerStep>() {{add(cleanAuthHeader);}});
         return activity;
     }
 
@@ -438,7 +479,7 @@ public class SwaggerTestScriptGenerator {
      * @return the {@link JSONObject} containing the base security details.
      */
     private static JSONObject getBaseSecurity(JSONArray security, JSONObject securitySchemas) {
-        if (security == null) { return null; }
+        if (security == null) {return null;}
         String securitySchemaName = new ArrayList<>(((JSONObject) security.get(0)).keySet()).get(0);
         return securitySchemas.getJSONObject(securitySchemaName);
     }
@@ -463,13 +504,19 @@ public class SwaggerTestScriptGenerator {
         responseParameters.put("responseHeaders", responseHeaders);
 
         JSONObject responseBodyContent = responseAttributes.optJSONObject("content");
-        if (responseBodyContent == null) { return responseParameters; }
+        if (responseBodyContent == null) {return responseParameters;}
 
         JSONObject responseBodySchema = getJSONSchema(responseBodyContent, components);
-        if (responseBodySchema == null) { return responseParameters; }
+        if (responseBodySchema == null) {return responseParameters;}
 
         responseParameters.put("responseSchema",
                                getResponseSchemaJSON(responseBodySchema, components.getJSONObject("schemas")));
+
+        String schemaRef = responses.optJSONObject(response).optJSONObject("content").optJSONObject("application/json")
+                                    .optJSONObject("schema").optString("$ref");
+        if (StringUtils.isNotEmpty(schemaRef)) {
+            responseParameters.put("$ref", schemaRef);
+        }
         return responseParameters;
     }
 
@@ -484,7 +531,8 @@ public class SwaggerTestScriptGenerator {
      */
     private static void createRequestJSONFile(String projectDirPath, JSONObject requestBodyJSON,
                                               String requestBodyJsonFile) throws IOException {
-        String requestJSONDir = StringUtils.joinWith(separator, projectDirPath, "artifact", "data", swaggerPrefix);
+        String requestJSONDir =
+                StringUtils.joinWith(separator, projectDirPath, "artifact", "data", swaggerPrefix, "payload");
         File dir = new File(requestJSONDir);
         if (!dir.exists()) {
             if (!dir.mkdir()) {
@@ -511,7 +559,7 @@ public class SwaggerTestScriptGenerator {
     private static JSONObject getJSONSchema(JSONObject schemaContent, JSONObject components) {
         JSONObject jsonObject = schemaContent.optJSONObject(WS_JSON_CONTENT_TYPE);
         JSONObject requestBody = null;
-        if (jsonObject != null) { requestBody = jsonObject.optJSONObject("schema"); }
+        if (jsonObject != null) {requestBody = jsonObject.optJSONObject("schema");}
         if (requestBody != null) {
             String requestBodyRefStr = requestBody.optString("$ref");
             if (StringUtils.isNotEmpty(requestBodyRefStr)) {
@@ -541,25 +589,19 @@ public class SwaggerTestScriptGenerator {
      * Generates a Nexial request body JSON matching the schema specified in the Swagger file. The property values
      * will be replaced with the Nexial placeholders.
      *
-     * @param components           contains schemas, authentication details and the parameters details.
-     * @param schemaDetails        the schema details
-     * @param result               the end result object to be retrieved.
-     * @param prefix               the prefix is the variable name string generated so far as part of the recursive call.
-     * @param requestBodyVariables the array of the Request body variables from dataVariables.
-     * @param varName              the name of the activity.
+     * @param components    contains schemas, authentication details and the parameters details.
+     * @param schemaDetails the schema details
+     * @param result        the end result object to be retrieved.
+     * @param prefix        the prefix is the variable name string generated so far as part of the recursive call.
      * @return the request body content which will be added to the request json body file.
      */
-    private static JSONObject getRequestBody(JSONObject components,
-                                             JSONObject schemaDetails,
-                                             JSONObject result,
-                                             String prefix,
-                                             Map<String, List<String>> requestBodyVariables,
-                                             String varName) {
+    private static JSONObject getRequestBody(JSONObject components, JSONObject schemaDetails, JSONObject result,
+                                             String prefix) {
         JSONObject schemas = components.optJSONObject("schemas");
-        if (schemas == null || schemas.keySet().size() <= 0) { return result; }
+        if (schemas == null || schemas.keySet().size() <= 0) {return result;}
 
         JSONObject schemaProperties = schemaDetails != null ? schemaDetails.optJSONObject("properties") : null;
-        if (schemaProperties == null) { return result; }
+        if (schemaProperties == null) {return result;}
 
         for (String property : schemaProperties.keySet()) {
             String propertyRef = schemaProperties.getJSONObject(property).optString("$ref");
@@ -569,23 +611,27 @@ public class SwaggerTestScriptGenerator {
                 JSONObject current = new JSONObject();
                 result.put(property, current);
                 String innerSchema = StringUtils.substringAfterLast(propertyRef, "/");
-                getRequestBody(components,
-                               schemas.optJSONObject(innerSchema),
-                               current,
-                               StringUtils.joinWith(".", prefix, innerSchema),
-                               requestBodyVariables,
-                               varName);
+                getRequestBody(components, schemas.optJSONObject(innerSchema), current,
+                               StringUtils.joinWith(".", prefix, innerSchema));
             } else {
-                String value = generateNexialVariablePlaceHolderString(prefix, property);
-                if (NON_STRING_TYPES.contains(type)) {
-                    result.put(property, StringUtils.join(NON_TEXT_MARKER, value, NON_TEXT_MARKER));
-                } else {
-                    result.put(property, value);
+                String value = "";
+                switch (type) {
+                    case "integer":
+                        value = StringUtils.join(NON_TEXT_MARKER, 0, NON_TEXT_MARKER);
+                        break;
+                    case "number":
+                        value = StringUtils.join(NON_TEXT_MARKER, 0.0, NON_TEXT_MARKER);
+                        break;
+                    case "boolean":
+                        value = StringUtils.join(NON_TEXT_MARKER, false, NON_TEXT_MARKER);
+                        break;
+                    case "array":
+                        value = StringUtils.join(NON_TEXT_MARKER, "[]", NON_TEXT_MARKER);
+                        break;
                 }
-                requestBodyVariables.get(varName).add(value);
+                result.put(property, value);
             }
         }
-
         return result;
     }
 
@@ -613,34 +659,19 @@ public class SwaggerTestScriptGenerator {
      * Generate the parameters like "headerParams", "queryParams", "pathParams", "cookieParams" from the Swagger file
      * corresponding to the current activity in the script.
      *
-     * @param attributes    {@link org.nexial.core.tools.swagger.ParameterGenerationAttributes} used to generate the parameters.
-     * @param dataVariables the data variables related parameters.
-     * @return {@link JSONObject} representing all the parameters.
+     * @param attributes {@link ParameterGenerationAttributes} used to generate the parameters.
      */
     private static JSONObject extractParameters(ParameterGenerationAttributes attributes,
-                                                SwaggerDataVariables dataVariables) {
+                                                SwaggerScenarioVars details) {
         JSONObject params = new JSONObject();
         PARAMS.forEach(s -> params.put(s, new JSONObject()));
 
-        Map<String, List<String>> headerVars = dataVariables.getHeaderParams();
-        Map<String, List<String>> pathVars = dataVariables.getPathParams();
-        Map<String, List<String>> cookieVars = dataVariables.getCookieParams();
-        Map<String, List<String>> queryParamVars = dataVariables.getQueryParams();
-
-        String varName = attributes.getVarName();
-        headerVars.put(varName, new ArrayList<>());
-        pathVars.put(varName, new ArrayList<>());
-        cookieVars.put(varName, new ArrayList<>());
-        queryParamVars.put(varName, new ArrayList<>());
-
         JSONArray paramUnion = new JSONArray();
         JSONArray parameters = attributes.getParameters();
-        if (parameters != null && parameters.length() > 0) { parameters.forEach(paramUnion::put); }
+        if (parameters != null && parameters.length() > 0) {parameters.forEach(paramUnion::put);}
 
         JSONArray parentParams = attributes.getParentParams();
-        if (parentParams != null && parentParams.length() > 0) { parentParams.forEach(paramUnion::put); }
-
-        String scenarioName = attributes.getScenarioName();
+        if (parentParams != null && parentParams.length() > 0) {parentParams.forEach(paramUnion::put);}
 
         for (int counter = 0; counter < paramUnion.length(); counter++) {
             JSONObject paramDetails = paramUnion.getJSONObject(counter);
@@ -654,32 +685,33 @@ public class SwaggerTestScriptGenerator {
             String paramType = paramDetails.optString("in");
             String type = paramDetails.optString("type");
             String name = paramDetails.getString("name");
-            String paramNexialDataVar =
-                StringUtils.joinWith(".", paramType, scenarioName, attributes.getResponse(), name);
 
             if (paramType != null) {
                 switch (paramType) {
                     case PARAM_TYPE_HEADER: {
-                        params.getJSONObject("headerParams").put(name, paramNexialDataVar);
-                        headerVars.get(varName).add(paramNexialDataVar);
+                        params.getJSONObject("headerParams").put(name, name);
+                        details.getHeaderParams()
+                               .add(StringUtils.joinWith(".", details.getActivityName(), "header", name));
                         break;
                     }
                     case PARAM_TYPE_PATH: {
-                        params.getJSONObject("pathParams").put(name, paramNexialDataVar);
-                        pathVars.get(varName).add(paramNexialDataVar);
+                        params.getJSONObject("pathParams").put(name, name);
+                        details.getPathParams().add(StringUtils.joinWith(".", details.getActivityName(), "path", name));
                         break;
                     }
                     case PARAM_TYPE_COOKIE: {
-                        params.getJSONObject("cookieParams").put(name, paramNexialDataVar);
+                        params.getJSONObject("cookieParams").put(name, name);
                         if (StringUtils.isNotEmpty(type) && type.equals(AUTH_SCHEME_API_KEY)) {
                             break;
                         }
-                        cookieVars.get(varName).add(paramNexialDataVar);
+                        details.getCookieParams()
+                               .add(StringUtils.joinWith(".", details.getActivityName(), "cookie", name));
                         break;
                     }
                     case PARAM_TYPE_QUERY: {
-                        params.getJSONObject("queryParams").put(name, paramNexialDataVar);
-                        queryParamVars.get(varName).add(paramNexialDataVar);
+                        params.getJSONObject("queryParams").put(name, name);
+                        details.getQueryParams()
+                               .add(StringUtils.joinWith(".", details.getActivityName(), "query", name));
                         break;
                     }
                     default:
@@ -701,23 +733,22 @@ public class SwaggerTestScriptGenerator {
      * @param method the http method.
      * @return the scenario name.
      */
-    private static String getScenarioName(String path, String method) {
+    private static String getScenarioName(String path, String method, boolean shorten) {
         String scenarioName = StringUtils.remove(StringUtils.remove(path.replace("/", STRING_SEPARATOR), "{"), "}");
-        if (scenarioName.startsWith(STRING_SEPARATOR)) { scenarioName = scenarioName.substring(1); }
+        if (scenarioName.startsWith(STRING_SEPARATOR)) {scenarioName = scenarioName.substring(1);}
         scenarioName = StringUtils.joinWith(STRING_SEPARATOR, scenarioName, method.toUpperCase());
-        return StringUtils.substring(scenarioName, MAX_TAB_NAME_LENGTH_EXCEL * -1);
+        return shorten ? StringUtils.substring(scenarioName, MAX_TAB_NAME_LENGTH_EXCEL * -1) : scenarioName;
     }
 
     /**
      * Generate the Nexial steps for the script file.
      *
-     * @param attributes    the {@link org.nexial.core.tools.swagger.StepAttributes} passed in.
-     * @param dataVariables the {@link SwaggerDataVariables} passed in.
+     * @param attributes the {@link StepAttributes} passed in.
      * @return {@link List} of {@link SwaggerStep}.
      * @throws IOException in case there are issues with File operations while creating RequestBody JSON file.
      */
-    private static List<SwaggerStep> generateSteps(StepAttributes attributes, SwaggerDataVariables dataVariables)
-        throws IOException {
+    private static List<SwaggerStep> generateSteps(StepAttributes attributes, SwaggerScenarioVars swaggerScenarioVars)
+            throws IOException {
         List<SwaggerStep> steps = new ArrayList<>();
         String responseVariable = "response";
         Set<String> bodyLessMethods = new HashSet<String>() {{
@@ -729,7 +760,7 @@ public class SwaggerTestScriptGenerator {
         String responseDescription = attributes.getResponseParameters().getString("responseDescription");
         String response = attributes.getResponseParameters().getString("response");
         JSONObject headerParams = attributes.getParams().getJSONObject("headerParams");
-        String activityName = StringUtils.join(attributes.getMethod(), ".", response);
+        String activityName = StringUtils.join(attributes.getMethod(), ".", response).toUpperCase();
         String contentType = attributes.getContentType();
 
         String warningMessage = attributes.getWarningMessage();
@@ -757,19 +788,22 @@ public class SwaggerTestScriptGenerator {
                                           attributes.getScenarioName());
 
         MethodInvocationStepAttributes methodInvocationStepAttributes =
-            new MethodInvocationStepAttributes().withMethod(attributes.getMethod())
-                                                .withNewActivity(sameActivity)
-                                                .withResponseVariable(responseVariable)
-                                                .withResponseDescription(responseDescription)
-                                                .withActivityName(activityName)
-                                                .withPathString(
-                                                    StringUtils.isNotEmpty(pathString) ? pathString :
-                                                    attributes.getPath())
-                                                .withQueryParamString(generateQueryParams(attributes.getParams()));
+                new MethodInvocationStepAttributes().withMethod(attributes.getMethod())
+                                                    .withNewActivity(sameActivity)
+                                                    .withResponseVariable(responseVariable)
+                                                    .withResponseDescription(responseDescription)
+                                                    .withActivityName(activityName)
+                                                    .withResponse(response)
+                                                    .withPathString(
+                                                            StringUtils.isNotEmpty(pathString) ? pathString :
+                                                            attributes.getPath())
+                                                    .withQueryParamString(generateQueryParams(attributes.getParams(),
+                                                                                              swaggerScenarioVars.getActivityName()));
+
 
         if (contentType.equals(WS_JSON_CONTENT_TYPE)) {
-            String requestJSONBodyFile = StringUtils.joinWith("/", "$(syspath|data|fullpath)",
-                                                              swaggerPrefix, attributes.getRequestJSONBodyFile());
+            String requestJSONBodyFile = StringUtils.joinWith("/", "${payloadBase}",
+                                                              attributes.getRequestJSONBodyFile());
             methodInvocationStepAttributes.withRequestBody(requestJSONBodyFile);
         } else if (contentType.equals(CONTENT_TYPE_OCTET_STREAM)) {
             String fileVar = StringUtils.joinWith(".", attributes.getScenarioName(), response, "file");
@@ -777,21 +811,17 @@ public class SwaggerTestScriptGenerator {
         } else {
             methodInvocationStepAttributes.withRequestBody(Data.EMPTY);
         }
+
         generateMethodInvocationStep(methodInvocationStepAttributes, steps);
-
-        Map<String, List<String>> statusTextVars = dataVariables.getStatusTextVars();
-        statusTextVars.put(attributes.getVarName(), new ArrayList<>());
-
         generateResponseSteps(new ResponseStepAttributes()
-                                  .withPath(attributes.getPath())
-                                  .withResponseParameters(attributes.getResponseParameters())
-                                  .withResponse(response)
-                                  .withActivityName(activityName)
-                                  .withResponseVariable(responseVariable)
-                                  // todo: statusTextVars would only have a `new ArrayList<>()`, right? can this be simplifed?
-                                  .withStatusTextVariables(statusTextVars.get(attributes.getVarName()))
-                                  .withScenarioName(attributes.getScenarioName()),
-                              steps);
+                                      .withPath(attributes.getPath())
+                                      .withResponseParameters(attributes.getResponseParameters())
+                                      .withResponse(response)
+                                      .withActivityName(activityName)
+                                      .withResponseVariable(responseVariable)
+                                      .withStatusTextVar(attributes.getVarName())
+                                      .withScenarioName(attributes.getScenarioName()),
+                              steps, swaggerScenarioVars);
 
         clearHeadersAndResponseVariable(steps, headerParams, responseVariable);
         return steps;
@@ -810,9 +840,9 @@ public class SwaggerTestScriptGenerator {
         String pathString = "";
         for (String name : pathParams.keySet()) {
             String parameterNexialDataVariable = generateNexialVariablePlaceHolderString(
-                StringUtils.joinWith(".", PARAM_TYPE_PATH, scenarioName, response, name)
-                           .replace("{", "")
-                           .replace("}", ""));
+                    StringUtils.joinWith(".", PARAM_TYPE_PATH, scenarioName, response, name)
+                               .replace("{", "")
+                               .replace("}", ""));
             pathString = path.replace(StringUtils.join("{", name, "}"), parameterNexialDataVariable);
         }
         return pathString;
@@ -876,8 +906,8 @@ public class SwaggerTestScriptGenerator {
      * Creates the Nexial step which performs the operation related to the invocation of the method. This step
      * will be added to the generated steps so far.
      *
-     * @param steps      the generated steps.
      * @param attributes {@link MethodInvocationStepAttributes} used to generate the Method Invocation step.
+     * @param steps      the generated steps.
      */
     private static void generateMethodInvocationStep(MethodInvocationStepAttributes attributes,
                                                      List<SwaggerStep> steps) {
@@ -885,13 +915,18 @@ public class SwaggerTestScriptGenerator {
         String queryParamString = attributes.getQueryParamString();
         String requestBody = attributes.getRequestBody();
 
-        steps.add(createStep(newActivity ? "" : attributes.getActivityName(),
+        String urlParamValue =
+                StringUtils.join("${", attributes.getMethod().toUpperCase(), ".", attributes.getResponse(), ".", "url",
+                                 "}");
+        String url = StringUtils.join(urlParamValue,
+                                      StringUtils.isNotEmpty(queryParamString) ? "?" : "",
+                                      queryParamString).trim();
+
+        steps.add(createStep(newActivity ? "" : attributes.getActivityName().toUpperCase(),
                              newActivity ? "" : attributes.getResponseDescription(),
                              CMD_TYPE_WS,
                              StringUtils.join(attributes.getMethod(), "(url,body,var)"),
-                             StringUtils.join("${baseUrl}", attributes.getPathString(),
-                                              StringUtils.isNotEmpty(queryParamString) ? "?" : "",
-                                              queryParamString).trim(),
+                             url,
                              StringUtils.isNotEmpty(requestBody) ? requestBody : Data.EMPTY,
                              attributes.getResponseVariable()));
     }
@@ -902,12 +937,14 @@ public class SwaggerTestScriptGenerator {
      * @param params the {@link JSONObject} containing the various params details.
      * @return the Query parameter string to be appended to the url.
      */
-    private static String generateQueryParams(JSONObject params) {
+    private static String generateQueryParams(JSONObject params, String prefix) {
         JSONObject queryParams = params.getJSONObject("queryParams");
         StringBuilder queryStringBuilder = new StringBuilder();
         for (String queryParam : queryParams.keySet()) {
             queryStringBuilder.append(queryParam).append("=")
                               .append(TOKEN_START)
+                              .append(prefix)
+                              .append(".query.")
                               .append(queryParams.get(queryParam))
                               .append(TOKEN_END)
                               .append(QUERY_STRING_PARAMS_APPENDER);
@@ -920,12 +957,13 @@ public class SwaggerTestScriptGenerator {
      * correctness of the JSON response post the invocation of the API call.
      *
      * @param steps      Nexial steps generated so far.
-     * @param attributes {@link org.nexial.core.tools.swagger.ResponseStepAttributes} for creating the Response
+     * @param attributes {@link ResponseStepAttributes} for creating the Response
      *                   validation steps as part of the script.
      * @throws IOException if the generation of response JSON file fails.
      */
-    private static void generateResponseSteps(ResponseStepAttributes attributes, List<SwaggerStep> steps)
-        throws IOException {
+    private static void generateResponseSteps(ResponseStepAttributes attributes, List<SwaggerStep> steps,
+                                              SwaggerScenarioVars swaggerScenarioVars)
+            throws IOException {
         String responseVariable = attributes.getResponseVariable();
         String response = attributes.getResponse();
         String scenarioName = attributes.getScenarioName();
@@ -933,46 +971,52 @@ public class SwaggerTestScriptGenerator {
         steps.add(createStep("", "", CMD_TYPE_WS, COMMAND_ASSERT_RETURN_CODE, responseVariable, response));
 
         Object[] params = {"statusText", scenarioName, response};
-        attributes.getStatusTextVariables().add(StringUtils.joinWith(".", params));
+        attributes.withStatusTextVar(StringUtils.joinWith(".", params));
 
         steps.add(createStep("", "", CMD_TYPE_BASE, COMMAND_ASSERT_EQUAL,
-                             StringUtils.join(TOKEN_START, responseVariable, TOKEN_END, ".statusText"),
-                             generateNexialVariablePlaceHolderString(params)));
+                             StringUtils.join(TOKEN_START, swaggerScenarioVars.getActivityName(), ".statusText",
+                                              TOKEN_END),
+                             "${response}.statusText"));
 
         JSONObject responseHeaders = attributes.getResponseParameters().optJSONObject("responseHeaders");
         if (responseHeaders != null) {
             for (String responseHeader : responseHeaders.keySet()) {
                 createStep("", "", CMD_TYPE_BASE, COMMAND_ASSERT_NOT_EMPTY,
-                           StringUtils.join(TOKEN_START, responseVariable, TOKEN_END, ".headers[", responseHeader, "]"));
+                           StringUtils.join(TOKEN_START, responseVariable, TOKEN_END, ".headers[", responseHeader,
+                                            "]"));
             }
         }
 
-        JSONObject responseSchema = attributes.getResponseParameters().optJSONObject("responseSchema");
-        if (responseSchema != null) {
-            responseSchema.put("$schema", JSON_SCHEMA_URL);
+        String $ref = StringUtils.substringAfterLast(attributes.getResponseParameters().optString("$ref"), "/");
+        if (StringUtils.isNotEmpty($ref)) {
             String responseSchemaFile =
-                StringUtils.joinWith(".", scenarioName, response, RESPONSE_FILE_POSTFIX);
-            String responseFileName =
-                StringUtils.joinWith("/", "$(syspath|data|fullpath)/Schema", swaggerPrefix, responseSchemaFile);
-
-            String dirPath =
-                StringUtils.joinWith(separator, projectDirPath, "artifact", "data", "Schema", swaggerPrefix);
-            File dir = new File(dirPath);
-            if (!dir.exists()) {
-                boolean dirCreated = dir.mkdirs();
-                if (!dirCreated) {
-                    System.err.println("Failed to create directory " + dir.getName());
-                    System.exit(RC_FAILURE_FOUND);
-                }
-            }
-
-            File file = new File(StringUtils.joinWith(separator, dirPath, responseSchemaFile));
-            Files.write(file.toPath(), JsonUtils.beautify(responseSchema.toString()).getBytes());
+                    StringUtils.joinWith(".", $ref, RESPONSE_FILE_POSTFIX);
+            swaggerScenarioVars.setSchema("${schemaBase}/".concat(responseSchemaFile));
             steps.add(createStep("", "", CMD_TYPE_JSON, COMMAND_ASSERT_CORRECTNESS,
                                  StringUtils.join(TOKEN_START, responseVariable, TOKEN_END, ".body"),
-                                 responseFileName, "", "", "",
+                                 swaggerScenarioVars.getSchema(), "", "", "",
                                  StringUtils.join("ProceedIf(", TOKEN_START, responseVariable,
                                                   TOKEN_END, ".headers[Content-Type] contain application/json)")));
+        } else {
+            JSONObject responseSchema = attributes.getResponseParameters().optJSONObject("responseSchema");
+            if (responseSchema != null) {
+                responseSchema.put("$schema", JSON_SCHEMA_URL);
+                String responseSchemaFile =
+                        StringUtils.joinWith(".", scenarioName, response, RESPONSE_FILE_POSTFIX);
+
+                swaggerScenarioVars.setSchema("${schemaBase}/".concat(responseSchemaFile));
+
+                String dirPath =
+                        StringUtils.joinWith(separator, projectDirPath, "artifact", "data", swaggerPrefix, "Schema");
+
+                File file = new File(StringUtils.joinWith(separator, dirPath, responseSchemaFile));
+                Files.write(file.toPath(), JsonUtils.beautify(responseSchema.toString()).getBytes());
+                steps.add(createStep("", "", CMD_TYPE_JSON, COMMAND_ASSERT_CORRECTNESS,
+                                     StringUtils.join(TOKEN_START, responseVariable, TOKEN_END, ".body"),
+                                     swaggerScenarioVars.getSchema(), "", "", "",
+                                     StringUtils.join("ProceedIf(", TOKEN_START, responseVariable,
+                                                      TOKEN_END, ".headers[Content-Type] contain application/json)")));
+            }
         }
     }
 
@@ -1019,7 +1063,7 @@ public class SwaggerTestScriptGenerator {
                 JSONObject value = defMap.get(key);
                 properties.getJSONObject(key).put("$defs", value);
 
-                for (String x : value.keySet()) { getResponseSchemaJSON(value.getJSONObject(x), schemas); }
+                for (String x : value.keySet()) {getResponseSchemaJSON(value.getJSONObject(x), schemas);}
             }
 
         } else {
@@ -1048,7 +1092,7 @@ public class SwaggerTestScriptGenerator {
      *                           in the Swagger or not.
      * @param scenarioName       the scenario name.
      * @return a {@link Map} of security variable scenarioName-value pairs. For example "Authorization" is the scenarioName and value
-     * is in the format ${<AUTH_TYPE>.<scenarioName>.<method>}.
+     *         is in the format ${<AUTH_TYPE>.<scenarioName>.<method>}.
      */
     private static Map<String, String> generateSecurityVariable(JSONObject security, boolean sameAuthentication,
                                                                 String scenarioName) {
@@ -1121,14 +1165,14 @@ public class SwaggerTestScriptGenerator {
         step.setDescription(description);
         step.setCmdType(cmdType);
         step.setCmd(command);
-        if (params.length == 6) { step.setFlowControl(params[5]); }
+        if (params.length == 6) {step.setFlowControl(params[5]);}
 
         int counter = 0;
-        if (counter < params.length) { step.setParam1(params[counter++]); }
-        if (counter < params.length) { step.setParam2(params[counter++]); }
-        if (counter < params.length) { step.setParam3(params[counter++]); }
-        if (counter < params.length) { step.setParam4(params[counter++]); }
-        if (counter < params.length) { step.setParam5(params[counter]); }
+        if (counter < params.length) {step.setParam1(params[counter++]);}
+        if (counter < params.length) {step.setParam2(params[counter++]);}
+        if (counter < params.length) {step.setParam3(params[counter++]);}
+        if (counter < params.length) {step.setParam4(params[counter++]);}
+        if (counter < params.length) {step.setParam5(params[counter]);}
 
         return step;
     }
