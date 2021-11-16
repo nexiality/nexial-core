@@ -17,18 +17,6 @@
 
 package org.nexial.core.plugins.xml;
 
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import javax.annotation.Nullable;
-import javax.validation.constraints.NotNull;
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.Source;
-import javax.xml.transform.stream.StreamSource;
-
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.ArrayUtils;
@@ -46,6 +34,18 @@ import org.nexial.core.plugins.base.BaseCommand;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.OutputFileUtils;
 import org.xml.sax.SAXException;
+
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import javax.annotation.Nullable;
+import javax.validation.constraints.NotNull;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.Source;
+import javax.xml.transform.stream.StreamSource;
 
 import static org.jdom2.input.sax.XMLReaders.XSDVALIDATING;
 import static org.nexial.core.NexialConst.*;
@@ -489,7 +489,7 @@ public class XmlCommand extends BaseCommand {
                 String caption = "Validation error(s) found (click link on the right for details)";
                 addLinkRef(caption, "errors", outFile);
             } catch (IOException e) {
-                error("Unable to write log file to '" + outFile + "': " + e.getMessage());
+                error("[WARN] Unable to write log file to '" + outFile + "': " + e.getMessage());
             }
         }
     }

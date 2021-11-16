@@ -131,7 +131,7 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
 
         String filename = generateScreenshotFilename(testStep);
         if (StringUtils.isBlank(filename)) {
-            error("Unable to generate screen capture filename!");
+            error("[WARN] Unable to generate screen capture filename!");
             return null;
         }
         filename = context.getProject().getScreenCaptureDir() + separator + filename;
@@ -141,13 +141,13 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
             log("using native screen capturing approach...");
             file = new File(filename);
             if (!NativeInputHelper.captureScreen(0, 0, -1, -1, file)) {
-                error("Unable to capture screenshot via native screen capturing approach");
+                error("[WARN] Unable to capture screenshot via native screen capturing approach");
                 return null;
             }
         } else {
             WebElement application = getApp();
             if (application == null) {
-                error("target application not available or not yet initialized");
+                error("[WARN] target application not available or not yet initialized");
                 return null;
             }
 
@@ -166,7 +166,7 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
         // also generate `OPT_LAST_SCREENSHOT_NAME` var in context
         File imageFile = ScreenshotUtils.saveScreenshot(getDriver(), targetFile, BoundingRectangle.asRectangle(element));
         if (imageFile == null) {
-            error("Unable to capture screenshot via Winium driver");
+            error("[WARN] Unable to capture screenshot via Winium driver");
             return null;
         }
 

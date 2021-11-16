@@ -981,7 +981,7 @@ public class BaseCommand implements NexialCommand {
 
     protected String postScreenshot(TestStep testStep, File file) {
         if (file == null) {
-            error("Unable to save screenshot for " + testStep);
+            error("[WARN] Unable to save screenshot for " + testStep);
             return null;
         }
 

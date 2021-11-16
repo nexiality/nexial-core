@@ -118,7 +118,7 @@ class MobileCommand : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
 
         var filename = generateScreenshotFilename(testStep)
         if (StringUtils.isBlank(filename)) {
-            error("Unable to generate screen capture filename!")
+            error("[WARN] Unable to generate screen capture filename!")
             return null
         }
 

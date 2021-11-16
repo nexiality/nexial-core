@@ -78,7 +78,7 @@ class Tn5250Command : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
     override fun takeScreenshot(testStep: TestStep): String {
         var filename = generateScreenshotFilename(testStep)
         if (StringUtils.isBlank(filename)) {
-            error("Unable to generate screen capture filename!")
+            error("[WARN] Unable to generate screen capture filename!")
             return ""
         }
 
@@ -86,7 +86,7 @@ class Tn5250Command : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
         return try {
             val sessionPanel = resolveActiveSessionPanel()
             if (sessionPanel == null) {
-                error("Unable to generate screen capture due to missing TN5250 session")
+                error("[WARN] Unable to generate screen capture due to missing TN5250 session")
                 return ""
             }
 
@@ -94,7 +94,7 @@ class Tn5250Command : BaseCommand(), CanTakeScreenshot, ForcefulTerminate {
             EncodeComponent.encode(PNG, sessionPanel, screenshotFile)
             postScreenshot(testStep, screenshotFile)
         } catch (e: Exception) {
-            error("Unable to generate screen capture: " + ExceptionUtils.getRootCauseMessage(e))
+            error("[WARN] Unable to generate screen capture: " + ExceptionUtils.getRootCauseMessage(e))
             ""
         }
     }

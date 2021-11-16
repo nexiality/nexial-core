@@ -1899,7 +1899,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
                 // ignore this... move on.
                 ConsoleUtils.log("Unable to reference element (" + locator + "), possibly due to page loading...");
                 if (waitForElementPresent(locator, getPollWaitMs() + "").failed()) {
-                    error("Web element '" + locator + "' no longer available after its value is cleared");
+                    error("[WARN] Web element '" + locator + "' no longer available after its value is cleared");
                 } else {
                     // do what we came here for...
                     clearValue(element);
@@ -2196,7 +2196,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
         String filename = generateScreenshotFilename(testStep);
         if (StringUtils.isBlank(filename)) {
-            error("Unable to generate screen capture filename!");
+            error("[WARN] Unable to generate screen capture filename!");
             return null;
         }
         filename = context.getProject().getScreenCaptureDir() + separator + filename;
@@ -2217,11 +2217,11 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
                 if (screenshotTaken) {
                     return postScreenshot(testStep, screenshotFile);
                 } else {
-                    error("Unable to capture screenshot via full screen capturing approach");
+                    error("[WARN] Unable to capture screenshot via full screen capturing approach");
                     return null;
                 }
             } catch (IOException e) {
-                error("Unable to capture screenshot via full screen capturing approach: " + e.getMessage());
+                error("[WARN] Unable to capture screenshot via full screen capturing approach: " + e.getMessage());
                 return null;
             }
         }
@@ -2246,7 +2246,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         // headless environment can't handle Robot-based screenshot
         if (useNativeCapture) {
             if (browser != null && browser.isHeadless()) {
-                error("Native screenshot is disabled in a headless environment - skipping screen capture");
+                error("[WARN] Native screenshot is disabled in a headless environment - skipping screen capture");
                 return null;
             }
         }
@@ -2255,7 +2255,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
             log("using native screen capturing approach...");
             screenshotFile = new File(filename);
             if (!NativeInputHelper.captureScreen(0, 0, -1, -1, screenshotFile)) {
-                error("Unable to capture screenshot via native screen capturing approach");
+                error("[WARN] Unable to capture screenshot via native screen capturing approach");
                 return null;
             }
         } else {
@@ -2587,9 +2587,16 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         String before = element.getAttribute("value");
         if (StringUtils.isEmpty(before)) { return; }
 
-        boolean useBackspace = browser.isRunElectron() ||
-                               context.getBooleanData(WEB_CLEAR_WITH_BACKSPACE, getDefaultBool(WEB_CLEAR_WITH_BACKSPACE)) ||
-                               context.getBooleanConfig(getTarget(), profile, OPT_IS_REACT);
+        // allow user to override "useBackspace" setting; if `nexial.web.clearWithBackspace` is specified 
+        boolean useBackspace;
+        if (context.hasData(WEB_CLEAR_WITH_BACKSPACE)) {
+            useBackspace = context.getBooleanData(WEB_CLEAR_WITH_BACKSPACE);
+        } else {
+            useBackspace = browser.isRunElectron() ||
+                           context.getBooleanData(WEB_CLEAR_WITH_BACKSPACE, getDefaultBool(WEB_CLEAR_WITH_BACKSPACE)) ||
+                           context.getBooleanConfig(getTarget(), profile, OPT_IS_REACT);
+        }
+
         if (useBackspace) {
             new Actions(driver).click(element)
                                .keyDown(SHIFT).keyDown(CONTROL)
@@ -2623,7 +2630,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         }
 
         if (StringUtils.isNotEmpty(after)) {
-            error("Unable to clear out the value of the target element. [before] " + before + ", [after] " + after);
+            error("[WARN] Unable to clear out the value of the target element. [before] " + before + ", [after] " + after);
         }
     }
 
