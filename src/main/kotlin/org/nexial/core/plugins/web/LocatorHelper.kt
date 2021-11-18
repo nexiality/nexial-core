@@ -489,7 +489,7 @@ class LocatorHelper internal constructor(private val delegator: WebCommand) {
         private val PATH_STARTS_WITH = listOf("/", "./", "(/", "( /", "(./", "( ./")
 
         @JvmStatic
-        fun toLocatorString(findBy: By): String = RegexUtils.removeMatches(findBy.toString(), "^By\\..+\\:\\s*")
+        fun toLocatorString(findBy: By): String = RegexUtils.removeMatches(findBy.toString(), "^By\\..*?\\:\\s*")
 
         @JvmStatic
         fun normalizeXpathText(label: String?): String {

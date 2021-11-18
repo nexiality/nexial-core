@@ -2630,7 +2630,8 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         }
 
         if (StringUtils.isNotEmpty(after)) {
-            error("[WARN] Unable to clear out the value of the target element. [before] " + before + ", [after] " + after);
+            error("[WARN] Unable to clear out the value of the target element. [before] " + before + ", [after] " +
+                  after);
         }
     }
 
@@ -3455,6 +3456,16 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         Point pagePosition = coordinates.onPage();
         // either we are already in view, or this is not suitable for scrolling (i.e. Window, Document, Html object)
         if (pagePosition.getX() < 10 && pagePosition.getY() < 10) { return true; }
+
+        Object dimensionResult = jsExecutor.executeScript(JsLib.documentDimension());
+        if (dimensionResult != null) {
+            List<String> windowDimension = TextUtils.toList(dimensionResult.toString(), ",", true);
+            if (CollectionUtils.size(windowDimension) == 2) {
+                int windowWidth = NumberUtils.toInt(windowDimension.get(0));
+                int windowHeight = NumberUtils.toInt(windowDimension.get(1));
+                if (pagePosition.getX() < windowWidth && pagePosition.getY() < windowHeight) { return true; }
+            }
+        }
 
         // according to Coordinates' Javadoc: "... This method automatically scrolls the page and/or
         // frames to make element visible in viewport before calculating its coordinates"

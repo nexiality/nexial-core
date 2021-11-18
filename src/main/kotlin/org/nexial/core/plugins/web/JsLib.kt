@@ -204,6 +204,9 @@ object JsLib {
     fun updateAttr(attribute: String, value: String) =
         "arguments[0].forEach(function(elem,index) { elem.style.$attribute = '$value'; });"
 
+    @JvmStatic
+    fun documentDimension() = "return window.innerWidth + ',' + window.innerHeight;"
+
     object LocalStorage {
         @JvmStatic
         fun getValue(key: String) = "return window.localStorage.getItem('$key')"

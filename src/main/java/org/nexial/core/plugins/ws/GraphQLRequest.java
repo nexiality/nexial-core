@@ -40,7 +40,6 @@ public class GraphQLRequest extends PostRequest {
 
     GraphQLRequest(ExecutionContext context, String url, String payload, byte[] payloadBytes) {
         super(context, url, payload, payloadBytes);
-        prepPayload();
     }
 
     @Override
