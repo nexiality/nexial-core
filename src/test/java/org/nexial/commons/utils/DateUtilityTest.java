@@ -17,11 +17,13 @@
 
 package org.nexial.commons.utils;
 
-import java.util.Date;
-
 import org.apache.http.client.utils.DateUtils;
 import org.junit.Assert;
 import org.junit.Test;
+
+import java.util.Date;
+
+import static org.junit.Assert.assertEquals;
 
 public class DateUtilityTest {
 
@@ -45,63 +47,69 @@ public class DateUtilityTest {
 			Assert.fail(e.getMessage());
 		}
 
+		try {
+			assertEquals(DateUtility.formatTo("11/19/2021 12:00:00 PM", "M/dd/yyyy hh:mm:ss a", "MM/dd/yyyy"), "11/19/2021");
+		} catch (Exception e) {
+			Assert.fail(e.getMessage());
+		}
+
 	}
 
 	@Test
 	public void testFormatFullMonth() {
 		Date fixture = new Date(DateUtility.formatTo("01/06/2012 04:34:12 AM", "MM/dd/yyyy hh:mm:ss a"));
 		String test = DateUtils.formatDate(fixture, "MMMM");
-		Assert.assertEquals("January", test);
+		assertEquals("January", test);
 
 		fixture = new Date(DateUtility.formatTo("02/06/2012 04:34:12 AM", "MM/dd/yyyy hh:mm:ss a"));
 		test = DateUtils.formatDate(fixture, "MMMM");
-		Assert.assertEquals("February", test);
+		assertEquals("February", test);
 
 		fixture = new Date(DateUtility.formatTo("03/06/2012 04:34:12 AM", "MM/dd/yyyy hh:mm:ss a"));
 		test = DateUtils.formatDate(fixture, "MMMM");
-		Assert.assertEquals("March", test);
+		assertEquals("March", test);
 
 		fixture = new Date(DateUtility.formatTo("04/06/2012 04:34:12 AM", "MM/dd/yyyy hh:mm:ss a"));
 		test = DateUtils.formatDate(fixture, "MMMM");
-		Assert.assertEquals("April", test);
+		assertEquals("April", test);
 
 		fixture = new Date(DateUtility.formatTo("05/06/2012 04:34:12 AM", "MM/dd/yyyy hh:mm:ss a"));
 		test = DateUtils.formatDate(fixture, "MMMM");
-		Assert.assertEquals("May", test);
+		assertEquals("May", test);
 
 		fixture = new Date(DateUtility.formatTo("06/06/2012 04:34:12 AM", "MM/dd/yyyy hh:mm:ss a"));
 		test = DateUtils.formatDate(fixture, "MMMM");
-		Assert.assertEquals("June", test);
+		assertEquals("June", test);
 
 		fixture = new Date(DateUtility.formatTo("07/06/2012 04:34:12 AM", "MM/dd/yyyy hh:mm:ss a"));
 		test = DateUtils.formatDate(fixture, "MMMM");
-		Assert.assertEquals("July", test);
+		assertEquals("July", test);
 
 		fixture = new Date(DateUtility.formatTo("08/06/2012 04:34:12 AM", "MM/dd/yyyy hh:mm:ss a"));
 		test = DateUtils.formatDate(fixture, "MMMM");
-		Assert.assertEquals("August", test);
+		assertEquals("August", test);
 
 		fixture = new Date(DateUtility.formatTo("09/06/2012 04:34:12 AM", "MM/dd/yyyy hh:mm:ss a"));
 		test = DateUtils.formatDate(fixture, "MMMM");
-		Assert.assertEquals("September", test);
+		assertEquals("September", test);
 
 		fixture = new Date(DateUtility.formatTo("10/06/2012 04:34:12 AM", "MM/dd/yyyy hh:mm:ss a"));
 		test = DateUtils.formatDate(fixture, "MMMM");
-		Assert.assertEquals("October", test);
+		assertEquals("October", test);
 
 		fixture = new Date(DateUtility.formatTo("11/06/2012 04:34:12 AM", "MM/dd/yyyy hh:mm:ss a"));
 		test = DateUtils.formatDate(fixture, "MMMM");
-		Assert.assertEquals("November", test);
+		assertEquals("November", test);
 
 		fixture = new Date(DateUtility.formatTo("12/06/2012 04:34:12 AM", "MM/dd/yyyy hh:mm:ss a"));
 		test = DateUtils.formatDate(fixture, "MMMM");
-		Assert.assertEquals("December", test);
+		assertEquals("December", test);
 
 	}
 
 	@Test
 	public void formatTime() {
-		Assert.assertEquals("00:00:00", DateUtility.formatTime(4));
+		assertEquals("00:00:00", DateUtility.formatTime(4));
 	}
 
 	@Test
@@ -110,7 +118,7 @@ public class DateUtilityTest {
 		Date date = new Date(DateUtility.formatTo("Wed, 09 Nov 2016 16:16:21 GMT", "EEE, dd MMM yyyy HH:mm:ss ZZZ"));
 		System.out.println("date = " + date);
 		String dateString = DateUtility.format(date.getTime(), "yyyy/MM/dd HH:mm:ss");
-		Assert.assertEquals("2016/11/09 08:16:21", dateString);
+		assertEquals("2016/11/09 08:16:21", dateString);
 
 	}
 }

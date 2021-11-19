@@ -253,17 +253,7 @@ public class DesktopTable extends DesktopElement {
             tableData = new TableData(object, Duration.between(startTime, Instant.now()));
         }
 
-        List<String> columnNames = tableData.getColumns();
-        List<TableRow> data = tableData.getData();
-        for (TableRow row : data) {
-            for (int i = 0; i < columnNames.size(); i++) {
-                if (row.size() <= i) { continue; }
-                String columnName = columnNames.get(i);
-                row.put(i + "", columnName, reformatCellData(columnName, row.get(columnName)));
-            }
-        }
-
-        return tableData;
+        return reformatCellData(tableData);
     }
 
     /** As of v3.7, we will support HierTable (aka ControlType.Tree) as well */
@@ -271,16 +261,19 @@ public class DesktopTable extends DesktopElement {
         sanityCheck();
         Instant startTime = Instant.now();
 
+        TableData tableData;
         if (isTreeView) {
             int count = countChildren(element, DesktopUtils::isValidDataRow);
             List<WebElement> rowData = count < 1 ?
                                        new ArrayList<>() :
                                        element.findElements(By.xpath(LOCATOR_HIER_TABLE_ROWS + "/*"));
-            return TableData.fromTreeViewRows(headers, rowData, Duration.between(startTime, Instant.now()));
+            tableData = TableData.fromTreeViewRows(headers, rowData, Duration.between(startTime, Instant.now()));
+        } else {
+            tableData = new TableData(driver.executeScript(SCRIPT_DATAGRID_FETCH_ALL, element),
+                                      Duration.between(startTime, Instant.now()));
         }
 
-        return new TableData(driver.executeScript(SCRIPT_DATAGRID_FETCH_ALL, element),
-                             Duration.between(startTime, Instant.now()));
+        return reformatCellData(tableData);
     }
 
     /** As of v3.7, we will support HierTable (aka ControlType.Tree) as well */
@@ -333,7 +326,7 @@ public class DesktopTable extends DesktopElement {
         List<WebElement> rows = new ArrayList<>();
         //todo: short circuit this: fetch only requested row
         if (CollectionUtils.isNotEmpty(dataElements)) {
-            dataElements.forEach(elem -> { if (elem != null) { rows.add(elem); }});
+            dataElements.forEach(elem -> { if (elem != null) { rows.add(elem); } });
         }
 
         int rowCount = CollectionUtils.size(rows);
@@ -355,7 +348,7 @@ public class DesktopTable extends DesktopElement {
                 if (row == 0) {
                     if (clickBeforeEdit()) {
                         clickOffset(element, clickOffsetX, resolveClickOffsetY(0));
-                        try { Thread.sleep(2000); } catch (InterruptedException e) {}
+                        try { Thread.sleep(2000); } catch (InterruptedException e) { }
                     }
                     matches = element.findElements(By.xpath(LOCATOR_NEW_ROW));
                     if (CollectionUtils.isEmpty(matches)) {
@@ -380,7 +373,7 @@ public class DesktopTable extends DesktopElement {
                     // get the 'Add Row' element for new row and then get all the child elements with '*[@Name!='Column Headers']'
                     matches = element.findElements(By.xpath(LOCATOR_NEW_ROW));
                     if (CollectionUtils.isEmpty(matches)) {
-                        try { Thread.sleep(5000);} catch (InterruptedException e) {}
+                        try { Thread.sleep(5000); } catch (InterruptedException e) { }
                         matches = element.findElements(By.xpath(LOCATOR_NEW_ROW));
                     }
 
@@ -436,6 +429,19 @@ public class DesktopTable extends DesktopElement {
         }
 
         return new DesktopTableRow(row, newRow, columnMapping, this, null);
+    }
+
+    private TableData reformatCellData(TableData tableData) {
+        List<String> columnNames = tableData.getColumns();
+        List<TableRow> data = tableData.getData();
+        for (TableRow row : data) {
+            for (int i = 0; i < columnNames.size(); i++) {
+                if (row.size() <= i) { continue; }
+                String columnName = columnNames.get(i);
+                row.put(i + "", columnName, reformatCellData(columnName, row.get(columnName)));
+            }
+        }
+        return tableData;
     }
 
     private boolean clickBeforeEdit() {
@@ -654,7 +660,11 @@ public class DesktopTable extends DesktopElement {
         return session;
     }
 
-    protected void actionClick(WebElement element) { new Actions(getDriver()).moveToElement(element).click().perform();}
+    protected void actionClick(WebElement element) {
+        new Actions(getDriver()).moveToElement(element)
+                                .click()
+                                .perform();
+    }
 
     protected String findAndSetEditableColumnName(WebElement column) {
         int tableXoffset = 0;
@@ -931,7 +941,9 @@ public class DesktopTable extends DesktopElement {
         return (offsetY > height) ? height - (TABLE_ROW_HEIGHT / 2) : offsetY;
     }
 
-    private String treatColumnHeader(String header) {return normalizeSpace ? TextUtils.xpathNormalize(header) : header;}
+    private String treatColumnHeader(String header) {
+        return normalizeSpace ? TextUtils.xpathNormalize(header) : header;
+    }
 
     protected String resolveMatchingColumnXpath(String column, String value) {
         String xpath = "./*[" + resolveColumnXpathCondition(column) + " and ";
