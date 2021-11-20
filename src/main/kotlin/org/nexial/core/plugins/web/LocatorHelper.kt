@@ -120,7 +120,8 @@ class LocatorHelper internal constructor(private val delegator: WebCommand) {
                             StringUtils.startsWith(text, END)              ->
                                 throw IllegalArgumentException(RB.PolyMatcher.text("notSupported.END", locator))
                             StringUtils.startsWith(text, END_ANY_CASE)     ->
-                                throw IllegalArgumentException(RB.PolyMatcher.text("notSupported.END_ANY_CASE", locator))
+                                throw IllegalArgumentException(
+                                    RB.PolyMatcher.text("notSupported.END_ANY_CASE", locator))
 
                             StringUtils.startsWith(text, CONTAIN)          ->
                                 "//*[contains($elemText,${normalizeXpathText(text.substringAfter(CONTAIN))})]"
@@ -233,7 +234,7 @@ class LocatorHelper internal constructor(private val delegator: WebCommand) {
     fun toElement(locator: String) =
         findElement(locator) ?: throw NoSuchElementException("element not found via '${locator}'")
 
-    protected fun findElements(locator: String): List<WebElement>? {
+    fun findElements(locator: String): List<WebElement>? {
         delegator.ensureReady()
 
         val by: By = findBy(locator)
@@ -256,12 +257,12 @@ class LocatorHelper internal constructor(private val delegator: WebCommand) {
         }
     }
 
-    protected fun findElements(driver: WebDriver, by: By): List<WebElement>? {
+    fun findElements(driver: WebDriver, by: By): List<WebElement>? {
         delegator.alert.preemptiveDismissAlert()
         return driver.findElements(by)
     }
 
-    protected fun fluentFindElements(locator:String, waitMs:String): List<WebElement>? {
+    fun fluentFindElements(locator: String, waitMs: String): List<WebElement>? {
         requiresNotBlank(locator, "invalid locator", locator)
 
         delegator.ensureReady()

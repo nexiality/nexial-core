@@ -120,7 +120,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     protected CssHelper css;
 
     protected static enum AssertionType {
-        PRESENT, ABSENT, VISIBLE, HIDDEN, ENABLED, DISABLED;
+        PRESENT, ABSENT, VISIBLE, HIDDEN, ENABLED, DISABLED
     }
 
     @Override
@@ -558,7 +558,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
             String message = "[" + name + "] ";
 
             try {
-                boolean matched = false;
+                boolean matched;
                 switch (assertionType) {
                     case PRESENT: {
                         matched = assertElementPresent(locator).isSuccess();
@@ -714,30 +714,6 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
             // it's ok to have timeout or web driver exception; it's a PASS
         }
 
-        // requiresNotBlank(locator, "invalid locator", locator);
-        // long maxWait = deriveMaxWaitMs(waitMs);
-        //
-        // ensureReady();
-        //
-        // long oldImplicitWaitMs = getPollWaitMs();
-        // Timeouts timeouts = driver.manage().timeouts();
-        // boolean timeoutChangesEnabled = browser.browserType.isTimeoutChangesEnabled();
-        // // if browser supports implicit wait, and we are not using explicit wait (`WEB_ALWAYS_WAIT`), then
-        // // we'll change timeout's implicit wait time
-        // if (timeoutChangesEnabled) { timeouts.implicitlyWait(maxWait, MILLISECONDS); }
-        //
-        // FluentWait<WebDriver> waiter = newFluentWait(maxWait);
-        // boolean found = false;
-        //
-        // try {
-        //     Object target = waiter.until(driver -> driver.findElements(locatorHelper.findBy(locator)));
-        //     found = target == null;
-        // } catch (WebDriverException e) {
-        //     // it's ok to have timeout or web driver exception; it's a PASS
-        // } finally {
-        //     if (timeoutChangesEnabled) { timeouts.implicitlyWait(oldImplicitWaitMs, MILLISECONDS); }
-        // }
-
         // not found means the target element is not found within `waitMs` time
         if (!found) {
             return StepResult.success("Element by locator '%s' is NOT present within the last %s ms", locator, waitMs);
@@ -763,7 +739,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
         long maxWait = deriveMaxWaitMs(waitMs);
         By by = locatorHelper.findBy(locator);
-        boolean outcome = waitForCondition(maxWait, object -> { return isHidden(by); });
+        boolean outcome = waitForCondition(maxWait, object -> isHidden(by));
 
         String prefix = "Element by locator '" + locator + "' ";
         if (!outcome) {
@@ -785,7 +761,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
         long maxWait = deriveMaxWaitMs(waitMs);
         By by = locatorHelper.findBy(locator);
-        boolean outcome = waitForCondition(maxWait, object -> { return isEnabled(by); });
+        boolean outcome = waitForCondition(maxWait, object -> isEnabled(by));
         if (outcome) {
             return StepResult.success("Element by locator '" + locator + "' is enabled");
         } else {
@@ -798,7 +774,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
         long maxWait = deriveMaxWaitMs(waitMs);
         By by = locatorHelper.findBy(locator);
-        boolean outcome = waitForCondition(maxWait, object -> { return isDisabled(by); });
+        boolean outcome = waitForCondition(maxWait, object -> isDisabled(by));
         if (outcome) {
             return StepResult.success("Element by locator '" + locator + "' is disabled");
         } else {
@@ -874,7 +850,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
             }
         } catch (StaleElementReferenceException e) {
             // oops.. it ran/went away...
-            String msg = String.format("element '%s' is not longer available or attached to this locator", locator);
+            String msg = String.format("element '%s' is no longer available or attached to this locator", locator);
             ConsoleUtils.log(msg);
             return StepResult.fail(msg);
         }
@@ -897,7 +873,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
             }
         } catch (StaleElementReferenceException e) {
             // oops.. it ran/went away...
-            String msg = String.format("element '%s' is not longer available or attached to this locator", locator);
+            String msg = String.format("element '%s' is no longer available or attached to this locator", locator);
             ConsoleUtils.log(msg);
             return StepResult.fail(msg);
         }
@@ -1412,6 +1388,15 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         }
     }
 
+    public StepResult clickIfPresent(String locator) {
+        List<WebElement> targets = findElements(locator);
+        if (CollectionUtils.isEmpty(targets)) {
+            return StepResult.success("No element matching '" + locator + "' found; skip clicking");
+        } else {
+            return clickInternal(targets.get(0));
+        }
+    }
+
     public StepResult doubleClickByLabel(String label) {
         if (browser.isRunSafari()) { return StepResult.fail("double-click not supported by Safari"); }
         return doubleClickInternal(LocatorHelper.resolveLabelXpath(label));
@@ -1542,7 +1527,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         if (StringUtils.isNotBlank(winHandle) && browser.getBrowserType().isSwitchWindowSupported()) {
             window = driver.switchTo().window(winHandle).manage().window();
         } else {
-            log("Unable to recognize current window, this command will likely fail..");
+            log("Unable to recognize current window, this command will likely fail...");
             window = driver.manage().window();
         }
 
@@ -1598,7 +1583,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         // dimension unit is point (or px)
         window.setPosition(new Point(posX, posY));
 
-        return StepResult.success("current browser window moved to to position (%s, %s)", x, y);
+        return StepResult.success("current browser window moved to position (%s, %s)", x, y);
     }
 
     public StepResult assertScrollbarVPresent(String locator) { return checkScrollbarV(locator, false); }
@@ -1818,7 +1803,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
                 if (useIndex) {
                     if (handles.size() > winIndex) {
                         String handle = IterableUtils.get(handles, winIndex);
-                        driver = driver.switchTo().window(handle);
+                        driver.switchTo().window(handle);
                         return true;
                     } else {
                         return false;
@@ -1827,7 +1812,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
                     String handle =
                         handles.stream().filter(id -> StringUtils.equals(winId, id)).findFirst().orElse(null);
                     if (StringUtils.isBlank(handle)) {
-                        driver = driver.switchTo().window(winId);
+                        driver.switchTo().window(winId);
                         return true;
                     } else {
                         return false;
@@ -2343,7 +2328,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
                 ConsoleUtils.log("focus returns to previous window '" + handle + "'");
                 driver = driver.switchTo().window(handle);
             } catch (NotFoundException e) {
-                ConsoleUtils.error("Unable to focus on windows due to invalid handler; default to main window");
+                ConsoleUtils.error("Unable to focus on last window due to invalid handler; default to main window");
                 selectWindow("null");
             }
         } else {
@@ -2901,9 +2886,9 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
                     return StepResult.fail(msg + "CONTAINS " + contains + ", which is NOT as expected");
                 } else {
                     if (expectsContains) {
-                        return StepResult.fail(msg + "DOES NOT contains " + contains + ", which is NOT as expected");
+                        return StepResult.fail(msg + "DOES NOT contain " + contains + ", which is NOT as expected");
                     }
-                    return StepResult.success(msg + "DOES NOT contains " + contains + ", as EXPECTED");
+                    return StepResult.success(msg + "DOES NOT contain " + contains + ", as EXPECTED");
                 }
             }
 
@@ -2913,9 +2898,9 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
             }
 
             if (expectsContains) {
-                return StepResult.fail(msg + "DOES NOT contains '" + contains + "', which is NOT as expected");
+                return StepResult.fail(msg + "DOES NOT contain '" + contains + "', which is NOT as expected");
             }
-            return StepResult.success(msg + "DOES NOT contains '" + contains + "', as EXPECTED");
+            return StepResult.success(msg + "DOES NOT contain '" + contains + "', as EXPECTED");
         } catch (WebDriverException e) {
             return StepResult.fail(WebDriverExceptionHelper.resolveErrorMessage(e));
         }

@@ -38,10 +38,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
-import static org.nexial.core.NexialConst.Data.POLL_WAIT_MS;
 import static org.nexial.core.NexialConst.MSG_FAIL;
 import static org.nexial.core.NexialConst.MSG_PASS;
-import static org.nexial.core.SystemVariables.getDefault;
 
 public class WebTransformer<T extends WebDataType> extends Transformer<T> {
     private static final Map<String, Integer> FUNCTION_TO_PARAM_LIST = discoverFunctions(WebTransformer.class);
@@ -273,16 +271,10 @@ public class WebTransformer<T extends WebDataType> extends Transformer<T> {
     public WebDataType check(T data, String locator, String waitMs) {
         if (data == null || data.getValue() == null) { return null; }
 
-        if (StringUtils.isEmpty(waitMs)) {
-            ExecutionContext context = ExecutionThread.get();
-            waitMs = context != null ? context.getPollWaitMs() + "" : getDefault(POLL_WAIT_MS);
-        }
-
-        WebCommand webCommand = resolveWebCommand();
-
         StepResult stepResult;
         try {
-            stepResult = webCommand.checkAll(locator, waitMs);
+            WebCommand webCommand = resolveWebCommand();
+            stepResult = webCommand.checkAll(locator, StringUtils.defaultIfBlank(waitMs, "2000"));
         } catch (Exception e) {
             stepResult = new StepResult(false, resolveErrorMessage(e), null);
         }
@@ -292,16 +284,10 @@ public class WebTransformer<T extends WebDataType> extends Transformer<T> {
     public WebDataType uncheck(T data, String locator, String waitMs) {
         if (data == null || data.getValue() == null) { return null; }
 
-        if (StringUtils.isEmpty(waitMs)) {
-            ExecutionContext context = ExecutionThread.get();
-            waitMs = context != null ? context.getPollWaitMs() + "" : getDefault(POLL_WAIT_MS);
-        }
-
-        WebCommand webCommand = resolveWebCommand();
-
         StepResult stepResult;
         try {
-            stepResult = webCommand.uncheckAll(locator, waitMs);
+            WebCommand webCommand = resolveWebCommand();
+            stepResult = webCommand.uncheckAll(locator, StringUtils.defaultIfBlank(waitMs, "2000"));
         } catch (Exception e) {
             stepResult = new StepResult(false, resolveErrorMessage(e), null);
         }
