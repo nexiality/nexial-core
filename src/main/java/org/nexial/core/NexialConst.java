@@ -414,7 +414,7 @@ public final class NexialConst {
         public static final String ENV_NAME = NAMESPACE + "env";
 
         // allow per-run override for the output directory name
-        // nexial.runID is set by castle via Jenkin internal BUILD_ID variable, which reflects build time in
+        // nexial.runID is set by castle via Jenkins internal BUILD_ID variable, which reflects build time in
         // the format of YYYY-MM-DD_hh-mm-ss
         public static final String OPT_RUN_ID = registerSysVar(NAMESPACE + "runID");
         public static final String OPT_RUN_ID_PREFIX = registerSysVar(OPT_RUN_ID + ".prefix");
@@ -444,7 +444,11 @@ public final class NexialConst {
         public static final String QUIET = registerSysVar(NAMESPACE + "quiet", false);
         public static final String NULL_VALUE = registerSysVar(NAMESPACE + "nullValue", "(null)");
         public static final String TEXT_DELIM = registerSysVar(NAMESPACE + "textDelim", ",");
+
         public static final String PROJ_PROP_TRIM_KEY = registerSysVar(NAMESPACE + "projectProperties.trimKey", false);
+        // possible options: first, last, error
+        public static final String DUP_PROJ_PROP_KEYS = registerSysVar(NAMESPACE + "projectPropertiesDups", "error");
+
 
         public static final String FAIL_IMMEDIATE = registerSysVar(NAMESPACE + "failImmediate", false);
         public static final String END_IMMEDIATE = registerSysVar(NAMESPACE + "endImmediate");

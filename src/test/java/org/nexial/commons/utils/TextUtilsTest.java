@@ -29,6 +29,8 @@ import java.util.*;
 import static java.io.File.separator;
 import static org.junit.Assert.*;
 import static org.nexial.commons.utils.TextUtils.CleanNumberStrategy.CSV;
+import static org.nexial.commons.utils.TextUtils.DuplicateKeyStrategy.FavorFirst;
+import static org.nexial.commons.utils.TextUtils.DuplicateKeyStrategy.FavorLast;
 import static org.nexial.core.NexialConst.DEF_FILE_ENCODING;
 
 public class TextUtilsTest {
@@ -512,6 +514,38 @@ public class TextUtilsTest {
         assertEquals(propMap.get("username"), "tech21					");
         assertEquals(propMap.get("passwordClue"), "agency19	");
         assertEquals(propMap.get("mySuperDuperDB.url"), "jdbc:sqlserver://myserver09sdb04:1433;databaseName=dbase21;integratedSecurity=true;authenticationScheme=JavaKerberos");
+    }
+
+    @Test
+    public void loadProperties_test_dup_keys() {
+        String testFixture = ResourceUtils.getResourceFilePath("/dupkeys-test.project.properties");
+
+        // assert that key "variables" are treated as different keys.. only exact similarity are treated as dup
+        Map<String, String> propMap = null;
+        try {
+            propMap = TextUtils.loadProperties(testFixture);
+            fail("expected RuntimeException did not go off...");
+        } catch (Exception e) {
+            // expected... it's ok
+        }
+
+        propMap = TextUtils.loadProperties(testFixture, false, FavorFirst);
+        assert propMap != null;
+        assertEquals(propMap.size(), 5);
+        assertEquals(propMap.get("my.name"), "Jimbo Hackies");
+        assertEquals(propMap.get("myname"), "Japee Nees");
+        assertEquals(propMap.get("my.name "), "Aai Yoh");
+        assertEquals(propMap.get("my.Name"), "Adi Yo");
+        assertEquals(propMap.get(" my.name    "), "Ai Yeeyo");
+
+        propMap = TextUtils.loadProperties(testFixture, false, FavorLast);
+        assert propMap != null;
+        assertEquals(propMap.size(), 5);
+        assertEquals(propMap.get("my.name"), "Pee-A-Know");
+        assertEquals(propMap.get("myname"), "Japee Nees");
+        assertEquals(propMap.get("my.name "), "Aai Yoh");
+        assertEquals(propMap.get("my.Name"), "Adi Yo");
+        assertEquals(propMap.get(" my.name    "), "Ai Yeeyo");
     }
 
     @Test

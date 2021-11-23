@@ -37,7 +37,7 @@ object WebDriverExceptionHelper {
     private const val noException = "No error or exception found"
 
     @JvmStatic
-    fun analyzeError(context: ExecutionContext, step: TestStep, e: WebDriverException?): String? {
+    fun analyzeError(context: ExecutionContext, step: TestStep, e: WebDriverException?): String {
         return if (e == null) noException else resolveCommandDetail(context, step) + "\n" + resolveErrorMessage(e)
     }
 
@@ -65,8 +65,9 @@ object WebDriverExceptionHelper {
             is NotFoundException               -> "Specified web element/window not found: "
             is ScreenshotException             -> "Unable to capture screenshot: "
             is UnhandledAlertException         -> "JavaScript alert dialog not properly handled: "
-            is StaleElementReferenceException  -> "Referenced element is either not longer available or attached to the specified locator"
             is TimeoutException                -> "Timed out while referencing web element(s): "
+            is StaleElementReferenceException  -> 
+                "Referenced element is either no longer available or attached to the specified locator: "
             is SessionNotCreatedException      ->
                 if (StringUtils.contains(e.message, "AppiumDriver")) "Unable to start Appium service: "
                 else "Unable to start WebDriver session: "
@@ -87,6 +88,7 @@ object WebDriverExceptionHelper {
                 .collect(Collectors.toList())
         }
 
-        return "EXECUTING COMMAND: ${step.commandFQN}(${TextUtils.toString(parameters, ", ", "'", "'")})"
+        val paramString = TextUtils.toString(parameters, ", ", "'", "'")
+        return "EXECUTING COMMAND: ${step.commandFQN}($paramString)"
     }
 }

@@ -44,12 +44,27 @@ import static java.lang.Character.UnicodeBlock.SPECIALS;
 import static java.lang.System.lineSeparator;
 import static org.nexial.commons.utils.TextUtils.CleanNumberStrategy.CSV;
 import static org.nexial.commons.utils.TextUtils.CleanNumberStrategy.OCTAL;
+import static org.nexial.commons.utils.TextUtils.DuplicateKeyStrategy.NotAllowed;
 import static org.nexial.core.NexialConst.*;
 
 /**
  * @author Mike Liu
  */
 public final class TextUtils {
+
+    public enum DuplicateKeyStrategy {
+        FavorFirst, FavorLast, NotAllowed;
+
+        public static DuplicateKeyStrategy toStrategy(String text) {
+            if (StringUtils.isBlank(text)) { throw new IllegalArgumentException("Invalid strategy: " + text); }
+            text = StringUtils.trim(text);
+            if (StringUtils.equals(text, "error")) { return NotAllowed; }
+            if (StringUtils.equals(text, "first")) { return FavorFirst; }
+            if (StringUtils.equals(text, "last")) { return FavorLast; }
+            throw new IllegalArgumentException("Unknown strategy: " + text);
+        }
+    }
+
     // FORM_UNFRIENDLY_TEXT and NEWLINES must match in size
     public static final String[] FORM_UNFRIENDLY_TEXT =
         new String[]{"&lt;BR/&gt;", "&lt;br/&gt;", "<BR/>", "<BR>", "<br>", "<br/>", "\r"};
@@ -1045,25 +1060,41 @@ public final class TextUtils {
      * the standard Java {@link Properties#load(InputStream)} in that it will make special concession towards property
      * names with space characters.
      */
-    @NotNull
     public static Map<String, String> loadProperties(String propFile) { return loadProperties(propFile, false); }
 
     public static Map<String, String> loadProperties(String propFile, boolean trimKey) {
+        return loadProperties(propFile, trimKey, NotAllowed);
+    }
+
+    public static Map<String, String> loadProperties(String propFile,
+                                                     boolean trimKey,
+                                                     DuplicateKeyStrategy duplicateKeyStrategy) {
         // load only properties without sections
         Map<String, String> properties = new LinkedHashMap<>();
-        Map<String, Map<String, String>> properties1 = loadProperties(propFile, trimKey, false);
+        Map<String, Map<String, String>> properties1 = loadProperties(propFile, trimKey, false, duplicateKeyStrategy);
         if (properties1 != null) { properties1.values().forEach(properties::putAll); }
         return properties;
     }
 
-    public static Map<String, Map<String, String>> loadProperties(String propFile, boolean trimKey,
+    public static Map<String, Map<String, String>> loadProperties(String propFile,
+                                                                  boolean trimKey,
                                                                   boolean readCommentAsKeyValue) {
+        return loadProperties(propFile, trimKey, readCommentAsKeyValue, NotAllowed);
+    }
+
+    public static Map<String, Map<String, String>> loadProperties(String propFile,
+                                                                  boolean trimKey,
+                                                                  boolean readCommentAsKeyValue,
+                                                                  DuplicateKeyStrategy duplicateKeyStrategy) {
         // load properties as section to key-value pair
         if (!FileUtil.isFileReadable(propFile, 5)) { return null; }
+
+        File prop = new File(propFile);
+        String propPath = prop.getAbsolutePath();
         String section = "";
         Map<String, Map<String, String>> properties = new LinkedHashMap<>();
         try {
-            List<String> lines = FileUtils.readLines(new File(propFile), DEF_FILE_ENCODING);
+            List<String> lines = FileUtils.readLines(prop, DEF_FILE_ENCODING);
             for (int i = 0; i < lines.size(); i++) {
                 String line = lines.get(i);
                 if (StringUtils.isBlank(line)) { continue; }
@@ -1108,7 +1139,21 @@ public final class TextUtils {
 
                 if (properties.containsKey(section)) {
                     Map<String, String> maps = properties.get(section);
-                    maps.put(key, value);
+                    if (maps.containsKey(key)) {
+                        switch (duplicateKeyStrategy) {
+                            case NotAllowed:
+                                throw new RuntimeException(RB.Abort.text("dupProjectProperties", propPath, key));
+                            case FavorFirst:
+                                ConsoleUtils.log(RB.Commons.text("dupProjectProperties.first", propPath, key));
+                                break;
+                            case FavorLast:
+                                ConsoleUtils.log(RB.Commons.text("dupProjectProperties.last", propPath, key));
+                                maps.put(key, value);
+                                break;
+                        }
+                    } else {
+                        maps.put(key, value);
+                    }
                 } else {
                     Map<String, String> keyValueMap = new LinkedHashMap<>();
                     keyValueMap.put(key, value);
@@ -1261,8 +1306,8 @@ public final class TextUtils {
         values.forEach(row -> {
             StringBuilder rowBuffer = new StringBuilder();
             row.forEach(cell -> rowBuffer
-                                    .append(cell.contains(delim) ? StringUtils.wrapIfMissing(cell, "\"") : cell)
-                                    .append(delim));
+                .append(cell.contains(delim) ? StringUtils.wrapIfMissing(cell, "\"") : cell)
+                .append(delim));
             csvBuffer.append(StringUtils.removeEnd(rowBuffer.toString(), delim)).append(recordDelim);
         });
         return csvBuffer.toString();

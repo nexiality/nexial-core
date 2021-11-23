@@ -22,6 +22,7 @@ import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.nexial.commons.utils.FileUtil;
 import org.nexial.commons.utils.TextUtils;
+import org.nexial.commons.utils.TextUtils.DuplicateKeyStrategy;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.ExecUtils;
 
@@ -32,8 +33,7 @@ import java.util.Set;
 import javax.annotation.Nonnull;
 
 import static java.io.File.separator;
-import static org.nexial.core.NexialConst.Data.ENV_NAME;
-import static org.nexial.core.NexialConst.Data.PROJ_PROP_TRIM_KEY;
+import static org.nexial.core.NexialConst.Data.*;
 import static org.nexial.core.NexialConst.OPT_PROJECT_BASE;
 import static org.nexial.core.NexialConst.Project.*;
 import static org.nexial.core.SystemVariables.getDefault;
@@ -123,7 +123,7 @@ public class TestProject {
             ConsoleUtils.error(runId, "Unable to read %s; fall back to project.properties", envProjectProperties);
         }
 
-        // if env not specified, or target project.properties file cannot be found..
+        // if env not specified, or target project.properties file cannot be found...
         return propBase + DEF_PROJECT_PROPS;
     }
 
@@ -188,6 +188,8 @@ public class TestProject {
         Map<String, String> properties = new LinkedHashMap<>();
 
         boolean trimKey = BooleanUtils.toBoolean(System.getProperty(PROJ_PROP_TRIM_KEY, getDefault(PROJ_PROP_TRIM_KEY)));
+        DuplicateKeyStrategy dupStrategy = 
+            DuplicateKeyStrategy.toStrategy(System.getProperty(DUP_PROJ_PROP_KEYS, getDefault(DUP_PROJ_PROP_KEYS)));
 
         // if user specified env-specific properties, then we'll load default `project.properties` first
         if (!StringUtils.endsWith(projectProps, DEF_PROJECT_PROPS)) {
@@ -198,7 +200,7 @@ public class TestProject {
         }
 
         // override anything found in env-specific properties
-        Map<String, String> props = TextUtils.loadProperties(projectProps, trimKey);
+        Map<String, String> props = TextUtils.loadProperties(projectProps, trimKey, dupStrategy);
         if (MapUtils.isNotEmpty(props)) { properties.putAll(props); }
 
         if (MapUtils.isNotEmpty(properties)) {
