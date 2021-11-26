@@ -119,10 +119,10 @@ public abstract class Transformer<T extends ExpressionDataType> {
                 throw new ExpressionFunctionException(typeName, functionName, "Invalid data type after transformation");
             }
 
-            ExecutionContext context = ExecutionThread.get();
-            if (context == null || StringUtils.isBlank(context.getRunId()) || context.isVerbose()) {
-                ConsoleUtils.log(msgPrefix + outcome);
-            }
+            // ExecutionContext context = ExecutionThread.get();
+            // if (context == null || StringUtils.isBlank(context.getRunId()) || context.isVerbose()) {
+            //     ConsoleUtils.log(msgPrefix + outcome);
+            // }
 
             return (ExpressionDataType) outcome;
         } catch (IllegalAccessException | InvocationTargetException e) {
