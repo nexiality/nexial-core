@@ -135,7 +135,7 @@ abstract class CloudWebTestingPlatform protected constructor(protected var conte
         // }
 
         @JvmStatic
-        protected fun formatStatusDescription(summary: ExecutionSummary): String {
+        fun formatStatusDescription(summary: ExecutionSummary): String {
             return "total: ${summary.totalSteps}, " +
                    "pass: ${summary.passCount}, " +
                    "fail: ${summary.failCount}, " +

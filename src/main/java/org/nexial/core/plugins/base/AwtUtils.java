@@ -78,8 +78,13 @@ public final class AwtUtils {
 
     @Nullable
     public static GraphicsDevice[] getAvailableScreens() {
-        GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
-        return ge == null ? null : ge.getScreenDevices();
+        try {
+            GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+            return ge == null ? null : ge.getScreenDevices();
+        } catch (Throwable e) {
+            ConsoleUtils.error("Error when determining available screen(s): " + e.getMessage());
+            return null;
+        }
     }
 
 

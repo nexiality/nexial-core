@@ -3044,11 +3044,8 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
             boolean useJS = context.getBooleanConfig(getTarget(), getProfile(), FORCE_JS_DBLCLICK);
             if (useJS) {
-                if (BooleanUtils.toBoolean(Objects.toString(jsExecutor.executeScript(JsLib.doubleClick(), element)))) {
-                    return StepResult.success("successfully JS double-clicked on web element '" + locator + "'");
-                } else {
-                    return StepResult.success("FAILED to JS double-clicked on web element '" + locator + "'");
-                }
+                jsExecutor.executeScript(JsLib.doubleClick(), element);
+                return StepResult.success("successfully JS double-clicked on web element '" + locator + "'");
             } else {
                 new Actions(driver).moveToElement(element).doubleClick(element).build().perform();
                 return StepResult.success("double-clicked on web element '" + locator + "'");
