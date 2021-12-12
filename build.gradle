@@ -200,7 +200,7 @@ dependencies {
 
 	// support: json
 	compile("org.json:json:${jsonVersion}")
-	compile("com.cedarsoftware:java-util:+")
+//	compile("com.cedarsoftware:java-util:+")
 	compile("com.cedarsoftware:json-io:+")
 	// compile("com.github.fge:json-schema-validator:+") {
 	// 	exclude module: "mailapi"
@@ -291,6 +291,11 @@ dependencies {
 	//	non-distributable libs
 	compile fileTree(dir: 'lib', include: '*.jar')
 
+	compile("com.mikesamuel:json-sanitizer:${jsonSanitizerVersion}")
+
+//	implementation 'org.owasp:java-file-io:1.0.0'
+//	https://github.com/augustd/owasp-java-fileio/tree/master/src/main/java/org/owasp/fileio	
+	
 	// provided("javax.servlet:javax.servlet-api:${servletApiVersion}") { force = true }
 
 	// annotationProcessor "org.springframework.boot:spring-boot-configuration-processor"

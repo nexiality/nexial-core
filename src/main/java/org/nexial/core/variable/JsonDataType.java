@@ -17,8 +17,11 @@
 
 package org.nexial.core.variable;
 
-import java.io.UnsupportedEncodingException;
-
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonSyntaxException;
+import com.google.json.JsonSanitizer;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.json.JSONArray;
@@ -26,10 +29,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.nexial.core.utils.ConsoleUtils;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonSyntaxException;
+import java.io.UnsupportedEncodingException;
 
 import static java.lang.System.lineSeparator;
 import static org.nexial.core.NexialConst.DEF_CHARSET;
@@ -99,5 +99,10 @@ public class JsonDataType extends ExpressionDataType<JsonElement> {
                                e);
             return textValue;
         }
+    }
+
+    public static String sanitize(String textValue) {
+        if (StringUtils.isBlank(textValue)) { return textValue; }
+        return JsonSanitizer.sanitize(escapeUnicode(textValue));
     }
 }

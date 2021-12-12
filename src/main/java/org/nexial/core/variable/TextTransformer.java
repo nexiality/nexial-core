@@ -539,7 +539,7 @@ public class TextTransformer<T extends TextDataType> extends Transformer<T> {
         try {
             if (resolveUrl && ResourceUtils.isWebResource(text)) { text = WsCommand.resolveWebContent(text); }
 
-            text = JsonDataType.escapeUnicode(text);
+            text = JsonDataType.sanitize(text);
             json = GSON.fromJson(text, JsonElement.class);
             if (json != null) { return new JsonDataType(text); }
         } catch (IOException e) {

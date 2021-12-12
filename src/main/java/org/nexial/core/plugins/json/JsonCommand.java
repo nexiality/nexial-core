@@ -38,6 +38,7 @@ import org.nexial.core.model.StepResult;
 import org.nexial.core.plugins.base.BaseCommand;
 import org.nexial.core.utils.*;
 import org.nexial.core.utils.JsonEditor.JsonEditorConfig;
+import org.nexial.core.variable.JsonDataType;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -309,6 +310,7 @@ public class JsonCommand extends BaseCommand {
 
     public StepResult beautify(String json, String var) {
         requiresValidAndNotReadOnlyVariableName(var);
+        context.removeData(var);
 
         String jsonContent = retrieveJsonContent(json);
         if (jsonContent == null) { return StepResult.fail("Unable to parse JSON content: " + json); }
@@ -322,6 +324,7 @@ public class JsonCommand extends BaseCommand {
 
     public StepResult compact(String var, String json, String removeEmpty) {
         requiresValidAndNotReadOnlyVariableName(var);
+        context.removeData(var);
 
         String jsonContent = retrieveJsonContent(json);
         if (jsonContent == null) { return StepResult.fail("Unable to parse JSON content: " + json); }
@@ -331,6 +334,20 @@ public class JsonCommand extends BaseCommand {
 
         updateDataVariable(var, compressed);
         return StepResult.success("JSON content minify/compacted and saved to '" + var);
+    }
+
+    public StepResult sanitize(String var, String json) {
+        requiresValidAndNotReadOnlyVariableName(var);
+        context.removeData(var);
+
+        String jsonContent = retrieveJsonContent(json);
+        if (jsonContent == null) { return StepResult.fail("Unable to read/retrieve JSON content: " + json); }
+
+        String sanitized = JsonDataType.sanitize(jsonContent);
+        if (StringUtils.isBlank(sanitized)) { return StepResult.fail("Unable to sanitize JSON content"); }
+
+        updateDataVariable(var, sanitized);
+        return StepResult.success("JSON content sanitized and saved to '" + var + "'");
     }
 
     public static Object resolveToJSONObject(String json) {
