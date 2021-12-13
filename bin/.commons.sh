@@ -143,6 +143,7 @@ function resolveEnv() {
     esac
 
 		# JAVA_VERSION=`echo "$(${JAVA} -version 2>&1)" | grep " version" | awk '{ print substr($3, 2, length($3)-2); }'`
+		NEXIAL_VERSION=$(cat ${NEXIAL_HOME}/version.txt)
 
     echo "» ENVIRONMENT: "
     echo "  CURRENT TIME:   `date \"+%Y-%m-%d %H:%M%:%S\"`"
@@ -150,6 +151,7 @@ function resolveEnv() {
     echo "  CURRENT HOST:   `hostname`"
     echo "  JAVA:           ${JAVA}"
     echo "  JAVA VERSION:   ${JAVA_VERSION}"
+    echo "	NEXIAL_VERSION: ${NEXIAL_VERSION}"
     echo "  NEXIAL_HOME:    ${NEXIAL_HOME}"
     echo "  NEXIAL_LIB:     ${NEXIAL_LIB}"
     echo "  NEXIAL_CLASSES: ${NEXIAL_CLASSES}"

@@ -163,6 +163,7 @@ REM # Make sure prerequisite environment variables are set
 :resolveEnv
 	set NEXIAL_LIB=%NEXIAL_HOME%\lib
 	set CLASSES_PATH=%NEXIAL_HOME%\classes
+	set /p NEXIAL_VERSION=<%NEXIAL_HOME%\version.txt
 	set datestr=%date% %time%
 
 	echo ENVIRONMENT:
@@ -171,6 +172,7 @@ REM # Make sure prerequisite environment variables are set
 	echo   CURRENT HOST:   %COMPUTERNAME%
 	echo   JAVA:           %JAVA%
 	echo   JAVA_VERSION:   %JAVA_VERSION%
+	echo   NEXIAL_VERSION: %NEXIAL_VERSION%
 	echo   NEXIAL_HOME:    %NEXIAL_HOME%
 	echo   NEXIAL_LIB:     %NEXIAL_LIB%
 	echo   NEXIAL_CLASSES: %NEXIAL_CLASSES%
