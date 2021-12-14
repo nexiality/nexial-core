@@ -17,15 +17,6 @@
 
 package org.nexial.core;
 
-import java.io.File;
-import java.io.IOException;
-import java.security.Security;
-import java.text.MessageFormat;
-import java.util.*;
-import java.util.stream.Collectors;
-import javax.annotation.Nullable;
-import javax.validation.constraints.NotNull;
-
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.HelpFormatter;
@@ -37,6 +28,7 @@ import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.poi.xssf.usermodel.XSSFRow;
+import org.nexial.commons.InvalidInputRuntimeException;
 import org.nexial.commons.utils.*;
 import org.nexial.core.aws.NexialS3Helper;
 import org.nexial.core.excel.Excel;
@@ -57,6 +49,15 @@ import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.ExecUtils;
 import org.nexial.core.utils.InputFileUtils;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
+
+import java.io.File;
+import java.io.IOException;
+import java.security.Security;
+import java.text.MessageFormat;
+import java.util.*;
+import java.util.stream.Collectors;
+import javax.annotation.Nullable;
+import javax.validation.constraints.NotNull;
 
 import static java.io.File.separator;
 import static java.lang.System.lineSeparator;
@@ -205,9 +206,8 @@ public class Nexial {
             main = new Nexial();
             main.init(args);
         } catch (Exception e) {
-            if (e instanceof IllegalArgumentException) {
-                // adopted from fail()
-                ConsoleUtils.errorBeforeTerminate(e.getMessage());
+            if (e instanceof IllegalArgumentException || e instanceof InvalidInputRuntimeException) { 
+                ConsoleUtils.errorBeforeTerminate(e.getMessage()); 
             } else {
                 e.printStackTrace();
                 System.err.println(e.getMessage());

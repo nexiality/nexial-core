@@ -81,9 +81,9 @@ configurations {
 sourceSets.main.compileClasspath += configurations.provided
 
 dependencies {
-	compile("org.apache.logging.log4j:log4j-api:2.15.0")
-	compile("org.apache.logging.log4j:log4j-core:2.15.0")
-	compile("org.apache.logging.log4j:log4j-to-slf4j:2.15.0")
+	compile("org.apache.logging.log4j:log4j-api:2.16.0")
+	compile("org.apache.logging.log4j:log4j-core:2.16.0")
+	compile("org.apache.logging.log4j:log4j-to-slf4j:2.16.0")
 
 	compile("org.apache.httpcomponents:httpcore:${httpcoreVersion}")
 	compile("org.apache.httpcomponents:httpclient:${httpclientVersion}")

@@ -26,6 +26,7 @@ import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.RegExUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
+import org.nexial.commons.InvalidInputRuntimeException;
 import org.nexial.core.utils.ConsoleUtils;
 
 import java.io.File;
@@ -1142,7 +1143,9 @@ public final class TextUtils {
                     if (maps.containsKey(key)) {
                         switch (duplicateKeyStrategy) {
                             case NotAllowed:
-                                throw new RuntimeException(RB.Abort.text("dupProjectProperties", propPath, key));
+                                throw new InvalidInputRuntimeException(RB.Abort.text("dupProjectProperties", 
+                                                                                     propPath, 
+                                                                                     key));
                             case FavorFirst:
                                 ConsoleUtils.log(RB.Commons.text("dupProjectProperties.first", propPath, key));
                                 break;
