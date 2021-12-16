@@ -76,14 +76,22 @@ object ExecUtils {
     val NEXIAL_MANIFEST: String = deriveJarManifest(Nexial::class.java, PRODUCT, "nexial-DEV")
 
     @JvmField
-    var IS_RUNNING_IN_JUNIT = isRunningInJUnit()
+    val IS_RUNNING_IN_JUNIT = isRunningInJUnit()
 
     /** determine if we are running under CI (Jenkins) using current system properties  */
     @JvmStatic
-    fun isRunningInCi() = StringUtils.isNotBlank(System.getenv()[OPT_JENKINS_URL]) &&
-                          StringUtils.isNotBlank(System.getenv()[OPT_JENKINS_HOME]) &&
-                          StringUtils.isNotBlank(System.getenv()[OPT_BUILD_ID]) &&
-                          StringUtils.isNotBlank(System.getenv()[OPT_BUILD_URL])
+    fun isRunningInCi() = isRunningInJenkins() || isRunningInAdoAgent();
+
+    @JvmStatic
+    fun isRunningInJenkins() = StringUtils.isNotBlank(System.getenv()[OPT_JENKINS_URL]) &&
+                                       StringUtils.isNotBlank(System.getenv()[OPT_JENKINS_HOME]) &&
+                                       StringUtils.isNotBlank(System.getenv()[OPT_BUILD_ID]) &&
+                                       StringUtils.isNotBlank(System.getenv()[OPT_BUILD_URL])
+
+    @JvmStatic
+    fun isRunningInAdoAgent() = StringUtils.isNotBlank(System.getenv()["BUILD_REPOSITORY_URI"]) &&
+                                        StringUtils.isNotBlank(System.getenv()["AGENT_JOBNAME"]) &&
+                                        StringUtils.isNotBlank(System.getenv()["AGENT_ID"])
 
     @JvmStatic
     fun isRunningInZeroTouchEnv(): Boolean = IS_RUNNING_IN_JUNIT || isRunningInCi()
@@ -134,7 +142,8 @@ object ExecUtils {
                 IGNORED_CLI_OPT.none { StringUtils.startsWith(StringUtils.substring(arg, 2), it) }
             }
         if (CollectionUtils.isNotEmpty(argsList)) {
-            System.setProperty(SCRIPT_REF_PREFIX + JAVA_OPT, argsList.joinToString(separator = getDefault(TEXT_DELIM)!!))
+            System.setProperty(SCRIPT_REF_PREFIX + JAVA_OPT,
+                               argsList.joinToString(separator = getDefault(TEXT_DELIM)!!))
             System.setProperty("execution.$JAVA_OPT", argsList.joinToString(separator = "\n"))
         }
     }

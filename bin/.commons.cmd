@@ -49,7 +49,6 @@
 	set JAVA_OPT=%JAVA_OPT% -Dwebdriver.winium.silent=false
     REM set JAVA_OPT=%JAVA_OPT% -Dwebdriver.winium.logpath=%TEMP%\winium-service.log
 	set JAVA_OPT=%JAVA_OPT% -Dorg.apache.poi.util.POILogger=org.apache.poi.util.NullLogger
-	set JAVA_OPT=%JAVA_OPT% -Dlog4j2.formatMsgNoLookups=true
 
 	goto :eof
 

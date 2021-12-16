@@ -557,7 +557,7 @@ public class ExecutionSummary {
         map.put("nexial version", NEXIAL_MANIFEST);
         map.put("java version", JAVA_VERSION);
 
-        if (ExecUtils.isRunningInCi()) {
+        if (ExecUtils.isRunningInJenkins()) {
             map.put("JENKINS::build url", ExecUtils.currentCiBuildUrl());
             map.put("JENKINS::build id", ExecUtils.currentCiBuildId());
             map.put("JENKINS::build number", ExecUtils.currentCiBuildNumber());
