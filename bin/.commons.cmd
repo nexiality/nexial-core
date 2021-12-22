@@ -39,7 +39,7 @@
 
 	mkdir %USERPROFILE%\tmp 2> NUL
 
-	REM # setting Java runtime options and classpath
+	REM setting Java runtime options and classpath
 	set JAVA_OPT=%JAVA_OPT% -ea
 	set JAVA_OPT=%JAVA_OPT% -Xss24m
 	set JAVA_OPT=%JAVA_OPT% -Djava.io.tmpdir="%USERPROFILE%\tmp"
@@ -49,6 +49,9 @@
 	set JAVA_OPT=%JAVA_OPT% -Dwebdriver.winium.silent=false
     REM set JAVA_OPT=%JAVA_OPT% -Dwebdriver.winium.logpath=%TEMP%\winium-service.log
 	set JAVA_OPT=%JAVA_OPT% -Dorg.apache.poi.util.POILogger=org.apache.poi.util.NullLogger
+
+	REM remove erroneous setup.jar in .nexial/lib
+	if exist "%USER_HOME_NEXIAL_LIB%\setup.jar" ( del "%USER_HOME_NEXIAL_LIB%\setup.jar" 2> NUL )
 
 	goto :eof
 

@@ -241,3 +241,8 @@ JAVA_OPT="${JAVA_OPT} -Dwebdriver.winium.verbose=true"
 JAVA_OPT="${JAVA_OPT} -Dwebdriver.winium.silent=false"
 # JAVA_OPT="${JAVA_OPT} -Dwebdriver.winium.logpath=$TMPDIR/winium-service.log"
 JAVA_OPT="${JAVA_OPT} -Dorg.apache.poi.util.POILogger=org.apache.poi.util.NullLogger"
+
+# remove erroneous setup.jar in .nexial/lib
+if [[ -f "$USER_HOME_NEXIAL_LIB/setup.jar" ]] ; then
+	rm -f "$USER_HOME_NEXIAL_LIB/setup.jar" > /dev/null 2>&1 
+fi
