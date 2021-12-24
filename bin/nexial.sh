@@ -7,6 +7,23 @@
 # --------------------------------------------------------------------------------
 
 NEXIAL_HOME=$(cd `dirname $0`/..; pwd -P)
+
+if [ "$1" == "-version" ] && [ "$2" == "" ]
+then
+ cat ${NEXIAL_HOME}/version.txt
+ echo ""
+ exit 0
+else
+ for ((i=1; i<=$#; i++))
+ do
+   if [ "${!i}" == "-version" ]
+   then
+     echo 'ERROR: Argument "-version" cannot be used with any other argument.'
+     exit 1
+   fi;
+ done
+fi;
+
 . ${NEXIAL_HOME}/bin/.commons.sh
 title "nexial runner"
 checkJava

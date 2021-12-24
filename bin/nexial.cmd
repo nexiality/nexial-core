@@ -15,6 +15,9 @@ set NEXIAL_BIN=%~dp0
 call :init
 if NOT ERRORLEVEL 0 goto :exit
 
+call :displayVersion %*
+if %ERRORLEVEL% LEQ 0 goto :exit
+
 call :title "nexial runner"
 if NOT ERRORLEVEL 0 goto :exit
 
@@ -103,6 +106,25 @@ goto :exit
 
 :init
     %NEXIAL_BIN%.commons.cmd %*
+
+:displayVersion
+	if "%1"=="-version" (
+		if "%2" == "" (
+			type %NEXIAL_HOME%\version.txt
+			echo.
+			exit /b 0
+		)
+		echo ERROR: Argument "-version" cannot be used with any other argument.
+		exit /b -1
+	) else (
+		for %%x in (%*) do (
+			if "%%x" == "-version" (
+				echo ERROR: Argument "-version" cannot be used with any other argument.
+				exit /b -1
+			)
+		)
+	)
+	exit /b 1
 
 :checkJava
     %NEXIAL_BIN%.commons.cmd %*
