@@ -185,6 +185,7 @@ public final class WebDriverUtils {
         map.put("{DEL}", DELETE);
         map.put("{DECIMAL}", DECIMAL);
         map.put("{ESCAPE}", ESCAPE);
+        map.put("{ESC}", ESCAPE);
 
         map.put("{HOME}", HOME);
         map.put("{END}", END);
