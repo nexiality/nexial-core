@@ -94,6 +94,7 @@ public class ExecutionSummary {
     private String dataFile;
     private transient File testScript;
     private String testScriptLink;
+    private String executionOutputHtml;
 
     private String runHost;
     private String runHostOs;
@@ -155,10 +156,10 @@ public class ExecutionSummary {
                                      ")";
 
         // 3. organize videos by "readable" name
-        summary.screenRecordings = new TreeMap<String, Map<String, String>>(
-            FileUtil.listFiles(captureDir, recordingFilesRegex, false, FILENAME_ASC).stream()
-                    .collect(Collectors.toMap(file -> SUBDIR_CAPTURES + "/" + file.getName(),
-                                              file -> OutputFileUtils.distillOutputFile(file.getAbsolutePath()))));
+        summary.screenRecordings = new TreeMap<>(
+                FileUtil.listFiles(captureDir, recordingFilesRegex, false, FILENAME_ASC).stream()
+                        .collect(Collectors.toMap(file -> SUBDIR_CAPTURES + "/" + file.getName(),
+                                                  file -> OutputFileUtils.distillOutputFile(file.getAbsolutePath()))));
 
         // 4. get log directory
         String logDir = NexialConst.Project.appendLog(summary.outputPath);
@@ -220,6 +221,10 @@ public class ExecutionSummary {
             errorStackTrace = ExceptionUtils.getStackTrace(error);
         }
     }
+
+    public String getExecutionOutputHtml() { return executionOutputHtml; }
+
+    public void setExecutionOutputHtml(String executionOutputHtml) {this.executionOutputHtml = executionOutputHtml; }
 
     public int getIterationIndex() { return iterationIndex; }
 
@@ -556,6 +561,7 @@ public class ExecutionSummary {
         map.put("fail-fast", summary.failedFast + "");
         map.put("nexial version", NEXIAL_MANIFEST);
         map.put("java version", JAVA_VERSION);
+        map.put("execution summary", summary.executionOutputHtml);
 
         if (ExecUtils.isRunningInJenkins()) {
             map.put("JENKINS::build url", ExecUtils.currentCiBuildUrl());
