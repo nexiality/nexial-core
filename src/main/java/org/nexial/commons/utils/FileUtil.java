@@ -17,19 +17,14 @@
 
 package org.nexial.commons.utils;
 
-import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.filefilter.DirectoryFileFilter;
-import org.apache.commons.io.filefilter.IOFileFilter;
-import org.apache.commons.lang3.StringUtils;
-import org.nexial.core.utils.ConsoleUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Objects;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
 import java.util.stream.Collectors;
@@ -38,6 +33,15 @@ import java.util.zip.ZipException;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 import javax.validation.constraints.NotNull;
+
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.filefilter.DirectoryFileFilter;
+import org.apache.commons.io.filefilter.IOFileFilter;
+import org.apache.commons.lang3.StringUtils;
+import org.nexial.core.utils.ConsoleUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static java.io.File.separator;
 import static org.apache.commons.io.comparator.LastModifiedFileComparator.LASTMODIFIED_COMPARATOR;
@@ -623,4 +627,21 @@ public final class FileUtil {
             return false;
         }
     }
+
+    /** Method will help to execute any command on linux/mac shell or windows command prompt */
+    public static String executeCommand(String[] cmd) {
+        StringBuilder sb = new StringBuilder();
+        try {
+            Process process = Runtime.getRuntime().exec(cmd);
+            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            reader.lines()
+                  .filter(StringUtils::isNotEmpty)
+                  .forEach(sb::append);
+            process.waitFor();
+        } catch (Exception e) {
+            ConsoleUtils.error("Error while executing command. "+e.getMessage());
+        }
+        return sb.toString();
+    }
+
 }

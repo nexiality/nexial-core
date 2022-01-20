@@ -17,6 +17,13 @@
 
 package org.nexial.core.model;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -33,13 +40,6 @@ import org.nexial.core.plugins.web.Browser;
 import org.nexial.core.utils.ExecUtils;
 import org.nexial.core.variable.ExpressionProcessor;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
-
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
 
 import static java.io.File.separator;
 import static org.apache.commons.lang3.SystemUtils.JAVA_IO_TMPDIR;
@@ -83,6 +83,8 @@ public class MockExecutionContext extends ExecutionContext {
                 springContext.getBean("webdriverHelperConfig", new HashMap<BrowserType, String>().getClass());
             dbdriverHelperConfig =
                 springContext.getBean("dbdriverHelperConfig", new HashMap<String, String>().getClass());
+            imageMagicConfig =
+                springContext.getBean("imageMagicConfig", new HashMap<String, String>().getClass());
         } else {
             readOnlyVars = Arrays.asList("nexial.runID", "nexial.runID.prefix", "nexial.iterationEnded",
                                          "nexial.spreadsheet.program", "nexial.lastScreenshot", "nexial.lastOutcome",

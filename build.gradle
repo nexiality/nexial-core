@@ -302,6 +302,8 @@ dependencies {
 
 	compile("com.mikesamuel:json-sanitizer:${jsonSanitizerVersion}")
 
+	implementation("org.im4java:im4java:${im4javaVersion}")
+
 //	implementation 'org.owasp:java-file-io:1.0.0'
 //	https://github.com/augustd/owasp-java-fileio/tree/master/src/main/java/org/owasp/fileio	
 	

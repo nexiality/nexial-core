@@ -198,6 +198,9 @@ export NEXIAL_CLASSES=${NEXIAL_HOME}/classes
 export USER_HOME_NEXIAL_LIB=~/.nexial/lib
 export IS_MAC=$([[ "`uname -s`" = "Darwin" ]] && echo "true" || echo "false" )
 export CACHE_FILE=$([[ ${IS_MAC} = "true" ]] && echo "$HOME/.nexial/cache.macos" || echo "$HOME/.nexial/cache.nix" )
+if [ "$IS_MAC" = true ] ; then
+    export DYLD_LIBRARY_PATH="$HOME/.nexial/imagemagick/lib"
+fi
 
 CHROME_KEY=$([[ ${IS_MAC} = "true" ]] && echo "Google Chrome" || echo "google-chrome" )
 export DEFAULT_CHROME_BIN="`resolveAppPath "${CHROME_KEY}"`"

@@ -17,6 +17,16 @@
 
 package org.nexial.core.model;
 
+import java.io.IOException;
+import java.lang.reflect.Array;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.TypeVariable;
+import java.util.*;
+import java.util.stream.Collectors;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import javax.validation.constraints.NotNull;
+
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.beanutils.MethodUtils;
 import org.apache.commons.beanutils.PropertyUtils;
@@ -67,16 +77,6 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 import org.thymeleaf.TemplateEngine;
-
-import java.io.IOException;
-import java.lang.reflect.Array;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.TypeVariable;
-import java.util.*;
-import java.util.stream.Collectors;
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-import javax.validation.constraints.NotNull;
 
 import static java.io.File.separator;
 import static org.apache.commons.lang3.SystemUtils.IS_OS_WINDOWS;
@@ -175,6 +175,8 @@ public class ExecutionContext {
     protected Map<BrowserType, String> webdriverHelperConfig;
 
     protected Map<String, String> dbdriverHelperConfig;
+
+    protected Map<String, String> imageMagicConfig;
 
     protected boolean isInMacro = false;
 
@@ -371,6 +373,8 @@ public class ExecutionContext {
     public Map<BrowserType, String> getWebdriverHelperConfig() { return webdriverHelperConfig; }
 
     public Map<String, String> getDbdriverHelperConfig() { return dbdriverHelperConfig; }
+
+    public Map<String, String> getImageMagicConfig() { return imageMagicConfig; }
 
     public NexialS3Helper getOtc() throws IOException {
         // check that the required properties are set
@@ -2223,6 +2227,9 @@ public class ExecutionContext {
         // db driver
         dbdriverHelperConfig =
             springContext.getBean("dbdriverHelperConfig", new HashMap<String, String>().getClass());
+
+        imageMagicConfig =
+            springContext.getBean("imageMagicConfig", new HashMap<String, String>().getClass());
 
         // thymeleaf template engine
         templateEngine = springContext.getBean("htmlTemplateEngine", TemplateEngine.class);

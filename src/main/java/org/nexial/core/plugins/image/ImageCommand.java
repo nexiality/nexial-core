@@ -17,6 +17,16 @@
 
 package org.nexial.core.plugins.image;
 
+import java.awt.*;
+import java.awt.image.*;
+import java.io.File;
+import java.io.IOException;
+import java.text.DecimalFormat;
+import java.util.List;
+import java.util.stream.Collectors;
+import javax.imageio.ImageIO;
+
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.commons.lang3.time.StopWatch;
@@ -29,15 +39,6 @@ import org.nexial.core.plugins.ForcefulTerminate;
 import org.nexial.core.plugins.base.BaseCommand;
 import org.nexial.core.services.external.ImageOcrApi;
 import org.nexial.core.utils.ConsoleUtils;
-
-import java.awt.*;
-import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.IOException;
-import java.text.DecimalFormat;
-import java.util.List;
-import java.util.stream.Collectors;
-import javax.imageio.ImageIO;
 
 import static org.nexial.core.NexialConst.Image.*;
 import static org.nexial.core.NexialConst.Image.ImageType.png;
@@ -134,16 +135,25 @@ public class ImageCommand extends BaseCommand implements ForcefulTerminate {
     }
 
     public StepResult saveDiff(String var, String baseline, String actual) throws IOException {
+        String baselineGray, actualGray;
         requiresReadableFileOrValidUrl(baseline);
         requiresReadableFileOrValidUrl(actual);
 
         float imageTol = Float.parseFloat(context.getStringData(OPT_IMAGE_TOLERANCE, getDefault(OPT_IMAGE_TOLERANCE)));
 
+        try {
+            ImageMagickHelper helper = new ImageMagickHelper();
+            baselineGray = helper.convertToGrayscale(baseline, context);
+            actualGray = helper.convertToGrayscale(actual, context);
+        } catch (Exception e) {
+            return StepResult.fail("image grayscale conversion failed. Error:"+e.getMessage());
+        }
+
         // get baseline image
-        File baselineFile = resolveFileResource(baseline);
+        File baselineFile = resolveFileResource(baselineGray);
 
         // get test image
-        File testFile = resolveFileResource(actual);
+        File testFile = resolveFileResource(actualGray);
 
         String colorName = context.getStringData(OPT_IMAGE_DIFF_COLOR, getDefault(OPT_IMAGE_DIFF_COLOR));
         Color color = ImageDiffColor.toColor(colorName);
@@ -169,17 +179,22 @@ public class ImageCommand extends BaseCommand implements ForcefulTerminate {
             String stats = formatToleranceMessage(matchPercent, imageTol);
 
             // show all differences (if any) in images
-            context.setData(var, new ImageComparisonMeta(baselineFile.getAbsolutePath(),
-                                                         testFile.getAbsolutePath(),
+            context.setData(var, new ImageComparisonMeta(baseline,
+                                                         actual,
                                                          imageComparison.getDifferences(),
                                                          matchPercent,
                                                          imageTol,
                                                          trimColor != null));
             log("Image comparison meta is saved to variable '" + var + "'");
 
+            //delete tmp gray image
+            FileUtils.deleteQuietly(baselineFile);
+            FileUtils.deleteQuietly(testFile);
+
             if ((matchPercent + imageTol) < 100) {
                 String msg = "Difference between baseline and actual BEYOND tolerance " + stats;
-                addOutputAsLink(msg, imageComparison.getDiffImage(), png.toString());
+                BufferedImage actualBI = drawRect(actual, imageComparison.getDifferences(), color);
+                addOutputAsLink(msg, actualBI, png.toString());
                 return StepResult.fail(msg);
             } else {
                 String msg = "Difference between baseline and actual within tolerance " + stats;
@@ -261,5 +276,15 @@ public class ImageCommand extends BaseCommand implements ForcefulTerminate {
             throw new ArrayIndexOutOfBoundsException("RGB color for trimming is not specified correctly");
         }
         return new Color(rgb.get(0), rgb.get(1), rgb.get(2));
+    }
+
+    private BufferedImage drawRect(String actual, List<Difference> diff, Color imageDiffColor) throws IOException {
+        BufferedImage actualBufferedImage = ImageIO.read(new File(actual));
+        Graphics2D g2d = actualBufferedImage.createGraphics();
+        g2d.setColor(imageDiffColor);
+        g2d.setStroke(new BasicStroke(2.0f));
+        diff.forEach(d -> g2d.drawRect(d.getX(), d.getY(), d.getWidth(), d.getHeight()));
+        g2d.dispose();
+        return actualBufferedImage;
     }
 }

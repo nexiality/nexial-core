@@ -974,4 +974,14 @@
         </entry>
     </util:map>
 
+    <util:map id="imageMagicConfig" key-type="java.lang.String" value-type="java.lang.String">
+        <entry key="location" value="${user.home}/.nexial/imagemagick"/>
+        <entry key="windows-url" value="https://download.imagemagick.org/ImageMagick/download/binaries/ImageMagick-7.1.0-portable-Q16-x64.zip"/>
+        <entry key="windows-required-version" value="7.1.0"/>
+        <entry key="linux-url" value="https://download.imagemagick.org/ImageMagick/download/binaries/magick"/>
+        <entry key="linux-required-version" value="7.1.0"/>
+        <entry key="mac-url" value="https://download.imagemagick.org/ImageMagick/download/binaries/ImageMagick-x86_64-apple-darwin20.1.0.tar.gz"/>
+        <entry key="mac-required-version" value="7.0.10"/>
+    </util:map>
+
 </beans>
