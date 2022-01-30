@@ -1099,14 +1099,15 @@ public final class TextUtils {
             for (int i = 0; i < lines.size(); i++) {
                 String line = lines.get(i);
                 if (StringUtils.isBlank(line)) { continue; }
-                boolean isComment = StringUtils.startsWithAny(line.trim(), "#", "!");
 
+                boolean isComment = StringUtils.startsWithAny(line.trim(), "#", "!");
                 if (isComment) {
                     if (StringUtils.startsWithAny(line.trim(), PROPERTIES_SECTION_START)) {
                         section = StringUtils.substringAfter(line, PROPERTIES_SECTION_START);
                         continue;
                     } else if (!readCommentAsKeyValue) { continue; }
                 }
+
                 if (StringUtils.endsWith(line, "\\")) {
                     line = StringUtils.removeEnd(line, "\\");
 
@@ -1117,6 +1118,7 @@ public final class TextUtils {
                             if (!StringUtils.startsWithAny(continuation, "#", ":")) { break; }
                             continuation = StringUtils.substring(continuation, 1);
                         }
+
                         if (StringUtils.endsWith(continuation, "\\")) {
                             line += StringUtils.removeEnd(continuation, "\\");
                         } else {
@@ -1143,8 +1145,8 @@ public final class TextUtils {
                     if (maps.containsKey(key)) {
                         switch (duplicateKeyStrategy) {
                             case NotAllowed:
-                                throw new InvalidInputRuntimeException(RB.Abort.text("dupProjectProperties", 
-                                                                                     propPath, 
+                                throw new InvalidInputRuntimeException(RB.Abort.text("dupProjectProperties",
+                                                                                     propPath,
                                                                                      key));
                             case FavorFirst:
                                 ConsoleUtils.log(RB.Commons.text("dupProjectProperties.first", propPath, key));
@@ -1163,6 +1165,7 @@ public final class TextUtils {
                     properties.put(section, keyValueMap);
                 }
             }
+
         } catch (IOException e) {
             ConsoleUtils.error("Unable to read project properties " + propFile + ": " + e.getMessage());
             return null;

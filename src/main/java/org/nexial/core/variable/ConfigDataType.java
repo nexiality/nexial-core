@@ -17,14 +17,16 @@
 
 package org.nexial.core.variable;
 
-import java.io.IOException;
-import java.io.Reader;
-import java.io.StringReader;
-
 import org.apache.commons.lang3.StringUtils;
+import org.nexial.commons.utils.FileUtil;
+import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.utils.ConsoleUtils;
 
+import java.util.Arrays;
+import java.util.Map;
+
 import static java.lang.System.lineSeparator;
+import static org.nexial.commons.utils.TextUtils.DuplicateKeyStrategy.FavorLast;
 
 /**
  * Created by nv092106 on 7/16/2017.
@@ -32,6 +34,7 @@ import static java.lang.System.lineSeparator;
 public class ConfigDataType extends ExpressionDataType<OrderedKeyProperties> {
     private ConfigTransformer<ConfigDataType> transformer = new ConfigTransformer<>();
     private String eol;
+    private String file;
 
     public ConfigDataType(String textValue) throws TypeConversionException { super(textValue); }
 
@@ -41,6 +44,10 @@ public class ConfigDataType extends ExpressionDataType<OrderedKeyProperties> {
     public String getName() { return "CONFIG"; }
 
     public String getEol() { return eol; }
+
+    public String getFile() { return file; }
+
+    public void setFile(String file) { this.file = file; }
 
     @Override
     ConfigTransformer<ConfigDataType> getTransformer() { return transformer; }
@@ -57,42 +64,52 @@ public class ConfigDataType extends ExpressionDataType<OrderedKeyProperties> {
 
     @Override
     protected void init() throws TypeConversionException {
-        Reader reader = null;
-        try {
-            this.value = new OrderedKeyProperties();
+        if (FileUtil.isFileReadable(file)) {
+            Map<String, Map<String, String>> props = TextUtils.loadProperties(file, false, false, FavorLast);
+            if (props != null) {
+                this.value = new OrderedKeyProperties();
+                props.values().forEach(this.value::putAll);
+            }
+            return;
+        }
 
-            if (StringUtils.isNotBlank(textValue)) {
-                if (StringUtils.contains(textValue, "\r\n")) {
-                    ConsoleUtils.log("determined current CONFIG content uses CRLF as end-of-line character");
-                    eol = "\r\n";
-                } else if (StringUtils.contains(textValue, "\n")) {
-                    ConsoleUtils.log("determined current CONFIG content uses LF as end-of-line character");
-                    eol = "\n";
-                } else {
-                    ConsoleUtils.log("determined current CONFIG content uses OS default as end-of-line character");
-                    eol = lineSeparator();
+        this.value = new OrderedKeyProperties();
+
+        if (StringUtils.isNotBlank(textValue)) {
+            if (StringUtils.contains(textValue, "\r\n")) {
+                ConsoleUtils.log("determined current CONFIG content uses CRLF as end-of-line character");
+                eol = "\r\n";
+            } else if (StringUtils.contains(textValue, "\n")) {
+                ConsoleUtils.log("determined current CONFIG content uses LF as end-of-line character");
+                eol = "\n";
+            } else {
+                ConsoleUtils.log("determined current CONFIG content uses OS default as end-of-line character");
+                eol = lineSeparator();
+            }
+
+            Arrays.stream(StringUtils.split(textValue, eol)).forEach(line -> {
+                if (StringUtils.isNotBlank(line) &&
+                    !StringUtils.startsWithAny(line, "#", "!") &&
+                    StringUtils.containsAny(line, "=", ":")) {
+
+                    int indexColon = StringUtils.indexOf(line, ":");
+                    int indexEqual = StringUtils.indexOf(line, "=");
+                    String separator = indexColon == -1 ? "=" :
+                                       indexEqual == -1 ? ":" :
+                                       indexColon > indexEqual ? "=" : ":";
+                    String key = StringUtils.substringBefore(line, separator);
+                    String val = StringUtils.substringAfter(line, separator);
+                    value.setProperty(key, val);
                 }
+            });
 
-                reader = new StringReader(textValue);
-                value.load(reader);
-            }
-
-        } catch (IOException ioException) {
-            throw new TypeConversionException(getName(), getTextValue(), "Error when converting " + textValue);
-        } finally {
-            try {
-                if (reader != null) { reader.close(); }
-            } catch (IOException e) {
-                ConsoleUtils.log("Unable to close the Reader source");
-            }
         }
     }
 
     protected void reset() {
         StringBuilder text = new StringBuilder();
-        value.stringPropertyNames().forEach(key ->
-                                                text.append(key).append("=").append(value.getProperty(key))
-                                                    .append(eol));
+        value.stringPropertyNames()
+             .forEach(key -> text.append(key).append("=").append(value.getProperty(key)).append(eol));
         textValue = text.toString();
     }
 }
