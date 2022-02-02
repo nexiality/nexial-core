@@ -21,6 +21,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.nexial.commons.utils.FileUtil;
 import org.nexial.commons.utils.RegexUtils;
 import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.ExecutionThread;
@@ -134,7 +135,11 @@ final class ExpressionDataTypeBuilder {
 
     ConfigDataType newConfigDataType(String value) throws TypeConversionException {
         ConfigDataType data = resumeExpression(value, ConfigDataType.class);
-        return data != null ? data : new ConfigDataType(handleExternal("CONFIG", value));
+        if (data != null) { return data; }
+
+        data = new ConfigDataType(handleExternal("CONFIG", value));
+        if (FileUtil.isFileReadable(value)) { data.setFile(value); }
+        return data;
     }
 
     IniDataType newIniDataType(String value) throws TypeConversionException {

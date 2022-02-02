@@ -50,6 +50,7 @@ public class HeadlessExpressionTests extends ExcelBasedTests {
     public void configTestViaExcel() throws Exception {
         ExecutionSummary executionSummary = testViaExcel("unitTest_config_expression.xlsx");
         assertPassFail(executionSummary, "CONFIG", TestOutcomeStats.allPassed());
+        assertPassFail(executionSummary, "CONFIG2", TestOutcomeStats.allPassed());
     }
 
     @Test
