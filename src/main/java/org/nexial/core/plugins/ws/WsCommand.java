@@ -691,7 +691,7 @@ public class WsCommand extends BaseCommand {
             }
             
             String delim = context == null ? "," : context.getTextDelim();
-            if (isMultipart && StringUtils.contains(fileParams, delim)) {
+            if (!isMultipart && StringUtils.contains(fileParams, delim)) {
                 throw new IllegalArgumentException("Multi-file params are not compatible with non-multipart request!");
             }
 
