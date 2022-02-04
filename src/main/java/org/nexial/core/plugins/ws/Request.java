@@ -165,8 +165,10 @@ public abstract class Request implements Serializable {
 
     protected abstract HttpUriRequest prepRequest(RequestConfig requestConfig) throws UnsupportedEncodingException;
 
-    protected ContentType resolveContentTypeAndCharset(Object header, String defaultContentType) {
-        String contentTypeString = Objects.toString(header, defaultContentType);
+    protected ContentType resolveContentTypeAndCharset(Object header, ContentType defaultContentType) {
+        if (header == null) { return defaultContentType; }
+
+        String contentTypeString = Objects.toString(header);
         if (StringUtils.isBlank(contentTypeString)) { return null; }
 
         String charset = null;

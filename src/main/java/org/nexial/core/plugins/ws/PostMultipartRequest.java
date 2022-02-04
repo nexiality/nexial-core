@@ -40,7 +40,7 @@ import java.util.HashMap;
 import java.util.Map;
 import javax.annotation.Nonnull;
 
-import static org.apache.http.entity.ContentType.APPLICATION_OCTET_STREAM;
+import static org.apache.http.entity.ContentType.DEFAULT_BINARY;
 import static org.apache.http.entity.mime.HttpMultipartMode.*;
 import static org.nexial.core.NexialConst.Ws.*;
 import static org.nexial.core.SystemVariables.getDefault;
@@ -98,13 +98,15 @@ public class PostMultipartRequest extends PostRequest {
 
         // split payload into parts; parts are separated by newline
         Map<String, String> params = TextUtils.toMap(payload, "\n", "=");
+        ContentType contentType = resolveContentTypeAndCharset(getHeaders().get(WS_CONTENT_TYPE), DEFAULT_BINARY);
 
         if (ArrayUtils.isNotEmpty(fileParams)) {
             Arrays.stream(fileParams).forEach(name -> {
                 String filePath = params.remove(name);
                 if (FileUtil.isFileReadable(filePath)) {
-                    if (verbose) { ConsoleUtils.log(logId, "adding %s as a multipart file", filePath); }
-                    multipartBuilder.addBinaryBody(name, new File(filePath));
+                    if (verbose) { ConsoleUtils.log(logId, "adding %s as a %s file", filePath, contentType); }
+                    File mpFile = new File(filePath);
+                    multipartBuilder.addBinaryBody(name, mpFile, contentType, mpFile.getName());
                 } else {
                     ConsoleUtils.error(logId,
                                        "Unable to resolve [%s=%s] as a multipart file; %s might not be a valid path",
@@ -114,9 +116,6 @@ public class PostMultipartRequest extends PostRequest {
         }
 
         if (MapUtils.isNotEmpty(params)) {
-            ContentType contentType =
-                resolveContentTypeAndCharset(getHeaders().get(WS_CONTENT_TYPE), APPLICATION_OCTET_STREAM.getMimeType());
-
             if (verbose) {
                 ConsoleUtils.log(logId,
                                  "setting the remaining payload (%s) as %s",
