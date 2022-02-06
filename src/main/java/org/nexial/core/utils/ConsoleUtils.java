@@ -39,6 +39,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Scanner;
+import javax.annotation.Nonnull;
 
 import static org.nexial.core.NexialConst.Data.QUIET;
 import static org.nexial.core.NexialConst.Exec.INSPECT_END;
@@ -308,17 +309,25 @@ public final class ConsoleUtils {
     }
 
     public static void printConsoleHeaderTop(PrintStream out, String header, char filler) {
+        out.println(toConsoleHeaderTop(header, filler));
+    }
+
+    public static void printConsoleHeaderBottom(PrintStream out, char filler) {
+        out.println(toConsoleHeaderBottom(filler));
+    }
+
+    @Nonnull
+    public static String toConsoleHeaderTop(String header, char filler) {
         // `-2` because we are adding filler twice later
         int fillerLength = PROMPT_LINE_WIDTH - 2 - header.length() - 1;
         String filler1 = StringUtils.repeat(filler, fillerLength / 2);
         String filler2 = StringUtils.repeat(filler, fillerLength - filler1.length());
-
-        out.println();
-        out.println("/" + filler + filler1 + header + filler2 + "\\");
+        return "\n/" + filler + filler1 + header + filler2 + "\\";
     }
 
-    public static void printConsoleHeaderBottom(PrintStream out, char filler) {
-        out.println("\\" + StringUtils.repeat(filler, PROMPT_LINE_WIDTH - 2) + "/");
+    @Nonnull
+    public static String toConsoleHeaderBottom(char filler) {
+        return "\\" + StringUtils.repeat(filler, PROMPT_LINE_WIDTH - 2) + "/";
     }
 
     public static void printConsoleSectionSeparator(PrintStream out, char filler) {
@@ -345,9 +354,7 @@ public final class ConsoleUtils {
         if (StringUtils.isEmpty(header1) || ArrayUtils.isEmpty(headers2)) { return; }
 
         String filler = StringUtils.repeat(' ', header1.length());
-        for (int i = 0; i < headers2.length; i++) {
-            printHeaderLine(out, i == 0 ? header1 : filler, headers2[i]);
-        }
+        for (int i = 0; i < headers2.length; i++) { printHeaderLine(out, i == 0 ? header1 : filler, headers2[i]); }
     }
 
     @SuppressWarnings("PMD.SystemPrintln")
@@ -415,12 +422,10 @@ public final class ConsoleUtils {
     }
 
     private static boolean isPauseReady() {
-        if (ExecUtils.isRunningInZeroTouchEnv()) {
-            log("SKIPPING pause-for-step since Nexial is currently running in non-interactive environment");
-            return false;
-        } else {
-            return true;
-        }
+        if (!ExecUtils.isRunningInZeroTouchEnv()) { return true; }
+
+        log("SKIPPING pause-for-step since Nexial is currently running in non-interactive environment");
+        return false;
     }
 
     private static void logAs(Level logLevel, String message) {

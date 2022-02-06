@@ -24,20 +24,19 @@ import com.amazonaws.services.sns.model.PublishRequest
 import org.apache.commons.lang3.StringUtils
 import org.nexial.commons.utils.TextUtils
 import org.nexial.core.IntegrationConfigException
+import org.nexial.core.NexialConst.RB
 import org.nexial.core.utils.ConsoleUtils
-import java.util.*
 
 class SmsHelper : AwsSupport() {
     private var sns: AmazonSNS? = null
     private var defaultMessageAttributes: MutableMap<String, MessageAttributeValue> = HashMap()
 
     var prefix = ""
-    var smsNotReadyMessage: String = ""
     var senderId = "12345"
 
     fun init() {
         if (!isReadyForUse) {
-            ConsoleUtils.log("missing REQUIRED configuration; sms DISABLED!")
+            ConsoleUtils.log(RB.Tools.text("sms.config.missing"))
             return
         }
 
@@ -56,19 +55,12 @@ class SmsHelper : AwsSupport() {
 
     @Throws(IntegrationConfigException::class)
     fun send(phoneNumbers: List<String>, text: String) {
-        if (sns == null) {
-            throw IntegrationConfigException(smsNotReadyMessage)
-        }
-        if (StringUtils.isBlank(text)) {
-            throw IllegalArgumentException("text cannot be empty")
-        }
+        if (sns == null) throw IntegrationConfigException(RB.Tools.text("sms.not.ready"))
+        if (StringUtils.isBlank(text)) throw IllegalArgumentException(RB.Tools.text("sms.text.missing"))
 
         phoneNumbers.forEach { phoneNumber ->
             val phone = TextUtils.sanitizePhoneNumber(phoneNumber)
-            if (StringUtils.length(phone) < 10) {
-                throw IllegalArgumentException("Resolved phone number is invalid since it has less than 10 digit")
-            }
-
+            if (StringUtils.length(phone) < 10) throw IllegalArgumentException(RB.Tools.text("sms.text.bad", phone))
             sns!!.publish(PublishRequest().withPhoneNumber(phone)
                               .withMessage("$prefix$text")
                               .withMessageAttributes(defaultMessageAttributes))

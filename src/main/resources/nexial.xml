@@ -317,7 +317,7 @@
             <bean class="org.nexial.core.plugins.redis.RedisCommand"/>
         </entry>
         <entry key="sms">
-            <bean class="org.nexial.core.plugins.sms.SmsCommand" p:smsNotReadyMessage-ref="smsNotReadyMessage"/>
+            <bean class="org.nexial.core.plugins.sms.SmsCommand"/>
         </entry>
         <entry key="sound">
             <bean class="org.nexial.core.plugins.sound.SoundCommand"/>

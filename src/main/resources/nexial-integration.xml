@@ -66,7 +66,6 @@
     <!-- The sender ID shown on the device. (shh.. it's 1-NEXIAL-BOTS) -->
     <!-- system values derived via setup -->
     <bean id="smsHelper" class="org.nexial.core.aws.SmsHelper" scope="prototype" init-method="init"
-          p:smsNotReadyMessage-ref="smsNotReadyMessage"
           p:prefix="nexial-bot: "
           p:senderId="16394252687"
           p:accessKey="${nexial.sms.accessKey:}"
@@ -76,14 +75,6 @@
                 <constructor-arg value="${nexial.sms.region:us-east-1}"/>
             </bean>
         </property>
-    </bean>
-
-    <bean id="otcNotReadyMessage" class="java.lang.String">
-        <constructor-arg value="Nexial Cloud Integration not probably configured. See https://nexiality.github.io/documentation/systemvars/index.html#nexial.outputToCloud for more details."/>
-    </bean>
-
-    <bean id="smsNotReadyMessage" class="java.lang.String">
-        <constructor-arg value="sms not configured. See https://nexiality.github.io/documentation/commands/sms/index.html#setup for setup details."/>
     </bean>
 
     <!-- mail -->

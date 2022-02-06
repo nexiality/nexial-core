@@ -273,6 +273,7 @@ public final class NexialConst {
         public static final ResourceBundle SQS = Messages.subset("SQS");
         public static final ResourceBundle Skipped = Messages.subset("Skipped");
         public static final ResourceBundle Tools = Messages.subset("Tools");
+        public static final ResourceBundle Temp = Messages.subset("Temp");
     }
 
     // Macro Flex var prefix
@@ -677,7 +678,6 @@ public final class NexialConst {
         public static final String FOUND_PLANS = "found plans in ";
         public static final String VALIDATE_TEST_SCRIPT = "validating test script as ";
         public static final String MSG_THREAD_TERMINATED = "all execution thread(s) have terminated";
-        public static final String MSG_CLEANUP = "cleaning up outdated temp files...";
         public static final String RESOLVE_RUN_ID = "resolve RUN ID as ";
         public static final String ERROR_LOG = "Error log: ";
         public static final String SCREENSHOT_CAPTURED_LOG = "output/screenshot captured to file ";
@@ -1132,7 +1132,7 @@ public final class NexialConst {
         public static final String SUBPLANS = "subplans";
         public static final String OUTPUT = "output";
         public static final String OVERRIDE = "override";
-        public static final String ANNOUNCE = "announce";
+        public static final String READY = "ready";
         public static final String INTERACTIVE = "interactive";
         public static final Options OPTIONS = initCmdOptions();
 
@@ -1147,10 +1147,10 @@ public final class NexialConst {
             cmdOptions.addOption(SCENARIO, true, RB.Tools.text("cli.scenario"));
             cmdOptions.addOption(DATA, true, RB.Tools.text("cli.data"));
             cmdOptions.addOption(DATASHEETS, true, RB.Tools.text("cli.datasheets"));
-            cmdOptions.addOption(OUTPUT, true, RB.Tools.text("cli.output"));
             cmdOptions.addOption(PLAN, true, RB.Tools.text("cli.plan"));
             cmdOptions.addOption(SUBPLANS, true, RB.Tools.text("cli.subPlans"));
             cmdOptions.addOption(OVERRIDE, true, RB.Tools.text("cli.override"));
+            cmdOptions.addOption(OUTPUT, true, RB.Tools.text("cli.output"));
             cmdOptions.addOption(INTERACTIVE, false, RB.Tools.text("cli.interactive"));
             return cmdOptions;
         }

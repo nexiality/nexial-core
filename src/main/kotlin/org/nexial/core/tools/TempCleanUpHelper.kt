@@ -28,6 +28,7 @@ import java.io.File.separator
 data class TempCleanUpManifest(var lastChecked: Long = 0, val checkFrequencyDay: Int = 6)
 
 object TempCleanUpHelper {
+    private const val KEY_CLEANUP = "cleanUp"
     private val cleanUpManifest = File("$USER_HOME${separator}.nexial${separator}config.json")
 
     // 1 day(24 hrs) => 86400000L milliseconds
@@ -38,8 +39,8 @@ object TempCleanUpHelper {
         var json = JSONObject()
         val manifest = if (cleanUpManifest.exists() && cleanUpManifest.canRead()) {
             json = JSONObject(FileUtils.readFileToString(cleanUpManifest, DEF_CHARSET))
-            if (json.has("cleanUp")) {
-                GSON.fromJson(json.getJSONObject("cleanUp").toString(), TempCleanUpManifest::class.java)
+            if (json.has(KEY_CLEANUP)) {
+                GSON.fromJson(json.getJSONObject(KEY_CLEANUP).toString(), TempCleanUpManifest::class.java)
             } else {
                 TempCleanUpManifest()
             }
@@ -61,7 +62,7 @@ object TempCleanUpHelper {
     }
 
     private fun updateConfig(json: JSONObject, manifest: TempCleanUpManifest) {
-        json.put("cleanUp", JSONObject(manifest))
+        json.put(KEY_CLEANUP, JSONObject(manifest))
         FileUtils.writeStringToFile(cleanUpManifest, JsonUtils.beautify(json.toString()), DEF_CHARSET)
     }
 }

@@ -152,7 +152,6 @@ public class ExecutionContext {
     protected ExecutionLogger executionLogger;
     // output-to-cloud (otc) via AWS S3
     protected NexialS3Helper otc;
-    protected String otcNotReadyMessage;
     protected SoundMachine dj;
     protected SmsHelper smsHelper;
     protected NexialMailer nexialMailer;
@@ -374,7 +373,7 @@ public class ExecutionContext {
 
     public NexialS3Helper getOtc() throws IOException {
         // check that the required properties are set
-        if (otc == null || !otc.isReadyForUse()) { throw new IOException(otcNotReadyMessage); }
+        if (otc == null || !otc.isReadyForUse()) { throw new IOException(RB.Tools.text("otc.not.ready")); }
         return otc;
     }
 
@@ -2198,7 +2197,6 @@ public class ExecutionContext {
         // otc=output-to-cloud (S3)
         otc = springContext.getBean("otc", NexialS3Helper.class);
         otc.setContext(this);
-        otcNotReadyMessage = springContext.getBean("otcNotReadyMessage", String.class);
 
         // AWS SNS
         smsHelper = springContext.getBean("smsHelper", SmsHelper.class);
