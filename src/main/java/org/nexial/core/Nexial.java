@@ -65,6 +65,7 @@ import static org.apache.commons.lang3.SystemUtils.IS_OS_WINDOWS;
 import static org.apache.commons.lang3.SystemUtils.USER_NAME;
 import static org.nexial.core.Nexial.ExecutionMode.*;
 import static org.nexial.core.NexialConst.CLI.INTERACTIVE;
+import static org.nexial.core.NexialConst.CLI.READY;
 import static org.nexial.core.NexialConst.CLI.*;
 import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.NexialConst.Data.*;
@@ -78,6 +79,7 @@ import static org.nexial.core.excel.Excel.MIN_EXCEL_FILE_SIZE;
 import static org.nexial.core.excel.Excel.readCellValue;
 import static org.nexial.core.excel.ExcelConfig.*;
 import static org.nexial.core.model.ExecutionSummary.ExecutionLevel.EXECUTION;
+import static org.nexial.core.utils.ConsoleUtils.PROMPT_LINE_WIDTH;
 import static org.nexial.core.utils.ExecUtils.NEXIAL_MANIFEST;
 
 /**
@@ -194,7 +196,7 @@ public class Nexial {
     private int threadWaitCounter;
     private ExecutionMode executionMode;
 
-    enum ExecutionMode {EXECUTE_SCRIPT, EXECUTE_PLAN, INTERACTIVE, INTEGRATION, READY}
+    enum ExecutionMode { EXECUTE_SCRIPT, EXECUTE_PLAN, INTERACTIVE, INTEGRATION, READY }
 
     @SuppressWarnings("PMD.DoNotCallSystemExit")
     public static void main(String[] args) {
@@ -206,8 +208,10 @@ public class Nexial {
             main = new Nexial();
             main.init(args);
         } catch (Exception e) {
-            if (e instanceof IllegalArgumentException || e instanceof InvalidInputRuntimeException) { 
-                ConsoleUtils.errorBeforeTerminate(e.getMessage()); 
+            if (e instanceof IllegalArgumentException ||
+                e instanceof InvalidInputRuntimeException ||
+                e instanceof ParseException) {
+                ConsoleUtils.errorBeforeTerminate(e.getMessage());
             } else {
                 e.printStackTrace();
                 System.err.println(e.getMessage());
@@ -226,10 +230,10 @@ public class Nexial {
             // shutdown hook for Control-C and SIGTERM
             Runtime.getRuntime().addShutdownHook(new Thread(ShutdownAdvisor::forcefullyTerminate));
 
-            // interactive mode, only for stepwise or blockwise execution. to be integrated into studio
+            // interactive mode, only for stepwise or blockwise execution.
             if (main.isInteractiveMode()) {
                 if (ExecUtils.isRunningInZeroTouchEnv()) {
-                    ConsoleUtils.error(NL + NL + "Nexial Interactive is disabled unit testing or in CI/CD environment");
+                    ConsoleUtils.error(RB.Tools.text("error.noCICD"));
                     System.exit(RC_NOT_SUPPORT_ZERO_TOUCH_ENV);
                     return;
                 }
@@ -311,33 +315,6 @@ public class Nexial {
 
         boolean isInteractive = cmd.hasOption(INTERACTIVE);
 
-        // check for clean up temp directory
-        ConsoleUtils.log(MSG_CLEANUP);
-        TempCleanUpHelper.cleanUpTemp();
-
-        // plan or script?
-        if (cmd.hasOption(PLAN)) {
-            // only -script will be supported
-            if (isInteractive) {
-                throw new ParseException("Interactive Mode is NOT supported with plan files. " +
-                                         "Try specifying a script instead");
-            }
-
-            this.executions = parsePlanExecution(cmd);
-            System.setProperty(NEXIAL_EXECUTION_TYPE, NEXIAL_EXECUTION_TYPE_PLAN);
-            executionMode = EXECUTE_PLAN;
-        } else if (cmd.hasOption(SCRIPT)) {
-            this.executions = parseScriptExecution(cmd);
-            System.setProperty(NEXIAL_EXECUTION_TYPE, NEXIAL_EXECUTION_TYPE_SCRIPT);
-
-            if (isInteractive) {
-                executionMode = ExecutionMode.INTERACTIVE;
-                System.setProperty(OPT_INTERACTIVE, "true");
-            } else {
-                executionMode = EXECUTE_SCRIPT;
-            }
-        }
-
         // any variable override?
         // this is synonymous to using `JAVA_OPT=-D....` from console prior to executing Nexial
         if (cmd.hasOption(OVERRIDE)) {
@@ -350,7 +327,36 @@ public class Nexial {
                   });
         }
 
-        ConsoleUtils.log("input files and output directory resolved...");
+        // plan or script?
+        if (cmd.hasOption(PLAN)) {
+            // only -script will be supported
+            if (isInteractive) { throw new ParseException(RB.Tools.text("plan.noInteractive")); }
+
+            this.executions = parsePlanExecution(cmd);
+            System.setProperty(NEXIAL_EXECUTION_TYPE, NEXIAL_EXECUTION_TYPE_PLAN);
+            executionMode = EXECUTE_PLAN;
+            ConsoleUtils.log(RB.Tools.text("cli.initComplete"));
+        } else if (cmd.hasOption(SCRIPT)) {
+            this.executions = parseScriptExecution(cmd);
+            System.setProperty(NEXIAL_EXECUTION_TYPE, NEXIAL_EXECUTION_TYPE_SCRIPT);
+
+            if (isInteractive) {
+                executionMode = ExecutionMode.INTERACTIVE;
+                System.setProperty(OPT_INTERACTIVE, "true");
+            } else {
+                executionMode = EXECUTE_SCRIPT;
+            }
+            ConsoleUtils.log(RB.Tools.text("cli.initComplete"));
+        } else if (cmd.hasOption(READY)) {
+            this.executionMode = ExecutionMode.READY;
+            // todo: add ReadyLauncher initialization
+        } else {
+            throw new InvalidInputRuntimeException(RB.Tools.text("error.noValidOption"));
+        }
+
+        // check for clean up temp directory
+        ConsoleUtils.log(RB.Temp.text("clean.before"));
+        TempCleanUpHelper.cleanUpTemp();
 
         NexialListenerFactory.fireEvent(NexialExecutionEvent.newNexialStartEvent(this, args, cmd));
     }
@@ -359,32 +365,25 @@ public class Nexial {
         List<String> testPlanPathList = TextUtils.toList(cmd.getOptionValue(PLAN), getDefault(TEXT_DELIM), true);
         List<ExecutionDefinition> executions = new ArrayList<>();
 
-        if (cmd.hasOption(SUBPLANS) && testPlanPathList.size() > 1) {
-            fail("The " + SUBPLANS + " doesn't work with multiple test plans. Please try with single plan.");
-        }
+        if (cmd.hasOption(SUBPLANS) && testPlanPathList.size() > 1) { fail(RB.Tools.text("plan.singleOnly")); }
 
         List<String> subplans = cmd.hasOption(SUBPLANS) ?
                                 TextUtils.toList(cmd.getOptionValue(SUBPLANS), ",", true) :
                                 new ArrayList<>();
         if (CollectionUtils.isNotEmpty(subplans)) {
-            ConsoleUtils.log("Executing the following sub-plan(s) from " + testPlanPathList + ": " + subplans);
+            ConsoleUtils.log(RB.Tools.text("plan.execSubplans", testPlanPathList, subplans));
         }
 
         for (String testPlanPath : testPlanPathList) {
             // String testPlanPath = cmd.getOptionValue(PLAN);
             // 1. based on plan location, determine script, data, output and artifact directory
-            if (!InputFileUtils.isValidPlanFile(testPlanPath)) {
-                fail("specified test plan (" + testPlanPath + ") is not readable or does not contain valid format.");
-            }
+            if (!InputFileUtils.isValidPlanFile(testPlanPath)) { fail(RB.Tools.text("plan.bad", testPlanPath)); }
 
             File testPlanFile = new File(testPlanPath);
 
             // resolve project directory structure based on the {@code testScriptFile} command line input
             project = TestProject.newInstance(testPlanFile);
-            if (!project.isStandardStructure()) {
-                ConsoleUtils.log("specified plan (" + testPlanFile + ") not following standard project " +
-                                 "structure, related directories would not be resolved from commandline arguments.");
-            }
+            if (!project.isStandardStructure()) { ConsoleUtils.log(RB.Tools.text("plan.nonStd", testPlanFile)); }
 
             deriveOutputDirectory(cmd, project);
 
@@ -402,8 +401,7 @@ public class Nexial {
 
                 for (int i = rowStartIndex; i < lastExecutionRow; i++) {
                     XSSFRow row = testPlan.getSheet().getRow(i);
-                    String msgSuffix = " specified in ROW " + (row.getRowNum() + 1) +
-                                       " of " + testPlan.getName() + " in " + testPlanFile;
+                    String msgSuffix = RB.Tools.text("plan.row", row.getRowNum() + 1, testPlan.getName(), testPlanFile);
 
                     // check for disabled step
                     if (ExecutionInputPrep.isPlanStepDisabled(row)) { continue; }
@@ -413,7 +411,7 @@ public class Nexial {
                         ConsoleUtils.log(VALIDATE_TEST_SCRIPT + testScript);
                         if (!InputFileUtils.isValidScript(testScript.getAbsolutePath())) {
                             // could be abs. path or relative path based on current project
-                            fail("Invalid/unreadable test script" + msgSuffix);
+                            fail(RB.Tools.text("plan.badScript", msgSuffix));
                         }
                         // cache this to improve perf.
                         scriptToScenarioCache.put(testScript, deriveScenarios(testScript));
@@ -421,18 +419,18 @@ public class Nexial {
                     List<String> scenarios = deriveScenarioFromPlan(row, scriptToScenarioCache.get(testScript));
 
                     File dataFilePath = deriveDataFileFromPlan(row, project, testPlanFile, testScript);
-                    if (dataFilePath == null) { fail("Unable to resolve data file for the test plan" + msgSuffix); }
+                    if (dataFilePath == null) { fail(RB.Tools.text("plan.badData", msgSuffix)); }
 
                     if (!dataFileCache.contains(dataFilePath)) {
-                        ConsoleUtils.log("validating data file as " + dataFilePath);
+                        ConsoleUtils.log(RB.Tools.text("data.validating", dataFilePath));
                         Excel dataFile = InputFileUtils.asDataFile(dataFilePath.getAbsolutePath());
-                        if (dataFile == null) { fail("Invalid/unreadable data file" + msgSuffix); }
+                        if (dataFile == null) { fail(RB.Tools.text("plan.badData2", msgSuffix)); }
 
                         // (2018/12/16,automike): optimize memory consumption
                         try {
                             dataFile.close();
                         } catch (IOException e) {
-                            ConsoleUtils.error("Unable to close data file (" + dataFilePath + "): " + e.getMessage());
+                            ConsoleUtils.error(RB.Tools.text("data.closeError", dataFilePath, e.getMessage()));
                         } finally {
                             dataFile = null;
                         }
@@ -461,14 +459,14 @@ public class Nexial {
                     exec.setSerialMode(BooleanUtils.toBoolean(
                         StringUtils.defaultIfBlank(readCellValue(row, COL_IDX_PLAN_WAIT), DEF_PLAN_SERIAL_MODE)));
                     exec.setLoadTestMode(BooleanUtils.toBoolean(readCellValue(row, COL_IDX_PLAN_LOAD_TEST)));
-                    if (exec.isLoadTestMode()) { fail("Sorry... load testing mode not yet ready for use."); }
+                    if (exec.isLoadTestMode()) { fail(RB.Tools.text("plan.noLoadTesting")); }
 
                     try {
                         // 3. for each row, parse script (and scenario) and data (and datasheet)
                         exec.parse();
                         executions.add(exec);
                     } catch (IOException e) {
-                        fail("Unable to parse successfully for the test plan" + msgSuffix);
+                        fail(RB.Tools.text("plan.parseError", msgSuffix, e.getMessage()));
                     }
                 }
             });
@@ -493,15 +491,14 @@ public class Nexial {
 
         // checking for invalid subplans
         List<String> planNames = plans.stream().map(Worksheet::getName).collect(Collectors.toList());
-        List<String> invalidSubplans = subplans.stream().filter(testPlan -> !planNames.contains(testPlan)).collect(
-            Collectors.toList());
+        List<String> invalidSubplans = subplans.stream().filter(testPlan -> !planNames.contains(testPlan))
+                                               .collect(Collectors.toList());
 
         // system variable for subplans omitted
         System.setProperty(SUBPLANS_OMITTED, TextUtils.toString(invalidSubplans, ","));
 
         if (invalidSubplans.size() != 0) {
-            fail("The plan " + excel.getFile().getAbsolutePath() + " doesn't contain worksheet/s named " +
-                 invalidSubplans + ".");
+            fail(RB.Tools.text("plan.subplansMissing", excel.getFile().getAbsolutePath(), invalidSubplans));
         }
 
         List<Worksheet> validPlans = new ArrayList<>(Collections.nCopies(subplans.size(), null));
@@ -519,7 +516,7 @@ public class Nexial {
     public File deriveScriptFromPlan(XSSFRow row, TestProject project, String testPlan) {
         String testScriptPath = readCellValue(row, COL_IDX_PLAN_TEST_SCRIPT);
         if (StringUtils.isBlank(testScriptPath)) {
-            fail("Invalid test script specified in ROW " + (row.getRowNum() + 1) + " of " + testPlan + ".");
+            fail(RB.Tools.text("plan.noScript", row.getRowNum() + 1, testPlan));
         }
 
         testScriptPath = StringUtils.appendIfMissing(testScriptPath, SCRIPT_FILE_EXT);
@@ -559,13 +556,11 @@ public class Nexial {
         try {
             excel = new Excel(testScript, DEF_OPEN_EXCEL_AS_DUP);
             List<Worksheet> validScenarios = InputFileUtils.retrieveValidTestScenarios(excel);
-            if (CollectionUtils.isEmpty(validScenarios)) {
-                fail("No valid scenario found in script " + testScript + ".");
-            } else {
-                validScenarios.forEach(worksheet -> scenarios.add(worksheet.getName()));
-            }
+            if (CollectionUtils.isEmpty(validScenarios)) { fail(RB.Tools.text("script.noScenario", testScript)); }
+
+            validScenarios.forEach(worksheet -> scenarios.add(worksheet.getName()));
         } catch (IOException e) {
-            fail("Unable to collect scenarios from " + testScript + ".");
+            fail(RB.Tools.text("script.bad", testScript));
         } finally {
             if (DEF_OPEN_EXCEL_AS_DUP && excel != null) { FileUtils.deleteQuietly(excel.getFile().getParentFile()); }
 
@@ -573,7 +568,7 @@ public class Nexial {
                 // (2018/12/16,automike): memory consumption precaution
                 if (excel != null) { excel.close(); }
             } catch (IOException e) {
-                ConsoleUtils.error("Unable to close Excel file (" + testScript + "): " + e.getMessage());
+                ConsoleUtils.error(RB.Tools.text("script.closeError", testScript, e.getMessage()));
             }
         }
 
@@ -587,16 +582,15 @@ public class Nexial {
         if (StringUtils.isBlank(dataFilePath)) {
             // since there's no data file specified, we'll assume standard path/file convention
             String testScriptPath = testScript.getAbsolutePath();
-            String dataPath1 = StringUtils.substringBefore(testScriptPath, DEF_REL_LOC_ARTIFACT) +
-                               DEF_REL_LOC_TEST_DATA;
-            String dataFilePath1 = dataPath1 +
-                                   StringUtils.substringBeforeLast(
-                                       StringUtils.substringAfter(testScriptPath, DEF_REL_LOC_TEST_SCRIPT), ".") +
-                                   DEF_DATAFILE_SUFFIX;
+            String dataPath1 =
+                StringUtils.substringBefore(testScriptPath, DEF_REL_LOC_ARTIFACT) + DEF_REL_LOC_TEST_DATA;
+            String dataFilePath1 =
+                dataPath1 +
+                StringUtils.substringBeforeLast(StringUtils.substringAfter(testScriptPath, DEF_REL_LOC_TEST_SCRIPT), ".") +
+                DEF_DATAFILE_SUFFIX;
             if (!FileUtil.isFileReadable(dataFilePath1, MIN_EXCEL_FILE_SIZE)) {
                 // else, don't know what to do...
-                fail("Invalid/unreadable data file specified in ROW " + (row.getRowNum() + 1) + " of " + testPlan +
-                     ". Data file not specified and cannot be resolved by standard convention (" + dataFilePath1 + ")");
+                fail(RB.Tools.text("plan.dataNoReadable", row.getRowNum() + 1, testPlan, dataFilePath1));
                 return null;
             }
 
@@ -624,9 +618,10 @@ public class Nexial {
                             // next, maybe it's relative to `artifact`
                             dataFilePath1 = project.getArtifactPath() + dataFilePath;
                             if (!FileUtil.isFileReadable(dataFilePath1, MIN_EXCEL_FILE_SIZE)) {
-                                fail("Invalid/unreadable data file specified in ROW " + (row.getRowNum() + 1) +
-                                     " of " + testPlan + ". The specified data file (" + dataFilePath + ") cannot be " +
-                                     "resolved to a valid data file.");
+                                fail(RB.Tools.text("Tools.plan.dataNoReadable2",
+                                                   row.getRowNum() + 1,
+                                                   testPlan,
+                                                   dataFilePath));
                                 return null;
                             }
                         }
@@ -650,17 +645,14 @@ public class Nexial {
         // command line option - script
         String testScriptPath = cmd.getOptionValue(SCRIPT);
         Excel script = InputFileUtils.resolveValidScript(testScriptPath);
-        if (script == null) { fail("Invalid test script - " + testScriptPath); }
+        if (script == null) { fail(RB.Tools.text("script.missing", testScriptPath)); }
 
         // resolve the standard project structure based on test script input
         File testScriptFile = new File(testScriptPath);
 
         // resolve project directory structure based on the {@code testScriptFile} command line input
         project = TestProject.newInstance(testScriptFile);
-        if (!project.isStandardStructure()) {
-            ConsoleUtils.log("specified test script (" + testScriptFile + ") not following standard project " +
-                             "structure, related directories would not be resolved from commandline arguments.");
-        }
+        if (!project.isStandardStructure()) { ConsoleUtils.log(RB.Tools.text("script.nonStd", testScriptFile)); }
 
         String artifactPath = project.isStandardStructure() ?
                               StringUtils.appendIfMissing(project.getArtifactPath(), separator) : null;
@@ -671,7 +663,7 @@ public class Nexial {
         // command line option - data. could be fully qualified or relative to script
         Excel dataFile = resolveDataFile(cmd, artifactPath, testScriptPath);
         if (dataFile == null) {
-            String error = "Unable to successfully resolve appropriate data file";
+            String error = RB.Tools.text("script.noData");
             ConsoleUtils.error(error);
             throw new RuntimeException(error);
         }
@@ -682,7 +674,7 @@ public class Nexial {
         try {
             dataFile.close();
         } catch (IOException e) {
-            ConsoleUtils.error("Unable to close data file (" + dataFilePath + "): " + e.getMessage());
+            ConsoleUtils.error(RB.Tools.text("data.closeError", dataFilePath, e.getMessage()));
         } finally {
             dataFile = null;
         }
@@ -721,18 +713,13 @@ public class Nexial {
         if (StringUtils.isBlank(outPath)) {
             // one last try: consider environment setup (NEXIAL_OUTPUT), if defined
             // nexial.cmd|sh converts NEXIAL_OUTPUT to -Dnexial.defaultOutBase
-            if (StringUtils.isNotBlank(System.getProperty(OPT_DEF_OUT_DIR))) {
-                outPath = System.getProperty(OPT_DEF_OUT_DIR);
-                project.setOutPath(outPath);
-            } else {
-                fail("output location cannot be resolved.");
-            }
+            if (StringUtils.isBlank(System.getProperty(OPT_DEF_OUT_DIR))) { fail(RB.Tools.text("output.bad")); }
+
+            outPath = System.getProperty(OPT_DEF_OUT_DIR);
+            project.setOutPath(outPath);
         }
 
-        if (FileUtil.isFileReadable(outPath)) {
-            fail("output location (" + outPath + ") cannot be accessed as a directory.");
-        }
-
+        if (FileUtil.isFileReadable(outPath)) { fail(RB.Tools.text("output.notDir", outPath)); }
         if (!FileUtil.isDirectoryReadable(outPath)) { FileUtils.forceMkdir(new File(outPath)); }
 
         // run id not yet determined... `outPath` does not contain run id in path
@@ -745,7 +732,7 @@ public class Nexial {
     protected void interact() {
         // there should only be 1 execution (ie script) since we've checked this earlier
         if (CollectionUtils.isEmpty(executions)) {
-            throw new IllegalArgumentException("Interactive Mode requires 1 script to be specified via -script");
+            throw new IllegalArgumentException(RB.Tools.text("interactive.missingScript"));
         }
 
         initSpringContext();
@@ -960,16 +947,16 @@ public class Nexial {
             htmlReport = reporter.generateHtml(summary);
             if (htmlReport != null) { System.setProperty(EXEC_OUTPUT_PATH, htmlReport.getAbsolutePath()); }
         } catch (IOException e) {
-            ConsoleUtils.error(runId, "Unable to generate HTML report for this execution: " + e.getMessage());
+            ConsoleUtils.error(runId, RB.Tools.text("execution.noReport", e.getMessage()));
         }
 
         File junitReport = null;
         try {
             junitReport = reporter.generateJUnitXml(summary);
-            ConsoleUtils.log("generated JUnit report for this execution: " + junitReport);
+            ConsoleUtils.log(RB.Tools.text("execution.junit.report", junitReport));
             if (junitReport != null) { System.setProperty(JUNIT_XML_LOCATION, junitReport.getAbsolutePath()); }
         } catch (IOException e) {
-            ConsoleUtils.error(runId, "Unable to generate JUnit report for this execution: " + e.getMessage());
+            ConsoleUtils.error(runId, RB.Tools.text("execution.junit.fail", e.getMessage()));
         }
 
         List<File> generatedJsons = null;
@@ -977,7 +964,7 @@ public class Nexial {
             try {
                 generatedJsons = reporter.generateJson(summary);
             } catch (IOException e) {
-                ConsoleUtils.error(runId, "Unable to save execution summary due to " + e.getMessage(), e);
+                ConsoleUtils.error(runId, RB.Tools.text("execution.report.fail", e.getMessage()), e);
             }
         }
 
@@ -986,10 +973,8 @@ public class Nexial {
             ConsoleUtils.log("resolving Nexial Cloud Integration...");
 
             try {
-                if (otc == null || !otc.isReadyForUse()) {
-                    // forget it...
-                    throw new IOException(springContext.getBean("otcNotReadyMessage", String.class));
-                }
+                // forget it...
+                if (otc == null || !otc.isReadyForUse()) { throw new IOException(RB.Tools.text("otc.not.ready")); }
 
                 // can't use otc.resolveOutputDir() since we are out of context at this point in time
                 // project.name could be affected by project.id, as designed
@@ -998,7 +983,7 @@ public class Nexial {
                 // upload the HTML report to cloud
                 if (FileUtil.isFileReadable(htmlReport, 1024)) {
                     String url = otc.importToS3(htmlReport, outputDir, true);
-                    ConsoleUtils.log("HTML output for this execution exported to " + url);
+                    ConsoleUtils.log(RB.Tools.text("execution.report.exported", url));
                     System.setProperty(EXEC_OUTPUT_PATH, url);
                     if (StringUtils.isNotBlank(url)) { ExecutionReporter.openExecutionSummaryReport(url); }
                 }
@@ -1011,7 +996,7 @@ public class Nexial {
                 // upload junit xml
                 if (FileUtil.isFileReadable(junitReport, 100)) {
                     String url = otc.importToS3(junitReport, outputDir, true);
-                    ConsoleUtils.log("JUnit XML output for this execution exported to " + url);
+                    ConsoleUtils.log(RB.Tools.text("execution.junit.exported", url));
                     System.setProperty(JUNIT_XML_LOCATION, url);
                 }
             } catch (IOException e) {
@@ -1025,7 +1010,7 @@ public class Nexial {
         if (mailConfig != null && mailConfig.isReady()) {
             notifyCompletion(summary);
         } else {
-            ConsoleUtils.log("skipped email notification as configured");
+            ConsoleUtils.log(RB.Tools.text("mail.skipped"));
         }
 
         NexialListenerFactory.fireEvent(NexialExecutionEvent.newExecutionEndEvent(runId, summary));
@@ -1051,19 +1036,15 @@ public class Nexial {
             // could be fully qualified or relative to script
             dataFile = cmd.getOptionValue(DATA);
             if (!FileUtil.isFileReadable(dataFile)) {
-                if (testScriptFile == null) {
-                    fail("data file (" + cmd.getOptionValue(DATA) + ") cannot be resolved; test script not specified.");
-                }
+                if (testScriptFile == null) { fail(RB.Tools.text("data.noScript", dataFile)); }
 
                 // try again by relative path
                 dataFile = artifactPath + dataFile;
-                if (!FileUtil.isFileReadable(dataFile)) {
-                    fail("data file (" + cmd.getOptionValue(DATA) + ") is not readable via absolute or relative path.");
-                }
+                if (!FileUtil.isFileReadable(dataFile)) { fail(RB.Tools.text("data.bad", cmd.getOptionValue(DATA))); }
             } // else dataFile is specified as a fully qualified path
         } else {
             if (testScriptFile == null) {
-                fail("data file cannot be resolved since test script is not specified.");
+                fail(RB.Tools.text("data.noScript2"));
                 return null;
             }
 
@@ -1079,7 +1060,7 @@ public class Nexial {
         if (cmd.hasOption(DATASHEETS)) {
             List<String> dataSets = TextUtils.toList(cmd.getOptionValue(DATASHEETS), ",", true);
             if (CollectionUtils.isEmpty(dataSets)) {
-                fail("Unable to derive any valid data sheet to use.");
+                fail(RB.Tools.text("data.noSheet"));
             } else {
                 dataSheets.addAll(dataSets);
             }
@@ -1091,16 +1072,15 @@ public class Nexial {
     }
 
     protected static void fail(String message) {
-        throw new IllegalArgumentException(message +
-                                           " Possibly the required argument is missing or invalid." +
-                                           " Check usage details.");
+        throw new IllegalArgumentException(message + RB.Tools.text("execution.fail.suffix"));
     }
 
     @SuppressWarnings("PMD.SystemPrintln")
     protected static void usage() {
-        System.out.println();
+        try { Thread.sleep(750); } catch (InterruptedException e) { }
         HelpFormatter formatter = new HelpFormatter();
-        formatter.printHelp("nexial." + BATCH_EXT, OPTIONS, true);
+        formatter.setOptionComparator(null);
+        formatter.printHelp(PROMPT_LINE_WIDTH, "nexial." + BATCH_EXT, "command line options:", OPTIONS, "", true);
         System.out.println();
     }
 
@@ -1146,8 +1126,7 @@ public class Nexial {
         }
 
         // can't find it.. failed!
-        fail("data file (" + dataFilePath + ") is not readable via absolute or relative path. Relative path is " +
-             "based on either the specified script or the resolved artifact directory.");
+        fail(RB.Tools.text("data.notResolved", dataFilePath));
         return null;
     }
 
@@ -1156,13 +1135,13 @@ public class Nexial {
         Excel dataFileExcel = InputFileUtils.asDataFile(dataFile);
 
         if (dataFileExcel == null) {
-            fail("data file (" + dataFile + ") does not contain valid data file format.");
+            fail(RB.Tools.text("data.badFormat", dataFile));
             return null;
         }
 
         File file = dataFileExcel.getFile();
         if (!project.isStandardStructure()) { project.setDataPath(file.getParentFile().getAbsolutePath()); }
-        ConsoleUtils.log("data file resolved as " + file.getAbsolutePath());
+        ConsoleUtils.log(RB.Tools.text("data.resolved", file.getAbsolutePath()));
 
         return dataFileExcel;
     }
@@ -1172,17 +1151,16 @@ public class Nexial {
         List<String> targetScenarios = new ArrayList<>();
         if (cmd.hasOption(SCENARIO)) {
             List<String> scenarios = TextUtils.toList(cmd.getOptionValue(SCENARIO), ",", true);
-            if (CollectionUtils.isEmpty(scenarios)) {
-                fail("Unable to derive any valid test script to run.");
-            } else {
-                targetScenarios.addAll(scenarios);
-            }
+            if (CollectionUtils.isEmpty(scenarios)) { fail(RB.Tools.text("script.noScenario2")); }
+            targetScenarios.addAll(scenarios);
         }
 
         // resolve scenario
         if (CollectionUtils.isEmpty(targetScenarios)) {
             targetScenarios.addAll(InputFileUtils.retrieveValidTestScenarioNames(script));
-            if (targetScenarios.isEmpty()) { fail("No scenarios found in " + script.getFile().getAbsolutePath()); }
+            if (targetScenarios.isEmpty()) {
+                fail(RB.Tools.text("script.noScenario", script.getFile().getAbsolutePath()));
+            }
         }
 
         return targetScenarios;
@@ -1198,7 +1176,7 @@ public class Nexial {
         // only for normal execution mode
         int exitStatus;
         if (summary == null) {
-            ConsoleUtils.error("Unable to cleanly execute tests; execution summary missing!");
+            ConsoleUtils.error(RB.Tools.text("execution.noReport2"));
             exitStatus = RC_EXECUTION_SUMMARY_MISSING;
         } else {
             int defaultSuccessRate = getDefaultInt(MIN_EXEC_SUCCESS_RATE);
@@ -1329,7 +1307,7 @@ public class Nexial {
         try {
             springContext.getBean("nexialMailer", ExecutionNotifier.class).notify(summary);
         } catch (IntegrationConfigException | IOException e) {
-            ConsoleUtils.error("Unable to send out notification email: " + e.getMessage());
+            ConsoleUtils.error(RB.Tools.text("mail.fail", e.getMessage()));
         }
     }
 

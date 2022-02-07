@@ -18,6 +18,7 @@ package org.nexial.core.plugins.sms
 
 import org.nexial.commons.utils.TextUtils
 import org.nexial.core.IntegrationConfigException
+import org.nexial.core.NexialConst.RB
 import org.nexial.core.model.StepResult
 import org.nexial.core.plugins.base.BaseCommand
 import org.nexial.core.utils.CheckUtils.requiresNotBlank
@@ -28,8 +29,6 @@ class SmsCommand : BaseCommand() {
 
     override fun getTarget() = "sms"
 
-    var smsNotReadyMessage: String = ""
-
     /** send SMS `text` to one or more `phones` numbers.  */
     @Throws(IntegrationConfigException::class)
     fun sendText(phones: String, text: String): StepResult {
@@ -37,7 +36,7 @@ class SmsCommand : BaseCommand() {
         requiresNotBlank(text, "text CANNOT be emptied", text)
 
         val sms = context.smsHelper
-        requiresNotNull(sms, smsNotReadyMessage)
+        requiresNotNull(sms, RB.Temp.text("sms.not.ready"))
 
         sms.send(TextUtils.toList(phones, context.textDelim, true), text)
         return StepResult.success()

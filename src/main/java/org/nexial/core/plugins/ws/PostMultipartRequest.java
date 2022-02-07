@@ -31,6 +31,7 @@ import org.nexial.commons.utils.FileUtil;
 import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.utils.ConsoleUtils;
+import org.nexial.core.utils.OutputFileUtils;
 
 import java.io.File;
 import java.io.UnsupportedEncodingException;
@@ -40,10 +41,12 @@ import java.util.HashMap;
 import java.util.Map;
 import javax.annotation.Nonnull;
 
-import static org.apache.http.entity.ContentType.APPLICATION_OCTET_STREAM;
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.apache.http.entity.ContentType.DEFAULT_BINARY;
 import static org.apache.http.entity.mime.HttpMultipartMode.*;
 import static org.nexial.core.NexialConst.Ws.*;
 import static org.nexial.core.SystemVariables.getDefault;
+import static org.nexial.core.SystemVariables.getDefaultBool;
 
 public class PostMultipartRequest extends PostRequest {
     protected static final Map<String, HttpMultipartMode> MULTIPART_MODES = initMultipartModes();
@@ -98,13 +101,18 @@ public class PostMultipartRequest extends PostRequest {
 
         // split payload into parts; parts are separated by newline
         Map<String, String> params = TextUtils.toMap(payload, "\n", "=");
+        ContentType contentType = resolveContentTypeAndCharset(getHeaders().get(WS_CONTENT_TYPE), DEFAULT_BINARY);
+        boolean rawContent = context != null &&
+                             context.getBooleanData(WS_REQ_FILE_AS_RAW, getDefaultBool(WS_REQ_FILE_AS_RAW));
 
         if (ArrayUtils.isNotEmpty(fileParams)) {
             Arrays.stream(fileParams).forEach(name -> {
                 String filePath = params.remove(name);
                 if (FileUtil.isFileReadable(filePath)) {
-                    if (verbose) { ConsoleUtils.log(logId, "adding %s as a multipart file", filePath); }
-                    multipartBuilder.addBinaryBody(name, new File(filePath));
+                    if (verbose) { ConsoleUtils.log(logId, "adding %s as %s file", filePath, contentType); }
+                    String content = OutputFileUtils.resolveContent(filePath, context, false, !rawContent);
+                    byte[] contentByte = StringUtils.isNotEmpty(content) ? content.getBytes(UTF_8) : new byte[0];
+                    multipartBuilder.addBinaryBody(name, contentByte, contentType, new File(filePath).getName());
                 } else {
                     ConsoleUtils.error(logId,
                                        "Unable to resolve [%s=%s] as a multipart file; %s might not be a valid path",
@@ -114,9 +122,6 @@ public class PostMultipartRequest extends PostRequest {
         }
 
         if (MapUtils.isNotEmpty(params)) {
-            ContentType contentType =
-                resolveContentTypeAndCharset(getHeaders().get(WS_CONTENT_TYPE), APPLICATION_OCTET_STREAM.getMimeType());
-
             if (verbose) {
                 ConsoleUtils.log(logId,
                                  "setting the remaining payload (%s) as %s",

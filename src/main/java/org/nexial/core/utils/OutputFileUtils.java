@@ -310,13 +310,8 @@ public final class OutputFileUtils {
                                         ExecutionContext context,
                                         boolean compact,
                                         boolean replaceTokens) {
-        return new OutputResolver(contentOrFile,
-                                  context,
-                                  true,
-                                  context.isResolveTextAsURL(),
-                                  replaceTokens,
-                                  false,
-                                  compact)
+        boolean resolveUrl = context == null ? false : context.isResolveTextAsURL();
+        return new OutputResolver(contentOrFile, context, true, resolveUrl, replaceTokens, false, compact)
             .getContent();
     }
 
