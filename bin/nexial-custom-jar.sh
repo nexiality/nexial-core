@@ -6,7 +6,7 @@ function reportBadInputAndExit() {
     echo "USAGE: $0 [directory|file]"
     echo "       $0 [directory|file] [directory|file] [...]"
     echo
-    echo "Files copied from the specified location to ${NEXIAL_JAR}"
+    echo "Files copied from the specified location to ${USER_NEXIAL_JAR}"
     echo "will be used as additional libraries (jars) in your Nexial execution."
     echo
     exit -1
@@ -33,7 +33,7 @@ function checkPrompt() {
 function doCopy() {
     echo "» copying from ${source}"
     echo "--------------------------------------------------------------------------------"
-    cp -pPRv ${source_jar} ${NEXIAL_JAR}
+    cp -pPRv ${source_jar} ${USER_NEXIAL_JAR}
     echo "--------------------------------------------------------------------------------"
     echo
 }
@@ -43,7 +43,6 @@ NEXIAL_HOME=$(cd `dirname $0`/..; pwd -P)
 title "nexial custom library setup"
 checkJava
 resolveEnv
-NEXIAL_JAR=~/.nexial/jar
 
 # set up
 if [[ "$1" = "" ]]; then
@@ -51,13 +50,13 @@ if [[ "$1" = "" ]]; then
 fi
 
 # first, create script/data files based on project name (if needed)
-if [[ -d "${NEXIAL_JAR}" ]] ; then
-    echo "» found ${NEXIAL_JAR}"
+if [[ -d "${USER_NEXIAL_JAR}" ]] ; then
+    echo "» found ${USER_NEXIAL_JAR}"
     echo
 else
-    echo "» creating missing directory - ${NEXIAL_JAR}"
+    echo "» creating missing directory - ${USER_NEXIAL_JAR}"
     echo
-    mkdir -p ${NEXIAL_JAR} > /dev/null 2>&1
+    mkdir -p ${USER_NEXIAL_JAR} > /dev/null 2>&1
 fi
 
 while [[ "$1" != "" ]]; do
@@ -71,7 +70,7 @@ while [[ "$1" != "" ]]; do
         source_jar="$1"
     fi
 
-    echo "» following files/directories are being copied to ${NEXIAL_JAR}"
+    echo "» following files/directories are being copied to ${USER_NEXIAL_JAR}"
     ls -FA1 $1
     echo
     checkPrompt

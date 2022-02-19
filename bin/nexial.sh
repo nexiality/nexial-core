@@ -40,10 +40,10 @@ else
 fi
 
 if [[ "${CHROME_BIN}" == "" ]]; then CHROME_BIN="${DEFAULT_CHROME_BIN}"; fi
-echo "setting CHROME_BIN  as ${CHROME_BIN}"
+if [[ "${CHROME_BIN}" != "" ]]; then echo "setting CHROME_BIN  as ${CHROME_BIN}"; fi
 
 if [[ "${FIREFOX_BIN}" == "" ]]; then FIREFOX_BIN="${DEFAULT_FIREFOX_BIN}"; fi
-echo "setting FIREFOX_BIN as ${FIREFOX_BIN}"
+if [[ "${FIREFOX_BIN}" != "" ]]; then echo "setting FIREFOX_BIN as ${FIREFOX_BIN}"; fi
 
 
 # support JVM max mem config
@@ -64,29 +64,36 @@ if [[ "${NEXIAL_POST_EXEC_SHELL}" != "" ]]; then
 fi
 
 # download nexial-lib-x.x.zip to userhome/.nexial/lib
-$NEXIAL_HOME/bin/nexial-lib-downloader.sh
+${NEXIAL_HOME}/bin/nexial-lib-downloader.sh
 rc=$?
 if [ $rc -ne 0 ]; then
     exit $rc
+fi
+
+# create keystore, if needed
+if [[ ! -f ${USER_NEXIAL_KEYSTORE} ]] ; then
+	. ${NEXIAL_HOME}/bin/.keygen.sh
+	rc=$?
+	if [ $rc -ne 0 ]; then
+			exit $rc
+	fi
 fi
 
 # run nexial now
 echo
 
 runNexial='${JAVA} ${MAX_MEM} \
-    -classpath "${PROJECT_CLASSPATH}:${NEXIAL_CLASSES}:${NEXIAL_LIB}/nexial*.jar:~/.nexial/jar/*:${NEXIAL_LIB}/*:${USER_HOME_NEXIAL_LIB}/*" \
+    -classpath "${PROJECT_CLASSPATH}:${NEXIAL_CLASSES}:${NEXIAL_LIB}/nexial*.jar:${USER_NEXIAL_JAR}/*:${NEXIAL_LIB}/*:${USER_NEXIAL_LIB}/*" \
     -XX:+UnlockExperimentalVMOptions \
     -XX:+ExplicitGCInvokesConcurrent \
     -Dwebdriver.chrome.bin="`echo ${CHROME_BIN} | sed '"'s/\ /\\\ /g'"'`" \
     -Dwebdriver.firefox.bin="`echo ${FIREFOX_BIN} | sed '"'s/\ /\\\ /g'"'`" \
-    -Djava.library.path="~/.nexial/dll" \
+    -Djava.library.path="${USER_NEXIAL_DLL}" \
     ${JAVA_OPT} \
     org.nexial.core.Nexial $*'
 eval "$runNexial"
 rc=$?
 
-USER_NEXIAL_HOME="$HOME/.nexial"
-USER_NEXIAL_INSTALL="$USER_NEXIAL_HOME/install"
 NEXIAL_INSTALLER_HOME="$HOME/projects/nexial-installer"
 
 # run nexial update now

@@ -437,6 +437,8 @@
                 <value>allow-running-insecure-localhost</value>
                 <value>allow-insecure-localhost</value>
                 <value>disable-web-security</value>
+                <value>disable-site-isolation-trials</value>
+                <value>allow-file-access-from-files</value>
                 <value>allow-running-insecure-content</value>
 
                 <!-- Disable all chrome extensions -->

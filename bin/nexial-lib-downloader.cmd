@@ -9,8 +9,8 @@ if NOT ERRORLEVEL 0 goto :exit
 
 REM download nexial-lib-x.x.zip to userhome/.nexial/lib
 set libVersionFile=nexial-lib-version.txt
-if exist %USER_HOME_NEXIAL_LIB%\%libVersionFile% (
-    fc /lb1 "%USER_HOME_NEXIAL_LIB%\%libVersionFile%" "%NEXIAL_HOME%\lib\%libVersionFile%" > nul
+if exist %USER_NEXIAL_LIB%\%libVersionFile% (
+    fc /lb1 "%USER_NEXIAL_LIB%\%libVersionFile%" "%NEXIAL_HOME%\lib\%libVersionFile%" > nul
     if [!ERRORLEVEL!]==[0] (goto :exit) else (goto :download)
 ) else (goto :download)
 

@@ -3,7 +3,6 @@
 setlocal enableextensions enabledelayedexpansion
 
 set NEXIAL_BIN=%~dp0
-set NEXIAL_JAR="%USERPROFILE%\.nexial\jar"
 
 call :init
 if NOT ERRORLEVEL 0 goto :exit
@@ -20,17 +19,17 @@ if NOT ERRORLEVEL 0 goto :exit
 if "%1"=="" goto :reportBadInputAndExit
 
 :createDir
-	if not exist "%NEXIAL_JAR%" (
+	if not exist "%USER_NEXIAL_JAR%" (
 	    echo.
-		echo ^>^> create missing directory - %NEXIAL_JAR%
-		mkdir %NEXIAL_JAR% 2>NUL
+		echo ^>^> create missing directory - %USER_NEXIAL_JAR%
+		mkdir %USER_NEXIAL_JAR% 2>NUL
 	)
 
 :copyJars
     if "%~n1"=="" goto :eof
 
     echo.
-    echo ^>^> following files/directories will be copied to %NEXIAL_JAR%
+    echo ^>^> following files/directories will be copied to %USER_NEXIAL_JAR%
     dir /b %1
 
     echo.
@@ -50,7 +49,7 @@ if "%1"=="" goto :reportBadInputAndExit
 :doCopy
     echo ^>^> copying from %1
     echo --------------------------------------------------------------------------------
-    xcopy /S /Y /V /Z /F "%1" "%NEXIAL_JAR%"
+    xcopy /S /Y /V /Z /F "%1" "%USER_NEXIAL_JAR%"
     echo --------------------------------------------------------------------------------
     echo.
     shift
@@ -74,7 +73,7 @@ if "%1"=="" goto :reportBadInputAndExit
 	echo USAGE: %0 [directory^|file]
 	echo        %0 [directory^|file] [directory^|file] [...]
 	echo.
-	echo Files copied from the specified location to %NEXIAL_JAR%
+	echo Files copied from the specified location to %USER_NEXIAL_JAR%
 	echo will be used as additional libraries (jars) in your Nexial execution.
     echo.
 	exit /b -1

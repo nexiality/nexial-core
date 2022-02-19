@@ -120,7 +120,7 @@ function title() {
 
     echo
     echo "--------------------------------------------------------------------------------"
-    echo "|                        nexial - test automation for all                      |"
+    echo "|                       nexial - automation for everyone!                      |"
     echo "--------------------------------------------------------------------------------"
     printf "[:: "
     printf "${title}"
@@ -143,22 +143,23 @@ function resolveEnv() {
     esac
 
 		# JAVA_VERSION=`echo "$(${JAVA} -version 2>&1)" | grep " version" | awk '{ print substr($3, 2, length($3)-2); }'`
-		NEXIAL_VERSION=$(cat ${NEXIAL_HOME}/version.txt)
+		NEXIAL_VERSION=$(cat ${NEXIAL_HOME}/version.txt > /dev/null 2>&1)
 
     echo "» ENVIRONMENT: "
-    echo "  CURRENT TIME:   `date \"+%Y-%m-%d %H:%M%:%S\"`"
-    echo "  CURRENT USER:   ${USER}"
-    echo "  CURRENT HOST:   `hostname`"
-    echo "  JAVA:           ${JAVA}"
-    echo "  JAVA VERSION:   ${JAVA_VERSION}"
-    echo "	NEXIAL_VERSION: ${NEXIAL_VERSION}"
-    echo "  NEXIAL_HOME:    ${NEXIAL_HOME}"
-    echo "  NEXIAL_LIB:     ${NEXIAL_LIB}"
-    echo "  NEXIAL_CLASSES: ${NEXIAL_CLASSES}"
-    echo "  PROJECT_BASE:   ${PROJECT_BASE}"
+    echo "  CURRENT TIME:     `date \"+%Y-%m-%d %H:%M:%S\"`"
+    echo "  CURRENT USER:     ${USER}"
+    echo "  CURRENT HOST:     `hostname`"
+    echo "  JAVA:             ${JAVA}"
+    echo "  JAVA VERSION:     ${JAVA_VERSION}"
+    echo "  NEXIAL_VERSION:   ${NEXIAL_VERSION}"
+    echo "  NEXIAL_HOME:      ${NEXIAL_HOME}"
+    echo "  NEXIAL_LIB:       ${NEXIAL_LIB}"
+    echo "  NEXIAL_CLASSES:   ${NEXIAL_CLASSES}"
+    echo "  PROJECT_BASE:     ${PROJECT_BASE}"
     if [[ "${PROJECT_HOME}" != "" ]]; then
-        echo "  PROJECT_HOME:   ${PROJECT_HOME}"
+        echo "  PROJECT_HOME:     ${PROJECT_HOME}"
     fi
+    echo "  USER_NEXIAL_HOME: ${USER_NEXIAL_HOME}"
     echo
 }
 
@@ -190,14 +191,20 @@ function resolveAppPath() {
 
 
 # utilities to be invoked by other frontend scripts
-mkdir -p "$HOME/.nexial"
+export USER_NEXIAL_HOME="$HOME/.nexial"
+mkdir -p ${USER_NEXIAL_HOME}
 export PROJECT_BASE=~/projects
 export NEXIAL_HOME=$(cd `dirname $0`/..; pwd -P)
 export NEXIAL_LIB=${NEXIAL_HOME}/lib
 export NEXIAL_CLASSES=${NEXIAL_HOME}/classes
-export USER_HOME_NEXIAL_LIB=~/.nexial/lib
+export USER_NEXIAL_LIB=${USER_NEXIAL_HOME}/lib
+export USER_NEXIAL_JAR=${USER_NEXIAL_HOME}/jar
+export USER_NEXIAL_DLL=${USER_NEXIAL_HOME}/dll
+export USER_NEXIAL_INSTALL=${USER_NEXIAL_HOME}/install
+export USER_NEXIAL_KEYSTORE=${USER_NEXIAL_HOME}/nexial-keystore.jks
+
 export IS_MAC=$([[ "`uname -s`" = "Darwin" ]] && echo "true" || echo "false" )
-export CACHE_FILE=$([[ ${IS_MAC} = "true" ]] && echo "$HOME/.nexial/cache.macos" || echo "$HOME/.nexial/cache.nix" )
+export CACHE_FILE=$([[ ${IS_MAC} = "true" ]] && echo "${USER_NEXIAL_HOME}/cache.macos" || echo "${USER_NEXIAL_HOME}/cache.nix" )
 
 CHROME_KEY=$([[ ${IS_MAC} = "true" ]] && echo "Google Chrome" || echo "google-chrome" )
 export DEFAULT_CHROME_BIN="`resolveAppPath "${CHROME_KEY}"`"
@@ -209,8 +216,8 @@ if [[ -z "${DEFAULT_CHROME_BIN//}" ]]; then
 fi
 
 # android sdk
-if [[ ! -f "${ANDROID_HOME}" ]] ; then ANDROID_HOME=~/.nexial/android/sdk ; fi
-if [[ ! -f "${ANDROID_SDK_ROOT}" ]] ; then ANDROID_SDK_ROOT=~/.nexial/android/sdk ; fi
+if [[ ! -f "${ANDROID_HOME}" ]] ; then ANDROID_HOME=${USER_NEXIAL_HOME}/android/sdk ; fi
+if [[ ! -f "${ANDROID_SDK_ROOT}" ]] ; then ANDROID_SDK_ROOT=${USER_NEXIAL_HOME}/android/sdk ; fi
 
 # javaui/jubula
 if [[ ! -f "${JUBULA_HOME}" ]] ; then JUBULA_HOME=/Application/jubula_8.8.0.034 ; fi
@@ -243,6 +250,6 @@ JAVA_OPT="${JAVA_OPT} -Dwebdriver.winium.silent=false"
 JAVA_OPT="${JAVA_OPT} -Dorg.apache.poi.util.POILogger=org.apache.poi.util.NullLogger"
 
 # remove erroneous setup.jar in .nexial/lib
-if [[ -f "$USER_HOME_NEXIAL_LIB/setup.jar" ]] ; then
-	rm -f "$USER_HOME_NEXIAL_LIB/setup.jar" > /dev/null 2>&1 
+if [[ -f "$USER_NEXIAL_LIB/setup.jar" ]] ; then
+	rm -f "$USER_NEXIAL_LIB/setup.jar" > /dev/null 2>&1 
 fi

@@ -25,7 +25,7 @@ if NOT ERRORLEVEL 0 goto :exit
 
 echo.
 
-%JAVA% -classpath %NEXIAL_LIB%\nexial*.jar;%NEXIAL_LIB%\*;%USER_HOME_NEXIAL_LIB%\* %JAVA_OPT% org.nexial.core.tools.DataVariableUpdater %*
+%JAVA% -classpath %NEXIAL_LIB%\nexial*.jar;%NEXIAL_LIB%\*;%USER_NEXIAL_LIB%\* %JAVA_OPT% org.nexial.core.tools.DataVariableUpdater %*
 endlocal
 exit /b 0
 goto :eof
