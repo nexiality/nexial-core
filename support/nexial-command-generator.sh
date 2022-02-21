@@ -6,5 +6,5 @@ title "nexial command generator"
 checkJava
 resolveEnv
 
-${JAVA} -classpath "${NEXIAL_CLASSES}:${NEXIAL_LIB}/*:${USER_HOME_NEXIAL_LIB}/*" ${JAVA_OPT} \
+${JAVA} -classpath "${NEXIAL_CLASSES}:${NEXIAL_LIB}/*:${USER_NEXIAL_LIB}/*" ${JAVA_OPT} \
 	org.nexial.core.tools.CommandMetaGenerator -v

@@ -11,7 +11,12 @@
 	set NEXIAL_HOME=%~dp0..
 	set NEXIAL_LIB=%NEXIAL_HOME%\lib
 	set NEXIAL_CLASSES=%NEXIAL_HOME%\classes
-	set USER_HOME_NEXIAL_LIB=%USERPROFILE%\.nexial\lib
+    set USER_NEXIAL_HOME="%USERPROFILE%\.nexial"
+	set USER_NEXIAL_LIB=%USER_NEXIAL_HOME%\lib
+	set USER_NEXIAL_JAR=%USER_NEXIAL_HOME%\jar
+    set USER_NEXIAL_DLL=%USER_NEXIAL_HOME%\dll
+    set USER_NEXIAL_INSTALL=%USER_NEXIAL_HOME%\install
+	set USER_NEXIAL_KEYSTORE=%USER_NEXIAL_HOME%\nexial-keystore.jks
 
 	if exist "%LOCALAPPDATA%\Google\Chrome\Application\chrome.exe" (
 		set DEFAULT_CHROME_BIN="%LOCALAPPDATA%\Google\Chrome\Application\chrome.exe"
@@ -31,8 +36,8 @@
 	)
 
     REM android sdk
-    if not exist "%ANDROID_HOME%\nul" ( set ANDROID_HOME=%USERPROFILE%\.nexial\android\sdk)
-    if not exist "%ANDROID_SDK_ROOT%\nul" ( set ANDROID_SDK_ROOT=%USERPROFILE%\.nexial\android\sdk)
+    if not exist "%ANDROID_HOME%\nul" ( set ANDROID_HOME=%USER_NEXIAL_HOME%\android\sdk)
+    if not exist "%ANDROID_SDK_ROOT%\nul" ( set ANDROID_SDK_ROOT=%USER_NEXIAL_HOME%\android\sdk)
 
 	REM javaui/jubula
     if not exist %JUBULA_HOME%\nul ( set JUBULA_HOME="%ProgramFiles%\jubula_8.8.0.034")
@@ -51,7 +56,7 @@
 	set JAVA_OPT=%JAVA_OPT% -Dorg.apache.poi.util.POILogger=org.apache.poi.util.NullLogger
 
 	REM remove erroneous setup.jar in .nexial/lib
-	if exist "%USER_HOME_NEXIAL_LIB%\setup.jar" ( del "%USER_HOME_NEXIAL_LIB%\setup.jar" 2> NUL )
+	if exist "%USER_NEXIAL_LIB%\setup.jar" ( del "%USER_NEXIAL_LIB%\setup.jar" 2> NUL )
 
 	goto :eof
 
@@ -155,7 +160,7 @@ REM # Make sure prerequisite environment variables are set
 :title
 	echo.
 	echo --------------------------------------------------------------------------------
-	echo ^|                        nexial - test automation for all                      ^|
+	echo ^|                      nexial - automation for everyone!                      ^|
 	echo --------------------------------------------------------------------------------
 	echo [:: %~1 ::]
 	echo --------------------------------------------------------------------------------
@@ -165,27 +170,25 @@ REM # Make sure prerequisite environment variables are set
 :resolveEnv
 	set NEXIAL_LIB=%NEXIAL_HOME%\lib
 	set CLASSES_PATH=%NEXIAL_HOME%\classes
-	set /p NEXIAL_VERSION=<%NEXIAL_HOME%\version.txt
+	if EXIST %NEXIAL_HOME%\version.txt (
+		set /p NEXIAL_VERSION=<%NEXIAL_HOME%\version.txt
+	)
 	set datestr=%date% %time%
 
 	echo ENVIRONMENT:
-	echo   CURRENT TIME:   %datestr%
-	echo   CURRENT USER:   %USERNAME%
-	echo   CURRENT HOST:   %COMPUTERNAME%
-	echo   JAVA:           %JAVA%
-	echo   JAVA_VERSION:   %JAVA_VERSION%
-	echo   NEXIAL_VERSION: %NEXIAL_VERSION%
-	echo   NEXIAL_HOME:    %NEXIAL_HOME%
-	echo   NEXIAL_LIB:     %NEXIAL_LIB%
-	echo   NEXIAL_CLASSES: %NEXIAL_CLASSES%
-	echo   PROJECT_BASE:   %PROJECT_BASE%
+	echo   CURRENT TIME:     %datestr%
+	echo   CURRENT USER:     %USERNAME%
+	echo   CURRENT HOST:     %COMPUTERNAME%
+	echo   JAVA:             %JAVA%
+	echo   JAVA_VERSION:     %JAVA_VERSION%
+	echo   NEXIAL_VERSION:   %NEXIAL_VERSION%
+	echo   NEXIAL_HOME:      %NEXIAL_HOME%
+	echo   NEXIAL_LIB:       %NEXIAL_LIB%
+	echo   NEXIAL_CLASSES:   %NEXIAL_CLASSES%
+	echo   PROJECT_BASE:     %PROJECT_BASE%
 	if NOT "%PROJECT_HOME%"=="" (
-		echo   PROJECT_HOME:   %PROJECT_HOME%
+		echo   PROJECT_HOME:     %PROJECT_HOME%
 	)
+	echo   USER_NEXIAL_HOME: %USER_NEXIAL_HOME%
 	echo.
 	goto :eof
-
-
-:testErrorlevel
-    echo testErrorlevel
-    exit /b 1

@@ -1,4 +1,11 @@
 @echo off
+
+REM ---------------------------------------------------------------------------
+REM [nexial-keygen]
+REM An use-only utility to generate nexial-only JKS cert for execution host.
+REM Generated cert will be stored in %NEXIAL_USER_HOME%
+REM ---------------------------------------------------------------------------
+
 setlocal enableextensions enabledelayedexpansion
 
 set NEXIAL_BIN=%~dp0
@@ -6,7 +13,7 @@ set NEXIAL_BIN=%~dp0
 call :init
 if NOT ERRORLEVEL 0 goto :exit
 
-call :title "nexial configuration setup"
+call :title "nexial certificate generator"
 if NOT ERRORLEVEL 0 goto :exit
 
 call :checkJava
@@ -16,9 +23,8 @@ call :resolveEnv
 if NOT ERRORLEVEL 0 goto :exit
 
 REM run now
-%JAVA% -classpath %NEXIAL_CLASSES%;%NEXIAL_LIB%\nexial*.jar;%NEXIAL_LIB%\*;%USER_NEXIAL_LIB%\* %JAVA_OPT% org.nexial.core.tools.NexialSetup %*
-
-exit /b 0
+call %NEXIAL_BIN%\.keygen.cmd
+exit /b %ERRORLEVEL%
 goto :eof
 
 :init

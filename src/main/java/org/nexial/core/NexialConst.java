@@ -1132,6 +1132,7 @@ public final class NexialConst {
         public static final String SUBPLANS = "subplans";
         public static final String OUTPUT = "output";
         public static final String OVERRIDE = "override";
+        public static final String ANNOUNCE = "ready";
         public static final String READY = "ready";
         public static final String INTERACTIVE = "interactive";
         public static final Options OPTIONS = initCmdOptions();
