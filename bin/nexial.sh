@@ -70,14 +70,7 @@ if [ $rc -ne 0 ]; then
     exit $rc
 fi
 
-# create keystore, if needed
-if [[ ! -f ${USER_NEXIAL_KEYSTORE} ]] ; then
-	. ${NEXIAL_HOME}/bin/.keygen.sh
-	rc=$?
-	if [ $rc -ne 0 ]; then
-			exit $rc
-	fi
-fi
+rm -f ${USER_NEXIAL_KEYSTORE} /dev/null 2>&1
 
 # run nexial now
 echo
