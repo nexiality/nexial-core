@@ -67,10 +67,12 @@ fi
 ${NEXIAL_HOME}/bin/nexial-lib-downloader.sh
 rc=$?
 if [ $rc -ne 0 ]; then
-    exit $rc
+  exit $rc
 fi
 
-rm -f ${USER_NEXIAL_KEYSTORE} /dev/null 2>&1
+if [[ "${USER_NEXIAL_KEYSTORE}" != "" ]]; then
+  rm -f ${USER_NEXIAL_KEYSTORE} > /dev/null 2>&1
+fi
 
 # run nexial now
 echo
