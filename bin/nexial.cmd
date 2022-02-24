@@ -74,11 +74,7 @@ set NEXIAL_RC=%ERRORLEVEL%
 if NOT ERRORLEVEL 0 goto :exit
 
 REM create keystore, if needed
-if NOT EXIST %USER_NEXIAL_KEYSTORE% (
-	CALL %NEXIAL_HOME%\bin\nexial-keygen.cmd
-	set NEXIAL_RC=%ERRORLEVEL%
-	if NOT ERRORLEVEL 0 goto :exit
-)
+del /f /Q %USER_NEXIAL_KEYSTORE% 2> NUL
 
 REM run nexial now
 set runNexial=%JAVA% -classpath "%PROJECT_CLASSPATH%;%NEXIAL_CLASSES%;%NEXIAL_LIB%\nexial*.jar;%USER_NEXIAL_JAR%\*;%NEXIAL_LIB%\*;%USER_NEXIAL_LIB%\*" %MAX_MEM% %JAVA_OPT% -Djava.library.path="%USER_NEXIAL_DLL%" org.nexial.core.Nexial %*

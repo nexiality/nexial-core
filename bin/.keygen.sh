@@ -17,7 +17,8 @@ ${KEYGEN_HOME}/keytool -genkey \
 	-keyalg RSA \
 	-validity 3650 \
 	-keystore ${USER_NEXIAL_KEYSTORE} \
-	-storepass "nexial-rocks!" \
-	-alias "nexial-keygen" \
+	-storepass "nexialrocks" \
+	-keypass "nexialrocks" \
+	-alias "default" \
 	-dname "CN=127.0.0.1, OU=Nexial, O=Nexial, L=Nexial, S=Nexial, C=Nexiality"
 exit $?
