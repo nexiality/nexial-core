@@ -960,12 +960,12 @@ public class Nexial {
         }
 
         List<File> generatedJsons = null;
-
-        // generate excution summary for every execution
-        try {
-            generatedJsons = reporter.generateJson(summary);
-        } catch (IOException e) {
-            ConsoleUtils.error(runId, RB.Tools.text("execution.report.fail", e.getMessage()), e);
+        if (isGenerateExecReport()) {
+            try {
+                generatedJsons = reporter.generateJson(summary);
+            } catch (IOException e) {
+                ConsoleUtils.error(runId, RB.Tools.text("execution.report.fail", e.getMessage()), e);
+            }
         }
 
         if (outputToCloud) {
