@@ -50,6 +50,7 @@ import static org.nexial.commons.utils.FileUtil.addToJar;
 import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.NexialConst.ExitStatus.*;
 import static org.nexial.core.NexialConst.Project.BATCH_EXT;
+import static org.nexial.core.tools.CliUtils.*;
 import static org.nexial.core.tools.CliUtils.newArgOption;
 import static org.nexial.core.utils.ExecUtils.BIN_SCRIPT_EXT;
 
@@ -129,8 +130,7 @@ public final class NexialSetup {
         Security.setProperty("crypto.policy", "unlimited");
 
         try {
-            CommandLine cmd = CliUtils.getCommandLine("nexial-setup." + BATCH_EXT, args, cmdOptions);
-            if (cmd == null) { System.exit(RC_BAD_CLI_ARGS); }
+            CommandLine cmd = getCommandLine("nexial-setup." + BATCH_EXT, args, cmdOptions);
 
             final String dataFilePath = cmd.getOptionValue(OPT_DATA_FILE);
             checkValidFilePath(dataFilePath);

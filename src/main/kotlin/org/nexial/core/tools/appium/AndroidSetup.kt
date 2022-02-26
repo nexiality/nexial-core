@@ -9,19 +9,15 @@ import org.apache.commons.io.filefilter.TrueFileFilter
 import org.apache.commons.lang3.BooleanUtils
 import org.apache.commons.lang3.StringUtils
 import org.apache.commons.lang3.SystemUtils.IS_OS_WINDOWS
-import org.apache.commons.lang3.SystemUtils.JAVA_IO_TMPDIR
 import org.nexial.commons.proc.ProcessInvoker
 import org.nexial.commons.proc.ProcessInvoker.WORKING_DIRECTORY
 import org.nexial.commons.utils.*
-import org.nexial.core.NexialConst.DEF_CHARSET
+import org.nexial.core.NexialConst.*
 import org.nexial.core.NexialConst.Data.WIN32_CMD
-import org.nexial.core.NexialConst.ExitStatus.RC_BAD_CLI_ARGS
-import org.nexial.core.NexialConst.GSON
 import org.nexial.core.NexialConst.Mobile.Android.*
 import org.nexial.core.plugins.ws.WebServiceClient
 import org.nexial.core.tools.CliConst.OPT_VERBOSE
-import org.nexial.core.tools.CliUtils
-import org.nexial.core.tools.inspector.InspectorConst
+import org.nexial.core.tools.CliUtils.*
 import org.nexial.core.utils.ConsoleUtils
 import java.io.File
 import java.io.File.separator
@@ -142,17 +138,10 @@ object AndroidSetup {
 
     private fun deriveCommandLine(args: Array<String>): CommandLine {
         val cmdOptions = Options()
-        cmdOptions.addOption(CliUtils.newArgOption("t", "target", "[REQUIRED] The project home directory", true))
+        cmdOptions.addOption(newArgOption("t", "target", "[REQUIRED] The project home directory", true))
         cmdOptions.addOption(OPT_VERBOSE)
-        cmdOptions.addOption(CliUtils.newNonArgOption("y", "override", "Always override", false))
-
-        val cmd = CliUtils.getCommandLine("android-setup$batchExt", args, cmdOptions)
-        if (cmd == null) {
-            ConsoleUtils.error("unable to proceed; exiting")
-            InspectorConst.exit(RC_BAD_CLI_ARGS)
-        }
-
-        return cmd
+        cmdOptions.addOption(newNonArgOption("y", "override", "Always override", false))
+        return getCommandLine("android-setup$batchExt", args, cmdOptions)
     }
 
     private fun deriveOptions(cmd: CommandLine) {
@@ -221,8 +210,7 @@ object AndroidSetup {
     }
 
     private fun downloadAndUnzip(downloadUrl: String, unzipLocation: File): MutableList<File>? {
-        val saveTo = StringUtils.appendIfMissing(JAVA_IO_TMPDIR, separator) +
-                     StringUtils.substringAfterLast(downloadUrl, "/")
+        val saveTo = TEMP + StringUtils.substringAfterLast(downloadUrl, "/")
         verbose("downloading from $downloadUrl...")
         val downloadResp = WebServiceClient(null)
             .configureAsQuiet()

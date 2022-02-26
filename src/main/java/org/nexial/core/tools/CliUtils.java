@@ -23,6 +23,8 @@ import org.apache.commons.lang3.StringUtils;
 
 import javax.validation.constraints.NotNull;
 
+import static org.nexial.core.NexialConst.ExitStatus.RC_BAD_CLI_ARGS;
+
 /**
  * Various utilities classes used all across tools package.
  */
@@ -76,9 +78,17 @@ final public class CliUtils {
         }
     }
 
+    @NotNull
     public static CommandLine getCommandLine(String name, String[] args, @NotNull Options cmdOptions) {
         HelpFormatter formatter = new HelpFormatter();
         formatter.setWidth(100);
-        return getCommandLine(name, args, cmdOptions, formatter);
+        CommandLine cmd = getCommandLine(name, args, cmdOptions, formatter);
+        if (cmd == null) {
+            System.out.println();
+            System.err.println("Unable to proceed, exiting...");
+            System.out.println();
+            System.exit(RC_BAD_CLI_ARGS);
+        }
+        return cmd;
     }
 }

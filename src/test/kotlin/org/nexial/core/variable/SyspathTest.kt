@@ -18,8 +18,6 @@
 package org.nexial.core.variable
 
 import org.apache.commons.io.FileUtils
-import org.apache.commons.lang3.StringUtils
-import org.apache.commons.lang3.SystemUtils
 import org.junit.After
 import org.junit.Assert
 import org.junit.Assert.assertEquals
@@ -30,16 +28,21 @@ import java.io.File
 import java.io.File.separator
 
 class SyspathTest {
+    private val projectBase = "${TEMP}projects${separator}MyProject"
+    private val projectReleaseBase = projectBase + separator + "Release1"
+    private val artifactBase = projectReleaseBase + separator + "artifact"
+    private val outBase = projectReleaseBase + separator + "sandbox" + separator + "out"
+
     private var syspath: Syspath? = null
 
     @Before
     @Throws(Exception::class)
     fun setUp() {
-        System.setProperty(OPT_OUT_DIR, OUT_BASE + separator + "20170106_230142")
-        System.setProperty(OPT_EXCEL_FILE, ARTIFACT_BASE + separator + "MyScript.xlsx")
-        System.setProperty(OPT_INPUT_EXCEL_FILE, ARTIFACT_BASE + separator + "MyScript.xlsx")
-        System.setProperty(OPT_PROJECT_BASE, PROJ_REL_BASE)
-        println("setting project base as $PROJ_REL_BASE")
+        System.setProperty(OPT_OUT_DIR, outBase + separator + "20170106_230142")
+        System.setProperty(OPT_EXCEL_FILE, artifactBase + separator + "MyScript.xlsx")
+        System.setProperty(OPT_INPUT_EXCEL_FILE, artifactBase + separator + "MyScript.xlsx")
+        System.setProperty(OPT_PROJECT_BASE, projectReleaseBase)
+        println("setting project base as $projectReleaseBase")
         syspath = Syspath()
         syspath!!.init()
     }
@@ -47,31 +50,31 @@ class SyspathTest {
     @After
     @Throws(Exception::class)
     fun tearDown() {
-        FileUtils.deleteQuietly(File(PROJ_BASE))
+        FileUtils.deleteQuietly(File(projectBase))
     }
 
     @Test
     @Throws(Exception::class)
     fun testOut() {
         assertEquals("20170106_230142", syspath!!.out("name"))
-        assertEquals(OUT_BASE, syspath!!.out("base"))
-        assertEquals(OUT_BASE + separator + "20170106_230142", syspath!!.out("fullpath"))
+        assertEquals(outBase, syspath!!.out("base"))
+        assertEquals(outBase + separator + "20170106_230142", syspath!!.out("fullpath"))
     }
 
     @Test
     @Throws(Exception::class)
     fun testScript() {
         assertEquals("MyScript.xlsx", syspath!!.script("name"))
-        assertEquals(ARTIFACT_BASE, syspath!!.script("base"))
-        assertEquals(ARTIFACT_BASE + separator + "MyScript.xlsx", syspath!!.script("fullpath"))
+        assertEquals(artifactBase, syspath!!.script("base"))
+        assertEquals(artifactBase + separator + "MyScript.xlsx", syspath!!.script("fullpath"))
     }
 
     @Test
     @Throws(Exception::class)
     fun testScreenshot() {
         assertEquals("captures", syspath!!.screenshot("name"))
-        assertEquals(OUT_BASE + separator + "20170106_230142", syspath!!.screenshot("base"))
-        assertEquals(OUT_BASE + separator + "20170106_230142" + separator + "captures",
+        assertEquals(outBase + separator + "20170106_230142", syspath!!.screenshot("base"))
+        assertEquals(outBase + separator + "20170106_230142" + separator + "captures",
                      syspath!!.screenshot("fullpath"))
     }
 
@@ -79,8 +82,8 @@ class SyspathTest {
     @Throws(Exception::class)
     fun testLog() {
         assertEquals("logs", syspath!!.log("name"))
-        assertEquals(OUT_BASE + separator + "20170106_230142", syspath!!.log("base"))
-        assertEquals(OUT_BASE + separator + "20170106_230142" + separator + "logs", syspath!!.log("fullpath"))
+        assertEquals(outBase + separator + "20170106_230142", syspath!!.log("base"))
+        assertEquals(outBase + separator + "20170106_230142" + separator + "logs", syspath!!.log("fullpath"))
     }
 
     @Test
@@ -95,13 +98,5 @@ class SyspathTest {
     @Throws(Exception::class)
     fun testProject() {
         assertEquals(syspath!!.project("name"), "Release1")
-    }
-
-    companion object {
-        private val PROJ_BASE = StringUtils.appendIfMissing(SystemUtils.getJavaIoTmpDir().absolutePath, separator) +
-                                "projects" + separator + "MyProject"
-        private val PROJ_REL_BASE = PROJ_BASE + separator + "Release1"
-        private val ARTIFACT_BASE = PROJ_REL_BASE + separator + "artifact"
-        private val OUT_BASE = PROJ_REL_BASE + separator + "sandbox" + separator + "out"
     }
 }

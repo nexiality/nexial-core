@@ -26,7 +26,6 @@ import com.xuggle.xuggler.IStreamCoder;
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.SystemUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.nexial.core.NexialConst.Project;
 import org.nexial.core.ShutdownAdvisor;
@@ -44,6 +43,7 @@ import static java.io.File.separator;
 import static java.util.concurrent.TimeUnit.*;
 import static org.nexial.core.NexialConst.OPT_OUT_DIR;
 import static org.nexial.core.NexialConst.Recording.Types.mp4;
+import static org.nexial.core.NexialConst.TEMP;
 import static org.nexial.core.plugins.base.Mp4ScreenRecorder.Quality.HIGH;
 
 public class Mp4ScreenRecorder extends MediaToolAdapter implements Runnable, ScreenRecorder {
@@ -105,9 +105,8 @@ public class Mp4ScreenRecorder extends MediaToolAdapter implements Runnable, Scr
 
     @Override
     public void start() {
-        String outputDir = System.getProperty(OPT_OUT_DIR, SystemUtils.getJavaIoTmpDir().getAbsolutePath());
-        start(Project.appendCapture(StringUtils.appendIfMissing(outputDir, separator)) + separator +
-              RandomStringUtils.randomAlphabetic(10) + "." + mp4.name());
+        String outputDir = System.getProperty(OPT_OUT_DIR, TEMP);
+        start(Project.appendCapture(outputDir) + separator + RandomStringUtils.randomAlphabetic(10) + "." + mp4.name());
     }
 
     @Override

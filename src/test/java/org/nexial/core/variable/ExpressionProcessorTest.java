@@ -39,15 +39,13 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
-import static java.io.File.separator;
-import static org.apache.commons.lang3.SystemUtils.JAVA_IO_TMPDIR;
-import static org.apache.commons.lang3.SystemUtils.getJavaIoTmpDir;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.*;
 import static org.junit.runners.MethodSorters.NAME_ASCENDING;
 import static org.nexial.core.NexialConst.DEF_FILE_ENCODING;
 import static org.nexial.core.NexialConst.FlowControls.ANY_FIELD;
+import static org.nexial.core.NexialConst.TEMP;
 
 @FixMethodOrder(value = NAME_ASCENDING)
 public class ExpressionProcessorTest {
@@ -340,9 +338,10 @@ public class ExpressionProcessorTest {
                   "TOTAL INVENTORY VALUE 64912.37\n) => " +
                   "removeRegex(^Date:.+Page:\\s+[0-9]+\n,true) " +
                   "removeRegex(^[A-Z \\\\/\\,]+(\\s+[0-9\\.]+\\)?\\s*\n,true)]";
-        assertEquals("4827 Bene-Bac Pet Gel Ea       9.16 0      4.582       0.00      4.582      4.582 F< 11 12-12-01\n" +
-                                 "WEFA Wysong EFA without Fish Oil Bottle      23.05     1.75     13.163      23.04     17.460     17.460 FTZ< 11 07-16-05\n",
-                     subject.process(fixture));
+        assertEquals(
+            "4827 Bene-Bac Pet Gel Ea       9.16 0      4.582       0.00      4.582      4.582 F< 11 12-12-01\n" +
+            "WEFA Wysong EFA without Fish Oil Bottle      23.05     1.75     13.163      23.04     17.460     17.460 FTZ< 11 07-16-05\n",
+            subject.process(fixture));
     }
 
     @Test
@@ -1465,7 +1464,7 @@ public class ExpressionProcessorTest {
 
     @Test
     public void processJson_invalid_json() throws Exception {
-        String invalidPath = StringUtils.appendIfMissing(JAVA_IO_TMPDIR, separator) + "non_existent.json";
+        String invalidPath = TEMP + "non_existent.json";
         Assert.assertFalse(new File(invalidPath).exists());
 
         ExpressionProcessor subject = new ExpressionProcessor(context);
@@ -1811,8 +1810,7 @@ public class ExpressionProcessorTest {
                          is(equalTo("user,name,Job Title,Department,Office Number,Office Phone,Mobile Phone,Fax," +
                                     "Address,City,state,ZIP or Postal Code,country"))));
 
-        String tmp = StringUtils.appendIfMissing(getJavaIoTmpDir().getAbsolutePath(), separator) +
-                     "junk2.csv";
+        String tmp = TEMP + "junk2.csv";
         assertThat(subject.process("[CSV(" + csvFile + ") => " +
                                    " parse(delim=\\,|recordDelim=\r\n|header=true)" +
                                    " removeColumns(First Name)" +
@@ -1919,8 +1917,7 @@ public class ExpressionProcessorTest {
                    allOf(is(not(nullValue())),
                          is(equalTo("Chris Green,Ben Andrews,David Longmuir,Cynthia Carey,Melissa MacBeth"))));
 
-        String tmp = StringUtils.appendIfMissing(getJavaIoTmpDir().getAbsolutePath(), separator) +
-                     "junk.csv";
+        String tmp = TEMP + "junk.csv";
         assertThat(subject.process("[CSV(" + csvFile + ") => " +
                                    " parse(delim=\\,|header=false)" +
                                    " transpose" +
@@ -3493,8 +3490,7 @@ public class ExpressionProcessorTest {
                    allOf(is(not(nullValue())), is(equalTo(expected))));
 
         String sqlTemplate = ResourceUtils.getResourceFilePath(resourceBasePath + "12.sql");
-        String sqlPath = StringUtils.appendIfMissing(getJavaIoTmpDir().getAbsolutePath(), separator) +
-                         className + "-rendered.sql";
+        String sqlPath = TEMP + className + "-rendered.sql";
         expected = "-- nexial:KXY result\n" +
                    "SELECT OFFICELOCATIONDESC AS \"description\", ADDRESSLINE1 || ' ' || ADDRESSLINE2 || ', ' || CITY || ' ' || OFFICELOCATIONSTATE || ' ' || ZIP || ' ' || COUNTRY AS \"fullAddress\" FROM OFFICELOCATIONS WHERE OFFICELOCATIONCODE = 'KXY';\n" +
                    "\n" +
@@ -3640,8 +3636,7 @@ public class ExpressionProcessorTest {
         assertNotNull(xlsxFile);
         File targetSource = new File(xlsxFile);
 
-        String tmpDir = StringUtils.appendIfMissing(getJavaIoTmpDir().getAbsolutePath(), separator);
-        File targetFile = new File(tmpDir + "junk1.xlsx");
+        File targetFile = new File(TEMP + "junk1.xlsx");
 
         FileUtils.copyFile(targetSource, targetFile);
         assertThat(subject.process("[EXCEL(" + file + ") =>" +
@@ -3670,7 +3665,7 @@ public class ExpressionProcessorTest {
         // --------------------------------------------------------------------------------
         // test with [potentially] new worksheet
         // --------------------------------------------------------------------------------
-        File tmpFile = new File(tmpDir + "junk2.xlsx");
+        File tmpFile = new File(TEMP + "junk2.xlsx");
         assertThat(subject.process("[EXCEL(" + file + ") =>" +
                                    " read(sc1,A2:AY6)" +
                                    " pack" +
@@ -3799,8 +3794,7 @@ public class ExpressionProcessorTest {
         assertNotNull(xlsxFile);
         File targetSource = new File(xlsxFile);
 
-        String tmpDir = StringUtils.appendIfMissing(getJavaIoTmpDir().getAbsolutePath(), separator);
-        File targetFile = new File(tmpDir + "junk1.xlsx");
+        File targetFile = new File(TEMP + "junk1.xlsx");
 
         FileUtils.copyFile(targetSource, targetFile);
 
@@ -3832,7 +3826,7 @@ public class ExpressionProcessorTest {
         // --------------------------------------------------------------------------------
         // test with [potentially] new worksheet
         // --------------------------------------------------------------------------------
-        File tmpFile = new File(tmpDir + "junk2.xlsx");
+        File tmpFile = new File(TEMP + "junk2.xlsx");
         assertThat(subject.process("[EXCEL(" + file + ") =>" +
                                    " read(sc1,A2:AY6)" +
                                    " pack" +

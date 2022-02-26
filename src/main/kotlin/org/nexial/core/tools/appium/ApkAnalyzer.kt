@@ -21,13 +21,13 @@ import net.dongliu.apk.parser.ApkFile
 import org.apache.commons.cli.CommandLine
 import org.apache.commons.cli.Options
 import org.apache.commons.lang3.StringUtils
-import org.apache.commons.lang3.SystemUtils
 import org.jdom2.Document
 import org.jdom2.Namespace
 import org.nexial.commons.utils.FileUtil
 import org.nexial.commons.utils.XmlUtils
-import org.nexial.core.NexialConst.ExitStatus.RC_BAD_CLI_ARGS
-import org.nexial.core.tools.CliUtils
+import org.nexial.core.NexialConst.Project.BATCH_EXT
+import org.nexial.core.tools.CliUtils.getCommandLine
+import org.nexial.core.tools.CliUtils.newArgOption
 import org.nexial.core.utils.ConsoleUtils
 import java.io.File
 import kotlin.system.exitProcess
@@ -46,17 +46,8 @@ object ApkAnalyzer {
 
     fun deriveCommandLine(args: Array<String>): CommandLine {
         val cliOptions = Options()
-        cliOptions.addOption(CliUtils.newArgOption("a", "apk", MSG_APK_LOCATION, true))
-
-        val programExt = if (SystemUtils.IS_OS_WINDOWS) ".cmd" else ".sh"
-        val cmd = CliUtils.getCommandLine("${SCRIPT_NAME}$programExt", args, cliOptions)
-        if (cmd == null) {
-            ConsoleUtils.error("unable to proceed... exiting")
-            println()
-            exitProcess(RC_BAD_CLI_ARGS)
-        }
-
-        return cmd
+        cliOptions.addOption(newArgOption("a", "apk", MSG_APK_LOCATION, true))
+        return getCommandLine("$SCRIPT_NAME$BATCH_EXT", args, cliOptions)
     }
 
     @JvmStatic

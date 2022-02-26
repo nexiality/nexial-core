@@ -19,9 +19,9 @@ package org.nexial.core.utils
 import org.apache.commons.io.FileUtils
 import org.apache.commons.lang3.RandomStringUtils
 import org.apache.commons.lang3.StringUtils
-import org.apache.commons.lang3.SystemUtils.JAVA_IO_TMPDIR
 import org.nexial.commons.utils.FileUtil
 import org.nexial.commons.utils.ResourceUtils
+import org.nexial.core.NexialConst.TEMP
 import org.nexial.core.model.ExecutionContext
 import org.nexial.core.plugins.ws.WsCommand
 import java.io.File
@@ -56,7 +56,7 @@ class OutputResolver(val data: String?,
      * @constructor
      */
     constructor(data: String?, context: ExecutionContext) :
-            this(data, context, true, context.isResolveTextAsURL, !context.isResolveTextAsIs, false, false)
+        this(data, context, true, context.isResolveTextAsURL, !context.isResolveTextAsIs, false, false)
 
     /**
      * convenience with `resolveAsFile` set to true, `asBinary` set to false and `compact` set to false.
@@ -66,10 +66,10 @@ class OutputResolver(val data: String?,
      * @constructor
      */
     constructor(data: String?, context: ExecutionContext, replaceTokens: Boolean = false) :
-            this(data, context, true, context.isResolveTextAsURL, replaceTokens, false, false)
+        this(data, context, true, context.isResolveTextAsURL, replaceTokens, false, false)
 
     constructor(data: String?, context: ExecutionContext, asBinary: Boolean = false, compact: Boolean = false) :
-            this(data, context, true, context.isResolveTextAsURL, !context.isResolveTextAsIs, asBinary, compact)
+        this(data, context, true, context.isResolveTextAsURL, !context.isResolveTextAsIs, asBinary, compact)
 
     init {
         if (data == null || StringUtils.isBlank(data)) {
@@ -104,8 +104,8 @@ class OutputResolver(val data: String?,
         /** we can't have NL or CR or TAB character in filename  */
         @JvmStatic
         fun isContentReferencedAsFile(data: String, context: ExecutionContext?) =
-                if (context != null && context.isNullOrEmptyOrBlankValue(data)) false
-                else isContentReferencedAsFile(data)
+            if (context != null && context.isNullOrEmptyOrBlankValue(data)) false
+            else isContentReferencedAsFile(data)
 
         @JvmStatic
         fun isContentReferencedAsFile(data: String) =
@@ -117,7 +117,7 @@ class OutputResolver(val data: String?,
 
             if (ResourceUtils.isWebResource(path)) {
                 val filename = RandomStringUtils.randomAlphabetic(5) + "_" + StringUtils.substringAfterLast(path, "/")
-                return WsCommand.saveWebContent(path, File(JAVA_IO_TMPDIR, filename))
+                return WsCommand.saveWebContent(path, File(TEMP, filename))
             }
 
             if (FileUtil.isFileReadable(path, 1)) return File(path)

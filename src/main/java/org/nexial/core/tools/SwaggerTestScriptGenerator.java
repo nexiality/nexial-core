@@ -17,14 +17,15 @@
 
 package org.nexial.core.tools;
 
-import static java.io.File.separator;
-import static org.nexial.core.NexialConst.*;
-import static org.nexial.core.NexialConst.ExitStatus.RC_BAD_CLI_ARGS;
-import static org.nexial.core.NexialConst.ExitStatus.RC_FAILURE_FOUND;
-import static org.nexial.core.NexialConst.Project.BATCH_EXT;
-import static org.nexial.core.NexialConst.Ws.*;
-import static org.nexial.core.excel.ExcelConfig.HEADER_TEST_STEP_DESCRIPTION;
-import static org.nexial.core.tools.CliUtils.newArgOption;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.Options;
+import org.apache.commons.lang3.StringUtils;
+import org.json.JSONArray;
+import org.json.JSONObject;
+import org.nexial.core.tools.swagger.*;
+import org.nexial.core.utils.JsonUtils;
+import org.yaml.snakeyaml.Yaml;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -36,15 +37,14 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.Options;
-import org.apache.commons.lang3.StringUtils;
-import org.json.JSONArray;
-import org.json.JSONObject;
-import org.nexial.core.tools.swagger.*;
-import org.nexial.core.utils.JsonUtils;
-import org.yaml.snakeyaml.Yaml;
+import static java.io.File.separator;
+import static org.nexial.core.NexialConst.*;
+import static org.nexial.core.NexialConst.ExitStatus.RC_FAILURE_FOUND;
+import static org.nexial.core.NexialConst.Project.BATCH_EXT;
+import static org.nexial.core.NexialConst.Ws.*;
+import static org.nexial.core.excel.ExcelConfig.HEADER_TEST_STEP_DESCRIPTION;
+import static org.nexial.core.tools.CliUtils.getCommandLine;
+import static org.nexial.core.tools.CliUtils.newArgOption;
 
 /**
  * <p>
@@ -166,8 +166,7 @@ public class SwaggerTestScriptGenerator {
      * @param args the command line arguments received from the main method.
      */
     private static void parseCLIOptions(String[] args) {
-        CommandLine cmd = CliUtils.getCommandLine(BATCH_NAME, args, cmdOptions);
-        if (cmd == null) {System.exit(RC_BAD_CLI_ARGS);}
+        CommandLine cmd = getCommandLine(BATCH_NAME, args, cmdOptions);
 
         swaggerPrefix = cmd.getOptionValue("p");
         if (swaggerPrefix.length() > PREFIX_MAX_LENGTH) {

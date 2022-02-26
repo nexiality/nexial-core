@@ -17,8 +17,6 @@
 
 package org.nexial.core.plugins.xml;
 
-import java.io.File;
-
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.After;
@@ -29,9 +27,10 @@ import org.nexial.commons.utils.ResourceUtils;
 import org.nexial.core.model.MockExecutionContext;
 import org.nexial.core.model.StepResult;
 
-import static java.io.File.separator;
-import static org.apache.commons.lang3.SystemUtils.JAVA_IO_TMPDIR;
+import java.io.File;
+
 import static org.nexial.core.NexialConst.DEF_FILE_ENCODING;
+import static org.nexial.core.NexialConst.TEMP;
 
 public class XmlCommandTest {
     String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
@@ -1939,7 +1938,7 @@ public class XmlCommandTest {
                       "    </wsdl:port>\n" +
                       "  </wsdl:service>\n" +
                       "</wsdl:definitions>\n";
-        File wsdlFile = new File(StringUtils.appendIfMissing(JAVA_IO_TMPDIR, separator) + "myWSDL.xsd");
+        File wsdlFile = new File(TEMP + "myWSDL.xsd");
         FileUtils.writeStringToFile(wsdlFile, wsdl, DEF_FILE_ENCODING);
 
         String requestXml =

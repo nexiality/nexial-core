@@ -17,11 +17,9 @@
 
 package org.nexial.core.plugins.json;
 
-import java.io.File;
-
+import com.google.gson.JsonArray;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.SystemUtils;
 import org.json.JSONObject;
 import org.junit.After;
 import org.junit.Assert;
@@ -30,13 +28,12 @@ import org.junit.Test;
 import org.nexial.core.model.MockExecutionContext;
 import org.nexial.core.model.StepResult;
 
-import com.google.gson.JsonArray;
+import java.io.File;
 
 import static java.io.File.separator;
-import static org.nexial.core.NexialConst.DEF_FILE_ENCODING;
+import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.NexialConst.Data.LAST_JSON_COMPARE_RESULT;
 import static org.nexial.core.NexialConst.Data.TREAT_JSON_AS_IS;
-import static org.nexial.core.NexialConst.GSON_COMPRESSED;
 
 public class JsonCommandTest {
     private MockExecutionContext context = new MockExecutionContext();
@@ -45,7 +42,7 @@ public class JsonCommandTest {
     @Before
     public void init() {
         if (context == null) { context = new MockExecutionContext(); }
-        destinationBase = SystemUtils.getJavaIoTmpDir().getAbsolutePath() + separator + "JsonCommandTest" + separator;
+        destinationBase = TEMP + "JsonCommandTest" + separator;
     }
 
     @After

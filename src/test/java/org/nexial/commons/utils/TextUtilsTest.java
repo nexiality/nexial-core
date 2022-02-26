@@ -19,19 +19,18 @@ package org.nexial.commons.utils;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.SystemUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.junit.Test;
 
 import java.io.File;
 import java.util.*;
 
-import static java.io.File.separator;
 import static org.junit.Assert.*;
 import static org.nexial.commons.utils.TextUtils.CleanNumberStrategy.CSV;
 import static org.nexial.commons.utils.TextUtils.DuplicateKeyStrategy.FavorFirst;
 import static org.nexial.commons.utils.TextUtils.DuplicateKeyStrategy.FavorLast;
 import static org.nexial.core.NexialConst.DEF_FILE_ENCODING;
+import static org.nexial.core.NexialConst.TEMP;
 
 public class TextUtilsTest {
 
@@ -480,8 +479,7 @@ public class TextUtilsTest {
                              "myValue1\n" +
                              "gotten=";
 
-        String tmpPropFile = StringUtils.appendIfMissing(SystemUtils.getJavaIoTmpDir().getAbsolutePath(), separator) +
-                             "testLoadProperties.properties";
+        String tmpPropFile = TEMP + "testLoadProperties.properties";
 
         File tmpProp = new File(tmpPropFile);
         FileUtils.writeStringToFile(tmpProp, propContent, DEF_FILE_ENCODING);

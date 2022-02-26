@@ -17,22 +17,17 @@
 
 package org.nexial.core.utils;
 
-import java.io.File;
-
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.RandomStringUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.junit.Assert;
 import org.junit.Test;
 
-import static java.io.File.separator;
-import static org.apache.commons.lang3.SystemUtils.JAVA_IO_TMPDIR;
+import java.io.File;
 
 public class CheckUtilsTest {
 
     @Test
     public void requiresReadableDirectory_on_newly_created_directory() throws Exception {
-        String testDir = StringUtils.appendIfMissing(JAVA_IO_TMPDIR, separator) + RandomStringUtils.random(5);
+        String testDir = ExecUtils.newRuntimeTempDir();
 
         try {
             Assert.assertTrue(new File(testDir).mkdirs());

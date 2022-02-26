@@ -105,7 +105,7 @@ public final class NexialConst {
     public static final String DEF_SPRING_XML = "/nexial.xml";
     public static final String ENV_NEXIAL_LIB = "NEXIAL_LIB";
     public static final String ENV_NEXIAL_HOME = "NEXIAL_HOME";
-    public static final String TEMP = StringUtils.appendIfMissing(System.getProperty("java.io.tmpdir"), separator);
+    public static final String TEMP = JAVA_IO_TMPDIR + separator;
     public static final String USERNAME = System.getProperty("user.name");
 
     // predefined variables/switches
@@ -2089,9 +2089,8 @@ public final class NexialConst {
             public static final String DEF_SYS_IMG_64 = SYSTEM_IMAGES_PREFIX + "android-30;google_apis;x86_64";
             public static final String DEF_SYS_IMG_32 = SYSTEM_IMAGES_PREFIX + "android-30;google_apis;x86";
 
-            public static final String CMDLINE_TOOLS_PATH = StringUtils.appendIfMissing(JAVA_IO_TMPDIR, separator) +
-                                                            "nexial" + separator + "android" + separator +
-                                                            "cmdline-tools";
+            public static final String CMDLINE_TOOLS_PATH = 
+                TEMP + "nexial" + separator + "android" + separator + "cmdline-tools";
             public static final String SDK_MANAGER = CMDLINE_TOOLS_PATH + separator + SDK_MANAGER_REL_PATH;
             public static final String SCRIPT_COPY_TO_ANDROID = "copy-to-android.";
         }

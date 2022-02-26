@@ -20,25 +20,18 @@ package org.nexial.core.tools
 import org.apache.commons.cli.CommandLine
 import org.apache.commons.cli.Options
 import org.apache.commons.io.FileUtils
-import org.apache.commons.lang3.StringUtils
-import org.apache.commons.lang3.SystemUtils.IS_OS_WINDOWS
 import org.apache.commons.lang3.exception.ExceptionUtils
-import org.nexial.commons.utils.RegexUtils
-import org.nexial.core.NexialConst.ExitStatus.RC_BAD_CLI_ARGS
+import org.nexial.core.NexialConst.Project.BATCH_EXT
 import org.nexial.core.NexialConst.TEMP
 import org.nexial.core.tools.CliConst.OPT_VERBOSE
 import org.nexial.core.tools.CliUtils.getCommandLine
 import org.nexial.core.tools.ProjectToolUtils.log
-import org.nexial.core.tools.inspector.InspectorConst.exit
 import org.nexial.core.utils.ConsoleUtils
-import org.nexial.core.utils.IOFilePathFilter
-import java.io.File
-import java.io.File.separator
+import org.nexial.core.utils.ExecUtils.findTempDirectories
 import java.util.*
 import java.util.Calendar.HOUR
 
 object TempCleanUp {
-    private const val filePattern = "(_nexial_)?[a-zA-Z]{5}"
 
     @JvmStatic
     fun main(args: Array<String>) {
@@ -50,15 +43,7 @@ object TempCleanUp {
     private fun deriveCommandLine(args: Array<String>): CommandLine {
         val cmdOptions = Options()
         cmdOptions.addOption(OPT_VERBOSE)
-
-        val programExt = if (IS_OS_WINDOWS) ".cmd" else ".sh"
-        val cmd = getCommandLine("nexial-clean$programExt", args, cmdOptions)
-        if (cmd == null) {
-            ConsoleUtils.error("unable to proceed... exiting")
-            exit(RC_BAD_CLI_ARGS)
-        }
-
-        return cmd
+        return getCommandLine("nexial-clean$BATCH_EXT", args, cmdOptions)
     }
 
     fun cleanTempFiles(verbose: Boolean) = cleanTempFiles(verbose, 24)
@@ -69,15 +54,9 @@ object TempCleanUp {
         val oneDayAgo = cal.time
 
         try {
-            IOFilePathFilter(true).filterFiles(TEMP).filter {
-                // filter directory with pattern `(_nexial_)?[a-zA-Z]{5}`
-                val dir = StringUtils.substringBetween(it, TEMP, separator)
-                RegexUtils.isExact(dir, filePattern) &&
-                isBefore(Date(File(TEMP + dir + separator).lastModified()), oneDayAgo)
-            }.forEach {
-                val dir = File(TEMP + StringUtils.substringBetween(it, TEMP, separator))
-                if (verbose) log("delete", dir.absolutePath)
-                if (!FileUtils.deleteQuietly(dir)) ConsoleUtils.error("unable to delete directory: ${dir.absolutePath}")
+            findTempDirectories().filter { isBefore(Date(it.lastModified()), oneDayAgo) }.forEach {
+                if (verbose) log("delete", it)
+                if (!FileUtils.deleteQuietly(it)) ConsoleUtils.error("unable to delete directory: $it")
             }
         } catch (e: Throwable) {
             ConsoleUtils.error("Unable to read or delete temp files from $TEMP, will try again later: " +

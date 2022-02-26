@@ -20,13 +20,11 @@ import org.apache.commons.cli.CommandLine
 import org.apache.commons.cli.Options
 import org.apache.commons.io.FileUtils
 import org.apache.commons.lang3.StringUtils
-import org.apache.commons.lang3.SystemUtils.IS_OS_WINDOWS
 import org.apache.poi.xssf.usermodel.XSSFWorkbook
 import org.nexial.commons.utils.TextUtils
 import org.nexial.core.CommandConst.CMD_MACRO
 import org.nexial.core.NexialConst.Data.SHEET_SYSTEM
 import org.nexial.core.NexialConst.Data.TEXT_DELIM
-import org.nexial.core.NexialConst.ExitStatus.RC_BAD_CLI_ARGS
 import org.nexial.core.NexialConst.ExitStatus.RC_EXCEL_IN_USE
 import org.nexial.core.NexialConst.Project.*
 import org.nexial.core.SystemVariables.getDefault
@@ -113,15 +111,7 @@ object MacroUpdater {
         cmdOptions.addOption(newArgOption("f", "file", "[REQUIRED] The macro file name to scan", true))
         cmdOptions.addOption(newArgOption("s", "sheet", "[REQUIRED] The macro sheet to search in", false))
         cmdOptions.addOption(newArgOption("m", "macroName", "[REQUIRED] The macro name to be refactored", false))
-
-        val programExt = if (IS_OS_WINDOWS) ".cmd" else ".sh"
-        val cmd = getCommandLine("nexial-macro-refactor$programExt", args, cmdOptions)
-        if (cmd == null) {
-            ConsoleUtils.error("unable to proceed... exiting")
-            exit(RC_BAD_CLI_ARGS)
-        }
-
-        return cmd
+        return getCommandLine("nexial-macro-refactor$BATCH_EXT", args, cmdOptions)
     }
 
     internal fun deriveMacroOptions(cmd: CommandLine): MacroUpdaterOptions {

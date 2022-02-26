@@ -18,7 +18,7 @@
 package org.nexial.core.model;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.junit.Assert;
 import org.junit.Test;
 import org.nexial.commons.utils.RegexUtils;
@@ -29,6 +29,8 @@ import java.io.IOException;
 import static java.io.File.separator;
 import static org.apache.commons.lang3.SystemUtils.JAVA_IO_TMPDIR;
 import static org.nexial.core.NexialConst.DEF_FILE_ENCODING;
+import static org.nexial.core.NexialConst.TEMP;
+import static org.nexial.core.utils.ExecUtils.newRuntimeTempDir;
 
 public class NexialFilterTest {
 
@@ -253,11 +255,11 @@ public class NexialFilterTest {
 
     @Test
     public void isReadableFileWithSize() throws IOException {
-        String tmpFilePath = JAVA_IO_TMPDIR + separator + "temp1.txt";
+        String tmpFilePath = TEMP + "temp1.txt";
         File tmpFile = new File(tmpFilePath);
         FileUtils.writeStringToFile(tmpFile, "", DEF_FILE_ENCODING);
 
-        String tmpDir = JAVA_IO_TMPDIR + separator + RandomStringUtils.randomAlphabetic(5);
+        String tmpDir = StringUtils.removeEnd(newRuntimeTempDir(), separator);
         File tmpPath = new File(tmpDir);
         tmpPath.mkdirs();
 

@@ -1322,7 +1322,7 @@ public class Browser implements ForcefulTerminate {
 
     @NotNull
     private File resolveBrowserLogFile(String logFileName) {
-        return new File(StringUtils.appendIfMissing(System.getProperty(TEST_LOG_PATH, JAVA_IO_TMPDIR), separator) +
+        return new File(StringUtils.appendIfMissing(System.getProperty(TEST_LOG_PATH, TEMP), separator) +
                         logFileName);
     }
 
