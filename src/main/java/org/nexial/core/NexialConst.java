@@ -1920,6 +1920,7 @@ public final class NexialConst {
         public static final String DROPDOWN_SELECT_ALL = "{ALL}";
         public static final String WEB_METRICS_JSON = "browser-metrics.json";
         public static final String WEB_METRICS_HTML = "browser-metrics.html";
+        public static final String WEB_EXECUTION_OUTPUT_JS = "execution_output.js";
         public static final String WEB_METRICS_TOKEN = "{METRICS}";
         public static final String WEB_METRICS_HTML_LOC = "/org/nexial/core/reports/";
         public static final String[] NON_PERF_METRICS_COMMAND_PREFIXES = {
