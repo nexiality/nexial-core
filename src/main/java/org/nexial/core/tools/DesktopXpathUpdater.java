@@ -44,6 +44,7 @@ import static java.io.File.separator;
 import static org.nexial.core.NexialConst.GSON;
 import static org.nexial.core.NexialConst.Project.BATCH_EXT;
 import static org.nexial.core.tools.CliConst.OPT_VERBOSE;
+import static org.nexial.core.tools.CliUtils.*;
 import static org.nexial.core.tools.CliUtils.newArgOption;
 
 /**
@@ -71,6 +72,8 @@ public class DesktopXpathUpdater {
     }
 
     protected void parseCLIOptions(CommandLine cmd) {
+        verbose = (cmd.hasOption("v"));
+
         if (!cmd.hasOption("t")) { throw new RuntimeException("[target] is a required argument and is missing"); }
 
         String target = cmd.getOptionValue("t");
@@ -164,12 +167,7 @@ public class DesktopXpathUpdater {
     private static DesktopXpathUpdater newInstance(String[] args) {
         DesktopXpathUpdater updater = new DesktopXpathUpdater();
         updater.initOptions();
-
-        CommandLine cmd = CliUtils.getCommandLine("nexial-desktop-xpath-update." + BATCH_EXT, args, updater.cmdOptions);
-        if (cmd == null) { throw new RuntimeException("Unable to parse commandline options"); }
-
-        updater.verbose = (cmd.hasOption("v"));
-        updater.parseCLIOptions(cmd);
+        updater.parseCLIOptions(getCommandLine("nexial-desktop-xpath-update." + BATCH_EXT, args, updater.cmdOptions));
         return updater;
     }
 

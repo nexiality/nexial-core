@@ -24,6 +24,7 @@ import org.apache.commons.cli.ParseException;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
@@ -196,7 +197,7 @@ public class Nexial {
     private int threadWaitCounter;
     private ExecutionMode executionMode;
 
-    enum ExecutionMode { EXECUTE_SCRIPT, EXECUTE_PLAN, INTERACTIVE, INTEGRATION, READY }
+    public enum ExecutionMode { EXECUTE_SCRIPT, EXECUTE_PLAN, INTERACTIVE, INTEGRATION, READY }
 
     @SuppressWarnings("PMD.DoNotCallSystemExit")
     public static void main(String[] args) {

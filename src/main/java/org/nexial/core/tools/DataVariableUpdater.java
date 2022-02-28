@@ -37,16 +37,17 @@ import org.nexial.core.excel.ExcelArea;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.InputFileUtils;
 
-import javax.validation.constraints.NotNull;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import javax.validation.constraints.NotNull;
 
 import static java.io.File.separator;
 import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.NexialConst.ExitStatus.RC_BAD_CLI_ARGS;
 import static org.nexial.core.NexialConst.ExitStatus.RC_EXCEL_IN_USE;
+import static org.nexial.core.NexialConst.Project.BATCH_EXT;
 import static org.nexial.core.excel.ExcelConfig.*;
 import static org.nexial.core.tools.CliConst.OPT_PREVIEW;
 import static org.nexial.core.tools.CliConst.OPT_VERBOSE;
@@ -97,12 +98,7 @@ final public class DataVariableUpdater {
         opts.addOption(newArgOption(OPT_PROJECT_PATH, "target", "Starting location to update data variables.", true));
         opts.addOption(newArgOption(OPT_VARIABLES_LIST, "data", "Data variables to replace in the form of " +
                                                                 "old_var=new_var;old_var2=new_var2", true));
-
-        final CommandLine cmd = getCommandLine(DataVariableUpdater.class.getName(), args, opts);
-        if (cmd == null) {
-            System.err.println("Unable to proceed, exiting...");
-            System.exit(RC_BAD_CLI_ARGS);
-        }
+        final CommandLine cmd = getCommandLine("nexial-variable-updates." + BATCH_EXT, args, opts);
 
         try {
             DataVariableUpdater updater = new DataVariableUpdater();

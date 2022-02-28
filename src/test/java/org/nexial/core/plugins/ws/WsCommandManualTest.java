@@ -17,10 +17,6 @@
 
 package org.nexial.core.plugins.ws;
 
-import java.io.File;
-
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.SystemUtils;
 import org.json.JSONObject;
 import org.junit.After;
 import org.junit.Assert;
@@ -28,6 +24,10 @@ import org.junit.Before;
 import org.junit.Test;
 import org.nexial.core.model.MockExecutionContext;
 import org.nexial.core.model.StepResult;
+
+import java.io.File;
+
+import static org.nexial.core.NexialConst.TEMP;
 
 /**
  * CANNOT AUTOMATE THIS TEST DUE TO MISSING CONNECTION TO PROXY SRV
@@ -125,7 +125,7 @@ public class WsCommandManualTest {
         String url = "https://s3-us-west-2.amazonaws.com/ep.qm/sentry-artifact/DataServices-BI_ReportUI/" +
                      "Regression.20190820_224530/captures/ReportServicesUI-plan.020%2CDS_2545.20190820_" +
                      "224532.001~001.xlsx_Scenario_A28.png";
-        File target = new File(StringUtils.appendIfMissing(SystemUtils.JAVA_IO_TMPDIR, File.separator) + "junk.png");
+        File target = new File(TEMP + "junk.png");
         File saveTo = WsCommand.saveWebContent(url, target);
 
         Assert.assertEquals(target.getAbsolutePath(), saveTo.getAbsolutePath());
@@ -135,7 +135,7 @@ public class WsCommandManualTest {
         url = "https://s3.console.aws.amazon.com/s3/object/ep.qm/sentry-artifact/FENIX-UI-REG-TEST/" +
               "qa2.20190820_180233/captures/ST_UI_Reg_Plan.005%252CST_Summary_Checkcode_UI.20190820_" +
               "182527.001~001.xlsx_Checkcode_Edit_Timepunches_A142.png?region=us-west-2&tab=overview";
-        target = new File(StringUtils.appendIfMissing(SystemUtils.JAVA_IO_TMPDIR, File.separator) + "junk2.png");
+        target = new File(TEMP + "junk2.png");
         saveTo = WsCommand.saveWebContent(url, target);
 
         Assert.assertEquals(target.getAbsolutePath(), saveTo.getAbsolutePath());

@@ -17,20 +17,18 @@
 
 package org.nexial.core.excel;
 
-import java.io.File;
-
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.SystemUtils;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-
 import org.nexial.core.NexialTestUtils;
 import org.nexial.core.excel.Excel.Worksheet;
 
-import static java.io.File.separator;
+import java.io.File;
+
 import static org.apache.poi.ss.usermodel.Row.MissingCellPolicy.CREATE_NULL_AS_BLANK;
+import static org.nexial.core.NexialConst.TEMP;
 
 public class ExcelSaveTest {
 	private File fixture;
@@ -38,7 +36,7 @@ public class ExcelSaveTest {
 	@Before
 	public void init() throws Exception {
 		File fixtureOrig = NexialTestUtils.getResourceFile(this.getClass(), this.getClass().getSimpleName() + ".xlsx");
-		fixture = new File(SystemUtils.getJavaIoTmpDir().getAbsolutePath() + separator + fixtureOrig.getName());
+		fixture = new File(TEMP + fixtureOrig.getName());
 
 		FileUtils.copyFile(fixtureOrig, fixture);
 		Assert.assertTrue(fixture.canRead());

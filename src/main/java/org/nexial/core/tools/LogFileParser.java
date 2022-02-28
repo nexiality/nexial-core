@@ -35,6 +35,7 @@ import java.util.List;
 import static org.nexial.core.NexialConst.DEF_FILE_ENCODING;
 import static org.nexial.core.NexialConst.ExitStatus.RC_BAD_CLI_ARGS;
 import static org.nexial.core.NexialConst.Project.BATCH_EXT;
+import static org.nexial.core.tools.CliUtils.*;
 
 public class LogFileParser {
     private static final String PIPE_SEP = "|";
@@ -116,11 +117,8 @@ public class LogFileParser {
     }
 
     private static LogFileParser newInstance(String[] args) {
-        CommandLine cmd = CliUtils.getCommandLine("nexial-log-parser." + BATCH_EXT, args, cmdOptions);
-        if (cmd == null) { return null; }
-
         LogFileParser parser = new LogFileParser();
-        parser.parseCLIOptions(cmd);
+        parser.parseCLIOptions(getCommandLine("nexial-log-parser." + BATCH_EXT, args, cmdOptions));
         return parser;
     }
 

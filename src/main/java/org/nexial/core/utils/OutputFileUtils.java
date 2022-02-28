@@ -20,7 +20,6 @@ package org.nexial.core.utils;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.ArrayUtils;
-import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.nexial.commons.utils.DateUtility;
@@ -42,8 +41,8 @@ import javax.annotation.Nonnull;
 import javax.validation.constraints.NotNull;
 
 import static java.io.File.separator;
-import static org.apache.commons.lang3.SystemUtils.JAVA_IO_TMPDIR;
 import static org.nexial.core.NexialConst.*;
+import static org.nexial.core.utils.ExecUtils.newRuntimeTempDir;
 
 /**
  * dedicated as a utility to decorate Nexial Excel files with additional runtime information.
@@ -482,7 +481,7 @@ public final class OutputFileUtils {
         }
 
         // use random alphabetic to avoid collision in parallel processing
-        return new File(JAVA_IO_TMPDIR + separator + RandomStringUtils.randomAlphabetic(5) + separator + filename);
+        return new File(newRuntimeTempDir() + filename);
     }
 
     @Nonnull

@@ -19,9 +19,7 @@ package org.nexial.core;
 
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.SystemUtils;
 import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.junit.After;
 import org.junit.Assert;
@@ -48,6 +46,7 @@ import static java.io.File.separator;
 import static org.nexial.core.NexialConst.Data.SHEET_MERGED_DATA;
 import static org.nexial.core.NexialConst.Project.DEF_DATAFILE_SUFFIX;
 import static org.nexial.core.NexialConst.Project.DEF_REL_LOC_OUTPUT;
+import static org.nexial.core.utils.ExecUtils.createUniqueTempDir;
 
 public class ExecutionInputPrepTest {
     private String projectHome;
@@ -60,8 +59,7 @@ public class ExecutionInputPrepTest {
     @Before
     public void setUp() throws Exception {
         System.out.println("creating test artifacts");
-        projectHome = SystemUtils.getJavaIoTmpDir().getAbsolutePath() + separator
-                      + "_nexial_" + RandomStringUtils.randomAlphabetic(5) + separator;
+        projectHome = createUniqueTempDir().getAbsolutePath() + separator;
 
         dirScript = new File(Project.appendScript(projectHome));
         FileUtils.forceMkdir(dirScript);
@@ -165,10 +163,7 @@ public class ExecutionInputPrepTest {
         execDef.parse();
 
         String baseScriptName = StringUtils.substringBefore(fileTestScript.getName(), ".xlsx");
-        // ExecutionInputPrep prep = new ExecutionInputPrep();
         String runId = ExecUtils.createTimestampString(null);
-
-        // IterationManager iterationManager = execDef.getTestData().getIterationManager();
 
         for (int iterationIndex = 1; iterationIndex <= 3; iterationIndex++) {
             Excel targetExcel = ExecutionInputPrep.prep(runId, execDef, iterationIndex);

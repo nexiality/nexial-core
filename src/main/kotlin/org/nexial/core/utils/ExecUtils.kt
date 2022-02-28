@@ -18,10 +18,15 @@
 package org.nexial.core.utils
 
 import org.apache.commons.collections4.CollectionUtils
+import org.apache.commons.io.FileUtils
+import org.apache.commons.io.filefilter.DirectoryFileFilter
+import org.apache.commons.lang3.RandomStringUtils
+import org.apache.commons.lang3.RandomStringUtils.randomAlphabetic
 import org.apache.commons.lang3.StringUtils
 import org.apache.commons.lang3.SystemUtils.*
 import org.nexial.commons.proc.ProcessInvoker
 import org.nexial.commons.proc.ProcessOutcome
+import org.nexial.commons.utils.RegexUtils
 import org.nexial.core.Nexial
 import org.nexial.core.NexialConst.*
 import org.nexial.core.NexialConst.Data.*
@@ -29,7 +34,11 @@ import org.nexial.core.NexialConst.Integration.*
 import org.nexial.core.NexialConst.Jenkins.*
 import org.nexial.core.NexialConst.Project.NEXIAL_HOME
 import org.nexial.core.SystemVariables.getDefault
+import java.io.File
+import java.io.File.separator
+import java.io.FileFilter
 import java.io.IOException
+import java.lang.System.currentTimeMillis
 import java.lang.management.ManagementFactory
 import java.util.*
 import java.util.jar.Manifest
@@ -39,6 +48,8 @@ object ExecUtils {
     const val PRODUCT = "nexial"
     const val JAVA_OPT = "JAVA_OPT"
     const val RUNTIME_ARGS = "runtime args"
+    private const val oldTempDirPattern = "(_${PRODUCT}_)?[a-zA-Z]{5}"
+    private const val tempDirPattern = "(_${PRODUCT}_)?[0-9]{5,}_[a-zA-Z]{10}"
 
     @JvmField
     val IGNORED_CLI_OPT = arrayListOf<String>(
@@ -84,14 +95,14 @@ object ExecUtils {
 
     @JvmStatic
     fun isRunningInJenkins() = StringUtils.isNotBlank(System.getenv()[OPT_JENKINS_URL]) &&
-                                       StringUtils.isNotBlank(System.getenv()[OPT_JENKINS_HOME]) &&
-                                       StringUtils.isNotBlank(System.getenv()[OPT_BUILD_ID]) &&
-                                       StringUtils.isNotBlank(System.getenv()[OPT_BUILD_URL])
+                               StringUtils.isNotBlank(System.getenv()[OPT_JENKINS_HOME]) &&
+                               StringUtils.isNotBlank(System.getenv()[OPT_BUILD_ID]) &&
+                               StringUtils.isNotBlank(System.getenv()[OPT_BUILD_URL])
 
     @JvmStatic
     fun isRunningInAdoAgent() = StringUtils.isNotBlank(System.getenv()["BUILD_REPOSITORY_URI"]) &&
-                                        StringUtils.isNotBlank(System.getenv()["AGENT_JOBNAME"]) &&
-                                        StringUtils.isNotBlank(System.getenv()["AGENT_ID"])
+                                StringUtils.isNotBlank(System.getenv()["AGENT_JOBNAME"]) &&
+                                StringUtils.isNotBlank(System.getenv()["AGENT_ID"])
 
     @JvmStatic
     fun isRunningInZeroTouchEnv(): Boolean = IS_RUNNING_IN_JUNIT || isRunningInCi()
@@ -113,7 +124,7 @@ object ExecUtils {
         var runId = System.getProperty(OPT_RUN_ID)
         if (StringUtils.isNotBlank(runId)) return runId
 
-        val rightNow = System.currentTimeMillis()
+        val rightNow = currentTimeMillis()
         runId = createTimestampString(rightNow)
 
         val runIdPrefix = StringUtils.defaultString(StringUtils.trim(System.getProperty(OPT_RUN_ID_PREFIX)))
@@ -262,9 +273,26 @@ object ExecUtils {
     }
 
     @JvmStatic
-    fun createTimestampString(timestamp: Long?) =
-        DF_TIMESTAMP.format(if (timestamp == null) Date() else Date(timestamp))
+    fun createTimestampString(timestamp: Long?): String =
+        DF_TIMESTAMP.format(if (timestamp == null || timestamp < 0) Date() else Date(timestamp))
 
+    @JvmStatic
+    fun createUniqueTempDir(): File {
+        val tempPath = File("${TEMP}_${PRODUCT}_${currentTimeMillis()}_${randomAlphabetic(10)}")
+        FileUtils.forceMkdir(tempPath)
+        return tempPath
+    }
+
+    @JvmStatic
+    fun findTempDirectories(): List<File> {
+        val directories = File(TEMP).listFiles(DirectoryFileFilter.INSTANCE as FileFilter)
+        return directories?.filter {
+            RegexUtils.isExact(it.name, oldTempDirPattern) || RegexUtils.isExact(it.name, tempDirPattern)
+        } ?: emptyList()
+    }
+
+    @JvmStatic
+    fun newRuntimeTempDir() = "${TEMP}${RandomStringUtils.randomAlphabetic(5)}$separator"
 
     private fun deriveWinParams(filePath: String) = arrayListOf("/C", "start", "\"\"", "\"" + filePath + "\"")
 }

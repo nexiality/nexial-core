@@ -62,7 +62,6 @@ import static java.lang.Boolean.FALSE;
 import static java.lang.Boolean.TRUE;
 import static java.lang.System.lineSeparator;
 import static java.util.regex.Pattern.CASE_INSENSITIVE;
-import static org.apache.commons.lang3.SystemUtils.JAVA_IO_TMPDIR;
 import static org.nexial.commons.utils.TextUtils.*;
 import static org.nexial.core.CommandConst.*;
 import static org.nexial.core.NexialConst.*;
@@ -1578,10 +1577,7 @@ public class BaseCommand implements NexialCommand {
     @NotNull
     protected File resolveFileResource(String resource) throws IOException {
         if (!ResourceUtils.isWebResource(resource)) { return new File(resource); }
-
-        String target = StringUtils.appendIfMissing(JAVA_IO_TMPDIR, separator) +
-                        StringUtils.substringAfterLast(resource, "/");
-        return WsCommand.saveWebContent(resource, new File(target));
+        return WsCommand.saveWebContent(resource, new File(TEMP + StringUtils.substringAfterLast(resource, "/")));
     }
 
     @NotNull

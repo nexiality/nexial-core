@@ -21,7 +21,6 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.LineIterator;
-import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.lang3.math.NumberUtils;
@@ -62,7 +61,6 @@ import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
 
 import static java.io.File.separator;
-import static java.io.File.separatorChar;
 import static java.lang.System.lineSeparator;
 import static org.apache.commons.lang3.SystemUtils.IS_OS_WINDOWS;
 import static org.nexial.core.NexialConst.Compare.*;
@@ -74,6 +72,7 @@ import static org.nexial.core.plugins.io.FileMeta.REGEX_FILE_META;
 import static org.nexial.core.plugins.io.IoAction.*;
 import static org.nexial.core.plugins.io.IoCommand.CompareMode.*;
 import static org.nexial.core.utils.CheckUtils.*;
+import static org.nexial.core.utils.ExecUtils.newRuntimeTempDir;
 
 public class IoCommand extends BaseCommand {
     protected static final LevenshteinDetailedDistance levenshtein = LevenshteinDetailedDistance.getDefaultInstance();
@@ -416,7 +415,7 @@ public class IoCommand extends BaseCommand {
         File zip;
         String tempDest = null;
         if (StringUtils.startsWith(zipFile, PREFIX_JAR)) {
-            tempDest = FileUtils.getTempDirectoryPath() + separatorChar + RandomStringUtils.randomAlphabetic(5);
+            tempDest = StringUtils.removeEnd(newRuntimeTempDir(), separator);
             try {
                 FileUtils.forceMkdir(new File(tempDest));
             } catch (IOException e) {
@@ -429,7 +428,7 @@ public class IoCommand extends BaseCommand {
             }
 
             String resourcePath = StringUtils.substringAfter(zipFile, PREFIX_JAR);
-            zip = new File(tempDest + separatorChar + StringUtils.substringAfterLast(resourcePath, "/"));
+            zip = new File(tempDest + separator + StringUtils.substringAfterLast(resourcePath, "/"));
         } else {
             zip = new File(zipFile);
         }

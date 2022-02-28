@@ -17,28 +17,26 @@
 
 package org.nexial.commons.proc;
 
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.RandomStringUtils;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Test;
+
 import java.io.File;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.ArrayUtils;
-import org.apache.commons.lang3.RandomStringUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Test;
-
-import static java.io.File.separator;
-import static org.apache.commons.lang3.SystemUtils.JAVA_IO_TMPDIR;
 import static org.nexial.core.NexialConst.DEF_FILE_ENCODING;
+import static org.nexial.core.NexialConst.TEMP;
 
 /**
  * MUST BE EXECUTED AS MANUAL TEST SINCE MANY OF THESE TESTS NEED TO BE COORDINATED WITH OTHER PROCESSES RUNNING ON OS
  */
 public class RuntimeUtilsManualTest {
-    private File tempFile1 = new File(StringUtils.appendIfMissing(JAVA_IO_TMPDIR, separator) + "dummy1");
+    private File tempFile1 = new File(TEMP + "dummy1");
 
     @After
     public void tearDown() throws Exception {

@@ -434,12 +434,18 @@
                 <value>hide-scrollbars</value>
 
                 <value>allow-http-screen-capture</value>
-                <value>allow-running-insecure-localhost</value>
+                
+                <!-- enable testing in lower environment, local network, and localhost -->
+                <value>allow-running-insecure-content</value>
                 <value>allow-insecure-localhost</value>
                 <value>disable-web-security</value>
                 <value>disable-site-isolation-trials</value>
+                <value>enable-local-file-accesses</value>
                 <value>allow-file-access-from-files</value>
+                <value>allow-external-pages</value>
                 <value>allow-running-insecure-content</value>
+                <value>allow-cross-origin-auth-prompt</value>
+                <value>allow-failed-policy-fetch-for-test</value>
 
                 <!-- Disable all chrome extensions -->
                 <value>disable-extensions</value>
@@ -455,6 +461,9 @@
                 <value>disable-breakpad</value>
                 <value>enable-ui-devtools</value>
 
+                <!-- Enables input event handling by the window manager. -->
+                <value>enable-input</value>
+                
                 <!-- media -->
                 <value>mute-audio</value>
 
@@ -489,6 +498,7 @@
                 <value>disable-client-side-phishing-detection</value>
 
                 <!-- force the chrome native prompt to go silent -->
+                <!-- disable prompt: "Known your location" -->
                 <value>enable-strict-powerful-feature-restrictions</value>
             </array>
         </property>

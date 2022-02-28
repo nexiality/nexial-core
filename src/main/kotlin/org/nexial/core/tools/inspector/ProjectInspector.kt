@@ -23,13 +23,10 @@ import org.apache.commons.cli.Options
 import org.apache.commons.io.FileUtils
 import org.apache.commons.io.filefilter.IOFileFilter
 import org.apache.commons.lang3.StringUtils
-import org.apache.commons.lang3.SystemUtils.IS_OS_WINDOWS
 import org.nexial.commons.utils.FileUtil
 import org.nexial.commons.utils.ResourceUtils
 import org.nexial.core.NexialConst.DEF_FILE_ENCODING
-import org.nexial.core.NexialConst.ExitStatus.RC_BAD_CLI_ARGS
-import org.nexial.core.NexialConst.Project.DEF_REL_LOC_ARTIFACT
-import org.nexial.core.NexialConst.Project.SCRIPT_FILE_EXT
+import org.nexial.core.NexialConst.Project.*
 import org.nexial.core.tools.CliConst.OPT_VERBOSE
 import org.nexial.core.tools.CliUtils.getCommandLine
 import org.nexial.core.tools.CliUtils.newArgOption
@@ -105,17 +102,7 @@ object ProjectInspector {
         cmdOptions.addOption(newArgOption("m", "viewMode",
                                           "Specify how output will be viewed (local or remote). Default is local",
                                           false))
-
-        val programExt = if (IS_OS_WINDOWS) ".cmd" else ".sh"
-        val cmd = getCommandLine("nexial-project-inspector$programExt", args, cmdOptions)
-        if (cmd == null) {
-            println()
-            InspectorLogger.error("Unable to proceed, exiting...")
-            println()
-            exit(RC_BAD_CLI_ARGS)
-        }
-
-        return cmd
+        return getCommandLine("nexial-project-inspector$BATCH_EXT", args, cmdOptions)
     }
 
     private fun deriveInspectorOptions(cmd: CommandLine): InspectorOptions {

@@ -96,6 +96,7 @@ open class InteractiveConsole {
         private const val HDR_STEPS = "${META_START}Step    $META_END"
         private const val HDR_SUMMARY = "${META_START}Summary $META_END"
         private const val HDR_EXCEPTION = "${META_START}ERROR   $META_END"
+        private const val HDR_READY =     "${META_START}Ready   $META_END"
 
         // private val SUB1_START = StringUtils.repeat(" ", HDR_ACTIVITY.length)
         private const val SUB1_START = "  "
@@ -113,7 +114,7 @@ open class InteractiveConsole {
         private const val MAX_LENGTH_SCRIPT = MAX_LENGTH_BASE - HDR_SCRIPT.length
         private val MAX_LENGTH_REF = HDR_STATS.length - SUB1_START.length - SUB2_END.length
         private val LEFT_MARGIN_L2_VAL = MAX_LENGTH_BASE - HDR_STATS.length
-        private val LEFT_MARGIN_L3_HEADER = MAX_LENGTH_BASE - SUB1_START.length
+        private const val LEFT_MARGIN_L3_HEADER = MAX_LENGTH_BASE - SUB1_START.length
 
         private val CONSOLE = Builder(Types.TERM).timestamping(false).build()
         private val CPRINTER = ColoredPrinter.Builder(1, false).timestamping(false).build()

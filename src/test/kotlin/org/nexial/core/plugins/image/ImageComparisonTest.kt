@@ -20,10 +20,10 @@ package org.nexial.core.plugins.image
 import com.github.romankh3.image.comparison.ImageComparison
 import com.github.romankh3.image.comparison.ImageComparisonUtil
 import com.github.romankh3.image.comparison.model.ImageComparisonState.MATCH
-import org.apache.commons.lang3.SystemUtils.JAVA_IO_TMPDIR
 import org.junit.Test
 import org.nexial.commons.utils.FileUtil
 import org.nexial.commons.utils.ResourceUtils
+import org.nexial.core.NexialConst.TEMP
 import java.io.File
 import java.io.File.separator
 import kotlin.test.assertFalse
@@ -34,7 +34,7 @@ class ImageComparisonTest {
 
     @Test
     fun testImageComparison() {
-        val resultBase = "$JAVA_IO_TMPDIR${separator}nexial${separator}img${separator}"
+        val resultBase = "${TEMP}nexial${separator}img${separator}"
         File(resultBase).mkdirs()
         FileUtil.deleteFiles(resultBase, ".+\\.png", false, false)
 

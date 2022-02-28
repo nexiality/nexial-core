@@ -320,13 +320,6 @@ public class MinifyGenerator {
                     link = link.replace("](../", "](" + DOCUMENTATION_URL + "/");
                 } else if (link.contains("](#")) {
                     link = link.replace(substringAfter(link, "#"), "");
-                    String operation = substringBetween(link, "[", "]");
-
-                    if (operation.startsWith("`") && operation.endsWith("`")) {operation = substringBetween(link, "`");}
-
-                    pageName = fileType.equals(EXPRESSIONS) ?
-                               getExpressionOperationFileName(pageName + MD_EXTENSION, operation) :
-                               getFunctionOperationName(operation);
 
                     link = link.replace("](#", "](" + DOCUMENTATION_URL + "/" + fileType + "/" + pageName + MINI + ")");
                     setUrlMapping(pageName, fileType, substringBetween(element, "#", ")"), link, fileName);

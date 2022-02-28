@@ -19,17 +19,16 @@ package org.nexial.core.tools.inspector
 
 import org.apache.commons.io.FileUtils
 import org.apache.commons.lang3.RandomStringUtils
-import org.apache.commons.lang3.SystemUtils.JAVA_IO_TMPDIR
 import org.junit.After
 import org.junit.Assert
 import org.junit.Test
+import org.nexial.core.NexialConst.TEMP
 import org.nexial.core.tools.inspector.CacheHelper.Companion.generateMD5
 import java.io.File
-import java.io.File.separator
 import java.nio.charset.Charset
 
 class MD5Test {
-    val subject = File(JAVA_IO_TMPDIR + separator + "dummy.txt")
+    val subject = File(TEMP + "dummy.txt")
     private val utf8 = Charset.forName("UTF-8")
     // wait at least this much time before generating MD5 on same file
     private val minWaitTime: Long = 650

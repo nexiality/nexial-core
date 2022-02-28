@@ -55,6 +55,7 @@ import static org.nexial.core.NexialConst.Project.COMMAND_JSON_FILE_NAME;
 import static org.nexial.core.NexialConst.RB;
 import static org.nexial.core.excel.ExcelConfig.*;
 import static org.nexial.core.tools.CliConst.OPT_VERBOSE;
+import static org.nexial.core.tools.CliUtils.*;
 import static org.nexial.core.tools.CliUtils.newArgOption;
 import static org.nexial.core.tools.CliUtils.newNonArgOption;
 import static org.nexial.core.tools.CommandDiscovery.GSON;
@@ -84,11 +85,8 @@ public class TestScriptUpdater {
     public void setTargetFiles(List<File> targetFiles) { this.targetFiles = targetFiles; }
 
     protected static TestScriptUpdater newInstance(String[] args) {
-        CommandLine cmd = CliUtils.getCommandLine("nexial-script-update." + BATCH_EXT, args, cmdOptions);
-        if (cmd == null) { return null; }
-
         TestScriptUpdater updater = new TestScriptUpdater();
-        updater.parseCLIOptions(cmd);
+        updater.parseCLIOptions(getCommandLine("nexial-script-update." + BATCH_EXT, args, cmdOptions));
         return updater;
     }
 

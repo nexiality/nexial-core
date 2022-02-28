@@ -20,11 +20,9 @@ package org.nexial.core.model;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.SystemUtils;
 import org.nexial.commons.utils.EnvUtils;
 import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.ExecutionThread;
-import org.nexial.core.NexialConst.BrowserType;
 import org.nexial.core.aws.NexialS3Helper;
 import org.nexial.core.logs.ExecutionLogger;
 import org.nexial.core.plugins.NexialCommand;
@@ -42,12 +40,11 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static java.io.File.separator;
-import static org.apache.commons.lang3.SystemUtils.JAVA_IO_TMPDIR;
-import static org.nexial.core.NexialConst.DEF_CHARSET;
+import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.NexialConst.Data.TEST_LOG_PATH;
-import static org.nexial.core.NexialConst.OPT_OUT_DIR;
 import static org.nexial.core.NexialConst.Project.DEF_REL_LOC_TEST_SCRIPT;
 import static org.nexial.core.NexialConst.Project.NEXIAL_HOME;
+import static org.nexial.core.utils.ExecUtils.createUniqueTempDir;
 
 public class MockExecutionContext extends ExecutionContext {
     protected String runId;
@@ -64,8 +61,8 @@ public class MockExecutionContext extends ExecutionContext {
 
         hostname = StringUtils.upperCase(EnvUtils.getHostName());
         runId = ExecUtils.createTimestampString(System.currentTimeMillis());
-        System.setProperty(TEST_LOG_PATH, JAVA_IO_TMPDIR);
-        System.setProperty(OPT_OUT_DIR, JAVA_IO_TMPDIR);
+        System.setProperty(TEST_LOG_PATH, TEMP);
+        System.setProperty(OPT_OUT_DIR, TEMP);
         executionLogger = new ExecutionLogger(this);
 
         if (withSpring) {
@@ -142,14 +139,11 @@ public class MockExecutionContext extends ExecutionContext {
     public NexialCommand findPlugin(String target) { return plugins.get(target); }
 
     public void newProject() throws IOException {
-        // String nexialHome = System.getProperty(NEXIAL_HOME, "/Users/ml093043/projects/nexial/nexial-core");
         String nexialHome = System.getProperty(NEXIAL_HOME, "/NON_EXISTING_PATH/nexial");
         System.setProperty(NEXIAL_HOME, nexialHome);
 
-        projectHome = SystemUtils.getJavaIoTmpDir().getAbsolutePath() + separator
-                      + "_nexial_" + RandomStringUtils.randomAlphabetic(5) + separator;
-        String testScriptPath = projectHome + DEF_REL_LOC_TEST_SCRIPT + "temp.xlsx";
-        File testScript = new File(testScriptPath);
+        projectHome = createUniqueTempDir().getAbsolutePath() + separator;
+        File testScript = new File(projectHome + DEF_REL_LOC_TEST_SCRIPT + "temp.xlsx");
         FileUtils.writeStringToFile(testScript, RandomStringUtils.random(100), DEF_CHARSET);
         project = TestProject.newInstance(testScript);
         project.setProjectHome(projectHome);

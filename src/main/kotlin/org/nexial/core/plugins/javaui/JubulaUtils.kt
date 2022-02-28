@@ -19,9 +19,9 @@ package org.nexial.core.plugins.javaui
 
 import org.apache.commons.lang3.StringUtils
 import org.apache.commons.lang3.SystemUtils.IS_OS_WINDOWS
-import org.apache.commons.lang3.SystemUtils.JAVA_IO_TMPDIR
 import org.nexial.commons.proc.ProcessInvoker.*
 import org.nexial.commons.utils.FileUtil
+import org.nexial.core.NexialConst.TEMP
 import org.nexial.core.plugins.external.ExternalCommand
 import org.nexial.core.plugins.javaui.JavaUIConst.Message.noJubulaHome
 import org.nexial.core.plugins.javaui.JavaUIConst.envJubulaHome
@@ -33,7 +33,7 @@ import java.io.File.separator
 
 object JubulaUtils {
 
-    private val logPath = StringUtils.appendIfMissing(JAVA_IO_TMPDIR, separator)
+    private val logPath = TEMP
 
     private fun prepExecEnv(procName: String, log: File, workingDirectory: File): MutableMap<String, String> {
         return mutableMapOf(

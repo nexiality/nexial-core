@@ -26,12 +26,12 @@ import org.junit.Test
 import org.nexial.commons.proc.ProcessInvoker
 import org.nexial.commons.utils.ResourceUtils
 import org.nexial.core.NexialConst.ImageCaption.CaptionPositions.*
+import org.nexial.core.NexialConst.TEMP
 import org.nexial.core.plugins.image.ImageCaptionHelper.CaptionModel
 import org.nexial.core.plugins.image.ImageCaptionHelper.addCaptionToImage
 import org.nexial.core.utils.ExecUtils
 import java.awt.Color.red
 import java.io.File
-import java.io.File.separator
 import java.io.IOException
 import javax.imageio.ImageIO
 
@@ -352,7 +352,7 @@ class ImageCaptionHelperManualTest {
 
     @Throws(IOException::class)
     private fun newBaseFixture(baseFixture: File, newFileName: String): File {
-        val img = File(SystemUtils.getJavaIoTmpDir().toString() + separator + newFileName)
+        val img = File(TEMP + newFileName)
         FileUtils.copyFile(baseFixture, img)
         return img
     }

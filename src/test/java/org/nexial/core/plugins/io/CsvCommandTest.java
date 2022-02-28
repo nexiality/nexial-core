@@ -17,6 +17,21 @@
 
 package org.nexial.core.plugins.io;
 
+import com.google.gson.JsonObject;
+import com.univocity.parsers.csv.CsvParser;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.text.similarity.LevenshteinDetailedDistance;
+import org.apache.commons.text.similarity.LevenshteinResults;
+import org.junit.*;
+import org.nexial.commons.utils.TextUtils;
+import org.nexial.core.model.ExecutionContext;
+import org.nexial.core.model.MockExecutionContext;
+import org.nexial.core.model.StepResult;
+import org.nexial.core.model.TestStep;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
@@ -25,39 +40,15 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.ArrayUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.SystemUtils;
-import org.apache.commons.text.similarity.LevenshteinDetailedDistance;
-import org.apache.commons.text.similarity.LevenshteinResults;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.nexial.commons.utils.TextUtils;
-import org.nexial.core.model.ExecutionContext;
-import org.nexial.core.model.MockExecutionContext;
-import org.nexial.core.model.StepResult;
-import org.nexial.core.model.TestStep;
-
-import com.google.gson.JsonObject;
-import com.univocity.parsers.csv.CsvParser;
-
-import static java.io.File.separator;
 import static org.nexial.core.NexialConst.Compare.*;
-import static org.nexial.core.NexialConst.DEF_FILE_ENCODING;
-import static org.nexial.core.NexialConst.OPT_OUT_DIR;
+import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.plugins.io.ComparisonResult.*;
 import static org.nexial.core.plugins.io.FileComparisonReport.GSON;
 import static org.nexial.core.plugins.io.IoCommand.levenshtein;
 
 public class CsvCommandTest {
     private static final String CLASSNAME = CsvCommandTest.class.getSimpleName();
-    private static final String TMP_PATH = SystemUtils.getJavaIoTmpDir().getAbsolutePath();
-    private static final String LOG_FILE = StringUtils.appendIfMissing(TMP_PATH, separator) + CLASSNAME + ".log";
+    private static final String LOG_FILE = TEMP + CLASSNAME + ".log";
 
     private static ExecutionContext context = new MockExecutionContext(true) {
         @Override
@@ -73,9 +64,7 @@ public class CsvCommandTest {
     private final String resourceBasePath = "/" + StringUtils.replace(this.getClass().getPackage().getName(), ".", "/");
 
     @BeforeClass
-    public static void init() {
-        System.setProperty(OPT_OUT_DIR, TMP_PATH);
-    }
+    public static void init() { System.setProperty(OPT_OUT_DIR, TEMP); }
 
     @AfterClass
     public static void afterClass() {
@@ -114,7 +103,7 @@ public class CsvCommandTest {
 
     @Test
     public void logComparisonReport() throws Exception {
-        String basePath = SystemUtils.getJavaIoTmpDir().getAbsolutePath() + separator + this.getClass().getSimpleName();
+        String basePath = TEMP + this.getClass().getSimpleName();
         File logFile = new File(basePath + ".log");
         File jsonFile = new File(basePath + ".json");
         FileUtils.deleteQuietly(logFile);
@@ -196,7 +185,7 @@ public class CsvCommandTest {
 
     @Test
     public void logComparisonReport_new() throws Exception {
-        String basePath = SystemUtils.getJavaIoTmpDir().getAbsolutePath() + separator + this.getClass().getSimpleName();
+        String basePath = TEMP + this.getClass().getSimpleName();
         File logFile = new File(basePath + ".log");
         File jsonFile = new File(basePath + ".json");
         FileUtils.deleteQuietly(logFile);

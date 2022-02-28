@@ -17,15 +17,8 @@
 
 package org.nexial.core.utils;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
+import com.google.gson.JsonElement;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.SystemUtils;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.After;
@@ -33,18 +26,22 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.google.gson.JsonElement;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 import static java.io.File.separator;
-import static org.nexial.core.NexialConst.DEF_FILE_ENCODING;
-import static org.nexial.core.NexialConst.GSON_COMPRESSED;
+import static org.nexial.core.NexialConst.*;
 
 public class JsonHelperTest {
     private String destinationBase;
 
     @Before
     public void setUp() {
-        destinationBase = SystemUtils.getJavaIoTmpDir().getAbsolutePath() + separator + "JsonHelperTest" + separator;
+        destinationBase = TEMP + "JsonHelperTest" + separator;
         new File(destinationBase).mkdirs();
     }
 

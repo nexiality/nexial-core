@@ -19,17 +19,13 @@ package org.nexial.core.tools.repair
 import org.apache.commons.cli.CommandLine
 import org.apache.commons.cli.Options
 import org.apache.commons.io.FileUtils
-import org.apache.commons.lang3.RandomStringUtils
 import org.apache.commons.lang3.StringUtils
-import org.apache.commons.lang3.SystemUtils.IS_OS_WINDOWS
 import org.apache.commons.lang3.time.StopWatch
 import org.apache.poi.ss.usermodel.CellType
 import org.nexial.commons.utils.FileUtil
 import org.nexial.core.NexialConst.Data.EXCEL_ROW_COL_MAX_LIMIT
 import org.nexial.core.NexialConst.ExitStatus.RC_BAD_CLI_ARGS
-import org.nexial.core.NexialConst.Project.NEXIAL_HOME
-import org.nexial.core.NexialConst.Project.SCRIPT_FILE_SUFFIX
-import org.nexial.core.NexialConst.TEMP
+import org.nexial.core.NexialConst.Project.*
 import org.nexial.core.excel.Excel
 import org.nexial.core.tools.CliConst.OPT_VERBOSE
 import org.nexial.core.tools.CliUtils.getCommandLine
@@ -40,6 +36,7 @@ import org.nexial.core.tools.repair.RepairExcels.ArtifactType
 import org.nexial.core.tools.repair.RepairExcels.getFileType
 import org.nexial.core.tools.repair.RepairExcels.lastColumnIdx
 import org.nexial.core.utils.ConsoleUtils
+import org.nexial.core.utils.ExecUtils.newRuntimeTempDir
 import org.springframework.util.CollectionUtils
 import java.io.File
 import java.io.File.separator
@@ -48,8 +45,8 @@ object RepairArtifact {
     private var searchFrom: String? = null
     private var previewDirectory: String? = null
     private val repaired = mutableListOf<RepairArtifactLog>()
-    private val newTemplateLoc = TEMP + RandomStringUtils.randomAlphabetic(5) + separator
-    private val tempDir = TEMP + RandomStringUtils.randomAlphabetic(5) + separator
+    private val newTemplateLoc = newRuntimeTempDir()
+    private val tempDir = newRuntimeTempDir()
 
     @JvmStatic
     fun main(args: Array<String>) {
@@ -62,14 +59,7 @@ object RepairArtifact {
         cmdOptions.addOption(OPT_VERBOSE)
         cmdOptions.addOption(newArgOption("t", "target", "[REQUIRED] File or directory to repair", true))
         cmdOptions.addOption(newArgOption("d", "destination", "[OPTIONAL] Destination for preview files", false))
-
-        val programExt = if (IS_OS_WINDOWS) ".cmd" else ".sh"
-        val cmd = getCommandLine("nexial-artifact-repair$programExt", args, cmdOptions)
-        if (cmd == null) {
-            ConsoleUtils.error("unable to proceed... exiting")
-            exit(RC_BAD_CLI_ARGS)
-        }
-        return cmd
+        return getCommandLine("nexial-artifact-repair$BATCH_EXT", args, cmdOptions)
     }
 
     private fun deriveOptions(cmd: CommandLine) {
