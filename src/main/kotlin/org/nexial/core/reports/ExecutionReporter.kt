@@ -21,7 +21,6 @@ import org.apache.commons.collections4.MapUtils
 import org.apache.commons.io.FileUtils
 import org.apache.commons.lang3.BooleanUtils
 import org.apache.commons.lang3.StringUtils
-import org.nexial.commons.utils.ResourceUtils
 import org.nexial.core.NexialConst.*
 import org.nexial.core.NexialConst.Exec.*
 import org.nexial.core.NexialConst.Web.WEB_METRICS_GENERATED
@@ -105,10 +104,6 @@ class ExecutionReporter {
         val content = templateEngine!!.process(executionTemplate!!, engineContext)
         return if (StringUtils.isNotBlank(content)) {
             FileUtils.writeStringToFile(output, content, DEF_FILE_ENCODING)
-            val executionOutputJsContent = ResourceUtils.loadResource(Web.WEB_METRICS_HTML_LOC
-                                                                         + Web.WEB_EXECUTION_OUTPUT_JS)
-            FileUtils.writeStringToFile(File(reportPath!! + Web.WEB_EXECUTION_OUTPUT_JS),
-                                        executionOutputJsContent, DEF_FILE_ENCODING)
             output
         } else {
             ConsoleUtils.error("No HTML content generated for this execution...")

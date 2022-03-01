@@ -94,7 +94,6 @@ public class ExecutionSummary {
     private String dataFile;
     private transient File testScript;
     private String testScriptLink;
-    private String executionOutputHtml;
 
     private String runHost;
     private String runHostOs;
@@ -206,7 +205,7 @@ public class ExecutionSummary {
         runHostOs = OS_ARCH + " " + OS_NAME + " " + OS_VERSION;
         runHost = StringUtils.upperCase(EnvUtils.getHostName());
 
-        // set up startTime now, just in case this execution didn't complete normally..
+        // set up startTime now, just in case this execution didn't complete normally...
         // then at least we'll have the time when this failed test started
         startTime = System.currentTimeMillis();
     }
@@ -221,10 +220,6 @@ public class ExecutionSummary {
             errorStackTrace = ExceptionUtils.getStackTrace(error);
         }
     }
-
-    public String getExecutionOutputHtml() { return executionOutputHtml; }
-
-    public void setExecutionOutputHtml(String executionOutputHtml) {this.executionOutputHtml = executionOutputHtml; }
 
     public int getIterationIndex() { return iterationIndex; }
 
@@ -561,7 +556,6 @@ public class ExecutionSummary {
         map.put("fail-fast", summary.failedFast + "");
         map.put("nexial version", NEXIAL_MANIFEST);
         map.put("java version", JAVA_VERSION);
-        map.put("execution summary", summary.executionOutputHtml);
 
         if (ExecUtils.isRunningInJenkins()) {
             map.put("JENKINS::build url", ExecUtils.currentCiBuildUrl());
@@ -571,7 +565,6 @@ public class ExecutionSummary {
         }
 
         // special case: log file is copied (NOT MOVED) to S3 with a special syntax here (markdown-like)
-        // createCell() function will made regard to this format to create appropriate hyperlink-friendly cells
         StringBuilder allLogs = new StringBuilder();
         if (StringUtils.isNotBlank(summary.executionLog)) {
             allLogs.append(summary.executionLog).append("|nexial log\n");

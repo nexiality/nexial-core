@@ -175,15 +175,6 @@ public final class ExecutionThread extends Thread {
             iterSummary.setIterationIndex(iterationIndex);
             iterSummary.setIterationTotal(totalIterations);
 
-            String executionOutputHtml = StringUtils.join(StringUtils.joinWith(separator,
-                                                              StringUtils.substringBefore(scriptLocation,
-                                                                                          StringUtils.join(separator,
-                                                                                                           "artifact",
-                                                                                                           separator)),
-                                                              "output", runId, "execution-output.html"),
-                                                          "|execution-output.html");
-            iterSummary.setExecutionOutputHtml(executionOutputHtml);
-
             try {
                 testScript = ExecutionInputPrep.prep(runId, execDef, iterationIndex);
                 iterSummary.setTestScript(testScript.getOriginalFile());

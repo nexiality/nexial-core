@@ -15,9 +15,9 @@
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.9.0/css/all.css" onerror="externalResourceNotFound()"/>
     <link rel="stylesheet" href="https://nexiality.github.io/documentation/assets/report/execution_summary.css" onerror="externalResourceNotFound()"/>
     <script src="https://ajax.aspnetcdn.com/ajax/jQuery/jquery-3.5.0.min.js" onerror="externalResourceNotFound()"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.0/dist/chart.min.js" onerror="externalResourceNotFound()"></script>
     <script src="https://nexiality.github.io/documentation/assets/report/execution_summary.js" onerror="externalResourceNotFound()"></script>
-    <script src="./execution_output.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.0/dist/chart.min.js"></script>
+    <script src="https://nexiality.github.io/documentation/assets/report/execution_output.js" onerror="externalResourceNotFound()"></script>
 </head>
 <body>
 <div class="title">
@@ -158,18 +158,16 @@
         <div class="chart">
             <div class="chart-container">
                 <table cellspacing="0" cellpadding="5" border="0" width="100%">
-                    <tbody>
-                    <tr>
-                        <td width="35%"><canvas id="resultsChart"></canvas></td>
-                    </tr>
-                    </tbody>
+                <tbody>
+                <tr>
+                    <td width="35%"><canvas id="resultsChart"></canvas></td>
+                </tr>
+                </tbody>
                 </table>
             </div>
             <div class="reset-buttons">
-                <div>
-                    <button id="resetResultsChart" onclick="reset()">Execution</button> &nbsp;
-                    <button id="rollUpResultsChart" onclick="rollUp()">Back</button>
-                </div>
+                <button id="resetResultsChart" onclick="reset()">Execution</button>&nbsp;&nbsp;
+                <button id="rollUpResultsChart" onclick="rollUp()">Back</button>
             </div>
         </div>
     </div>
@@ -519,13 +517,6 @@
 
 <script>if (loadErrorFound) { document.getElementById('loadError').style.display = 'block'; }</script>
 <script th:inline="javascript">
-   Chart.defaults.font = {
-      family: "Trebuchet MS , Arial, Helvetica, sans-serif",
-      size: 16,
-      weight: "bold",
-      fillStyle: "rgba(50,50,50,0.5)"
-   };
-
    const executionChart = new ExecutionChart([[${summary}]]);
    executionChart.initializeChart();
 </script>
