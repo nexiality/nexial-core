@@ -16,9 +16,10 @@
     <link rel="stylesheet" href="https://nexiality.github.io/documentation/assets/report/execution_summary.css" onerror="externalResourceNotFound()"/>
     <script src="https://ajax.aspnetcdn.com/ajax/jQuery/jquery-3.5.0.min.js" onerror="externalResourceNotFound()"></script>
     <script src="https://nexiality.github.io/documentation/assets/report/execution_summary.js" onerror="externalResourceNotFound()"></script>
+    <script src="./execution_output.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.0/dist/chart.min.js"></script>
 </head>
 <body>
-
 <div class="title">
     Execution Summary for <span data-th-utext="${summary.name}">PROJECT_PLAN_WITH_RUNID</span>
 </div>
@@ -51,106 +52,127 @@
         <i class="fas fa-plus-square" onclick="showSection(this)" title="restore this section"></i>
     </div>
 
-    <table id="execMeta" class="execMeta" cellpadding="4" cellspacing="3">
-        <tbody>
-        <tr>
-            <td class="section-header section-env"><i class="fas fa-laptop-code"></i></td>
-            <td class="section-detail detail-env">
-                <div class="execValue">
-                    <div class="execLabel">run from</div>
-                    <div class="content" style="text-align:left; margin-top:-5px;" data-th-utext="${execution.get('run from')}">HOSTNAME (HOST OS)</div>
+    <div id="execMeta" class="parent">
+        <div class="meta">
+            <table class="execMeta" cellpadding="0" cellspacing="0" style="width: 100%">
+                <tbody>
+                    <tr>
+                        <td class="section-header section-env" width="10%"><i class="fas fa-laptop-code"></i></td>
+                        <td class="section-detail detail-env">
+                            <div class="execValue">
+                                <div class="execLabel">run from</div>
+                                <div class="content" style="text-align:left; margin-top:-5px;" data-th-utext="${execution.get('run from')}">HOSTNAME (HOST OS)</div>
+                            </div>
+                            <div class="execValue">
+                                <div class="execLabel">run user</div>
+                                <div class="content" data-th-utext="${execution.get('run user')}">USER_NAME</div>
+                            </div>
+                            <div class="execValue">
+                                <div class="execLabel">nexial version</div>
+                                <div class="content" data-th-utext="${execution.get('nexial version')}">Nexial 1.8.162</div>
+                            </div>
+                            <div class="execValue">
+                                <div class="execLabel">java version</div>
+                                <div class="content" data-th-utext="${execution.get('java version')}">1.8.0_181</div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td rowspan="1" class="section-header section-time"><i class="fas fa-clock"></i></td>
+                        <td class="section-detail detail-time">
+                            <div class="execValue">
+                                <div class="execLabel">starts on</div>
+                                <div class="content" data-th-utext="${execution.get('start time')}">10/30/2018 01:31:39</div>
+                            </div>
+                            <div class="execValue">
+                                <div class="execLabel">ends on</div>
+                                <div class="content" data-th-utext="${execution.get('end time')}">10/30/2018 01:31:39</div>
+                            </div>
+                            <div class="execValue">
+                                <div class="execLabel">duration</div>
+                                <div class="content" data-th-utext="${execution.get('duration')}">00:01:29.693</div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="section-header section-exec"><i class="fas fa-cogs"></i></td>
+                        <td class="section-detail detail-exec">
+                            <div class="execValue">
+                                <div class="execLabel">Scenario Passed</div>
+                                <div class="content" data-th-utext="${execution.get('scenario passed')}">4 / 5</div>
+                            </div>
+                            <div class="execValue">
+                                <div class="execLabel">Total Steps</div>
+                                <div class="content" data-th-utext="${execution.get('total steps')}">94</div>
+                            </div>
+                            <div class="execValue">
+                                <div class="execLabel">Executed Steps</div>
+                                <div class="content" data-th-utext="${execution.get('executed steps')}">96 (102.13%)</div>
+                            </div>
+                            <div class="execValue execValuePass">
+                                <div class="execLabel">Passed</div>
+                                <div class="content" data-th-utext="${execution.get('passed')}">95 (101.06%)</div>
+                            </div>
+                            <div class="execValue" data-th-attrappend="class=${execution.get('executed steps') == execution.get('passed') ? '' : ' execValueFail'}">
+                                <div class="execLabel">Failed</div>
+                                <div class="content" data-th-utext="${execution.get('failed')}">1 (1.06%)</div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td rowspan="2" class="section-header section-ref"><i class="fas fa-file-invoice"></i></td>
+                        <td class="section-detail detail-ref">
+                            <div class="execValue exec-supplemental">
+                                <div class="execLabel">Analysis</div>
+                                <div class="links">
+                                    <th:block data-th-if="${hasSupplemental}">
+                                        <th:block data-th-if="${screenRecordings}"><a href="#recordings" class="supplemental-link">Screen Recordings</a></th:block>
+                                        <th:block data-th-if="${wsLogs}"><a href="#wsLogs" class="supplemental-link">Web Service/API</a></th:block>
+                                    </th:block>
+                                    <th:block data-th-unless="${hasSupplemental}">
+                                        Learn more about
+                                        <a href="https://nexiality.github.io/documentation/userguide/ImprovingExecutionReport.html">
+                                            Post-Execution Analysis
+                                        </a>
+                                    </th:block>
+                                    <th:block data-th-if="${browser_metrics_html}"><a data-th-href="${browser_metrics_html}">Browser Metrics</a></th:block>
+                                </div>
+                            </div>
+                            <div class="execValue execLog">
+                                <div class="execLabel">Logs</div>
+                                <th:block data-th-if="#{logs}" data-th-each="log : ${logs}"><a data-th-href="${log.value}" target="_nexial_link" data-th-utext="${log.key}">log file</a><br/></th:block>
+                            </div>
+                            <div class="execValue execArgs" data-th-if="${execution.get('runtime args')}">
+                                <div class="execLabel">Runtime Args</div>
+                                <pre data-th-utext="${execution.get('runtime args')}">-plan C:\projects\demos\notes\artifact\plan\notes-plan.xlsx</pre>
+                            </div>
+                            <div class="execValue execArgs" data-th-if="${execution.get('JAVA_OPT')}">
+                                <div class="execLabel">JAVA_OPT</div>
+                                <pre data-th-utext="${execution.get('JAVA_OPT')}">-Dnexial.generateOutput=TRUE -Dnexial.outputToCloud=TRUE</pre>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="chart">
+            <div class="chart-container">
+                <table cellspacing="0" cellpadding="5" border="0" width="100%">
+                    <tbody>
+                    <tr>
+                        <td width="35%"><canvas id="resultsChart"></canvas></td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="reset-buttons">
+                <div>
+                    <button id="resetResultsChart" onclick="reset()">Execution</button> &nbsp;
+                    <button id="rollUpResultsChart" onclick="rollUp()">Back</button>
                 </div>
-                <div class="execValue">
-                    <div class="execLabel">run user</div>
-                    <div class="content" data-th-utext="${execution.get('run user')}">USER_NAME</div>
-                </div>
-                <div class="execValue">
-                    <div class="execLabel">nexial version</div>
-                    <div class="content" data-th-utext="${execution.get('nexial version')}">Nexial 1.8.162</div>
-                </div>
-                <div class="execValue">
-                    <div class="execLabel">java version</div>
-                    <div class="content" data-th-utext="${execution.get('java version')}">1.8.0_181</div>
-                </div>
-            </td>
-        </tr>
-        <tr>
-            <td rowspan="1" class="section-header section-time"><i class="fas fa-clock"></i></td>
-            <td class="section-detail detail-time">
-                <div class="execValue">
-                    <div class="execLabel">starts on</div>
-                    <div class="content" data-th-utext="${execution.get('start time')}">10/30/2018 01:31:39</div>
-                </div>
-                <div class="execValue">
-                    <div class="execLabel">ends on</div>
-                    <div class="content" data-th-utext="${execution.get('end time')}">10/30/2018 01:31:39</div>
-                </div>
-                <div class="execValue">
-                    <div class="execLabel">duration</div>
-                    <div class="content" data-th-utext="${execution.get('duration')}">00:01:29.693</div>
-                </div>
-            </td>
-        </tr>
-        <tr>
-            <td class="section-header section-exec"><i class="fas fa-cogs"></i></td>
-            <td class="section-detail detail-exec">
-                <div class="execValue">
-                    <div class="execLabel">Scenario Passed</div>
-                    <div class="content" data-th-utext="${execution.get('scenario passed')}">4 / 5</div>
-                </div>
-                <div class="execValue">
-                    <div class="execLabel">Total Steps</div>
-                    <div class="content" data-th-utext="${execution.get('total steps')}">94</div>
-                </div>
-                <div class="execValue">
-                    <div class="execLabel">Executed Steps</div>
-                    <div class="content" data-th-utext="${execution.get('executed steps')}">96 (102.13%)</div>
-                </div>
-                <div class="execValue execValuePass">
-                    <div class="execLabel">Passed</div>
-                    <div class="content" data-th-utext="${execution.get('passed')}">95 (101.06%)</div>
-                </div>
-                <div class="execValue" data-th-attrappend="class=${execution.get('executed steps') == execution.get('passed') ? '' : ' execValueFail'}">
-                    <div class="execLabel">Failed</div>
-                    <div class="content" data-th-utext="${execution.get('failed')}">1 (1.06%)</div>
-                </div>
-            </td>
-        </tr>
-        <tr>
-            <td rowspan="2" class="section-header section-ref"><i class="fas fa-file-invoice"></i></td>
-            <td class="section-detail detail-ref">
-                <div class="execValue exec-supplemental">
-                    <div class="execLabel">Analysis</div>
-                    <div class="links">
-                        <th:block data-th-if="${hasSupplemental}">
-                            <th:block data-th-if="${screenRecordings}"><a href="#recordings" class="supplemental-link">Screen Recordings</a></th:block>
-                            <th:block data-th-if="${wsLogs}"><a href="#wsLogs" class="supplemental-link">Web Service/API</a></th:block>
-                        </th:block>
-                        <th:block data-th-unless="${hasSupplemental}">
-                            Learn more about
-                            <a href="https://nexiality.github.io/documentation/userguide/ImprovingExecutionReport.html">
-                                Post-Execution Analysis
-                            </a>
-                        </th:block>
-                        <th:block data-th-if="${browser_metrics_html}"><a data-th-href="${browser_metrics_html}">Browser Metrics</a></th:block>
-                    </div>
-                </div>
-                <div class="execValue execLog">
-                    <div class="execLabel">Logs</div>
-                    <th:block data-th-if="#{logs}" data-th-each="log : ${logs}"><a data-th-href="${log.value}" target="_nexial_link" data-th-utext="${log.key}">log file</a><br/></th:block>
-                </div>
-                <div class="execValue execArgs" data-th-if="${execution.get('runtime args')}">
-                    <div class="execLabel">Runtime Args</div>
-                    <pre data-th-utext="${execution.get('runtime args')}">-plan C:\projects\demos\notes\artifact\plan\notes-plan.xlsx</pre>
-                </div>
-                <div class="execValue execArgs" data-th-if="${execution.get('JAVA_OPT')}">
-                    <div class="execLabel">JAVA_OPT</div>
-                    <pre data-th-utext="${execution.get('JAVA_OPT')}">-Dnexial.generateOutput=TRUE -Dnexial.outputToCloud=TRUE</pre>
-                </div>
-            </td>
-        </tr>
-        </tbody>
-    </table>
+            </div>
+        </div>
+    </div>
 </div>
 
 <div data-th-if="${summary.error}">
@@ -163,6 +185,7 @@
     </div>
     <br/>
 </div>
+
 
 <div class="exec-summary" data-th-if="#{summary.nestedExecutions}" data-th-each="script,scriptStat : ${summary.nestedExecutions}"
      data-th-with="showPlan=${script.showPlan(summary, scriptStat.index)}">
@@ -237,77 +260,77 @@
                 </tr>
 
                 <th:block data-th-if="${script.nestedExecutions}" data-th-each="iteration : ${script.nestedExecutions}">
-                <tr data-th-class="'record iter ' + ${iteration.failCount > 0 ? 'hasFailure' : 'noFailure'}">
-                    <td colspan="3" class="value value-title" data-th-attr="title=${iteration.name}" data-th-with="referenceData=${@org.nexial.commons.utils.CollectionUtil@removeEmptyEntries(iteration.referenceData)}">
-                        <a target="_nexial_link" data-th-id="${iteration.testScript.name}" data-th-href="${iteration.testScriptLink}" data-th-utext="${'Execution Result (' + iteration.name + ')'}">myscript.001.xlsx</a>
-                        <i class="fas fa-copy" data-th-attr="onclick=|copyToClipboard('${#strings.escapeJava(iteration.testScriptLink)}')|" title="copy artifact location"></i>
-                        <div class="value-scriptRef" data-th-if="${referenceData.size() > 0}">
-                            <i class="fas fa-info-circle info" title="Reference Data labeled as nexial.scriptRef.*"></i>
-                            <table cellspacing="0" cellpadding="0">
-                            <th:block data-th-each="data : ${referenceData}">
-                            <th:block data-th-if="${data.key != 'JAVA_OPT' and data.key != 'runtime args' and data.key != 'Data File'}">
-                            <tr>
-                                <td class="label-ref" data-th-attr="title=${data.key}" data-th-utext="${data.key}">Tax Year</td>
-                                <td class="value-ref" data-th-attr="title=${data.value}" data-th-utext="${data.value}">2018</td>
-                            </tr>
-                            </th:block>
-                            </th:block>
-                            </table>
-                        </div>
-                    </td>
-                    <td class="value value-scenarioPassed" data-th-utext="${iteration.totalLevelPassed + ' / ' + iteration.nestedExecutions.size()}">1 / 2</td>
-                    <td class="value value-datetime exectime" data-th-utext="${#dates.format(new java.util.Date(iteration.startTime), 'yyyy/MM/dd HH:mm:ss')}">2018/12/16 12:53:21</td>
-                    <td class="value value-time value-tally exectime" data-th-utext="${#dates.format(#dates.create(0,0,0,0,0,0, (iteration.endTime - iteration.startTime)), 'HH:mm:ss')}">00:42:11</td>
-                    <td class="value value-num value-tally passfail" data-th-utext="${#numbers.formatInteger(iteration.executed, 1, 'DEFAULT')}">23456</td>
-                    <td class="value value-num value-tally passfail" data-th-utext="${#numbers.formatInteger(iteration.passCount, 1, 'DEFAULT')}">12345</td>
-                    <td class="value value-num value-tally passfail" data-th-utext="${#numbers.formatInteger(iteration.failCount, 1, 'DEFAULT')}">10001</td>
-                    <td class="value value-percent value-tally passfail" data-th-attrappend="class=${iteration.passCount == iteration.executed ? ' allPass' : ' hasFailure'}"
-                        data-th-with="success=${iteration.executed == 0 ? 0.00 : (iteration.passCount * 1.0 / iteration.executed) * 100}"
-                        data-th-utext="${#numbers.formatDecimal(success, 1, 2, 'DEFAULT')} + '%'">98.12%</td>
-                </tr>
+                    <tr data-th-class="'record iter ' + ${iteration.failCount > 0 ? 'hasFailure' : 'noFailure'}">
+                        <td colspan="3" class="value value-title" data-th-attr="title=${iteration.name}" data-th-with="referenceData=${@org.nexial.commons.utils.CollectionUtil@removeEmptyEntries(iteration.referenceData)}">
+                            <a target="_nexial_link" data-th-id="${iteration.testScript.name}" data-th-href="${iteration.testScriptLink}" data-th-utext="${'Execution Result (' + iteration.name + ')'}">myscript.001.xlsx</a>
+                            <i class="fas fa-copy" data-th-attr="onclick=|copyToClipboard('${#strings.escapeJava(iteration.testScriptLink)}')|" title="copy artifact location"></i>
+                            <div class="value-scriptRef" data-th-if="${referenceData.size() > 0}">
+                                <i class="fas fa-info-circle info" title="Reference Data labeled as nexial.scriptRef.*"></i>
+                                <table cellspacing="0" cellpadding="0">
+                                    <th:block data-th-each="data : ${referenceData}">
+                                        <th:block data-th-if="${data.key != 'JAVA_OPT' and data.key != 'runtime args' and data.key != 'Data File'}">
+                                            <tr>
+                                                <td class="label-ref" data-th-attr="title=${data.key}" data-th-utext="${data.key}">Tax Year</td>
+                                                <td class="value-ref" data-th-attr="title=${data.value}" data-th-utext="${data.value}">2018</td>
+                                            </tr>
+                                        </th:block>
+                                    </th:block>
+                                </table>
+                            </div>
+                        </td>
+                        <td class="value value-scenarioPassed" data-th-utext="${iteration.totalLevelPassed + ' / ' + iteration.nestedExecutions.size()}">1 / 2</td>
+                        <td class="value value-datetime exectime" data-th-utext="${#dates.format(new java.util.Date(iteration.startTime), 'yyyy/MM/dd HH:mm:ss')}">2018/12/16 12:53:21</td>
+                        <td class="value value-time value-tally exectime" data-th-utext="${#dates.format(#dates.create(0,0,0,0,0,0, (iteration.endTime - iteration.startTime)), 'HH:mm:ss')}">00:42:11</td>
+                        <td class="value value-num value-tally passfail" data-th-utext="${#numbers.formatInteger(iteration.executed, 1, 'DEFAULT')}">23456</td>
+                        <td class="value value-num value-tally passfail" data-th-utext="${#numbers.formatInteger(iteration.passCount, 1, 'DEFAULT')}">12345</td>
+                        <td class="value value-num value-tally passfail" data-th-utext="${#numbers.formatInteger(iteration.failCount, 1, 'DEFAULT')}">10001</td>
+                        <td class="value value-percent value-tally passfail" data-th-attrappend="class=${iteration.passCount == iteration.executed ? ' allPass' : ' hasFailure'}"
+                            data-th-with="success=${iteration.executed == 0 ? 0.00 : (iteration.passCount * 1.0 / iteration.executed) * 100}"
+                            data-th-utext="${#numbers.formatDecimal(success, 1, 2, 'DEFAULT')} + '%'">98.12%</td>
+                    </tr>
 
-                <th:block data-th-if="${iteration.nestedExecutions}" data-th-each="scenario : ${iteration.nestedExecutions}">
-                <tr data-th-class="'record scenario ' + ${scenario.failCount > 0 ? 'hasFailure' : 'noFailure'}">
-                    <td class="value spacer2">&nbsp;</td>
-                    <td colspan="3" class="value value-title" data-th-attr="title=${scenario.name}" data-th-with="referenceData=${@org.nexial.commons.utils.CollectionUtil@removeEmptyEntries(scenario.referenceData)}">
-                        <th:block data-th-utext="${scenario.name}">Scenario 123.7</th:block>
-                        <div class="value-scenarioRef" data-th-if="${referenceData.size() > 0}">
-                            <i class="fas fa-info-circle info" title="Reference Data labeled as nexial.scenarioRef.*"></i>
-                            <table cellspacing="0" cellpadding="0">
-                            <th:block data-th-each="data : ${referenceData}">
-                            <tr>
-                                <td class="label-ref" data-th-attr="title=${data.key}" data-th-utext="${data.key}">Tax Year</td>
-                                <td class="value-ref" data-th-attr="title=${data.value}" data-th-utext="${data.value}">2018</td>
-                            </tr>
-                            </th:block>
-                            </table>
-                        </div>
-                    </td>
-                    <td class="value value-datetime exectime" data-th-utext="${#dates.format(new java.util.Date(scenario.startTime), 'yyyy/MM/dd HH:mm:ss')}">2018/12/16 12:53:21</td>
-                    <td class="value value-time value-tally exectime" data-th-utext="${#dates.format(#dates.create(0,0,0,0,0,0, (scenario.endTime - scenario.startTime)), 'HH:mm:ss')}">00:42:11</td>
-                    <td class="value value-num value-tally passfail" data-th-utext="${#numbers.formatInteger(scenario.executed, 1, 'DEFAULT')}">23456</td>
-                    <td class="value value-num value-tally passfail" data-th-utext="${#numbers.formatInteger(scenario.passCount, 1, 'DEFAULT')}">12345</td>
-                    <td class="value value-num value-tally passfail" data-th-utext="${#numbers.formatInteger(scenario.failCount, 1, 'DEFAULT')}">10001</td>
-                    <td class="value value-percent value-tally passfail" data-th-attrappend="class=${scenario.passCount == scenario.executed ? ' allPass' : ' hasFailure'}"
-                        data-th-with="success=${scenario.executed == 0 ? 0.00 : (scenario.passCount * 1.0 / scenario.executed) * 100}"
-                        data-th-utext="${#numbers.formatDecimal(success, 1, 2, 'DEFAULT')} + '%'">98.12%</td>
-                </tr>
+                    <th:block data-th-if="${iteration.nestedExecutions}" data-th-each="scenario : ${iteration.nestedExecutions}">
+                        <tr data-th-class="'record scenario ' + ${scenario.failCount > 0 ? 'hasFailure' : 'noFailure'}">
+                            <td class="value spacer2">&nbsp;</td>
+                            <td colspan="3" class="value value-title" data-th-attr="title=${scenario.name}" data-th-with="referenceData=${@org.nexial.commons.utils.CollectionUtil@removeEmptyEntries(scenario.referenceData)}">
+                                <th:block data-th-utext="${scenario.name}">Scenario 123.7</th:block>
+                                <div class="value-scenarioRef" data-th-if="${referenceData.size() > 0}">
+                                    <i class="fas fa-info-circle info" title="Reference Data labeled as nexial.scenarioRef.*"></i>
+                                    <table cellspacing="0" cellpadding="0">
+                                        <th:block data-th-each="data : ${referenceData}">
+                                            <tr>
+                                                <td class="label-ref" data-th-attr="title=${data.key}" data-th-utext="${data.key}">Tax Year</td>
+                                                <td class="value-ref" data-th-attr="title=${data.value}" data-th-utext="${data.value}">2018</td>
+                                            </tr>
+                                        </th:block>
+                                    </table>
+                                </div>
+                            </td>
+                            <td class="value value-datetime exectime" data-th-utext="${#dates.format(new java.util.Date(scenario.startTime), 'yyyy/MM/dd HH:mm:ss')}">2018/12/16 12:53:21</td>
+                            <td class="value value-time value-tally exectime" data-th-utext="${#dates.format(#dates.create(0,0,0,0,0,0, (scenario.endTime - scenario.startTime)), 'HH:mm:ss')}">00:42:11</td>
+                            <td class="value value-num value-tally passfail" data-th-utext="${#numbers.formatInteger(scenario.executed, 1, 'DEFAULT')}">23456</td>
+                            <td class="value value-num value-tally passfail" data-th-utext="${#numbers.formatInteger(scenario.passCount, 1, 'DEFAULT')}">12345</td>
+                            <td class="value value-num value-tally passfail" data-th-utext="${#numbers.formatInteger(scenario.failCount, 1, 'DEFAULT')}">10001</td>
+                            <td class="value value-percent value-tally passfail" data-th-attrappend="class=${scenario.passCount == scenario.executed ? ' allPass' : ' hasFailure'}"
+                                data-th-with="success=${scenario.executed == 0 ? 0.00 : (scenario.passCount * 1.0 / scenario.executed) * 100}"
+                                data-th-utext="${#numbers.formatDecimal(success, 1, 2, 'DEFAULT')} + '%'">98.12%</td>
+                        </tr>
 
-                <th:block data-th-if="${scenario.nestedExecutions}" data-th-each="activity : ${scenario.nestedExecutions}">
-                <tr data-th-class="'record activity ' + ${activity.failCount > 0 ? 'hasFailure' : 'noFailure'}">
-                    <td colspan="2" class="value spacer2"></td>
-                    <td colspan="2" class="value value-title" data-th-utext="${activity.name}" data-th-attr="title=${activity.name}">Act 1</td>
-                    <td class="value value-datetime exectime" data-th-utext="${#dates.format(new java.util.Date(activity.startTime), 'yyyy/MM/dd HH:mm:ss')}">2018/12/16 12:53:21</td>
-                    <td class="value value-time exectime" data-th-utext="${#dates.format(#dates.create(0,0,0,0,0,0, (activity.endTime - activity.startTime)), 'HH:mm:ss')}">00:42:11</td>
-                    <td class="value value-num passfail" data-th-utext="${#numbers.formatInteger(activity.executed, 1, 'DEFAULT')}">23456</td>
-                    <td class="value value-num passfail" data-th-utext="${#numbers.formatInteger(activity.passCount, 1, 'DEFAULT')}">12345</td>
-                    <td class="value value-num passfail" data-th-utext="${#numbers.formatInteger(activity.failCount, 1, 'DEFAULT')}">10001</td>
-                    <td class="value value-percent passfail" data-th-attrappend="class=${activity.passCount == activity.executed ? ' allPass' : ' hasFailure'}"
-                        data-th-with="success=${activity.executed == 0 ? 0.00 : (activity.passCount * 1.0 / activity.executed) * 100}"
-                        data-th-utext="${#numbers.formatDecimal(success, 1, 2, 'DEFAULT')} + '%'">98.12%</td>
-                </tr>
-                </th:block>
-                </th:block>
+                        <th:block data-th-if="${scenario.nestedExecutions}" data-th-each="activity : ${scenario.nestedExecutions}">
+                            <tr data-th-class="'record activity ' + ${activity.failCount > 0 ? 'hasFailure' : 'noFailure'}">
+                                <td colspan="2" class="value spacer2"></td>
+                                <td colspan="2" class="value value-title" data-th-utext="${activity.name}" data-th-attr="title=${activity.name}">Act 1</td>
+                                <td class="value value-datetime exectime" data-th-utext="${#dates.format(new java.util.Date(activity.startTime), 'yyyy/MM/dd HH:mm:ss')}">2018/12/16 12:53:21</td>
+                                <td class="value value-time exectime" data-th-utext="${#dates.format(#dates.create(0,0,0,0,0,0, (activity.endTime - activity.startTime)), 'HH:mm:ss')}">00:42:11</td>
+                                <td class="value value-num passfail" data-th-utext="${#numbers.formatInteger(activity.executed, 1, 'DEFAULT')}">23456</td>
+                                <td class="value value-num passfail" data-th-utext="${#numbers.formatInteger(activity.passCount, 1, 'DEFAULT')}">12345</td>
+                                <td class="value value-num passfail" data-th-utext="${#numbers.formatInteger(activity.failCount, 1, 'DEFAULT')}">10001</td>
+                                <td class="value value-percent passfail" data-th-attrappend="class=${activity.passCount == activity.executed ? ' allPass' : ' hasFailure'}"
+                                    data-th-with="success=${activity.executed == 0 ? 0.00 : (activity.passCount * 1.0 / activity.executed) * 100}"
+                                    data-th-utext="${#numbers.formatDecimal(success, 1, 2, 'DEFAULT')} + '%'">98.12%</td>
+                            </tr>
+                        </th:block>
+                    </th:block>
                 </th:block>
             </table>
         </div>
@@ -383,27 +406,27 @@
             </div>
 
             <table id="wsSummaryTable" class="cell-border compact hover">
-            <thead>
-            <tr>
-                <th title="request date/time">req time</th>
-                <th>output</th>
-                <th>scenario</th>
-                <th>row</th>
-                <th>url</th>
-                <th>method</th>
-                <th title="request body length">req len</th>
-                <th>return code</th>
-                <th>return status</th>
-                <th title="Time-to-First-Byte">ttfb</th>
-                <th>elapsed time</th>
-                <th title="response body length">resp len</th>
-            </tr>
-            </thead>
-            <tbody>
-            <tr data-th-each="record : ${wsSummary.records}">
-                <th:block data-th-each="cell : ${record}"><td data-th-utext="${cell}">data</td></th:block>
-            </tr>
-            </tbody>
+                <thead>
+                <tr>
+                    <th title="request date/time">req time</th>
+                    <th>output</th>
+                    <th>scenario</th>
+                    <th>row</th>
+                    <th>url</th>
+                    <th>method</th>
+                    <th title="request body length">req len</th>
+                    <th>return code</th>
+                    <th>return status</th>
+                    <th title="Time-to-First-Byte">ttfb</th>
+                    <th>elapsed time</th>
+                    <th title="response body length">resp len</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr data-th-each="record : ${wsSummary.records}">
+                    <th:block data-th-each="cell : ${record}"><td data-th-utext="${cell}">data</td></th:block>
+                </tr>
+                </tbody>
             </table>
         </div>
 
@@ -432,7 +455,7 @@
         </div>
 
         <th:block data-th-if="${wsLogs.details}" data-th-each="wsDetail : ${wsLogs.details}">
-        <div class="container wsDetail" data-th-attrappend="class=${' wsMethod-' + wsDetail.method + ' wsReturn-' + wsDetail.returnCode}">
+            <div class="container wsDetail" data-th-attrappend="class=${' wsMethod-' + wsDetail.method + ' wsReturn-' + wsDetail.returnCode}">
                 <div class="caption">
                     <div class="caption-title">
                         <span data-th-class="${'method method-' + wsDetail.method}" data-th-utext="${wsDetail.method}"></span>
@@ -493,7 +516,19 @@
     Please check/adjust your Internet access and reload this page again.<br/><br/>
     Thank you.
 </div>
+
 <script>if (loadErrorFound) { document.getElementById('loadError').style.display = 'block'; }</script>
+<script th:inline="javascript">
+   Chart.defaults.font = {
+      family: "Trebuchet MS , Arial, Helvetica, sans-serif",
+      size: 16,
+      weight: "bold",
+      fillStyle: "rgba(50,50,50,0.5)"
+   };
+
+   const executionChart = new ExecutionChart([[${summary}]]);
+   executionChart.initializeChart();
+</script>
 
 <th:block data-th-if="${wsLogs}">
     <link rel="stylesheet" href="https://nexiality.github.io/documentation/assets/project/datatables.min.css" onerror="externalResourceNotFound()"/>
