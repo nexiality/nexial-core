@@ -13,8 +13,7 @@
         }
     </script>
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.9.0/css/all.css" onerror="externalResourceNotFound()"/>
-<!--    <link rel="stylesheet" href="https://nexiality.github.io/documentation/assets/report/execution_summary.css" onerror="externalResourceNotFound()"/>-->
-    <link rel="stylesheet" href="E:\Projects\nexial\nexial-docs\documentation\assets\report\execution_summary.css">
+    <link rel="stylesheet" href="https://nexiality.github.io/documentation/assets/report/execution_summary.css" onerror="externalResourceNotFound()"/>
     <script src="https://ajax.aspnetcdn.com/ajax/jQuery/jquery-3.5.0.min.js" onerror="externalResourceNotFound()"></script>
     <script src="https://nexiality.github.io/documentation/assets/report/execution_summary.js" onerror="externalResourceNotFound()"></script>
     <script src="./execution_output.js"></script>
@@ -157,13 +156,6 @@
             </table>
         </div>
         <div class="chart">
-            <div class="reset-buttons">
-                <div>
-                    <button id="resetResultsChart">Execution</button> &nbsp;
-                    <button id="rollUpResultsChart">Back</button>
-                </div>
-            </div>
-
             <div class="chart-container">
                 <table cellspacing="0" cellpadding="5" border="0" width="100%">
                     <tbody>
@@ -173,12 +165,15 @@
                     </tbody>
                 </table>
             </div>
+            <div class="reset-buttons">
+                <div>
+                    <button id="resetResultsChart" onclick="reset()">Execution</button> &nbsp;
+                    <button id="rollUpResultsChart" onclick="rollUp()">Back</button>
+                </div>
+            </div>
         </div>
     </div>
-
 </div>
-
-
 
 <div data-th-if="${summary.error}">
     <div class="errorSection">
