@@ -22,6 +22,8 @@ import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.Pair;
 import org.nexial.commons.utils.FileUtil;
 import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.ShutdownAdvisor;
@@ -164,7 +166,8 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
 
     protected File screenshot(String targetFile, WebElement element) {
         // also generate `OPT_LAST_SCREENSHOT_NAME` var in context
-        File imageFile = ScreenshotUtils.saveScreenshot(getDriver(), targetFile, BoundingRectangle.asRectangle(element));
+        File imageFile =
+            ScreenshotUtils.saveScreenshot(getDriver(), targetFile, BoundingRectangle.asRectangle(element));
         if (imageFile == null) {
             error("[WARN] Unable to capture screenshot via Winium driver");
             return null;
@@ -452,7 +455,9 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
             }
 
             xpath += "/*[@ControlType='ControlType.Menu'";
-            if (StringUtils.isNotBlank(previousMenuContainer)) { xpath += " and @Name='" + previousMenuContainer + "'";}
+            if (StringUtils.isNotBlank(previousMenuContainer)) {
+                xpath += " and @Name='" + previousMenuContainer + "'";
+            }
             xpath += "]";
 
             boolean useIndex = StringUtils.startsWith(item, CONTEXT_MENU_VIA_INDEX);
@@ -750,7 +755,7 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
 
     public StepResult clickByLocator(String locator) {
         WebElement elem = findElement(locator, 3);
-        if (elem == null) { return StepResult.fail("element NOT found via " + locator);}
+        if (elem == null) { return StepResult.fail("element NOT found via " + locator); }
         click(elem, locator);
         return StepResult.success();
     }
@@ -769,7 +774,7 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
         requiresNotBlank(locator, "Invalid locator", locator);
 
         WebElement elem = findElement(locator);
-        if (elem == null) { return StepResult.fail("element NOT found via " + locator);}
+        if (elem == null) { return StepResult.fail("element NOT found via " + locator); }
 
         clickOffset(elem, xOffset, yOffset);
         autoClearModalDialog(locator);
@@ -779,7 +784,7 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
     public StepResult clickElementOffset(String name, String xOffset, String yOffset) {
         DesktopElement component = getRequiredElement(name, null);
         WebElement element = component.getElement();
-        if (element == null) { return StepResult.fail("element NOT found via '" + name + "'");}
+        if (element == null) { return StepResult.fail("element NOT found via '" + name + "'"); }
 
         clickOffset(element, xOffset, yOffset);
         autoClearModalDialog(component);
@@ -790,7 +795,7 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
         requiresNotBlank(locator, "Invalid locator", locator);
 
         WebElement elem = findElement(locator);
-        if (elem == null) { return StepResult.fail("element NOT found via " + locator);}
+        if (elem == null) { return StepResult.fail("element NOT found via " + locator); }
 
         rightClickOffset(elem, xOffset, yOffset);
         autoClearModalDialog(locator);
@@ -800,7 +805,7 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
     public StepResult rightClickElementOffset(String name, String xOffset, String yOffset) {
         DesktopElement component = getRequiredElement(name, null);
         WebElement element = component.getElement();
-        if (element == null) { return StepResult.fail("element NOT found via '" + name + "'");}
+        if (element == null) { return StepResult.fail("element NOT found via '" + name + "'"); }
 
         rightClickOffset(element, xOffset, yOffset);
         autoClearModalDialog(component);
@@ -895,7 +900,7 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
 
     public StepResult doubleClickByLocator(String locator) {
         WebElement elem = findElement(locator);
-        if (elem == null) { return StepResult.fail("element NOT found via " + locator);}
+        if (elem == null) { return StepResult.fail("element NOT found via " + locator); }
         new Actions(winiumDriver).doubleClick(elem).perform();
         autoClearModalDialog(locator);
         return StepResult.success();
@@ -951,7 +956,7 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
         requiresNotBlank(locator, "Invalid locator", locator);
 
         WebElement element = findElement(locator);
-        if (element == null) { return StepResult.fail("element NOT found via " + locator);}
+        if (element == null) { return StepResult.fail("element NOT found via " + locator); }
 
         try {
             String text = isAttributeMatched(element, "ControlType", CHECK_BOX, RADIO) &&
@@ -988,8 +993,7 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
         requires(StringUtils.isNotBlank(locator), "invalid locator", locator);
         requires(StringUtils.isNotBlank(var), "invalid variable", var);
 
-        List<WebElement> matched = findElements(locator, 2500L);
-        int count = CollectionUtils.size(matched);
+        int count = countElements(locator);
         context.setData(var, count);
         return StepResult.success("Matched count of " + count + " saved to data " + var);
     }
@@ -1150,7 +1154,9 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
     public StepResult clearCombo(String name) {
         DesktopElement component = getRequiredElement(name, Any);
         if (component == null) { return StepResult.fail("Unable to derive component via '" + name + "'"); }
-        if (!component.getElementType().isCombo()) { return StepResult.fail("component '" + name + "' is NOT a Combo");}
+        if (!component.getElementType().isCombo()) {
+            return StepResult.fail("component '" + name + "' is NOT a Combo");
+        }
         return component.clearCombo();
     }
 
@@ -1266,7 +1272,7 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
             // move to first open via 'HOME'
             shortcuts.add("HOME");
 
-            // we should always found match, since we got a matching 'rowIndex'
+            // we should always find match, since we got a matching 'rowIndex'
             boolean foundMatch = false;
             for (int i = 0; i < list.getRowCount(); i++) {
                 WebElement elem = list.getDataElement(i);
@@ -1381,6 +1387,8 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
         if (textPane.getElement() == null) { textPane.refreshElement(); }
 
         Object result = context.getObjectData(var);
+        if (result == null) { fail("No element found via variable name '" + var + "'"); }
+
         if (result instanceof SeeknowData) {
             return DesktopElement.clickMatchedTextPaneRow(getDriver(), textPane.getElement(), (SeeknowData) result);
         }
@@ -1390,9 +1398,9 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
             if (result instanceof Collection) { return clickTextPaneRow(textPane, CollectionUtils.get(result, row)); }
             if (result.getClass().isArray()) { return clickTextPaneRow(textPane, Array.get(result, row)); }
         } catch (IllegalArgumentException e) {
-            fail("Variable '" + var + "' DOES NOT contains the EXPECTED TextPane row");
+            fail("Variable '" + var + "' DOES NOT contain the EXPECTED TextPane row");
         } catch (ArrayIndexOutOfBoundsException | NullPointerException e) {
-            fail("Variable '" + var + "' DOES NOT has index " + index);
+            fail("Variable '" + var + "' DOES NOT contain index " + index);
         }
 
         return StepResult.fail("Unable to resolve TextPane row from variable '" + var + "', index " + index);
@@ -1533,14 +1541,10 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
             return StepResult.success("0 element found by name '" + name + "'");
         }
 
-        List<WebElement> matches = getDriver().findElements(By.xpath(component.getXpath()));
-        if (CollectionUtils.isEmpty(matches)) {
-            context.setData(var, 0);
-            return StepResult.success("0 element found by name '" + name + "'");
-        }
-
-        context.setData(var, matches.size());
-        return StepResult.success(matches.size() + " element(s) found by name '" + name + "'");
+        String locator = component.getXpath();
+        int count = countElements(locator);
+        context.setData(var, count);
+        return StepResult.success(count + " element(s) found by name '" + name + "'");
     }
 
     public StepResult clickFirstMatchRow(String nameValues) {
@@ -1961,7 +1965,7 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
         return StringUtils.defaultIfEmpty(text, name);
     }
 
-    protected String[] formatActualHierData(Map<String, String> rowData) { return formatActualHierData(rowData.values());}
+    protected String[] formatActualHierData(Map<String, String> rowData) { return formatActualHierData(rowData.values()); }
 
     protected String[] formatActualHierData(Collection<String> data) {
         return data.stream().map(StringUtils::trim).toArray(String[]::new);
@@ -2030,7 +2034,7 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
         DesktopHierTable table = getCurrentHierTable();
         requiresNotNull(table, "No Hierarchical Table element referenced or scanned");
 
-        if (!table.getHeaders().contains(column)) {CheckUtils.fail("Specified column '" + column + "' not found.");}
+        if (!table.getHeaders().contains(column)) { CheckUtils.fail("Specified column '" + column + "' not found."); }
 
         Map<String, String> row = table.getHierRow(TextUtils.toList(matchBy, context.getTextDelim(), true));
         if (row == null) { CheckUtils.fail("Unable to fetch data from Hierarchical Table"); }
@@ -2133,7 +2137,7 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
         DesktopElement app = session.getApp();
         DesktopElement menuBarElement = app.getComponent(APP_MENUBAR);
         requiresNotNull(menuBarElement, "No menu component found for current desktop session");
-        if (menuBarElement instanceof DesktopMenuBar) {return (DesktopMenuBar) menuBarElement; }
+        if (menuBarElement instanceof DesktopMenuBar) { return (DesktopMenuBar) menuBarElement; }
 
         fail("Invalid component type for '" + APP_MENUBAR + "': " + menuBarElement.getClass());
         return null;
@@ -2207,10 +2211,10 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
         return application;
     }
 
-    @NotNull
-    protected FluentWait<WiniumDriver> newFluentWait() {
-        return newFluentWait(getDriver(), context.getIntData(POLL_WAIT_MS, getDefaultInt(POLL_WAIT_MS)));
-    }
+    protected int getPollWaitMs() { return context.getIntData(POLL_WAIT_MS, getDefaultInt(POLL_WAIT_MS)); }
+
+    // @NotNull
+    // protected FluentWait<WiniumDriver> newFluentWait() { return newFluentWait(getDriver(), getPollWaitMs()); }
 
     @NotNull
     protected static FluentWait<WiniumDriver> newFluentWait(WiniumDriver driver, long waitMs) {
@@ -2219,16 +2223,27 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
                                        .ignoreAll(Collections.singletonList(WebDriverException.class));
     }
 
-    public List<WebElement> findElements(String locator) { return findElements(locator, 1); }
-
-    public List<WebElement> findElements(String locator, int retryCount) {
+    @NotNull
+    protected Pair<FluentWait<WiniumDriver>, By> waiterAndByForElements(String locator, long maxWaitMs) {
         requiresNotBlank(locator, "invalid locator", locator);
-
         By findBy = findBy(locator);
         requiresNotNull(findBy, "Unknown/unsupported locator", locator);
 
+        // bound check
+        if (maxWaitMs < 1) { maxWaitMs = getPollWaitMs(); }
+
+        return new ImmutablePair<>(
+            newFluentWait(getDriver(), maxWaitMs).withMessage("find element(s) via locator " + locator),
+            findBy);
+    }
+
+    public List<WebElement> findElements(String locator) { return findElements(locator, 1); }
+
+    public List<WebElement> findElements(String locator, int retryCount) {
+        Pair<FluentWait<WiniumDriver>, By> parts = waiterAndByForElements(locator, -1);
+        FluentWait<WiniumDriver> waiter = parts.getKey();
+        By findBy = parts.getValue();
         int maxTries = Math.max(retryCount, 1);
-        FluentWait<WiniumDriver> waiter = newFluentWait().withMessage("find element(s) via locator " + locator);
 
         for (int i = 0; i < maxTries; i++) {
             // progressive wait longer at each loop
@@ -2248,49 +2263,18 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
         return null;
     }
 
-    public List<WebElement> findElements(String locator, long maxWaitMs) {
-        requiresNotBlank(locator, "invalid locator", locator);
-
-        By findBy = findBy(locator);
-        requiresNotNull(findBy, "Unknown/unsupported locator", locator);
-
-        try {
-            return newFluentWait(getDriver(), maxWaitMs).withMessage("find element(s) via locator " + locator)
-                                                        .until(driver -> driver.findElements(findBy));
-        } catch (NoSuchElementException e) {
-            return null;
-        }
-    }
-
-    protected WebElement findElement(String locator) { return findElement(locator, 3); }
-
-    protected WebElement findElement(String locator, int retryCount) {
-        List<WebElement> matches = findElements(locator, retryCount);
-        return CollectionUtils.isEmpty(matches) ? null : matches.get(0);
-    }
-
-    public WebElement findFirstElement(String locator) { return findElement(locator); }
-
     public List<WebElement> findElements(WebElement container, String locator) {
         return findElements(container, locator, 3);
     }
 
-    protected WebElement findElement(WebElement container, String locator) { return findElement(container, locator, 3);}
-
-    protected WebElement findElement(WebElement container, String locator, int retryCount) {
-        List<WebElement> matches = findElements(container, locator, retryCount);
-        return CollectionUtils.isNotEmpty(matches) ? matches.get(0) : null;
-    }
-
     public List<WebElement> findElements(WebElement container, String locator, int retryCount) {
         requiresNotNull(container, "Invalid container", container);
-        requiresNotBlank(locator, "invalid locator", locator);
 
-        By findBy = findBy(locator);
-        requiresNotNull(findBy, "Unknown/unsupported locator", locator);
-
+        Pair<FluentWait<WiniumDriver>, By> parts = waiterAndByForElements(locator, -1);
+        FluentWait<WiniumDriver> waiter = parts.getKey();
+        By findBy = parts.getValue();
+        boolean explicitWait = useExplicitWait();
         int maxTries = Math.max(retryCount, 1);
-        FluentWait<WiniumDriver> waiter = newFluentWait().withMessage("find element(s) via locator " + locator);
 
         for (int i = 0; i < maxTries; i++) {
             // progressive wait longer at each loop
@@ -2298,7 +2282,7 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
 
             List<WebElement> matches;
             try {
-                matches = useExplicitWait() ?
+                matches = explicitWait ?
                           waiter.until(driver -> container.findElements(findBy)) : container.findElements(findBy);
             } catch (Exception e) {
                 return null;
@@ -2310,6 +2294,37 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
         return null;
     }
 
+    public List<WebElement> findElements(String locator, long maxWaitMs) {
+        Pair<FluentWait<WiniumDriver>, By> parts = waiterAndByForElements(locator, maxWaitMs);
+        try {
+            return parts.getKey().until(driver -> driver.findElements(parts.getValue()));
+        } catch (NoSuchElementException e) {
+            return null;
+        }
+    }
+
+    protected int countElements(String locator) {
+        List<WebElement> matches = findElements(locator);
+        return CollectionUtils.isEmpty(matches) ? 0 : matches.size();
+    }
+
+    protected WebElement findElement(String locator) { return findElement(locator, 3); }
+
+    protected WebElement findElement(String locator, int retryCount) {
+        List<WebElement> matches = findElements(locator, retryCount);
+        return CollectionUtils.isEmpty(matches) ? null : matches.get(0);
+    }
+
+    protected WebElement findElement(WebElement container,
+                                     String locator) { return findElement(container, locator, 3); }
+
+    public WebElement findFirstElement(String locator) { return findElement(locator); }
+
+    protected WebElement findElement(WebElement container, String locator, int retryCount) {
+        List<WebElement> matches = findElements(container, locator, retryCount);
+        return CollectionUtils.isNotEmpty(matches) ? matches.get(0) : null;
+    }
+
     protected WebElement waitForElement(WebElement parent, String locator, long maxWaitMs) {
         requires(maxWaitMs > 0, "invalid maxWaitMs", maxWaitMs);
         requiresNotBlank(locator, "invalid locator", locator);
@@ -2317,7 +2332,8 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
         By by = findBy(locator);
         requiresNotNull(by, "Unsupported/unknown locator", locator);
 
-        FluentWait<WiniumDriver> waiter = newFluentWait(getDriver(), maxWaitMs);
+        FluentWait<WiniumDriver> waiter = newFluentWait(getDriver(), maxWaitMs)
+            .withMessage("find first element via locator " + locator);
         WebElement waitFor = parent != null ?
                              waiter.until(driver -> parent.findElement(by)) :
                              waiter.until(driver -> driver.findElement(by));
@@ -2472,7 +2488,7 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
     protected StepResult enforceCheckOrUncheckByLocator(String locator, boolean toCheck) {
         WebElement elem = findElement(locator);
 
-        if (elem == null) { return StepResult.fail("element NOT found via " + locator);}
+        if (elem == null) { return StepResult.fail("element NOT found via " + locator); }
 
         if (!DesktopUtils.isCheckboxOrRadio(elem)) {
             return StepResult.fail("Locator '%s' does not resolve to a CheckBox or Radio element", locator);
@@ -2526,7 +2542,7 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
     protected String findProcessId(WebElement elem) {
         String processId = elem.getAttribute("ProcessId");
         if (StringUtils.isBlank(processId)) { return processId; }
-        if (StringUtils.contains(processId, " (")) { processId = StringUtils.substringBefore(processId, " (");}
+        if (StringUtils.contains(processId, " (")) { processId = StringUtils.substringBefore(processId, " ("); }
         return processId;
     }
 
@@ -2627,7 +2643,7 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
 
     /**
      * (re)scan table structure and store table metadata to {@code var}.  This method will force rescanning to get the
-     * latest row count.  Consequently it will clear out any previously harvested rows.  The latest table metadata will
+     * latest row count.  Consequently, it will clear out any previously harvested rows.  The latest table metadata will
      * be stored as {@code var}.
      * <p>
      * As of v3.7, we will support HierTable (aka ControlType.Tree) as well
@@ -2674,7 +2690,7 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
 
     /**
      * (re)scan table structure and store table metadata to {@code var}.  This method will force rescanning to get the
-     * latest row count.  Consequently it will clear out any previously harvested rows.  The latest table metadata will
+     * latest row count.  Consequently, it will clear out any previously harvested rows.  The latest table metadata will
      * be stored as {@code var}.
      */
     protected StepResult saveHierTableMetaData(String var, String name) {
@@ -2717,7 +2733,7 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
         if (!isCurrentTable || context.getObjectData(CURRENT_DESKTOP_TABLE_ROW) == null) { return; }
 
         DesktopTableRow tableRow = (DesktopTableRow) context.getObjectData(CURRENT_DESKTOP_TABLE_ROW);
-        if (tableRow == null) { return; }
+        if (tableRow == null || MapUtils.isEmpty(tableRow.getColumns())) { return; }
 
         String currentEditColumn = context.getStringData(CURRENT_DESKTOP_TABLE_EDITABLE_COLUMN_NAME);
         if (StringUtils.isNotEmpty(currentEditColumn)) {
@@ -2737,7 +2753,7 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
 
     private void warnTypeMismatch(String name, DesktopElement component, String expectedTypeDesc) {
         ConsoleUtils.log(context.getRunId(),
-                         "WARNING: requested element '%s' is not a %s but a %s. This command might work anyways...",
+                         "WARNING: requested element '%s' is not a %s but %s. This command might work anyways...",
                          name, expectedTypeDesc, component.getElementType());
     }
 
