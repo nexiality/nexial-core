@@ -86,7 +86,13 @@ public class ExecutionSummary {
         (int) (CELL_WIDTH_MULTIPLIER * 10), // total pass
         (int) (CELL_WIDTH_MULTIPLIER * 10), // total fail
         (int) (CELL_WIDTH_MULTIPLIER * 10)); // success rate
-    protected static final String REGEX_LINKABLE_DATA = "^(http|/[0-9A-Za-z/_]+|[A-Za-z]\\:\\\\|\\\\\\\\.+).+\\|.+$";
+    // treat the following as hyperlink content:
+    //  - (URL)             http...
+    //  - (Windows path)    C:\..., D:\..., e:\...
+    //  - (*NIX/Mac path)   /..., //...
+    //  - (UNC)             \\\\....
+    //  - (relative path)   ./...
+    private static final String REGEX_LINKABLE_DATA = "^(http|/[0-9A-Za-z/_]+|[A-Za-z]\\:\\\\|\\\\\\\\.+|\\./).+\\|.+$";
     private static final int STEP_LENGTH = 5;
     private String name;
     private ExecutionLevel executionLevel;
@@ -539,23 +545,23 @@ public class ExecutionSummary {
 
     public static Map<String, String> gatherExecutionData(ExecutionSummary summary) {
         Map<String, String> map = new LinkedHashMap<>();
-        map.put("run from", ExecutionSummary.formatValue(summary.runHost, summary.runHostOs));
-        map.put("run user", ExecutionSummary.formatValue(summary.runUser));
-        map.put("time span", ExecutionSummary.formatValue(
+        map.put("run from", formatValue(summary.runHost, summary.runHostOs));
+        map.put("run user", formatValue(summary.runUser));
+        map.put("time span", formatValue(
             DateUtility.formatLongDate(summary.startTime) + " - " + DateUtility.formatLongDate(summary.endTime)));
-        map.put("start time", ExecutionSummary.formatValue(DateUtility.formatLongDate(summary.startTime)));
-        map.put("end time", ExecutionSummary.formatValue(DateUtility.formatLongDate(summary.endTime)));
-        map.put("duration", ExecutionSummary.formatValue(DateUtility.formatStopWatchTime(
-            summary.endTime - summary.startTime)));
-        map.put("scenario passed", ExecutionSummary.formatValue(summary.resolveTotalScenariosPassed()));
-        map.put("total steps", ExecutionSummary.formatValue(StringUtils.leftPad(
-            summary.totalSteps + "", STEP_LENGTH, " ")));
-        map.put("executed steps", ExecutionSummary.formatStat(summary.executed, summary.totalSteps));
-        map.put("passed", ExecutionSummary.formatStat(summary.passCount, summary.totalSteps));
-        map.put("failed", ExecutionSummary.formatStat(summary.failCount, summary.totalSteps));
+        map.put("start time", formatValue(DateUtility.formatLongDate(summary.startTime)));
+        map.put("end time", formatValue(DateUtility.formatLongDate(summary.endTime)));
+        map.put("duration", formatValue(DateUtility.formatStopWatchTime(summary.endTime - summary.startTime)));
+        map.put("scenario passed", formatValue(summary.resolveTotalScenariosPassed()));
+        map.put("total steps", formatValue(StringUtils.leftPad(summary.totalSteps + "", STEP_LENGTH, " ")));
+        map.put("executed steps", formatStat(summary.executed, summary.totalSteps));
+        map.put("passed", formatStat(summary.passCount, summary.totalSteps));
+        map.put("failed", formatStat(summary.failCount, summary.totalSteps));
         map.put("fail-fast", summary.failedFast + "");
         map.put("nexial version", NEXIAL_MANIFEST);
         map.put("java version", JAVA_VERSION);
+        // todo: need to support output to cloud scenario
+        map.put("execution summary", "./execution-output.html|Execution Summary");
 
         if (ExecUtils.isRunningInJenkins()) {
             map.put("JENKINS::build url", ExecUtils.currentCiBuildUrl());
@@ -846,6 +852,7 @@ public class ExecutionSummary {
         String dataValue = Objects.toString(content);
         if (RegexUtils.isExact(dataValue, REGEX_LINKABLE_DATA)) {
             String link = StringUtils.substringBefore(dataValue, "|");
+            if (StringUtils.startsWithAny(link, "./")) { link = StringUtils.removeStart(link, "./"); }
             String text = StringUtils.substringAfter(dataValue, "|");
             worksheet.setLinkCell(addr, link, text, styleName, EXEC_SUMMARY_HEIGHT);
         } else {
