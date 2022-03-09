@@ -275,7 +275,6 @@ dependencies {
 	compile("org.java-websocket:Java-WebSocket:1.5.+")
 
   	compile("org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version")
-	// implementation 'org.jetbrains.kotlin:kotlin-stdlib-jdk8'
 	implementation("org.jetbrains.kotlin:kotlin-reflect:$kotlin_version")
 
 	compile("com.googlecode.soundlibs:jlayer:1.0.1.4")
@@ -312,7 +311,6 @@ dependencies {
 	testCompile("org.springframework.boot:spring-boot-starter-test")
 	testCompile("junit:junit:${junitVersion}")
 	testCompile("org.jetbrains.kotlin:kotlin-test")
-	// testCompile("org.jetbrains.kotlin:kotlin-test-junit")
 }
 
 jar {
@@ -326,13 +324,13 @@ jar {
 }
 
 tasks.withType(Test) {
-	mkdir "${System.properties['user.home']}/tmp"
+	mkdir "${System.properties['user.home']}${System.properties['file.separator']}tmp"
 	maxParallelForks = 8
 	systemProperty 'nexial.home', projectDir
 	systemProperty 'user.country', 'US'
 	systemProperty 'user.language', 'en'
 	systemProperty 'user.timezone', 'PST'
-	systemProperty 'java.io.tmpdir', "${System.properties['user.home']}/tmp"
+	systemProperty 'java.io.tmpdir', "${System.properties['user.home']}${System.properties['file.separator']}tmp"
 }
 
 test {
