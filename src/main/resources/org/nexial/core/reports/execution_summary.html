@@ -17,7 +17,8 @@
     <script src="https://ajax.aspnetcdn.com/ajax/jQuery/jquery-3.5.0.min.js" onerror="externalResourceNotFound()"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.0/dist/chart.min.js" onerror="externalResourceNotFound()"></script>
     <script src="https://nexiality.github.io/documentation/assets/report/execution_summary.js" onerror="externalResourceNotFound()"></script>
-    <script src="https://nexiality.github.io/documentation/assets/report/execution_output.js" onerror="externalResourceNotFound()"></script>
+<!--    <script src="https://nexiality.github.io/documentation/assets/report/execution_output.js" onerror="externalResourceNotFound()"></script>-->
+    <script src="./execution_output.js"></script>
 </head>
 <body>
 <div class="title">
@@ -167,8 +168,8 @@
             </div>
             <div class="reset-buttons">
                 <span id="chartInstruction">click on the chart above to drill down</span>
-                <button id="resetResultsChart" onclick="reset()">Execution</button>&nbsp;&nbsp;
-                <button id="rollUpResultsChart" onclick="rollUp()">Back</button>
+                <button id="resetResultsChart">Execution</button>&nbsp;&nbsp;
+                <button id="rollUpResultsChart">Back</button>
             </div>
         </div>
     </div>
@@ -520,6 +521,9 @@
 <script th:inline="javascript">
    const executionChart = new ExecutionChart([[${summary}]]);
    executionChart.initializeChart();
+
+   const durationChart = new DurationChart([[${summary}]]);
+   durationChart.initializeChart();
 </script>
 
 <th:block data-th-if="${wsLogs}">

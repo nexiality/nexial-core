@@ -114,6 +114,7 @@ public class ExecutionSummary {
     private int passCount;
     private int failCount;
     private int warnCount;
+    private int skippedCount;
     private int executed;
     private String customHeader;
     private String customFooter;
@@ -286,21 +287,33 @@ public class ExecutionSummary {
 
     public void adjustPassCount(int changeBy) { this.passCount += changeBy; }
 
+    public void adjustSkipCount(int changeBy) { this.skippedCount += changeBy; }
+
     public void adjustExecutedSteps(int changeBy) { this.executed += changeBy; }
 
     public int getPassCount() { return passCount; }
 
     public void setPassCount(int passCount) { this.passCount = passCount; }
 
-    public void incrementPass() { this.passCount++; }
+    public int getSkippedCount() {
+        return skippedCount;
+    }
 
-    public int getFailCount() { return failCount; }
+    public void setSkippedCount(int skippedCount) {
+        this.skippedCount = skippedCount;
+    }
+
+    public void incrementPass()             { this.passCount++; }
+
+    public void incrementSkipped()             { this.skippedCount++; }
+
+    public int getFailCount()               { return failCount; }
 
     public void setFailCount(int failCount) { this.failCount = failCount; }
 
-    public void incrementFail() { this.failCount++; }
+    public void incrementFail()             { this.failCount++; }
 
-    public int getWarnCount() { return warnCount; }
+    public int getWarnCount()               { return warnCount; }
 
     public void setWarnCount(int warnCount) { this.warnCount = warnCount; }
 
@@ -391,6 +404,7 @@ public class ExecutionSummary {
         totalSteps = 0;
         executed = 0;
         passCount = 0;
+        skippedCount = 0;
         failCount = 0;
         warnCount = 0;
         totalLevelPassed = 0;
@@ -405,6 +419,7 @@ public class ExecutionSummary {
             totalSteps += nested.totalSteps;
             executed += nested.executed;
             passCount += nested.passCount;
+            skippedCount += nested.skippedCount;
             failCount += nested.failCount;
             warnCount += nested.warnCount;
             if (nested.executed == nested.passCount && nested.executed != 0) { totalLevelPassed++; }
@@ -471,6 +486,7 @@ public class ExecutionSummary {
         text.append(formatLabel("Steps")).append(formatValue(StringUtils.leftPad(totalSteps + "", STEP_LENGTH, " ")));
         text.append(formatLabel("Executed")).append(formatStat(executed, totalSteps));
         text.append(formatLabel("PASS")).append(formatStat(passCount, totalSteps));
+        text.append(formatLabel("SKIPPED")).append(formatStat(skippedCount, totalSteps));
         text.append(formatLabel("FAIL")).append(formatStat(failCount, totalSteps));
 
         return text.toString();
@@ -556,6 +572,7 @@ public class ExecutionSummary {
         map.put("total steps", formatValue(StringUtils.leftPad(summary.totalSteps + "", STEP_LENGTH, " ")));
         map.put("executed steps", formatStat(summary.executed, summary.totalSteps));
         map.put("passed", formatStat(summary.passCount, summary.totalSteps));
+        map.put("skipped", formatStat(summary.skippedCount, summary.totalSteps));
         map.put("failed", formatStat(summary.failCount, summary.totalSteps));
         map.put("fail-fast", summary.failedFast + "");
         map.put("nexial version", NEXIAL_MANIFEST);
@@ -981,6 +998,7 @@ public class ExecutionSummary {
         summary.setEndTime(source.endTime);
         summary.setTotalSteps(source.totalSteps);
         summary.setPassCount(source.passCount);
+        summary.setSkippedCount(source.skippedCount);
         summary.setFailCount(source.failCount);
         summary.setWarnCount(source.warnCount);
         summary.setExecuted(source.executed);

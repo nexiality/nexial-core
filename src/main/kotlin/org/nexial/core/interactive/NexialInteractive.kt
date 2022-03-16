@@ -464,6 +464,7 @@ class NexialInteractive {
 
             if (result.isSkipped) {
                 stepSummary.adjustTotalSteps(-1)
+                stepSummary.adjustSkipCount(1)
 
                 // special treatment for `base.section()`
                 if (StringUtils.equals(commandFQN, CMD_SECTION)) {
