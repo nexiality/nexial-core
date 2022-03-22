@@ -521,9 +521,6 @@
 <script th:inline="javascript">
    const executionChart = new ExecutionChart([[${summary}]]);
    executionChart.initializeChart();
-
-   const durationChart = new DurationChart([[${summary}]]);
-   durationChart.initializeChart();
 </script>
 
 <th:block data-th-if="${wsLogs}">
