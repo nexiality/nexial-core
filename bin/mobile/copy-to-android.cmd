@@ -13,7 +13,7 @@ if "%2"=="" (
 )
 
 set ANDROID_SDK_ROOT=%USERPROFILE%\.nexial\android\sdk
-cd /d %ANDROID_SDK_ROOT%\platform-tools
+cd /d "%ANDROID_SDK_ROOT%\platform-tools"
 adb push "%1" "/storage/self/primary/%2"
 if %ERRORLEVEL% EQU 0 (
 	exit /b 0

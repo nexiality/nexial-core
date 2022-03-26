@@ -70,9 +70,9 @@ if [ $rc -ne 0 ]; then
   exit $rc
 fi
 
-if [[ "${USER_NEXIAL_KEYSTORE}" != "" ]]; then
-  rm -f ${USER_NEXIAL_KEYSTORE} > /dev/null 2>&1
-fi
+# if [[ "${USER_NEXIAL_KEYSTORE}" != "" ]]; then
+#   rm -f ${USER_NEXIAL_KEYSTORE} > /dev/null 2>&1
+# fi
 
 # run nexial now
 echo

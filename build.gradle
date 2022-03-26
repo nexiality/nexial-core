@@ -253,7 +253,7 @@ dependencies {
 	// support: jms
 	compile("org.apache.geronimo.specs:geronimo-jms_1.1_spec:1.1.1")
 	compile("javax.transaction:jta:1.1")
-	compile("org.apache.activemq:activemq-client:5.16.+")
+	compile("org.apache.activemq:activemq-client:${activemqVersion}")
 	compile("com.rabbitmq.jms:rabbitmq-jms:1.+")
 
 	compile("javax.mail:javax.mail-api:${javaxMailVersion}")

@@ -74,9 +74,9 @@ set NEXIAL_RC=%ERRORLEVEL%
 if NOT ERRORLEVEL 0 goto :exit
 
 REM create keystore, if needed
-if NOT [%USER_NEXIAL_KEYSTORE%]==[] (
-    del /f /Q %USER_NEXIAL_KEYSTORE% 2>NUL
-)
+REM if NOT [%USER_NEXIAL_KEYSTORE%]==[] (
+REM     del /f /Q "%USER_NEXIAL_KEYSTORE%" 2>NUL
+REM )
 
 REM run nexial now
 set runNexial=%JAVA% -classpath "%PROJECT_CLASSPATH%;%NEXIAL_CLASSES%;%NEXIAL_LIB%\nexial*.jar;%USER_NEXIAL_JAR%\*;%NEXIAL_LIB%\*;%USER_NEXIAL_LIB%\*" %MAX_MEM% %JAVA_OPT% -Djava.library.path="%USER_NEXIAL_DLL%" org.nexial.core.Nexial %*
@@ -92,7 +92,7 @@ if exist %UPDATE_AGREED% (
     DEL %UPDATE_AGREED%
     echo.
     %JAVA% -jar %NEXIAL_INSTALLER_HOME%\lib\nexial-installer.jar upgradeNexial
-    cd %nexDirect%
+    cd /d %nexDirect%
 )
 
 set RESUME_FILE="%USER_NEXIAL_INSTALL%\resume-after-update"

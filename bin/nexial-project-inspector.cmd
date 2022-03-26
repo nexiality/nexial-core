@@ -18,8 +18,7 @@ if NOT ERRORLEVEL 0 goto :exit
 
 REM run now
 echo.
-%JAVA% -classpath %NEXIAL_CLASSES%;%NEXIAL_LIB%\nexial*.jar;%NEXIAL_LIB%\*;%USER_NEXIAL_LIB%\* %JAVA_OPT% org.nexial.core.tools.inspector.ProjectInspector %*
-
+%JAVA% -classpath "%NEXIAL_CLASSES%;%NEXIAL_LIB%\nexial*.jar;%NEXIAL_LIB%\*;%USER_NEXIAL_LIB%\*" %JAVA_OPT% org.nexial.core.tools.inspector.ProjectInspector %*
 endlocal
 exit /b 0
 goto :eof

@@ -11,7 +11,7 @@
     set NEXIAL_HOME=%~dp0..
     set NEXIAL_LIB=%NEXIAL_HOME%\lib
     set NEXIAL_CLASSES=%NEXIAL_HOME%\classes
-    set USER_NEXIAL_HOME="%USERPROFILE%\.nexial"
+    set USER_NEXIAL_HOME=%USERPROFILE%\.nexial
     set USER_NEXIAL_LIB=%USER_NEXIAL_HOME%\lib
     set USER_NEXIAL_JAR=%USER_NEXIAL_HOME%\jar
     set USER_NEXIAL_DLL=%USER_NEXIAL_HOME%\dll
@@ -36,13 +36,29 @@
     )
 
     REM android sdk
-    if not exist "%ANDROID_HOME%\nul" ( set ANDROID_HOME=%USER_NEXIAL_HOME%\android\sdk)
-    if not exist "%ANDROID_SDK_ROOT%\nul" ( set ANDROID_SDK_ROOT=%USER_NEXIAL_HOME%\android\sdk)
+    if defined ANDROID_HOME (
+        if exist "%ANDROID_HOME%\nul" (
+            REM echo found ANDROID_HOME set to %ANDROID_HOME% 
+        ) else (
+	        set ANDROID_HOME="%USER_NEXIAL_HOME%\android\sdk"
+        )
+    ) else (
+        set ANDROID_HOME="%USER_NEXIAL_HOME%\android\sdk"
+    )
+	if defined ANDROID_SDK_ROOT (
+	    if exist "%ANDROID_SDK_ROOT%\nul" (
+	        REM echo found ANDROID_SDK_ROOT set to %ANDROID_SDK_ROOT%
+        ) else (
+	        set ANDROID_SDK_ROOT="%USER_NEXIAL_HOME%\android\sdk"
+	    )
+	) else (
+        set ANDROID_SDK_ROOT="%USER_NEXIAL_HOME%\android\sdk"
+	)
 
     REM javaui/jubula
     if not exist %JUBULA_HOME%\nul ( set JUBULA_HOME="%ProgramFiles%\jubula_8.8.0.034")
 
-    mkdir %USERPROFILE%\tmp 2> NUL
+    mkdir "%USERPROFILE%\tmp" 2> NUL
 
     REM setting Java runtime options and classpath
     set JAVA_OPT=%JAVA_OPT% -ea

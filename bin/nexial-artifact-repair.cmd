@@ -2,7 +2,7 @@
 REM --------------------------------------------------------------------------------
 REM environment variable guide
 REM --------------------------------------------------------------------------------
-REM JAVA_HOME           - home directory of a valid JDK installation (1.6 or above)
+REM JAVA_HOME           - home directory of a valid JDK installation (1.8 or above)
 REM PROJECT_HOME        - home directory of your project.
 REM NEXIAL_OUT          - the output directory
 REM FIREFOX_BIN         - the full path of firefox.exe
@@ -35,7 +35,7 @@ REM echo Runtime Option: %JAVA_OPT%
 echo.
 
 REM run now
-%JAVA% -classpath %NEXIAL_CLASSES%;%NEXIAL_LIB%\nexial*.jar;%NEXIAL_LIB%\*;%USER_NEXIAL_LIB%\* %JAVA_OPT% org.nexial.core.tools.repair.RepairArtifact %*
+%JAVA% -classpath "%NEXIAL_CLASSES%;%NEXIAL_LIB%\nexial*.jar;%NEXIAL_LIB%\*;%USER_NEXIAL_LIB%\*" %JAVA_OPT% org.nexial.core.tools.repair.RepairArtifact %*
 
 endlocal
 exit /b 0

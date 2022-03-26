@@ -50,7 +50,7 @@ if not "%EMULATOR_BACK_CAM%"=="" ( set EMU_OPTIONS=%EMU_OPTIONS% -camera-back %E
 if not "%EMULATOR_PHONE%"=="" ( set EMULATOR_PHONE_NUMBER=%EMULATOR_PHONE%)
 set EMU_OPTIONS=%EMU_OPTIONS% -phone-number %EMULATOR_PHONE_NUMBER%
 
-cd /d %ANDROID_SDK_ROOT%\emulator
+cd /d "%ANDROID_SDK_ROOT%\emulator"
 emulator -avd %1 -ranchu -allow-host-audio %EMU_OPTIONS%
 
 :end

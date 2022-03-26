@@ -12,11 +12,11 @@ if EXIST "%JAVA_HOME%\bin\keytool.exe" (
 )
 
 echo.
-del /f %USER_NEXIAL_KEYSTORE% 2>NUL
+del /f "%USER_NEXIAL_KEYSTORE%" 2>NUL
 %KEYGEN_HOME%\keytool -genkey ^
 	-keyalg RSA ^
 	-validity 3650 ^
-	-keystore %USER_NEXIAL_KEYSTORE% ^
+	-keystore "%USER_NEXIAL_KEYSTORE%" ^
 	-storepass "nexialrocks" ^
 	-keypass "nexialrocks" ^
 	-alias "default" ^

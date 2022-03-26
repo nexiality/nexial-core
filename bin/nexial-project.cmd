@@ -160,11 +160,11 @@ if "%1"=="" goto :reportBadInputAndExit
 	)
 
 :doneCopy
-	cd %PROJECT_HOME%
+	cd /d %PROJECT_HOME%
 	echo ^>^> DONE - nexial automation project created as follows:
 	echo.
 
-	cd %PROJECT_HOME%
+	cd /d %PROJECT_HOME%
 	cd
 	dir /s /b /on *.xlsx *.properties *.cmd
 
