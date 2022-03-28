@@ -22,7 +22,7 @@ if "%1"=="" goto :reportBadInputAndExit
 	if not exist "%USER_NEXIAL_JAR%" (
 	    echo.
 		echo ^>^> create missing directory - %USER_NEXIAL_JAR%
-		mkdir %USER_NEXIAL_JAR% 2>NUL
+		mkdir "%USER_NEXIAL_JAR%" 2>NUL
 	)
 
 :copyJars

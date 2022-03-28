@@ -19,7 +19,7 @@ if NOT ERRORLEVEL 0 goto :exit
 echo.
 
 REM run now
-%JAVA% -classpath %NEXIAL_CLASSES%;%NEXIAL_LIB%\nexial*.jar;%NEXIAL_LIB%\*;%USER_NEXIAL_LIB%\* %JAVA_OPT% org.nexial.core.tools.appium.AndroidSetup %*
+%JAVA% -classpath "%NEXIAL_CLASSES%;%NEXIAL_LIB%\nexial*.jar;%NEXIAL_LIB%\*;%USER_NEXIAL_LIB%\*" %JAVA_OPT% org.nexial.core.tools.appium.AndroidSetup %*
 
 endlocal
 exit /b 0

@@ -16,8 +16,7 @@ call :resolveEnv
 if NOT ERRORLEVEL 0 goto :exit
 
 REM run now
-%JAVA% -classpath %NEXIAL_CLASSES%;%NEXIAL_LIB%\nexial*.jar;%NEXIAL_LIB%\*;%USER_NEXIAL_LIB%\* %JAVA_OPT% org.nexial.core.tools.NexialSetup %*
-
+%JAVA% -classpath "%NEXIAL_CLASSES%;%NEXIAL_LIB%\nexial*.jar;%NEXIAL_LIB%\*;%USER_NEXIAL_LIB%\*" %JAVA_OPT% org.nexial.core.tools.NexialSetup %*
 exit /b 0
 goto :eof
 

@@ -12,7 +12,7 @@ REM ----------------------------------------------------------------------------
 
 set ANDROID_SDK_ROOT=%USERPROFILE%\.nexial\android\sdk
 
-cd /d %ANDROID_SDK_ROOT%\platform-tools
+cd /d "%ANDROID_SDK_ROOT%\platform-tools"
 adb kill-server
 adb start-server
 adb devices -l

@@ -3,7 +3,7 @@
 # --------------------------------------------------------------------------------
 # environment variable guide
 # --------------------------------------------------------------------------------
-# JAVA_HOME           - home directory of a valid JDK installation (1.6 or above)
+# JAVA_HOME           - home directory of a valid JDK installation (1.8 or above)
 # --------------------------------------------------------------------------------
 
 function resolveOSXAppPath() {
