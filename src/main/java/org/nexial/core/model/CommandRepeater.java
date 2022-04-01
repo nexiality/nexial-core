@@ -104,6 +104,7 @@ public class CommandRepeater {
                 trackTimeLogs.checkStartTracking(context, testStep);
 
                 StepResult result = null;
+                ExecutionSummary executionSummary = testStep.getTestCase().getExecutionSummary();
                 try {
                     context.setCurrentTestStep(testStep);
 
@@ -136,8 +137,13 @@ public class CommandRepeater {
                     } else {
                         if (result.isSuccess()) {
                             logger.log(testStep, MSG_REPEAT_UNTIL + MSG_PASS + result.getMessage());
+                            executionSummary.incrementPass();
+                            executionSummary.incrementExecuted();
+                            executionSummary.adjustTotalSteps(1);
                         } else if (result.isSkipped()) {
                             logger.log(testStep, MSG_REPEAT_UNTIL + result.getMessage());
+                            executionSummary.incrementSkipped();
+                            executionSummary.adjustTotalSteps(1);
                         } else {
                             // fail or warn
                             logError(context, testStep, result.getMessage());
@@ -160,6 +166,12 @@ public class CommandRepeater {
                     }
 
                 } catch (Throwable e) {
+                    if (i > 0) {
+                        executionSummary.incrementFail();
+                    } else {
+                        executionSummary.incrementPass();
+                    }
+                    executionSummary.adjustTotalSteps(1);
                     result = handleException(testStep, i, e);
                     if (result != null) { return result; }
                 } finally {
