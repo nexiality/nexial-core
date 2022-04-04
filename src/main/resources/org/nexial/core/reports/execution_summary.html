@@ -119,7 +119,7 @@
                                 <div class="execLabel">Failed</div>
                                 <div class="content" data-th-utext="${execution.get('failed')}">1 (1.06%)</div>
                             </div>
-                            <div class="execValue" data-th-attrappend="class=${execution.get('skipped') > 0 ? execValueSkipped : ''}">
+                            <div class="execValue execValueSkipped">
                                 <div class="execLabel">Skipped</div>
                                 <div class="content" data-th-utext="${execution.get('skipped')}">96 (102.13%)</div>
                             </div>
