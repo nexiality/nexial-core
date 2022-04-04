@@ -13,12 +13,13 @@
         }
     </script>
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.9.0/css/all.css" onerror="externalResourceNotFound()"/>
-    <link rel="stylesheet" href="https://nexiality.github.io/documentation/assets/report/execution_summary.css" onerror="externalResourceNotFound()"/>
+<!--    <link rel="stylesheet" href="https://nexiality.github.io/documentation/assets/report/execution_summary.css" onerror="externalResourceNotFound()"/>-->
     <script src="https://ajax.aspnetcdn.com/ajax/jQuery/jquery-3.5.0.min.js" onerror="externalResourceNotFound()"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.0/dist/chart.min.js" onerror="externalResourceNotFound()"></script>
     <script src="https://nexiality.github.io/documentation/assets/report/execution_summary.js" onerror="externalResourceNotFound()"></script>
 <!--    <script src="https://nexiality.github.io/documentation/assets/report/execution_output.js" onerror="externalResourceNotFound()"></script>-->
     <script src="./execution_output.js"></script>
+    <link href="./execution_summary.css" rel="stylesheet" type="text/css"/>
 </head>
 <body>
 <div class="title">
@@ -117,6 +118,10 @@
                             <div class="execValue" data-th-attrappend="class=${execution.get('executed steps') == execution.get('passed') ? '' : ' execValueFail'}">
                                 <div class="execLabel">Failed</div>
                                 <div class="content" data-th-utext="${execution.get('failed')}">1 (1.06%)</div>
+                            </div>
+                            <div class="execValue" data-th-attrappend="class=${execution.get('skipped') > 0 ? execValueSkipped : ''}">
+                                <div class="execLabel">Skipped</div>
+                                <div class="content" data-th-utext="${execution.get('skipped')}">96 (102.13%)</div>
                             </div>
                         </td>
                     </tr>

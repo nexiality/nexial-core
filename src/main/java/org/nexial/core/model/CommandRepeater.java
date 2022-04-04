@@ -168,8 +168,10 @@ public class CommandRepeater {
                 } catch (Throwable e) {
                     if (i > 0) {
                         executionSummary.incrementFail();
+                        executionSummary.incrementExecuted();
                     } else {
                         executionSummary.incrementPass();
+                        executionSummary.incrementExecuted();
                     }
                     executionSummary.adjustTotalSteps(1);
                     result = handleException(testStep, i, e);
