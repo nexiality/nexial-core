@@ -112,6 +112,8 @@ class MacroExecutor(private val initialTestStep: TestStep, val macro: Macro,
             if (!result.isSkipped)
                 context.setData(OPT_LAST_OUTCOME, succeed)
             else {
+                activitySummary.adjustSkipCount(1)
+                activitySummary.adjustTotalSteps(1)
                 // if macro step is part of repeat until and is skipped don't reduce total steps
                 if (!initialTestStep.macroPartOfRepeatUntil) activitySummary.adjustTotalSteps(-1)
                 if (testStep.commandFQN == CMD_SECTION) {
