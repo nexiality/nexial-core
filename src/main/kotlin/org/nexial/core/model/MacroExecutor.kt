@@ -142,6 +142,14 @@ class MacroExecutor(private val initialTestStep: TestStep, val macro: Macro,
                 // if nested repeat until has EndLoopIf() so setting back to normal again
                 if (testStep.isCommandRepeater) context.isBreakCurrentIteration = false
 
+                if (result.isError) {
+                    activitySummary.incrementFail()
+                } else {
+                    activitySummary.incrementPass()
+                }
+                activitySummary.adjustTotalSteps(1)
+                activitySummary.incrementExecuted()
+
                 if (context.isBreakCurrentIteration || (result.isError && shouldFailFast(context, testStep))) {
                     // just to be safe for upcoming macro
                     updateOutputToContext()
