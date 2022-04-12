@@ -40,19 +40,19 @@
         if exist "%ANDROID_HOME%\nul" (
             REM echo found ANDROID_HOME set to %ANDROID_HOME% 
         ) else (
-	        set ANDROID_HOME="%USER_NEXIAL_HOME%\android\sdk"
+	        set ANDROID_HOME=%USER_NEXIAL_HOME%\android\sdk
         )
     ) else (
-        set ANDROID_HOME="%USER_NEXIAL_HOME%\android\sdk"
+        set ANDROID_HOME=%USER_NEXIAL_HOME%\android\sdk
     )
 	if defined ANDROID_SDK_ROOT (
 	    if exist "%ANDROID_SDK_ROOT%\nul" (
 	        REM echo found ANDROID_SDK_ROOT set to %ANDROID_SDK_ROOT%
         ) else (
-	        set ANDROID_SDK_ROOT="%USER_NEXIAL_HOME%\android\sdk"
+	        set ANDROID_SDK_ROOT=%USER_NEXIAL_HOME%\android\sdk
 	    )
 	) else (
-        set ANDROID_SDK_ROOT="%USER_NEXIAL_HOME%\android\sdk"
+        set ANDROID_SDK_ROOT=%USER_NEXIAL_HOME%\android\sdk
 	)
 
     REM javaui/jubula
