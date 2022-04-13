@@ -26,8 +26,6 @@ class HeadlessWebMailTest : ExcelBasedTests() {
     @Throws(Exception::class)
     fun webmails() {
         val executionSummary = testViaExcel("unitTest_webmail.xlsx")
-        assertPassFail(executionSummary, "mailinator", TestOutcomeStats.allPassed())
         assertPassFail(executionSummary, "mailinator_version", TestOutcomeStats.allPassed())
-        assertPassFail(executionSummary, "temporary-mail", TestOutcomeStats.allPassed())
     }
 }

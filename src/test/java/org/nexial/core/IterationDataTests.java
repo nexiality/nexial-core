@@ -26,7 +26,6 @@ public class IterationDataTests extends ExcelBasedTests {
     public void fallback_true_contiguous_iterations() throws Exception {
         ExecutionSummary executionSummary = testViaExcel("unitTest_IterationDataTests.xlsx",
                                                          "fallback_true_multi_iter");
-        assertPassFail(executionSummary, "fallback_true_multi_iter", TestOutcomeStats.allPassed());
         Assert.assertEquals(0, executionSummary.getFailCount());
 
     }
@@ -35,7 +34,6 @@ public class IterationDataTests extends ExcelBasedTests {
     public void fallback_false_contiguous_iterations() throws Exception {
         ExecutionSummary executionSummary = testViaExcel("unitTest_IterationDataTests.xlsx",
                                                          "fallback_false_multi_iter");
-        assertPassFail(executionSummary, "fallback_false_multi_iter", TestOutcomeStats.allPassed());
         Assert.assertEquals(0, executionSummary.getFailCount());
     }
 
@@ -44,7 +42,6 @@ public class IterationDataTests extends ExcelBasedTests {
         System.setProperty("Var5", "Still the one");
         ExecutionSummary executionSummary = testViaExcel("unitTest_IterationDataTests.xlsx",
                                                          "fallback_false_split_iter");
-        assertPassFail(executionSummary, "fallback_false_split_iter", TestOutcomeStats.allPassed());
         Assert.assertEquals(0, executionSummary.getFailCount());
     }
 

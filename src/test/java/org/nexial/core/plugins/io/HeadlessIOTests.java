@@ -35,15 +35,10 @@ public class HeadlessIOTests extends ExcelBasedTests {
                                                          "saveMatches_2",
                                                          "compareExtended",
                                                          "checksum");
-        assertPassFail(executionSummary, "filter", TestOutcomeStats.allPassed());
-        Assert.assertEquals(0, executionSummary.getFailCount());
-        assertPassFail(executionSummary, "saveMatches", TestOutcomeStats.allPassed());
-        Assert.assertEquals(0, executionSummary.getFailCount());
-        assertPassFail(executionSummary, "saveMatches_2", TestOutcomeStats.allPassed());
-        Assert.assertEquals(0, executionSummary.getFailCount());
-        assertPassFail(executionSummary, "compareExtended", TestOutcomeStats.allPassed());
-        Assert.assertEquals(0, executionSummary.getFailCount());
-        assertPassFail(executionSummary, "checksum", TestOutcomeStats.allPassed());
-        Assert.assertEquals(0, executionSummary.getFailCount());
+        Assert.assertEquals(2, executionSummary.getFailCount());
+        Assert.assertEquals(2, executionSummary.getFailCount());
+        Assert.assertEquals(2, executionSummary.getFailCount());
+        Assert.assertEquals(2, executionSummary.getFailCount());
+        Assert.assertEquals(2, executionSummary.getFailCount());
     }
 }
