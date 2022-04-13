@@ -178,11 +178,10 @@ public class CommandRepeater {
                 } finally {
                     boolean isSkipped = result != null && result.isSkipped();
 
-                    // time tracking
-                    if (!isSkipped) { trackTimeLogs.checkEndTracking(context, testStep); }
-
                     // expand substitution in description column
                     if (!isSkipped) {
+                        // time tracking
+                        trackTimeLogs.checkEndTracking(context, testStep);
                         List<XSSFCell> row = testStep.getRow();
                         XSSFCell cellDescription = row.get(COL_IDX_DESCRIPTION);
                         String description = Excel.getCellValue(cellDescription);
