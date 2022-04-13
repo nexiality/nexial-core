@@ -109,7 +109,7 @@ public class TestCase {
             }
 
             if (result.isSkipped()) {
-                executionSummary.adjustTotalSteps(-1);
+                executionSummary.incrementSkipped();
 
                 if (StringUtils.equals(testStep.getCommandFQN(), CMD_SECTION)) {
                     formatSectionDescription(testStep);

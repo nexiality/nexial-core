@@ -117,6 +117,10 @@
                                 <div class="execLabel">Failed</div>
                                 <div class="content" data-th-utext="${execution.get('failed')}">1 (1.06%)</div>
                             </div>
+                            <div class="execValue execValueSkipped">
+                                <div class="execLabel">Skipped</div>
+                                <div class="content" data-th-utext="${execution.get('skipped')}">96 (102.13%)</div>
+                            </div>
                         </td>
                     </tr>
                     <tr>
@@ -167,8 +171,8 @@
             </div>
             <div class="reset-buttons">
                 <span id="chartInstruction">click on the chart above to drill down</span>
-                <button id="resetResultsChart" onclick="reset()">Execution</button>&nbsp;&nbsp;
-                <button id="rollUpResultsChart" onclick="rollUp()">Back</button>
+                <button id="resetResultsChart">Execution</button>&nbsp;&nbsp;
+                <button id="rollUpResultsChart">Back</button>
             </div>
         </div>
     </div>
