@@ -1013,7 +1013,7 @@ class IoCommandTest {
         val basePath = javaClass.getPackage().name.replace(".", "/")
         assertEquals("c1d20cf59843cd209517f1b31186b1e73dcefdb96c7c20d09f6b49f2ef0ca91f",
                      IoCommand.checksum(ResourceUtils.getResourceFilePath("$basePath/checksum-target")))
-        assertEquals("fe129bf8cbce30c7a44cd642327b72a44d6c173d64cd12907acb57f6cc1952f4",
+        assertEquals("3e20709d538de2b4028b55884192617a1b0add3fda3540e93828f89e252e0bad",
                      IoCommand.checksum(ResourceUtils.getResourceFilePath("$basePath/checksum-target2")))
     }
 
