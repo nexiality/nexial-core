@@ -17,12 +17,6 @@
 
 package org.nexial.core;
 
-import java.io.File;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
-import javax.validation.constraints.NotNull;
-
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.ArrayUtils;
@@ -33,6 +27,12 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.model.ExecutionSummary;
+
+import java.io.File;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
+import javax.validation.constraints.NotNull;
 
 import static java.io.File.separator;
 import static org.nexial.core.NexialConst.Data.*;
@@ -315,6 +315,12 @@ public abstract class ExcelBasedTests {
         expected.setIteration(testSummary.getName());
         expected.setScenario(testScenario);
         compare(expected, getActualStats(testSummary, testScenario));
+    }
+
+    protected void assertNoFail(ExecutionSummary testSummary, String testScenario) {
+        TestOutcomeStats actual = getActualStats(testSummary, testScenario);
+        Assert.assertEquals("[" + testSummary.getName() + "][" + testScenario + "] Expects fail count to be 0",
+                            0, actual.failCount);
     }
 
     protected void assertScenarioNotExecuted(ExecutionSummary testSummary, String testScenario) {

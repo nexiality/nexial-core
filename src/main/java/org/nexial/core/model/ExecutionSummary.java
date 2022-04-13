@@ -163,9 +163,9 @@ public class ExecutionSummary {
 
         // 3. organize videos by "readable" name
         summary.screenRecordings = new TreeMap<>(
-                FileUtil.listFiles(captureDir, recordingFilesRegex, false, FILENAME_ASC).stream()
-                        .collect(Collectors.toMap(file -> SUBDIR_CAPTURES + "/" + file.getName(),
-                                                  file -> OutputFileUtils.distillOutputFile(file.getAbsolutePath()))));
+            FileUtil.listFiles(captureDir, recordingFilesRegex, false, FILENAME_ASC).stream()
+                    .collect(Collectors.toMap(file -> SUBDIR_CAPTURES + "/" + file.getName(),
+                                              file -> OutputFileUtils.distillOutputFile(file.getAbsolutePath()))));
 
         // 4. get log directory
         String logDir = NexialConst.Project.appendLog(summary.outputPath);
@@ -295,25 +295,21 @@ public class ExecutionSummary {
 
     public void setPassCount(int passCount) { this.passCount = passCount; }
 
-    public int getSkippedCount() {
-        return skippedCount;
-    }
+    public int getSkippedCount() { return skippedCount; }
 
-    public void setSkippedCount(int skippedCount) {
-        this.skippedCount = skippedCount;
-    }
+    public void setSkippedCount(int skippedCount) { this.skippedCount = skippedCount; }
 
-    public void incrementPass()             { this.passCount++; }
+    public void incrementPass() { this.passCount++; }
 
-    public void incrementSkipped()             { this.skippedCount++; }
+    public void incrementSkipped() { this.skippedCount++; }
 
-    public int getFailCount()               { return failCount; }
+    public int getFailCount() { return failCount; }
 
     public void setFailCount(int failCount) { this.failCount = failCount; }
 
-    public void incrementFail()             { this.failCount++; }
+    public void incrementFail() { this.failCount++; }
 
-    public int getWarnCount()               { return warnCount; }
+    public int getWarnCount() { return warnCount; }
 
     public void setWarnCount(int warnCount) { this.warnCount = warnCount; }
 

@@ -32,6 +32,7 @@ class ProjectPropertiesTests : ExcelBasedTests() {
     fun test_UNITTEST_env() {
         System.setProperty(ENV_NAME, "UNITTEST")
         val executionSummary = testViaExcel("unitTest_project_properties.xlsx")
+        assertNoFail(executionSummary, "env")
         Assert.assertEquals(0, executionSummary.failCount.toLong())
     }
 
@@ -39,6 +40,7 @@ class ProjectPropertiesTests : ExcelBasedTests() {
     fun test_UnitTesting_env() {
         System.setProperty(ENV_NAME, "UnitTesting")
         val executionSummary = testViaExcel("unitTest_project_properties.xlsx")
+        assertNoFail(executionSummary, "env")
         Assert.assertEquals(0, executionSummary.failCount.toLong())
     }
 

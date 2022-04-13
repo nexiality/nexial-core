@@ -17,11 +17,11 @@
 
 package org.nexial.core.variable;
 
-import static org.junit.Assert.assertEquals;
-
 import org.junit.Test;
 import org.nexial.core.ExcelBasedTests;
 import org.nexial.core.model.ExecutionSummary;
+
+import static org.junit.Assert.assertEquals;
 
 
 public class HeadlessExpressionTests extends ExcelBasedTests {
@@ -31,6 +31,7 @@ public class HeadlessExpressionTests extends ExcelBasedTests {
         assertPassFail(executionSummary, "NUMBER", TestOutcomeStats.allPassed());
         assertPassFail(executionSummary, "CSV", TestOutcomeStats.allPassed());
         assertPassFail(executionSummary, "EXCEL", TestOutcomeStats.allPassed());
+        assertPassFail(executionSummary, "XML", TestOutcomeStats.allPassed());
     }
 
     @Test
@@ -44,6 +45,7 @@ public class HeadlessExpressionTests extends ExcelBasedTests {
     @Test
     public void macro() throws Exception {
         ExecutionSummary executionSummary = testViaExcel("unitTest_base_macro2.xlsx", "ImportMacro");
+        assertNoFail(executionSummary, "ImportMacro");
         assertEquals(0, executionSummary.getFailCount());
     }
 
@@ -67,9 +69,6 @@ public class HeadlessExpressionTests extends ExcelBasedTests {
     public void binary() throws Exception {
         ExecutionSummary executionSummary = testViaExcel("unitTest_binary_expression.xlsx");
         assertPassFail(executionSummary, "Scenario", TestOutcomeStats.allPassed());
-    //     assertPassFail(executionSummary, "Add or Replace-REPLACE", TestOutcomeStats.allPassed());
-    //     assertPassFail(executionSummary, "Add or Replace-NONE", TestOutcomeStats.allPassed());
-    //     assertPassFail(executionSummary, "Other Commands", TestOutcomeStats.allPassed());
     }
 
 }

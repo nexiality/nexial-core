@@ -17,10 +17,11 @@
 
 package org.nexial.core.plugins.io;
 
-import org.junit.Assert;
 import org.junit.Test;
 import org.nexial.core.ExcelBasedTests;
 import org.nexial.core.model.ExecutionSummary;
+
+import static org.junit.Assert.assertEquals;
 
 public class HeadlessIOTests extends ExcelBasedTests {
     @Test
@@ -35,6 +36,12 @@ public class HeadlessIOTests extends ExcelBasedTests {
                                                          "saveMatches_2",
                                                          "compareExtended",
                                                          "checksum");
-        Assert.assertEquals(0, executionSummary.getFailCount());
+        assertNoFail(executionSummary, "filter");
+        assertNoFail(executionSummary, "saveMatches");
+        assertNoFail(executionSummary, "saveMatches_2");
+        assertNoFail(executionSummary, "compareExtended");
+        assertNoFail(executionSummary, "checksum");
+
+        assertEquals(0, executionSummary.getFailCount());
     }
 }

@@ -33,12 +33,14 @@ class HeadlessBaseTests : ExcelBasedTests() {
     @Throws(Exception::class)
     fun baseCommandTests_part1() {
         val executionSummary = testViaExcel("unitTest_base_part1.xlsx")
+        assertNoFail(executionSummary, "base_showcase")
         assertPassFail(executionSummary, "function_projectfile", TestOutcomeStats.allPassed())
         assertPassFail(executionSummary, "function_array", TestOutcomeStats.allPassed())
         assertPassFail(executionSummary, "function_count", TestOutcomeStats.allPassed())
         assertPassFail(executionSummary, "function_date", TestOutcomeStats.allPassed())
         assertPassFail(executionSummary, "actual_in_output", TestOutcomeStats.allPassed())
         assertPassFail(executionSummary, "actual_in_output2", TestOutcomeStats.allPassed())
+        assertEquals(0, executionSummary.failCount)
     }
 
     @Test
@@ -46,6 +48,7 @@ class HeadlessBaseTests : ExcelBasedTests() {
     fun baseCommandTests_part2() {
         val executionSummary = testViaExcel("unitTest_base_part2.xlsx")
         assertPassFail(executionSummary, "crypto", TestOutcomeStats.allPassed())
+        assertNoFail(executionSummary, "macro-test")
         assertPassFail(executionSummary, "repeat-test", TestOutcomeStats.allPassed())
         assertPassFail(executionSummary, "expression-test", TestOutcomeStats.allPassed())
         assertPassFail(executionSummary, "multi-scenario2", TestOutcomeStats.allPassed())
@@ -66,6 +69,9 @@ class HeadlessBaseTests : ExcelBasedTests() {
     fun baseCommandTests_macro3() {
         val executionSummary = testViaExcel("unitTest_base_macro3.xlsx")
         assertPassFail(executionSummary, "start", TestOutcomeStats.allPassed())
+        assertNoFail(executionSummary, "macro-test")
+        assertNoFail(executionSummary, "macro-section-test")
+        assertEquals(0, executionSummary.failCount)
         // to check total steps inside macro-section-test is not reduced
         assertEquals(118, executionSummary.totalSteps)
     }
@@ -89,6 +95,7 @@ class HeadlessBaseTests : ExcelBasedTests() {
     @Throws(Exception::class)
     fun repeatUntilTests() {
         val executionSummary = testViaExcel("unitTest_repeatUntil.xlsx")
+        assertNoFail(executionSummary, "repeatUntil_take1")
         assertEquals(0, executionSummary.failCount)
     }
 
@@ -96,6 +103,7 @@ class HeadlessBaseTests : ExcelBasedTests() {
     @Throws(Exception::class)
     fun repeatUntilAssertTests() {
         val executionSummary = testViaExcel("unitTest_repeatUntil_assert.xlsx", "repeatUntil")
+        assertNoFail(executionSummary, "repeatUntil")
 
         // in this test, we expect no screenshot to be generated
         val outputDir = System.getProperty("nexial.outBase")
@@ -112,6 +120,7 @@ class HeadlessBaseTests : ExcelBasedTests() {
     @Throws(Exception::class)
     fun repeatUntilInsideSectionAssetTests() {
         val executionSummary = testViaExcel("unitTest_repeatUntil_assert.xlsx", "section_with_repeatUntil")
+        assertNoFail(executionSummary, "section_with_repeatUntil")
         assertEquals(0, executionSummary.failCount)
     }
 
