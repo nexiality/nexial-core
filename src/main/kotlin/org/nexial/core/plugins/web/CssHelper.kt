@@ -67,7 +67,7 @@ class CssHelper(private val delegator: WebCommand) {
         // if (useComputedCss) return assertCssValue(locator, property, value)
 
         // 1. use selenium or js to get css value
-        val actual = if (useComputedCss) getCssValue(locator, property) else getComputedCssValue(locator, property)
+        val actual = if (!useComputedCss) getCssValue(locator, property) else getComputedCssValue(locator, property)
 
         if (context.isVerbose) contextLogger.log(delegator, "derive CSS property '$property' for '$locator': '$actual'")
 
@@ -126,7 +126,17 @@ class CssHelper(private val delegator: WebCommand) {
     fun getComputedCssValue(locator: String, property: String): String {
         requiresNotBlank(property, "invalid css property", property)
         val element = locatorHelper.findElement(locator, false)
-        val js = JsLib.getComputedCssValue(property)
+
+        // `property` can be a property name like 'background' or a "pseudo class + property name" combination in 
+        // the form of "pseudo|property"
+        val pseudoDelim = ';'
+        val js = if (property.contains(pseudoDelim)) {
+            val pseudoClass = property.substringBefore(pseudoDelim)
+            val propertyName = property.substringAfter(pseudoDelim)
+            JsLib.getComputedCssValue(pseudoClass, propertyName)
+        } else
+            JsLib.getComputedCssValue(property)
+
         return ((delegator.jsExecutor.executeScript(js, element) ?: "") as String).trim()
     }
 

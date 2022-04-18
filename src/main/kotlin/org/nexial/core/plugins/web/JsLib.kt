@@ -150,6 +150,10 @@ object JsLib {
         "return window.getComputedStyle(arguments[0]).getPropertyValue('$property')"
 
     @JvmStatic
+    fun getComputedCssValue(pseudoClass: String, property: String) =
+        "return window.getComputedStyle(arguments[0], '$pseudoClass').getPropertyValue('$property')"
+
+    @JvmStatic
     fun findCssMatchingElements(attribute: String, value: String) =
         "var targets = Array(); " +
         "document.querySelectorAll(\"*\").forEach(function(elem, index) {" +
