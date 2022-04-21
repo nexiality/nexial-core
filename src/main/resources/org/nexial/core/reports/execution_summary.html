@@ -224,13 +224,13 @@
         <div class="plan-step-summary">
             <table cellspacing="0" cellpadding="5" border="0">
                 <tr data-th-class="${script.failCount > 0 ? 'hasFailure' : 'noFailure'}">
-                    <td class="value value-title" data-th-with="scriptFileName=${@org.nexial.commons.utils.FileUtil@extractFilename(script.scriptFile)}" data-th-attr="title=${scriptFile}">
-                        <a data-th-href="${script.scriptFile}" data-th-utext="${scriptFileName}">myscript.xlsx</a>
-                        <i class="fas fa-copy" data-th-attr="onclick=|copyToClipboard('${#strings.escapeJava(script.scriptFile)}')|" title="copy artifact location"></i>
+                    <td class="value value-title" data-th-with="scriptFileName=${@org.nexial.commons.utils.FileUtil@extractFilename(script.scriptFile)}" title="Click to download script">
+                        <a class="fileLink" data-th-href="${script.scriptFile}" data-th-utext="${scriptFileName}">myscript.xlsx</a>
+                        <i class="fas fa-copy" data-th-attr="onclick=|copyToClipboard('${#strings.escapeJava(script.scriptFile)}')|" title="copy script location"></i>
                     </td>
-                    <td class="value value-title" data-th-with="dataPath=${script.resolveDataFile()},dataFileName=${@org.nexial.commons.utils.FileUtil@extractFilename(dataPath)}" data-th-attr="title=${dataFileName}">
-                        <a data-th-href="${dataPath}" data-th-utext="${dataFileName}">myscript.data.xlsx</a>
-                        <i class="fas fa-copy" data-th-attr="onclick=|copyToClipboard('${#strings.escapeJava(dataPath)}')|" title="copy artifact location"></i>
+                    <td class="value value-title" data-th-with="dataPath=${script.resolveDataFile()},dataFileName=${@org.nexial.commons.utils.FileUtil@extractFilename(dataPath)}" title="Click to download data">
+                        <a class="fileLink" data-th-href="${dataPath}" data-th-utext="${dataFileName}">myscript.data.xlsx</a>
+                        <i class="fas fa-copy" data-th-attr="onclick=|copyToClipboard('${#strings.escapeJava(dataPath)}')|" title="copy data file location"></i>
                     </td>
                     <td class="value value-iteration" data-th-utext="${script.nestedExecutions.size()}">1234</td>
                     <td class="value value-scenarioPassed" data-th-utext="${script.resolveTotalScenariosPassed()}">1 / 2</td>
@@ -264,9 +264,9 @@
 
                 <th:block data-th-if="${script.nestedExecutions}" data-th-each="iteration : ${script.nestedExecutions}">
                     <tr data-th-class="'record iter ' + ${iteration.failCount > 0 ? 'hasFailure' : 'noFailure'}">
-                        <td colspan="3" class="value value-title" data-th-attr="title=${iteration.name}" data-th-with="referenceData=${@org.nexial.commons.utils.CollectionUtil@removeEmptyEntries(iteration.referenceData)}">
-                            <a target="_nexial_link" data-th-id="${iteration.testScript.name}" data-th-href="${iteration.testScriptLink}" data-th-utext="${'Execution Result (' + iteration.name + ')'}">myscript.001.xlsx</a>
-                            <i class="fas fa-copy" data-th-attr="onclick=|copyToClipboard('${#strings.escapeJava(iteration.testScriptLink)}')|" title="copy artifact location"></i>
+                        <td colspan="3" class="value value-title" data-th-with="referenceData=${@org.nexial.commons.utils.CollectionUtil@removeEmptyEntries(iteration.referenceData)}">
+                            <a data-th-class="fileLink" title="Click to download result" target="_nexial_link" data-th-id="${iteration.testScript.name}" data-th-href="${iteration.testScriptLink}" data-th-utext="${'Execution Result (' + iteration.name + ')'}">myscript.001.xlsx</a>
+                            <i class="fas fa-copy" data-th-attr="onclick=|copyToClipboard('${#strings.escapeJava(iteration.testScriptLink)}')|" title="copy execution result file location"></i>
                             <div class="value-scriptRef" data-th-if="${referenceData.size() > 0}">
                                 <i class="fas fa-info-circle info" title="Reference Data labeled as nexial.scriptRef.*"></i>
                                 <table cellspacing="0" cellpadding="0">
@@ -322,7 +322,20 @@
                         <th:block data-th-if="${scenario.nestedExecutions}" data-th-each="activity : ${scenario.nestedExecutions}">
                             <tr data-th-class="'record activity ' + ${activity.failCount > 0 ? 'hasFailure' : 'noFailure'}">
                                 <td colspan="2" class="value spacer2"></td>
-                                <td colspan="2" class="value value-title" data-th-utext="${activity.name}" data-th-attr="title=${activity.name}">Act 1</td>
+                                <td colspan="2" class="value value-title" >
+                                    <div class="step-icon-grid" data-th-if="not ${#lists.isEmpty(activity.getStepDetails())}">
+                                        <div data-th-attr="title=${activity.name}" data-th-utext="${activity.name}">Act 1</div>
+                                        <div>
+                                            <i class="fa execution-error-icon" data-th-if="${activity.isStepDetailsHasError()}" onclick="toggleStepErrors(this)" title="View Errors"></i>&nbsp;
+                                        </div>
+                                        <div>
+                                            <i class="fa execution-screenshot-icon" data-th-if="${activity.isStepDetailsHasLinks()}" onclick="toggleStepFiles(this)" title="View Screenshots/Files"></i>
+                                        </div>
+                                    </div>
+                                    <div data-th-if="${#lists.isEmpty(activity.getStepDetails())}">
+                                        <span data-th-attr="title=${activity.name}" data-th-utext="${activity.name}">Act 1</span>
+                                    </div>
+                                </td>
                                 <td class="value value-datetime exectime" data-th-utext="${#dates.format(new java.util.Date(activity.startTime), 'yyyy/MM/dd HH:mm:ss')}">2018/12/16 12:53:21</td>
                                 <td class="value value-time exectime" data-th-utext="${#dates.format(#dates.create(0,0,0,0,0,0, (activity.endTime - activity.startTime)), 'HH:mm:ss')}">00:42:11</td>
                                 <td class="value value-num passfail" data-th-utext="${#numbers.formatInteger(activity.executed, 1, 'DEFAULT')}">23456</td>
@@ -331,6 +344,31 @@
                                 <td class="value value-percent passfail" data-th-attrappend="class=${activity.passCount == activity.executed ? ' allPass' : ' hasFailure'}"
                                     data-th-with="success=${activity.executed == 0 ? 0.00 : (activity.passCount * 1.0 / activity.executed) * 100}"
                                     data-th-utext="${#numbers.formatDecimal(success, 1, 2, 'DEFAULT')} + '%'">98.12%</td>
+                            </tr>
+                            <tr class="record canHide step-detail-row" th:with="nestedMessages=${activity.stepDetails}" >
+                                <td class="spacer2"></td>
+                                <td class="spacer2"></td>
+                                <td colspan="8">
+                                    <table cellspacing="0" cellpadding="5" style="width:100%">
+                                        <th:block data-th-if="${nestedMessages}" data-th-each="messages : ${nestedMessages}" >
+                                            <tr class="record step-detail-tr" data-th-attr="is-step-error=${not messages.isPass}" data-th-each="messageMap, msgMapIdx : ${messages.nestedMessages}">
+                                                <td class="value step-table-col-width-5" style="text-align: right"  data-th-utext="${messages.rowNum}"
+                                                    data-th-if="${msgMapIdx.index == 0}" data-th-attr="rowspan=${#lists.size(messages.nestedMessages)}">Step No.</td>
+                                                <td class="value step-table-col-width-45" data-th-title="${messages.description}" data-th-utext="${#strings.abbreviate(messages.description, 100)}"
+                                                    data-th-if="${msgMapIdx.index == 0}" data-th-attr="rowspan=${#lists.size(messages.nestedMessages)}">description
+                                                </td>
+                                                <td class="value step-table-col-width-45" data-th-classappend="${messages.isPass} ? '' : 'hasFailure'">
+                                                    <span data-th-title="${messageMap.message}" data-th-utext="${#strings.abbreviate(messageMap.message, 200)}"></span>
+                                                </td>
+                                                <td class="value step-table-col-width-5" data-th-classappend="${messages.isPass} ? '' : 'hasFailure'">
+                                                    <a data-th-if="not ${#strings.isEmpty(messageMap.file)}" target="_nexial_target" data-th-href="${messageMap.file}">
+                                                        <i class="fas" data-th-classappend="'file-'+${messageMap.fileType}+'-icon'" data-th-title="'View File'"></i>
+                                                    </a>
+                                                </td>
+                                            </tr>
+                                        </th:block>
+                                    </table>
+                                </td>
                             </tr>
                         </th:block>
                     </th:block>

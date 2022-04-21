@@ -148,6 +148,18 @@ public class ExecutionSummary {
     private Map<String, Map<String, String>> screenRecordings;
     private WebServiceLogs wsLogs;
 
+    private transient List<StepDetails> stepDetails = new LinkedList<>();
+
+    public List<StepDetails> getStepDetails() { return stepDetails; }
+
+    private transient boolean stepDetailsHasError = false;
+
+    public boolean isStepDetailsHasError(){ return stepDetailsHasError; }
+
+    private transient boolean stepDetailsHasLinks = false;
+
+    public boolean isStepDetailsHasLinks(){ return stepDetailsHasLinks; }
+
     public void setOutputPath(String outputPath) { this.outputPath = outputPath; }
 
     public static void gatherSupplementProofs(@NotNull ExecutionSummary summary) {
@@ -374,6 +386,34 @@ public class ExecutionSummary {
 
     public void addNestedMessages(TestStepManifest testStep, List<NestedMessage> nestedTestResults) {
         nestMessages.put(testStep, nestedTestResults);
+    }
+
+    /**
+     * Add step details such as row num, description, error messages(if any) and screenshots or linked files to test step
+     *
+     * @param step {@link TestStepManifest} provides test step details such as row num and description
+     * @param nestedMessages list of {@link NestedMessage} containing files and error messages
+     * @param isSuccess {@link Boolean} to check if test step is passed or not
+     */
+    public void addStepDetails(TestStepManifest step, List<NestedMessage> nestedMessages, boolean isSuccess) {
+        if (CollectionUtils.isEmpty(nestedMessages)) return;
+        LinkedList<StepMessage> nestedLinks = new LinkedList<>();
+        nestedMessages.forEach(nm -> {
+            String link = (nm instanceof NestedScreenCapture) ? (((NestedScreenCapture) nm).getLink()) : "";
+            // not adding message if step is passed and no link
+            if(StringUtils.isBlank(link) && isSuccess) return;
+            if(StringUtils.isNotBlank(link)){
+                stepDetailsHasLinks = true;
+                // not adding message if step is passed
+                if(isSuccess) nm.setMessage("");
+            }
+            nestedLinks.add(new StepMessage(nm.getMessage(), link));
+        });
+
+        if(!isSuccess) { stepDetailsHasError = true; }
+        if(CollectionUtils.isNotEmpty(nestedLinks)) {
+            stepDetails.add(new StepDetails(step.rowIndex + 1, step.description, nestedLinks, isSuccess));
+        }
     }
 
     public void addNestSummary(ExecutionSummary nested) { this.nestedExecutions.add(nested); }

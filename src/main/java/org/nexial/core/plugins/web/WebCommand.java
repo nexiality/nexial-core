@@ -2144,6 +2144,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
     protected StepResult postScreenshot(File target, String locator) throws IOException {
         String captured = locator == null ? "FullPage" : "'" + locator + "'";
+        context.getCurrentTestStep().setScreenshot(target.getAbsolutePath());
         if (context.isOutputToCloud()) {
             String cloudUrl = context.getOtc().importMedia(target, true);
             context.setData(OPT_LAST_OUTPUT_LINK, cloudUrl);
@@ -2572,7 +2573,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         String before = element.getAttribute("value");
         if (StringUtils.isEmpty(before)) { return; }
 
-        // allow user to override "useBackspace" setting; if `nexial.web.clearWithBackspace` is specified 
+        // allow user to override "useBackspace" setting; if `nexial.web.clearWithBackspace` is specified
         boolean useBackspace;
         if (context.hasData(WEB_CLEAR_WITH_BACKSPACE)) {
             useBackspace = context.getBooleanData(WEB_CLEAR_WITH_BACKSPACE);

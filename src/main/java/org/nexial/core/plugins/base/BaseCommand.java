@@ -984,6 +984,8 @@ public class BaseCommand implements NexialCommand {
             return null;
         }
 
+        testStep.setScreenshot(file.getAbsolutePath());
+
         String caption = context.getStringData(SCREENSHOT_CAPTION);
         if (StringUtils.isNotBlank(caption)) {
             CaptionModel model = new CaptionModel();

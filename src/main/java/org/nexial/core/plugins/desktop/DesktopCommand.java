@@ -172,7 +172,7 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
             error("[WARN] Unable to capture screenshot via Winium driver");
             return null;
         }
-
+        context.getCurrentTestStep().setScreenshot(imageFile.getAbsolutePath());
         return imageFile;
     }
 

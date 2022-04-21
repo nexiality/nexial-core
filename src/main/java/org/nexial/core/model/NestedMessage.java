@@ -43,6 +43,8 @@ public class NestedMessage {
 
     public boolean isPass() { return isPass; }
 
+    public void setPass(boolean pass) { isPass = pass; }
+
     public String getResultMessage() { return resultMessage; }
 
     private void processMessage() {

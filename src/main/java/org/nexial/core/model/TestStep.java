@@ -87,6 +87,7 @@ public class TestStep extends TestStepManifest {
     protected List<NestedMessage> nestedTestResults;
     protected boolean isCommandRepeater;
     protected CommandRepeater commandRepeater;
+    protected String screenshot;
     protected boolean hasErrorScreenshot;
     protected boolean isMacroExpander;
     protected MacroExecutor macroExecutor;
@@ -157,6 +158,8 @@ public class TestStep extends TestStepManifest {
     public void setMacroExecutor(MacroExecutor macroExecutor) { this.macroExecutor = macroExecutor; }
 
     public Macro getMacro() { return macro; }
+
+    public void setScreenshot(String screenshot) { this.screenshot = screenshot; }
 
     @Override
     public String toString() {
@@ -611,12 +614,6 @@ public class TestStep extends TestStepManifest {
                 return null;
             }
 
-            if (result.failed()) {
-                addErrorScreenCapture(screenshotPath, result.getMessage());
-            } else {
-                addStepOutput(screenshotPath, MSG_SCREENCAPTURE);
-            }
-
             return screenshotPath;
         } catch (Exception e) {
             error("Unable to capture screenshot: " + e.getMessage());
@@ -631,9 +628,10 @@ public class TestStep extends TestStepManifest {
         // screenshot
         // take care of screenshot requirement first...
         // in interactive mode, we won't proceed if any of the Excel-related operations
-        if (!isSkipped || !isEnded) {
+        if ((!isSkipped || !isEnded) && StringUtils.isEmpty(screenshot)) {
             // don't capture screenshot if step skipped or ended by endIf
-            handleScreenshot(result);
+            // OR if screenshot is already captured then also no need of duplicate screenshot
+                screenshot = handleScreenshot(result);
         }
 
         if (!context.isInteractiveMode()) {
@@ -870,9 +868,27 @@ public class TestStep extends TestStepManifest {
             }
         }
 
+        updateNestedResults(result);
+    }
+
+    private void updateNestedResults(StepResult result) {
+        if (StringUtils.isNotEmpty(screenshot)) {
+            if (result.failed()) {
+                addErrorScreenCapture(screenshot, result.getMessage());
+            } else {
+                addStepOutput(screenshot, MSG_SCREENCAPTURE);
+            }
+        } else if (result.isError()) {
+            addNestedMessage(result.getMessage());
+        }
+        // update nestedResult as passed or failed if step has error and screenshot is not specified anywhere
+        nestedTestResults.forEach(nm -> nm.setPass(result.isSuccess()));
+
         if (CollectionUtils.isNotEmpty(nestedTestResults)) {
             TestStepManifest testStep = toTestStepManifest();
-            testCase.getTestScenario().getExecutionSummary().addNestedMessages(testStep, nestedTestResults);
+            ExecutionSummary testCaseSummary = testCase.getExecutionSummary();
+            testCaseSummary.addStepDetails(testStep, nestedTestResults, result.isSuccess());
+            testCaseSummary.addNestedMessages(testStep, nestedTestResults);
         }
     }
 
