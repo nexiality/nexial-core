@@ -38,6 +38,7 @@ import java.util.Map;
 import java.util.Objects;
 
 import static org.nexial.core.NexialConst.Ws.*;
+import static org.nexial.core.NexialConst.Ws.WS_IGNORE_CONTENT_TYPE;
 import static org.nexial.core.SystemVariables.getDefaultBool;
 import static org.nexial.core.SystemVariables.getDefaultInt;
 import static org.nexial.core.plugins.ws.WebServiceClient.hideAuthDetails;
@@ -170,6 +171,9 @@ public abstract class Request implements Serializable {
 
         String contentTypeString = Objects.toString(header);
         if (StringUtils.isBlank(contentTypeString)) { return null; }
+        if (StringUtils.equals(contentTypeString, WS_IGNORE_CONTENT_TYPE)) {
+            return null;
+        }
 
         String charset = null;
         String contentType = StringUtils.trim(contentTypeString);

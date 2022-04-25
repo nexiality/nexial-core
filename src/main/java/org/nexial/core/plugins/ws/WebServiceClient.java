@@ -62,18 +62,18 @@ import java.net.InetAddress;
 import java.net.MalformedURLException;
 import java.net.SocketException;
 import java.net.URL;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
 
 import static java.io.File.separator;
+import static org.apache.http.HttpHeaders.AUTHORIZATION;
+import static org.nexial.core.NexialConst.Data.TEXT_DELIM;
 import static org.nexial.core.NexialConst.DEF_CHARSET;
 import static org.nexial.core.NexialConst.NL;
 import static org.nexial.core.NexialConst.Ws.*;
+import static org.nexial.core.SystemVariables.getDefault;
 import static org.nexial.core.SystemVariables.getDefaultBool;
 
 public class WebServiceClient {
@@ -135,15 +135,25 @@ public class WebServiceClient {
     }
 
     @NotNull
+    public WebServiceClient removeHeader(String name) {
+        priorityHeaders.remove(name);
+        return this;
+    }
+
+    @NotNull
     public WebServiceClient withBasicAuth(String username, String password) {
         priorityConfigs.put(WS_BASIC_USER, username);
         priorityConfigs.put(WS_BASIC_PWD, password);
+        if(context == null) {
+            String authorization = new String(Base64.getEncoder().encode((username + ":" + password).getBytes()));
+            priorityHeaders.put(AUTHORIZATION, "Basic " + authorization);
+        }
         return this;
     }
 
     @NotNull
     public WebServiceClient withAuthorization(String authorization) {
-        priorityHeaders.put("Authorization", "Bearer " + authorization);
+        priorityHeaders.put(AUTHORIZATION, "Bearer " + authorization);
         return this;
     }
 
@@ -282,7 +292,7 @@ public class WebServiceClient {
         PostMultipartRequest request = new PostMultipartRequest(resolveContextForRequest());
         request.setUrl(url);
         if (MapUtils.isNotEmpty(priorityHeaders)) { priorityHeaders.forEach(request::addHeaderIfNotSpecified); }
-        request.setPayload(payload, StringUtils.split(fileParams, context.getTextDelim()));
+        request.setPayload(payload, StringUtils.split(fileParams, getDefault(TEXT_DELIM)));
         return request;
     }
 
@@ -336,7 +346,7 @@ public class WebServiceClient {
         PutMultipartRequest request = new PutMultipartRequest(resolveContextForRequest());
         request.setUrl(url);
         if (MapUtils.isNotEmpty(priorityHeaders)) { priorityHeaders.forEach(request::addHeaderIfNotSpecified); }
-        request.setPayload(payload, StringUtils.split(fileParams, context.getTextDelim()));
+        request.setPayload(payload, StringUtils.split(fileParams, getDefault(TEXT_DELIM)));
         return request;
     }
 
@@ -870,6 +880,7 @@ public class WebServiceClient {
 
         InputStream responseBody = responseEntity.getContent();
         if (responseBody == null) { return null; }
+        if(responseBody.available() <= 0 && !responseEntity.isChunked()) { return null; }
         return IOUtils.toByteArray(responseBody);
     }
 

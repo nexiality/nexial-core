@@ -110,9 +110,13 @@ public class PostMultipartRequest extends PostRequest {
                 String filePath = params.remove(name);
                 if (FileUtil.isFileReadable(filePath)) {
                     if (verbose) { ConsoleUtils.log(logId, "adding %s as %s file", filePath, contentType); }
-                    String content = OutputFileUtils.resolveContent(filePath, context, false, !rawContent);
-                    byte[] contentByte = StringUtils.isNotEmpty(content) ? content.getBytes(UTF_8) : new byte[0];
-                    multipartBuilder.addBinaryBody(name, contentByte, contentType, new File(filePath).getName());
+                    if(contentType == null) {
+                        multipartBuilder.addBinaryBody(name, new File(filePath));
+                    } else {
+                        String content = OutputFileUtils.resolveContent(filePath, context, false, !rawContent);
+                        byte[] contentByte = StringUtils.isNotEmpty(content) ? content.getBytes(UTF_8) : new byte[0];
+                        multipartBuilder.addBinaryBody(name, contentByte, contentType, new File(filePath).getName());
+                    }
                 } else {
                     ConsoleUtils.error(logId,
                                        "Unable to resolve [%s=%s] as a multipart file; %s might not be a valid path",

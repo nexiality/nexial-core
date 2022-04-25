@@ -980,6 +980,8 @@ public final class NexialConst {
         public static final String TMS_USERNAME = NEXIAL_TMS + "username";
         public static final String TMS_PASSWORD = NEXIAL_TMS + "password";
         public static final String TMS_ORG = NEXIAL_TMS + "organization";
+        public static final String TMS_SUITE_ISSUE_TYPE = NEXIAL_TMS + "suiteIssueType";
+        public static final String TMS_CASE_ISSUE_TYPE = NEXIAL_TMS + "caseIssueType";
 
         private TMSSettings() { }
 
@@ -1001,6 +1003,7 @@ public final class NexialConst {
         public static final String DEF_REL_META = ".meta" + separator;
         public static final String DEF_REL_META_PROJ_ID = DEF_REL_META + "project.id";
         public static final String DEF_REL_META_EXECUTION = DEF_REL_META + "execution";
+        public static final String DEF_REL_PROJ_META_JSON = DEF_REL_META + "project.tms.json";
 
         public static final String NEXIAL_HOME = NAMESPACE + "home";
         public static final String NEXIAL_BIN_REL_PATH = "bin" + separator;
@@ -1187,7 +1190,7 @@ public final class NexialConst {
         public static final String SUMMARY_CUSTOM_HEADER = registerSysVar(NS_SUMMARY + "header");
 
         // note: only consider sysprop, not data variable
-        public static final String GENERATE_EXEC_REPORT = registerSysVar(NAMESPACE + "generateReport", false);
+        public static final String GENERATE_EXEC_REPORT = registerSysVar(NAMESPACE + "generateReport", true);
 
         public static final String ASSISTANT_MODE = registerSysVar(NAMESPACE + "assistantMode", false);
         // synonymous to `assistantMode`, but reads better
@@ -1607,11 +1610,13 @@ public final class NexialConst {
         public static final String WS_CONTENT_LENGTH = "Content-Length";
         public static final String CONTENT_TYPE_CHARSET = "charset=";
         public static final String WS_SOAP_CONTENT_TYPE = "text/xml;" + CONTENT_TYPE_CHARSET + "UTF-8";
+        public static final String WS_IGNORE_CONTENT_TYPE = "(IGNORE)";
         public static final String WS_JSON_CONTENT_TYPE = "application/json";
         public static final String WS_XML_CONTENT_TYPE = "application/xml";
         public static final String WS_OCTET_STREAM_CONTENT_TYPE = "application/octet-stream";
         public static final String WS_JSON_CONTENT_TYPE2 = WS_JSON_CONTENT_TYPE + ";" + CONTENT_TYPE_CHARSET + "UTF-8";
         public static final String WS_FORM_CONTENT_TYPE = "application/x-www-form-urlencoded";
+        public static final String WS_JSON_CONTENT_TYPE3 = WS_JSON_CONTENT_TYPE + "-patch+json";
         // corresponds to the various multipart header settings supported by Apache HttpClient
         // STRICT               - RFC 822, RFC 2045, RFC 2046 compliant
         // BROWSER_COMPATIBLE   - browser-compatible mode, i.e. only write Content-Disposition; use content charset;
@@ -2089,7 +2094,7 @@ public final class NexialConst {
             public static final String DEF_SYS_IMG_64 = SYSTEM_IMAGES_PREFIX + "android-30;google_apis;x86_64";
             public static final String DEF_SYS_IMG_32 = SYSTEM_IMAGES_PREFIX + "android-30;google_apis;x86";
 
-            public static final String CMDLINE_TOOLS_PATH = 
+            public static final String CMDLINE_TOOLS_PATH =
                 TEMP + "nexial" + separator + "android" + separator + "cmdline-tools";
             public static final String SDK_MANAGER = CMDLINE_TOOLS_PATH + separator + SDK_MANAGER_REL_PATH;
             public static final String SCRIPT_COPY_TO_ANDROID = "copy-to-android.";

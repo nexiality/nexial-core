@@ -121,7 +121,7 @@ public class ExecutionSummary {
 
     private boolean failedFast;
     private String errorStackTrace;
-    private Throwable error;
+    private transient Throwable error;
     private String executionLog;
     private final Map<String, String> logs = new TreeMap<>();
 

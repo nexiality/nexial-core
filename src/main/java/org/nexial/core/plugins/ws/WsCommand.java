@@ -522,7 +522,7 @@ public class WsCommand extends BaseCommand {
         if (StringUtils.isNotEmpty(basicAuthUsername) && StringUtils.isNotEmpty(basicAuthPassword)) {
             String encoded =
                 new String(Base64.encodeBase64((basicAuthUsername + ":" + basicAuthPassword).getBytes(UTF_8)));
-            conn.setRequestProperty("Authorization", OAUTH_TOKEN_TYPE_BASIC + " " + encoded);
+            conn.setRequestProperty(AUTHORIZATION, OAUTH_TOKEN_TYPE_BASIC + " " + encoded);
         }
         conn.getOutputStream().write(postDataBytes);
 
