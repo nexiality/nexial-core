@@ -144,7 +144,7 @@ public class WebServiceClient {
     public WebServiceClient withBasicAuth(String username, String password) {
         priorityConfigs.put(WS_BASIC_USER, username);
         priorityConfigs.put(WS_BASIC_PWD, password);
-        if(context == null) {
+        if (context == null) {
             String authorization = new String(Base64.getEncoder().encode((username + ":" + password).getBytes()));
             priorityHeaders.put(AUTHORIZATION, "Basic " + authorization);
         }
@@ -880,7 +880,7 @@ public class WebServiceClient {
 
         InputStream responseBody = responseEntity.getContent();
         if (responseBody == null) { return null; }
-        if(responseBody.available() <= 0 && !responseEntity.isChunked()) { return null; }
+        if (responseBody.available() <= 0 && !responseEntity.isChunked()) { return null; }
         return IOUtils.toByteArray(responseBody);
     }
 

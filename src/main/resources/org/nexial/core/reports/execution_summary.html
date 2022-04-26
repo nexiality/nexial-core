@@ -322,19 +322,13 @@
                         <th:block data-th-if="${scenario.nestedExecutions}" data-th-each="activity : ${scenario.nestedExecutions}">
                             <tr data-th-class="'record activity ' + ${activity.failCount > 0 ? 'hasFailure' : 'noFailure'}">
                                 <td colspan="2" class="value spacer2"></td>
-                                <td colspan="2" class="value value-title" >
+                                <td colspan="2" class="value value-title">
                                     <div class="step-icon-grid" data-th-if="not ${#lists.isEmpty(activity.getStepDetails())}">
                                         <div data-th-attr="title=${activity.name}" data-th-utext="${activity.name}">Act 1</div>
-                                        <div>
-                                            <i class="fa execution-error-icon" data-th-if="${activity.isStepDetailsHasError()}" onclick="toggleStepErrors(this)" title="View Errors"></i>&nbsp;
-                                        </div>
-                                        <div>
-                                            <i class="fa execution-screenshot-icon" data-th-if="${activity.isStepDetailsHasLinks()}" onclick="toggleStepFiles(this)" title="View Screenshots/Files"></i>
-                                        </div>
+                                        <div><i class="fa execution-error-icon" data-th-if="${activity.isStepDetailsHasError()}" onclick="toggleStepErrors(this)" title="View Errors"></i>&nbsp;</div>
+                                        <div><i class="fa execution-screenshot-icon" data-th-if="${activity.isStepDetailsHasLinks()}" onclick="toggleStepFiles(this)" title="View Screenshots/Files"></i></div>
                                     </div>
-                                    <div data-th-if="${#lists.isEmpty(activity.getStepDetails())}">
-                                        <span data-th-attr="title=${activity.name}" data-th-utext="${activity.name}">Act 1</span>
-                                    </div>
+                                    <div data-th-if="${#lists.isEmpty(activity.getStepDetails())}"><span data-th-attr="title=${activity.name}" data-th-utext="${activity.name}">Act 1</span></div>
                                 </td>
                                 <td class="value value-datetime exectime" data-th-utext="${#dates.format(new java.util.Date(activity.startTime), 'yyyy/MM/dd HH:mm:ss')}">2018/12/16 12:53:21</td>
                                 <td class="value value-time exectime" data-th-utext="${#dates.format(#dates.create(0,0,0,0,0,0, (activity.endTime - activity.startTime)), 'HH:mm:ss')}">00:42:11</td>

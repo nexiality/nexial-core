@@ -631,7 +631,7 @@ public class TestStep extends TestStepManifest {
         if ((!isSkipped || !isEnded) && StringUtils.isEmpty(screenshot)) {
             // don't capture screenshot if step skipped or ended by endIf
             // OR if screenshot is already captured then also no need of duplicate screenshot
-                screenshot = handleScreenshot(result);
+            screenshot = handleScreenshot(result);
         }
 
         if (!context.isInteractiveMode()) {

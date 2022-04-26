@@ -2144,11 +2144,11 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
     protected StepResult postScreenshot(File target, String locator) throws IOException {
         String captured = locator == null ? "FullPage" : "'" + locator + "'";
-        context.getCurrentTestStep().setScreenshot(target.getAbsolutePath());
         if (context.isOutputToCloud()) {
             String cloudUrl = context.getOtc().importMedia(target, true);
             context.setData(OPT_LAST_OUTPUT_LINK, cloudUrl);
             context.setData(OPT_LAST_OUTPUT_PATH, StringUtils.substringBeforeLast(cloudUrl, "/"));
+            context.getCurrentTestStep().setScreenshot(cloudUrl);
             return StepResult.success("Image captured for " + captured + " to URL " + cloudUrl);
         } else {
             String link = target.getAbsolutePath();
@@ -2156,6 +2156,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
             context.setData(OPT_LAST_OUTPUT_PATH, StringUtils.contains(link, "\\") ?
                                                   StringUtils.substringBeforeLast(link, "\\") :
                                                   StringUtils.substringBeforeLast(link, "/"));
+            context.getCurrentTestStep().setScreenshot(link);
             return StepResult.success("Image captured for " + captured + " to file '" + target + "'");
         }
     }

@@ -110,7 +110,7 @@ public class PostMultipartRequest extends PostRequest {
                 String filePath = params.remove(name);
                 if (FileUtil.isFileReadable(filePath)) {
                     if (verbose) { ConsoleUtils.log(logId, "adding %s as %s file", filePath, contentType); }
-                    if(contentType == null) {
+                    if (contentType == null) {
                         multipartBuilder.addBinaryBody(name, new File(filePath));
                     } else {
                         String content = OutputFileUtils.resolveContent(filePath, context, false, !rawContent);
@@ -129,7 +129,8 @@ public class PostMultipartRequest extends PostRequest {
             if (verbose) {
                 ConsoleUtils.log(logId,
                                  "setting the remaining payload (%s) as %s",
-                                 TextUtils.toString(params.keySet(), ","), contentType.toString());
+                                 TextUtils.toString(params.keySet(), ","), 
+                                 contentType == null ? "NO-CONTENT-TYPE-SPECIFIED" : contentType.toString());
             }
             params.forEach((name, value) -> multipartBuilder.addTextBody(name, value, contentType));
         }

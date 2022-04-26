@@ -22,20 +22,22 @@ import java.util.*
 /**
  * lightweight version of the [TestStep], without references to POI objects
  */
-data class StepDetails(var rowNum: Int, var description: String, var nestedMessages: LinkedList<StepMessage>,
+data class StepDetails(var rowNum: Int,
+                       var description: String,
+                       var nestedMessages: LinkedList<StepMessage>,
                        var isPass: Boolean)
-data class StepMessage(var message: String, var file: String){
-    var fileType = "file"
-    init {
-        if(StringUtils.isNotEmpty(file)) {
-            this.fileType = when (file.substringAfterLast('.' ).lowercase()) {
-                "csv" -> "csv"
-                "pdf" -> "pdf"
-                "png", "jpg", "jpeg" -> "image"
-                "mp4" -> "video"
-                "xls", "xlsx"  -> "excel"
-                else -> "alt"
-            }
+
+data class StepMessage(var message: String, var file: String) {
+    val fileType = resolveFileType()
+
+    private fun resolveFileType() = if (StringUtils.isNotEmpty(file)) {
+        when (file.substringAfterLast('.').lowercase()) {
+            "csv"                -> "csv"
+            "pdf"                -> "pdf"
+            "png", "jpg", "jpeg" -> "image"
+            "mp4"                -> "video"
+            "xls", "xlsx"        -> "excel"
+            else                 -> "alt"
         }
-    }
+    } else "alt"
 }
