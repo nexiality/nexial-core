@@ -692,9 +692,10 @@ public class Browser implements ForcefulTerminate {
         // the content transfer between these two context as security violation
         if (context.hasData(OPT_TREAT_AS_SECURE)) {
             String treatAsSecure = context.getStringData(OPT_TREAT_AS_SECURE);
-            options.addArguments(KEY_TREAT_AS_SECURE, treatAsSecure);
+            options.addArguments(KEY_TREAT_AS_SECURE + "=" + treatAsSecure);
         }
 
+        options.addArguments("--user-agent=\"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/101.0.4951.54 Safari/537.36\"");
         ChromeDriverService driverService = null;
         ChromeDriver chrome;
         try {
