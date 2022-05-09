@@ -83,8 +83,6 @@ internal object WebDriverCapabilityUtils {
         options.addArguments("--autoplay-policy=user-gesture-required")
         options.addArguments("--disable-gpu") // applicable to Windows os and Linux
         options.addArguments("--disable-software-rasterizer")
-        options.addArguments("--enable-features=NetworkService")
-        options.addArguments("--ignore-certificate-errors")
     }
 
     @JvmStatic

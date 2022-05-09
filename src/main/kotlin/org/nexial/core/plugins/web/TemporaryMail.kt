@@ -17,9 +17,7 @@
 
 package org.nexial.core.plugins.web
 
-import org.apache.commons.io.FileUtils
 import org.apache.commons.lang3.StringUtils
-import org.apache.commons.lang3.SystemUtils.JAVA_IO_TMPDIR
 import org.json.JSONObject
 import org.nexial.core.NexialConst.BrowserType
 import org.nexial.core.NexialConst.Web.BROWSER
@@ -27,11 +25,12 @@ import org.nexial.core.model.ExecutionContext
 import org.nexial.core.plugins.ws.WebServiceClient
 import org.nexial.core.utils.ConsoleUtils
 import org.nexial.core.utils.JsonUtils
-import org.openqa.selenium.*
-import org.openqa.selenium.OutputType.FILE
+import org.openqa.selenium.By
+import org.openqa.selenium.WebDriver
+import org.openqa.selenium.WebDriverException
+import org.openqa.selenium.WebElement
 import org.openqa.selenium.interactions.Actions
 import org.openqa.selenium.support.ui.FluentWait
-import java.io.File
 import java.time.Duration
 import java.time.LocalDateTime
 import java.time.ZoneId
@@ -59,10 +58,10 @@ class TemporaryMail : WebMailer() {
     var browser: Browser? = null
 
     override fun search(context: ExecutionContext, profile: WebMailProfile, searchCriteria: String, duration: Long):
-        Set<String?> {
+        Set<String> {
         if (duration < 1) {
             ConsoleUtils.log("Scan for incoming email from ${profile.inbox}$mailSuffix...")
-            val driver: WebDriver = initDriver(context)
+            val driver = initDriver(context)
             initInbox(driver, profile)
             Thread.sleep(waitBeforeDriverCloseMs)
             driver.close()
@@ -79,7 +78,6 @@ class TemporaryMail : WebMailer() {
                     email.id
                 }.toSet()
             }
-            // if (duration < 1) break
             Thread.sleep(waitBetweenFetchMs)
         }
 
@@ -151,18 +149,19 @@ class TemporaryMail : WebMailer() {
 
         val bodyElem = driver.findElement<WebElement>(By.cssSelector("body"))
                        ?: throw WebDriverException("Unable to navigate to $startUrl")
-        val screenshot = (driver as TakesScreenshot).getScreenshotAs(FILE)
-        FileUtils.moveFile(screenshot, File(StringUtils.appendIfMissing(JAVA_IO_TMPDIR, "/") + "TempMail1.png"))
-        ConsoleUtils.log("DEBUG...\n${bodyElem.text}")
+        // val screenshot = (driver as TakesScreenshot).getScreenshotAs(FILE)
+        // FileUtils.moveFile(screenshot, File(StringUtils.appendIfMissing(JAVA_IO_TMPDIR, "/") + "TempMail1.png"))
+        // ConsoleUtils.log("DEBUG...\n${bodyElem.text}")
 
         if (StringUtils.containsIgnoreCase(bodyElem.text, "Checking your browser")) {
+            // give it some time for redirect to complete
             Thread.sleep(6500)
-            val screenshot2 = (driver as TakesScreenshot).getScreenshotAs(FILE)
-            FileUtils.moveFile(screenshot2, File(StringUtils.appendIfMissing(JAVA_IO_TMPDIR, "/") + "TempMail2.png"))
-
-            val bodyElem2 = driver.findElement<WebElement>(By.cssSelector("body"))
-                            ?: throw WebDriverException("Unable to navigate to $startUrl")
-            ConsoleUtils.log("DEBUG...\n${bodyElem2.text}")
+            // val screenshot2 = (driver as TakesScreenshot).getScreenshotAs(FILE)
+            // FileUtils.moveFile(screenshot2, File(StringUtils.appendIfMissing(JAVA_IO_TMPDIR, "/") + "TempMail2.png"))
+            //
+            // val bodyElem2 = driver.findElement<WebElement>(By.cssSelector("body"))
+            //                 ?: throw WebDriverException("Unable to navigate to $startUrl")
+            // ConsoleUtils.log("DEBUG...\n${bodyElem2.text}")
         }
 
         val inboxSelector = By.cssSelector("#user_mailbox")
@@ -176,14 +175,14 @@ class TemporaryMail : WebMailer() {
         val submitElem = driver.findElement<WebElement>(submitSelector)
         Actions(driver).click(submitElem).perform()
 
-        Thread.sleep(2750)
+        Thread.sleep(3000)
 
         val messageSelector = By.cssSelector("#message-list")
         waiter.until { driver.findElement<WebElement>(messageSelector) }
     }
 
     private fun newWaiter(chrome: WebDriver): FluentWait<WebDriver> =
-        FluentWait<WebDriver>(chrome)
+        FluentWait(chrome)
             .withTimeout(Duration.ofMillis(maxElementWaitMs))
             .pollingEvery(Duration.ofMillis(25))
             .ignoring(WebDriverException::class.java)
@@ -206,26 +205,21 @@ class TemporaryMail : WebMailer() {
         return driver
     }
 
-    private fun retrieveFrom(json: JSONObject) =
-        if (!json.has("header"))
-            ""
-        else {
-            val header = json.getJSONObject("header")
-            if (header == null || !header.has("From"))
-                ""
-            else {
-                val fromArray = header.getJSONArray("From")
-                if (fromArray == null || fromArray.length() < 1 || fromArray.isNull(0))
-                    ""
-                else {
-                    val email = fromArray.getString(0)
-                    if (email.contains(">") && email.contains("<"))
-                        StringUtils.trim(StringUtils.substringBetween(email, "<", ">"))
-                    else
-                        email
-                }
-            }
-        }
+    private fun retrieveFrom(json: JSONObject): String {
+        if (!json.has("header")) return ""
+
+        val header = json.getJSONObject("header")
+        if (header == null || !header.has("From")) return ""
+
+        val fromArray = header.getJSONArray("From")
+        if (fromArray == null || fromArray.length() < 1 || fromArray.isNull(0)) return ""
+
+        val email = fromArray.getString(0)
+        return if (email.contains(">") && email.contains("<"))
+            StringUtils.trim(StringUtils.substringBetween(email, "<", ">"))
+        else
+            email
+    }
 
     override fun delete(context: ExecutionContext, profile: WebMailProfile, id: String): Boolean {
         val url = apiBase + profile.inbox + "/" + id
