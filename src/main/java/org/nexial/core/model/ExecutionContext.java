@@ -576,6 +576,14 @@ public class ExecutionContext {
         return getIntData(DELAY_BETWEEN_STEPS_MS, getDefaultInt(DELAY_BETWEEN_STEPS_MS));
     }
 
+    public boolean useExplicitWait(String profile) {
+        if (hasConfig("web", profile, WEB_EXPLICIT_WAIT)) {
+            return getBooleanConfig("web", profile, WEB_EXPLICIT_WAIT);
+        }
+        if (hasConfig("web", profile, WEB_ALWAYS_WAIT)) { return getBooleanConfig("web", profile, WEB_ALWAYS_WAIT); }
+        return getDefaultBool(WEB_EXPLICIT_WAIT);
+    }
+
     public boolean hasData(String name) { return getObjectData(name) != null; }
 
     @Nullable
@@ -1922,12 +1930,12 @@ public class ExecutionContext {
                 int index = NumberUtils.isDigits(propName) ? NumberUtils.toInt(propName) : -1;
                 if (Collection.class.isAssignableFrom(value.getClass())) {
                     Collection collection = (Collection) value;
-                    newValue = index == -1 ? "" : 
-                                         collection.size() > index ? 
-                                         ObjectUtils.defaultIfNull(IterableUtils.get(collection, index), "") : "";
+                    newValue = index == -1 ? "" :
+                               collection.size() > index ?
+                               ObjectUtils.defaultIfNull(IterableUtils.get(collection, index), "") : "";
                 } else if (value.getClass().isArray()) {
                     newValue = index == -1 ? "" :
-                               ArrayUtils.getLength(value) > index ? 
+                               ArrayUtils.getLength(value) > index ?
                                ObjectUtils.defaultIfNull(Array.get(value, index), "") : "";
                 } else {
                     // object treatment
@@ -1946,7 +1954,8 @@ public class ExecutionContext {
                     }
                 }
             }
-        } catch (IllegalAccessException | InvocationTargetException | IndexOutOfBoundsException | NoSuchMethodException e) {
+        } catch (IllegalAccessException | InvocationTargetException | IndexOutOfBoundsException |
+                 NoSuchMethodException e) {
             logger.warn("Unable to retrieve '" + propName + "' from " + value + ": " + e.getMessage());
             newValue = null;
         }

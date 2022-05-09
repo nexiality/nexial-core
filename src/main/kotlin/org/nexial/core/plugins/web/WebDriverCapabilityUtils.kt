@@ -24,6 +24,7 @@ import org.nexial.core.model.ExecutionContext
 import org.openqa.selenium.MutableCapabilities
 import org.openqa.selenium.UnexpectedAlertBehaviour.ACCEPT
 import org.openqa.selenium.UnexpectedAlertBehaviour.IGNORE
+import org.openqa.selenium.chrome.ChromeOptions
 import org.openqa.selenium.remote.CapabilityType.*
 
 internal object WebDriverCapabilityUtils {
@@ -36,19 +37,20 @@ internal object WebDriverCapabilityUtils {
     }
 
     @JvmStatic
-    fun initCapabilities(context: ExecutionContext, capabilities: MutableCapabilities) {
-        // if true then we tell firefox not to auto-close js alert dialog
+    fun initCapabilities(context: ExecutionContext?, capabilities: MutableCapabilities) {
+        val ignoreAlertFlag = context?.getBooleanData(OPT_ALERT_IGNORE_FLAG) ?: false
+        val acceptInvalidCert =
+            context?.getBooleanData(BROWSER_ACCEPT_INVALID_CERTS, getDefaultBool(BROWSER_ACCEPT_INVALID_CERTS)) ?: false
+
+        // if true then we tell browser not to auto-close js alert dialog
         capabilities.setCapability(UNEXPECTED_ALERT_BEHAVIOUR,
-                                   if (BooleanUtils.toBoolean(context.getBooleanData(OPT_ALERT_IGNORE_FLAG))) IGNORE
-                                   else ACCEPT)
+                                   if (BooleanUtils.toBoolean(ignoreAlertFlag)) IGNORE else ACCEPT)
         capabilities.setCapability(SUPPORTS_ALERTS, true)
         capabilities.setCapability(SUPPORTS_WEB_STORAGE, true)
         capabilities.setCapability(HAS_NATIVE_EVENTS, true)
         capabilities.setCapability(SUPPORTS_LOCATION_CONTEXT, false)
         capabilities.setCapability(ACCEPT_SSL_CERTS, true)
-        if (context.getBooleanData(BROWSER_ACCEPT_INVALID_CERTS, getDefaultBool(BROWSER_ACCEPT_INVALID_CERTS))) {
-            capabilities.setCapability(ACCEPT_INSECURE_CERTS, true)
-        }
+        if (acceptInvalidCert) capabilities.setCapability(ACCEPT_INSECURE_CERTS, true)
 
         // --------------------------------------------------------------------
         // Proxy
@@ -69,5 +71,67 @@ internal object WebDriverCapabilityUtils {
         //     ConsoleUtils.log("setting direct connection for webdriver");
         //     capabilities.setCapability(PROXY, WebProxy.getDirect());
         // }
+    }
+
+
+    @JvmStatic
+    fun configureForHeadless(options: ChromeOptions) {
+        options.setHeadless(true)
+        options.addArguments("--no-sandbox")
+        options.addArguments("--disable-dev-shm-usage")
+        options.addArguments("--use-fake-device-for-media-stream")
+        options.addArguments("--autoplay-policy=user-gesture-required")
+        options.addArguments("--disable-gpu") // applicable to Windows os and Linux
+        options.addArguments("--disable-software-rasterizer")
+    }
+
+    @JvmStatic
+    fun addChromeExperimentalOptions(options: ChromeOptions,
+                                     withGeoLocation: Boolean,
+                                     alwaysSavePdf: Boolean,
+                                     downloadTo: String?) {
+        // time to experiment...
+        val prefs: MutableMap<String, Any> = HashMap()
+
+        // disable save password "bubble", in case we are running in non-incognito mode
+        prefs["credentials_enable_service"] = false
+        prefs["profile.password_manager_enabled"] = false
+        if (downloadTo != null && StringUtils.isNotBlank(downloadTo)) {
+            // allow PDF to be downloaded instead of displayed (pretty much useless)
+            prefs["plugins.always_open_pdf_externally"] = alwaysSavePdf
+            prefs["download.default_directory"] = downloadTo
+            // prefs.put("download.extensions_to_open", "application/pdf");
+        }
+
+        // https://stackoverflow.com/questions/40244670/disable-geolocation-in-selenium-chromedriver-with-python
+        prefs["geolocation"] = withGeoLocation
+        prefs["profile.default_content_setting_values.geolocation"] = if (withGeoLocation) 1 else 2
+        prefs["profile.managed_default_content_settings.geolocation"] = if (withGeoLocation) 1 else 2
+
+        // To Turns off multiple download warning
+        prefs["profile.default_content_settings.popups"] = 0
+        prefs["profile.default_content_setting_values.automatic_downloads"] = 1
+        // Turns off download prompt
+        prefs["download.prompt_for_download"] = false
+        options.setExperimentalOption("prefs", prefs)
+
+        // starting from Chrome 80, "samesite" is enforced by default... we need to workaround it
+        val experimentalFlags: MutableList<String> = ArrayList()
+        experimentalFlags.add("same-site-by-default-cookies@1")
+        experimentalFlags.add("enable-removing-all-third-party-cookies@2")
+        experimentalFlags.add("cookies-without-same-site-must-be-secure@1")
+        val localState: MutableMap<String, Any> = HashMap()
+        localState["browser.enabled_labs_experiments"] = experimentalFlags
+        options.setExperimentalOption("localState", localState)
+
+        // get rid of the infobar on top of the browser window
+        //  Disable a few things considered not appropriate for automation.
+        //     - disables the password saving UI (which covers the usecase of the removed `disable-save-password-bubble` flag)
+        //     - disables infobar animations
+        //     - disables dev mode extension bubbles (?), and doesn't show some other info bars
+        //     - disables auto-reloading on network errors (source)
+        //     - means the default browser check prompt isn't shown
+        //     - avoids showing these 3 infobars: ShowBadFlagsPrompt, GoogleApiKeysInfoBarDelegate, ObsoleteSystemInfoBarDelegate
+        options.setExperimentalOption("excludeSwitches", arrayOf("enable-automation", "load-extension"))
     }
 }

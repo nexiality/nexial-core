@@ -25,55 +25,55 @@
         http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-2.0.xsd"
        default-lazy-init="true">
 
-    <import resource="nexial-integration.xml"/>
+  <import resource="nexial-integration.xml"/>
 
-    <bean id="applicationEventMulticaster" class="org.springframework.context.event.SimpleApplicationEventMulticaster"/>
-    <bean id="applicationContextUtils" class="org.nexial.commons.spring.ApplicationContextUtils"/>
+  <bean id="applicationEventMulticaster" class="org.springframework.context.event.SimpleApplicationEventMulticaster"/>
+  <bean id="applicationContextUtils" class="org.nexial.commons.spring.ApplicationContextUtils"/>
 
-    <bean id="gsonBuilder" class="com.google.gson.GsonBuilder" init-method="setPrettyPrinting"/>
-    <bean id="gson" factory-bean="gsonBuilder" factory-method="create"/>
+  <bean id="gsonBuilder" class="com.google.gson.GsonBuilder" init-method="setPrettyPrinting"/>
+  <bean id="gson" factory-bean="gsonBuilder" factory-method="create"/>
 
-    <bean id="soundMachine" class="org.nexial.core.plugins.sound.SoundMachine" scope="prototype" init-method="init"
-          p:tts-ref="tts"
-          p:notReadMessage="tts not configured. See https://nexiality.github.io/documentation/commands/sound/speak(text).html#setup for setup details.">
+  <bean id="soundMachine" class="org.nexial.core.plugins.sound.SoundMachine" scope="prototype" init-method="init"
+        p:tts-ref="tts"
+        p:notReadMessage="tts not configured. See https://nexiality.github.io/documentation/commands/sound/speak(text).html#setup for setup details.">
 
-        <property name="soundFileInfo">
-            <map key-type="java.lang.String" value-type="java.lang.String">
-                <entry key="downloadFrom" value="https://nexiality.github.io/documentation/commands/sound/"/>
-                <entry key="downloadTo" value="${user.home}/.nexial/sound/"/>
-                <entry key="fileExtension" value=".mp3"/>
-            </map>
-        </property>
-    </bean>
+    <property name="soundFileInfo">
+      <map key-type="java.lang.String" value-type="java.lang.String">
+        <entry key="downloadFrom" value="https://nexiality.github.io/documentation/commands/sound/"/>
+        <entry key="downloadTo" value="${user.home}/.nexial/sound/"/>
+        <entry key="fileExtension" value=".mp3"/>
+      </map>
+    </property>
+  </bean>
 
-    <bean id="executionEventListener" class="org.nexial.core.model.ExecutionEventListener"
-          p:mailIncludeMeta="false"
-          p:smsIncludeMeta="false"
-    />
+  <bean id="executionEventListener" class="org.nexial.core.model.ExecutionEventListener"
+        p:mailIncludeMeta="false"
+        p:smsIncludeMeta="false"
+  />
 
-    <util:map id="webmailers" key-type="java.lang.String" value-type="org.nexial.core.plugins.web.WebMailer"
-              map-class="java.util.HashMap">
-        <entry key="mailinator">
-            <bean class="org.nexial.core.plugins.web.Mailinator"/>
-        </entry>
-        <entry key="temporary-mail">
-            <bean class="org.nexial.core.plugins.web.TemporaryMail"/>
-        </entry>
-    </util:map>
+  <util:map id="webmailers" key-type="java.lang.String" value-type="org.nexial.core.plugins.web.WebMailer"
+            map-class="java.util.HashMap">
+    <entry key="mailinator">
+      <bean class="org.nexial.core.plugins.web.Mailinator"/>
+    </entry>
+    <entry key="temporary-mail">
+      <bean class="org.nexial.core.plugins.web.TemporaryMail" p:browser-ref="browserTemplate"/>
+    </entry>
+  </util:map>
 
-    <bean id="userstack" class="org.nexial.core.services.external.UserStackAPI">
-        <constructor-arg name="apiKeys">
-            <list value-type="java.lang.String">
-                <value>5b71975a107de30d26f3878fa9adbb5e</value>
-                <value>278720a8776318f6bee49fe59c517381</value>
-                <value>30dcc7900c443a279315170afe815bd4</value>
-                <value>46d1f7737e47ba2525b80f9a5042e212</value>
-            </list>
-        </constructor-arg>
-        <constructor-arg name="url">
-            <!-- can only use http for free api keys -->
-            <value><![CDATA[http://api.userstack.com/detect?access_key={accessKey}&ua={ua}]]></value>
-        </constructor-arg>
-    </bean>
+  <bean id="userstack" class="org.nexial.core.services.external.UserStackAPI">
+    <constructor-arg name="apiKeys">
+      <list value-type="java.lang.String">
+        <value>5b71975a107de30d26f3878fa9adbb5e</value>
+        <value>278720a8776318f6bee49fe59c517381</value>
+        <value>30dcc7900c443a279315170afe815bd4</value>
+        <value>46d1f7737e47ba2525b80f9a5042e212</value>
+      </list>
+    </constructor-arg>
+    <constructor-arg name="url">
+      <!-- can only use http for free api keys -->
+      <value><![CDATA[http://api.userstack.com/detect?access_key={accessKey}&ua={ua}]]></value>
+    </constructor-arg>
+  </bean>
 
 </beans>

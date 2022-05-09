@@ -17,6 +17,9 @@
 
 package org.nexial.core.plugins.ws;
 
+import org.apache.http.conn.ssl.NoopHostnameVerifier;
+import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
+
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.X509Certificate;
@@ -24,9 +27,6 @@ import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
-
-import org.apache.http.conn.ssl.NoopHostnameVerifier;
-import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 
 public class NaiveConnectionSocketFactory extends SSLConnectionSocketFactory {
     static final SSLContext I_TRUST_EVERYONE = initNaiveContext();
@@ -51,7 +51,7 @@ public class NaiveConnectionSocketFactory extends SSLConnectionSocketFactory {
 
             sslContext.init(null, new TrustManager[]{tm}, null);
         } catch (NoSuchAlgorithmException | KeyManagementException e) {
-            throw new RuntimeException("Unable to initialize NaiveConnectionSocketFactory:" + e.getMessage());
+            throw new RuntimeException("Unable to initialize NaiveConnectionSocketFactory: " + e.getMessage());
         }
 
         return sslContext;

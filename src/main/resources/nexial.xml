@@ -25,659 +25,665 @@
         http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-2.0.xsd"
        default-lazy-init="true">
 
-    <import resource="nexial-main.xml"/>
-    <!--<import resource="nexial-props.xml"/>-->
+  <import resource="nexial-main.xml"/>
+  <!--<import resource="nexial-props.xml"/>-->
 
 
-    <util:list id="failfastCommands" list-class="java.util.ArrayList" value-type="java.lang.String">
-        <value>web.open</value>
-        <value>web.openAndWait</value>
-        <value>web.close</value>
-        <value>mobile.use</value>
-    </util:list>
+  <util:list id="failfastCommands" list-class="java.util.ArrayList" value-type="java.lang.String">
+    <value>web.open</value>
+    <value>web.openAndWait</value>
+    <value>web.close</value>
+    <value>mobile.use</value>
+  </util:list>
 
 
-    <!-- ##################################### -->
-    <!-- ### evaluator framework           ### -->
-    <!-- ##################################### -->
-    <bean id="evaluatorTemplate" class="org.nexial.core.compare.EvaluatorBase" abstract="true"/>
-    <bean id="evaluatorEquals" class="org.nexial.core.compare.EvaluateEquals" parent="evaluatorTemplate"/>
-    <bean id="evaluatorNotEquals" class="org.nexial.core.compare.EvaluateNotEquals"
-          parent="evaluatorTemplate"/>
-    <bean id="evaluatorGreater" class="org.nexial.core.compare.EvaluateGreater" parent="evaluatorTemplate"/>
-    <bean id="evaluatorLesser" class="org.nexial.core.compare.EvaluateLesser" parent="evaluatorTemplate"/>
-    <bean id="evaluatorGreaterOrEqual" class="org.nexial.core.compare.EvaluateGreaterOrEqual"
-          parent="evaluatorTemplate"/>
-    <bean id="evaluatorLesserOrEqual" class="org.nexial.core.compare.EvaluateLesserOrEqual"
-          parent="evaluatorTemplate"/>
-    <bean id="evaluatorContains" class="org.nexial.core.compare.EvaluateContains" parent="evaluatorTemplate"/>
-    <bean id="evaluatorNotContain" class="org.nexial.core.compare.EvaluateNotContain"
-          parent="evaluatorTemplate"/>
-    <bean id="evaluatorTrue" class="org.nexial.core.compare.EvaluateTrue" parent="evaluatorTemplate"/>
-    <bean id="evaluatorFalse" class="org.nexial.core.compare.EvaluateFalse" parent="evaluatorTemplate"/>
-    <util:map id="evaluators" key-type="java.lang.String" value-type="org.nexial.core.compare.Evaluator">
-        <entry key="=" value-ref="evaluatorEquals"/>
-        <entry key="=" value-ref="evaluatorEquals"/>
-        <entry key="==" value-ref="evaluatorEquals"/>
-        <entry key="is" value-ref="evaluatorEquals"/>
-        <entry key="!=" value-ref="evaluatorNotEquals"/>
-        <entry key="is not" value-ref="evaluatorNotEquals"/>
-        <entry key=">" value-ref="evaluatorGreater"/>
-        <entry key="&lt;" value-ref="evaluatorLesser"/>
-        <entry key=">=" value-ref="evaluatorGreaterOrEqual"/>
-        <entry key="&lt;=" value-ref="evaluatorLesserOrEqual"/>
-        <entry key="in" value-ref="evaluatorContains"/>
-        <entry key="not in" value-ref="evaluatorNotContain"/>
-        <entry key="is true" value-ref="evaluatorTrue"/>
-        <entry key="is false" value-ref="evaluatorFalse"/>
-    </util:map>
-    <bean id="evaluate" class="org.nexial.core.compare.Evaluate">
-        <property name="evaluators" ref="evaluators"/>
-        <property name="regexes">
-            <array>
-                <value><![CDATA[(.+)\ *(\=\=|\!\=|is not|\>\=|\<\=|not in)\ *(.+)]]></value>
-                <value><![CDATA[(.+)\ *(\=|is|\>|\<|in)\ *(.+)]]></value>
-                <value><![CDATA[(.+)\ *(is true|is false).*]]></value>
-            </array>
+  <!-- ##################################### -->
+  <!-- ### evaluator framework           ### -->
+  <!-- ##################################### -->
+  <bean id="evaluatorTemplate" class="org.nexial.core.compare.EvaluatorBase" abstract="true"/>
+  <bean id="evaluatorEquals" class="org.nexial.core.compare.EvaluateEquals" parent="evaluatorTemplate"/>
+  <bean id="evaluatorNotEquals" class="org.nexial.core.compare.EvaluateNotEquals"
+        parent="evaluatorTemplate"/>
+  <bean id="evaluatorGreater" class="org.nexial.core.compare.EvaluateGreater" parent="evaluatorTemplate"/>
+  <bean id="evaluatorLesser" class="org.nexial.core.compare.EvaluateLesser" parent="evaluatorTemplate"/>
+  <bean id="evaluatorGreaterOrEqual" class="org.nexial.core.compare.EvaluateGreaterOrEqual"
+        parent="evaluatorTemplate"/>
+  <bean id="evaluatorLesserOrEqual" class="org.nexial.core.compare.EvaluateLesserOrEqual"
+        parent="evaluatorTemplate"/>
+  <bean id="evaluatorContains" class="org.nexial.core.compare.EvaluateContains" parent="evaluatorTemplate"/>
+  <bean id="evaluatorNotContain" class="org.nexial.core.compare.EvaluateNotContain"
+        parent="evaluatorTemplate"/>
+  <bean id="evaluatorTrue" class="org.nexial.core.compare.EvaluateTrue" parent="evaluatorTemplate"/>
+  <bean id="evaluatorFalse" class="org.nexial.core.compare.EvaluateFalse" parent="evaluatorTemplate"/>
+  <util:map id="evaluators" key-type="java.lang.String" value-type="org.nexial.core.compare.Evaluator">
+    <entry key="=" value-ref="evaluatorEquals"/>
+    <entry key="=" value-ref="evaluatorEquals"/>
+    <entry key="==" value-ref="evaluatorEquals"/>
+    <entry key="is" value-ref="evaluatorEquals"/>
+    <entry key="!=" value-ref="evaluatorNotEquals"/>
+    <entry key="is not" value-ref="evaluatorNotEquals"/>
+    <entry key=">" value-ref="evaluatorGreater"/>
+    <entry key="&lt;" value-ref="evaluatorLesser"/>
+    <entry key=">=" value-ref="evaluatorGreaterOrEqual"/>
+    <entry key="&lt;=" value-ref="evaluatorLesserOrEqual"/>
+    <entry key="in" value-ref="evaluatorContains"/>
+    <entry key="not in" value-ref="evaluatorNotContain"/>
+    <entry key="is true" value-ref="evaluatorTrue"/>
+    <entry key="is false" value-ref="evaluatorFalse"/>
+  </util:map>
+  <bean id="evaluate" class="org.nexial.core.compare.Evaluate">
+    <property name="evaluators" ref="evaluators"/>
+    <property name="regexes">
+      <array>
+        <value><![CDATA[(.+)\ *(\=\=|\!\=|is not|\>\=|\<\=|not in)\ *(.+)]]></value>
+        <value><![CDATA[(.+)\ *(\=|is|\>|\<|in)\ *(.+)]]></value>
+        <value><![CDATA[(.+)\ *(is true|is false).*]]></value>
+      </array>
+    </property>
+  </bean>
+
+
+  <!-- ####################################### -->
+  <!-- ### nexial built-in functions       ### -->
+  <!-- ####################################### -->
+  <bean id="array" class="org.nexial.core.variable.Array" init-method="init"/>
+  <bean id="count" class="org.nexial.core.variable.Count" init-method="init"/>
+  <bean id="date" class="org.nexial.core.variable.Date" init-method="init"/>
+  <bean id="execution" class="org.nexial.core.variable.Execution" init-method="init"/>
+  <bean id="file" class="org.nexial.core.variable.File" init-method="init"/>
+  <bean id="format" class="org.nexial.core.variable.Format" init-method="init"/>
+  <bean id="projectfile" class="org.nexial.core.variable.ProjectFile" init-method="init"/>
+  <bean id="random" class="org.nexial.core.variable.Random" init-method="init"/>
+  <bean id="sysdate" class="org.nexial.core.variable.Sysdate" init-method="init"/>
+  <bean id="syspath" class="org.nexial.core.variable.Syspath" init-method="init"/>
+  <util:map id="builtinFunctions" key-type="java.lang.String" value-type="java.lang.Object">
+    <entry key="array" value-ref="array"/>
+    <entry key="count" value-ref="count"/>
+    <entry key="date" value-ref="date"/>
+    <entry key="execution" value-ref="execution"/>
+    <entry key="file" value-ref="file"/>
+    <entry key="format" value-ref="format"/>
+    <entry key="projectfile" value-ref="projectfile"/>
+    <entry key="random" value-ref="random"/>
+    <entry key="sysdate" value-ref="sysdate"/>
+    <entry key="syspath" value-ref="syspath"/>
+  </util:map>
+
+
+  <!-- ##################################### -->
+  <!-- ### RDBMS beans                   ### -->
+  <!-- ##################################### -->
+  <bean id="template:dataSource" class="org.apache.commons.dbcp2.BasicDataSource" destroy-method="close" abstract="true"
+        scope="prototype">
+    <property name="maxTotal" value="${nexial.jdbc.maxTotal}"/>
+    <property name="maxIdle" value="${nexial.jdbc.maxIdle}"/>
+    <property name="maxOpenPreparedStatements" value="${nexial.jdbc.maxOpenPreparedStatements}"/>
+    <property name="poolPreparedStatements" value="${nexial.jdbc.poolPreparedStatements}"/>
+    <property name="defaultAutoCommit" value="${nexial.jdbc.defaultAutoCommit}"/>
+    <property name="accessToUnderlyingConnectionAllowed" value="${nexial.jdbc.accessToUnderlyingConnectionAllowed}"/>
+  </bean>
+
+
+  <!-- ##################################### -->
+  <!-- ### all plugins                   ### -->
+  <!-- ##################################### -->
+  <bean id="rdbms" class="org.nexial.core.plugins.db.RdbmsCommand">
+    <property name="dataAccess">
+      <bean class="org.nexial.core.plugins.db.DataAccess">
+        <!--
+        we want to support ALL types of SQL, including those vendor-specific
+        so for that reason, we are no longer insisting on the use of standard ANSI sql
+        -->
+        <!--<property name="validSQLStartWords">-->
+        <!--<list value-type="java.lang.String">-->
+        <!--<value><![CDATA[SELECT ]]></value>-->
+        <!--<value><![CDATA[WITH ]]></value>-->
+        <!--<value><![CDATA[INSERT ]]></value>-->
+        <!--<value><![CDATA[UPDATE ]]></value>-->
+        <!--<value><![CDATA[DELETE ]]></value>-->
+        <!--<value><![CDATA[{CALL ]]></value>-->
+        <!--<value><![CDATA[CALL ]]></value>-->
+        <!--<value><![CDATA[COMMIT]]></value>-->
+        <!--<value><![CDATA[ROLLBACK]]></value>-->
+        <!--</list>-->
+        <!--</property>-->
+        <property name="dbTypes">
+          <map key-type="java.lang.String" value-type="java.lang.String">
+            <entry key="connx" value="com.Connx.jdbc.TCJdbc.TCJdbcDriver"/>
+            <entry key="db2" value="com.ibm.db2.jcc.DB2Driver"/>
+            <entry key="isam" value="com.Connx.jdbc.TCJdbc.TCJdbcDriver"/>
+            <entry key="mssql" value="com.microsoft.sqlserver.jdbc.SQLServerDriver"/>
+            <entry key="mysql" value="com.mysql.cj.jdbc.Driver"/>
+            <entry key="oracle" value="oracle.jdbc.driver.OracleDriver"/>
+            <entry key="postgresql" value="org.postgresql.Driver"/>
+            <entry key="sqlite" value="org.sqlite.JDBC"/>
+            <entry key="hsqldb" value="org.hsqldb.jdbc.JDBCDriver"/>
+            <!-- https://bitbucket.org/dbschema/mongodb-jdbc-driver/src/master/ -->
+            <entry key="mongodb" value="com.dbschema.MongoJdbcDriver"/>
+            <entry key="mariadb" value="org.mariadb.jdbc.Driver"/>
+          </map>
         </property>
-    </bean>
-
-
-    <!-- ####################################### -->
-    <!-- ### nexial built-in functions       ### -->
-    <!-- ####################################### -->
-    <bean id="array" class="org.nexial.core.variable.Array" init-method="init"/>
-    <bean id="count" class="org.nexial.core.variable.Count" init-method="init"/>
-    <bean id="date" class="org.nexial.core.variable.Date" init-method="init"/>
-    <bean id="execution" class="org.nexial.core.variable.Execution" init-method="init"/>
-    <bean id="file" class="org.nexial.core.variable.File" init-method="init"/>
-    <bean id="format" class="org.nexial.core.variable.Format" init-method="init"/>
-    <bean id="projectfile" class="org.nexial.core.variable.ProjectFile" init-method="init"/>
-    <bean id="random" class="org.nexial.core.variable.Random" init-method="init"/>
-    <bean id="sysdate" class="org.nexial.core.variable.Sysdate" init-method="init"/>
-    <bean id="syspath" class="org.nexial.core.variable.Syspath" init-method="init"/>
-    <util:map id="builtinFunctions" key-type="java.lang.String" value-type="java.lang.Object">
-        <entry key="array" value-ref="array"/>
-        <entry key="count" value-ref="count"/>
-        <entry key="date" value-ref="date"/>
-        <entry key="execution" value-ref="execution"/>
-        <entry key="file" value-ref="file"/>
-        <entry key="format" value-ref="format"/>
-        <entry key="projectfile" value-ref="projectfile"/>
-        <entry key="random" value-ref="random"/>
-        <entry key="sysdate" value-ref="sysdate"/>
-        <entry key="syspath" value-ref="syspath"/>
-    </util:map>
-
-
-    <!-- ##################################### -->
-    <!-- ### RDBMS beans                   ### -->
-    <!-- ##################################### -->
-    <bean id="template:dataSource" class="org.apache.commons.dbcp2.BasicDataSource" destroy-method="close" abstract="true" scope="prototype">
-        <property name="maxTotal" value="${nexial.jdbc.maxTotal}"/>
-        <property name="maxIdle" value="${nexial.jdbc.maxIdle}"/>
-        <property name="maxOpenPreparedStatements" value="${nexial.jdbc.maxOpenPreparedStatements}"/>
-        <property name="poolPreparedStatements" value="${nexial.jdbc.poolPreparedStatements}"/>
-        <property name="defaultAutoCommit" value="${nexial.jdbc.defaultAutoCommit}"/>
-        <property name="accessToUnderlyingConnectionAllowed" value="${nexial.jdbc.accessToUnderlyingConnectionAllowed}"/>
-    </bean>
-
-
-    <!-- ##################################### -->
-    <!-- ### all plugins                   ### -->
-    <!-- ##################################### -->
-    <bean id="rdbms" class="org.nexial.core.plugins.db.RdbmsCommand">
-        <property name="dataAccess">
-            <bean class="org.nexial.core.plugins.db.DataAccess">
-                <!--
-                we want to support ALL types of SQL, including those vendor-specific
-                so for that reason, we are no longer insisting on the use of standard ANSI sql
-                -->
-                <!--<property name="validSQLStartWords">-->
-                <!--<list value-type="java.lang.String">-->
-                <!--<value><![CDATA[SELECT ]]></value>-->
-                <!--<value><![CDATA[WITH ]]></value>-->
-                <!--<value><![CDATA[INSERT ]]></value>-->
-                <!--<value><![CDATA[UPDATE ]]></value>-->
-                <!--<value><![CDATA[DELETE ]]></value>-->
-                <!--<value><![CDATA[{CALL ]]></value>-->
-                <!--<value><![CDATA[CALL ]]></value>-->
-                <!--<value><![CDATA[COMMIT]]></value>-->
-                <!--<value><![CDATA[ROLLBACK]]></value>-->
-                <!--</list>-->
-                <!--</property>-->
-                <property name="dbTypes">
-                    <map key-type="java.lang.String" value-type="java.lang.String">
-                        <entry key="connx" value="com.Connx.jdbc.TCJdbc.TCJdbcDriver"/>
-                        <entry key="db2" value="com.ibm.db2.jcc.DB2Driver"/>
-                        <entry key="isam" value="com.Connx.jdbc.TCJdbc.TCJdbcDriver"/>
-                        <entry key="mssql" value="com.microsoft.sqlserver.jdbc.SQLServerDriver"/>
-                        <entry key="mysql" value="com.mysql.cj.jdbc.Driver"/>
-                        <entry key="oracle" value="oracle.jdbc.driver.OracleDriver"/>
-                        <entry key="postgresql" value="org.postgresql.Driver"/>
-                        <entry key="sqlite" value="org.sqlite.JDBC"/>
-                        <entry key="hsqldb" value="org.hsqldb.jdbc.JDBCDriver"/>
-                        <!-- https://bitbucket.org/dbschema/mongodb-jdbc-driver/src/master/ -->
-                        <entry key="mongodb" value="com.dbschema.MongoJdbcDriver"/>
-                        <entry key="mariadb" value="org.mariadb.jdbc.Driver"/>
-                    </map>
-                </property>
-                <property name="dbJarInfo">
-                    <map key-type="java.lang.String" value-type="org.nexial.core.plugins.ThirdPartyDriverInfo">
-                        <entry key="connx">
-                            <bean class="org.nexial.core.plugins.ThirdPartyDriverInfo">
-                                <constructor-arg name="jarFilePattern" value="connxjdbc-xxx.jar"/>
-                                <constructor-arg name="minVersion" value="4.6"/>
-                                <constructor-arg name="url" value="https://www.connx.com/databases/cisam-db.php"/>
-                            </bean>
-                        </entry>
-                        <entry key="isam">
-                            <bean class="org.nexial.core.plugins.ThirdPartyDriverInfo">
-                                <constructor-arg name="jarFilePattern" value="connxjdbc-xxx.jar"/>
-                                <constructor-arg name="minVersion" value="4.6"/>
-                                <constructor-arg name="url" value="https://www.connx.com/databases/cisam-db.php"/>
-                            </bean>
-                        </entry>
-                        <entry key="db2">
-                            <bean class="org.nexial.core.plugins.ThirdPartyDriverInfo">
-                                <constructor-arg name="jarFilePattern" value="db2jcc4.jar, db2jcc_license*.jar"/>
-                                <constructor-arg name="minVersion" value="4.8.87"/>
-                                <constructor-arg name="url" value="http://www-01.ibm.com/support/docview.wss?uid=swg21363866"/>
-                            </bean>
-                        </entry>
-                        <entry key="oracle">
-                            <bean class="org.nexial.core.plugins.ThirdPartyDriverInfo">
-                                <constructor-arg name="jarFilePattern" value="ojdbc*.jar"/>
-                                <constructor-arg name="minVersion" value="11.2.0.2.0"/>
-                                <constructor-arg name="url" value="http://www.oracle.com/technetwork/database/features/jdbc/jdbc-drivers-12c-download-1958347.html"/>
-                            </bean>
-                        </entry>
-                    </map>
-                </property>
-            </bean>
+        <property name="dbJarInfo">
+          <map key-type="java.lang.String" value-type="org.nexial.core.plugins.ThirdPartyDriverInfo">
+            <entry key="connx">
+              <bean class="org.nexial.core.plugins.ThirdPartyDriverInfo">
+                <constructor-arg name="jarFilePattern" value="connxjdbc-xxx.jar"/>
+                <constructor-arg name="minVersion" value="4.6"/>
+                <constructor-arg name="url" value="https://www.connx.com/databases/cisam-db.php"/>
+              </bean>
+            </entry>
+            <entry key="isam">
+              <bean class="org.nexial.core.plugins.ThirdPartyDriverInfo">
+                <constructor-arg name="jarFilePattern" value="connxjdbc-xxx.jar"/>
+                <constructor-arg name="minVersion" value="4.6"/>
+                <constructor-arg name="url" value="https://www.connx.com/databases/cisam-db.php"/>
+              </bean>
+            </entry>
+            <entry key="db2">
+              <bean class="org.nexial.core.plugins.ThirdPartyDriverInfo">
+                <constructor-arg name="jarFilePattern" value="db2jcc4.jar, db2jcc_license*.jar"/>
+                <constructor-arg name="minVersion" value="4.8.87"/>
+                <constructor-arg name="url" value="http://www-01.ibm.com/support/docview.wss?uid=swg21363866"/>
+              </bean>
+            </entry>
+            <entry key="oracle">
+              <bean class="org.nexial.core.plugins.ThirdPartyDriverInfo">
+                <constructor-arg name="jarFilePattern" value="ojdbc*.jar"/>
+                <constructor-arg name="minVersion" value="11.2.0.2.0"/>
+                <constructor-arg name="url"
+                                 value="http://www.oracle.com/technetwork/database/features/jdbc/jdbc-drivers-12c-download-1958347.html"/>
+              </bean>
+            </entry>
+          </map>
         </property>
-    </bean>
+      </bean>
+    </property>
+  </bean>
 
-    <bean id="localdb" class="org.nexial.core.plugins.db.LocalDbCommand"
-          p:dbName="nexial.localdb"
-          p:dbFile="${user.home}/.nexial/localdb/nexial"
-          p:rdbms-ref="rdbms">
-        <property name="connectionProps">
-            <map key-type="java.lang.String" value-type="java.lang.String">
-                <entry key="nexial.localdb.type" value="sqlite"/>
-                <entry key="nexial.localdb.url" value="jdbc:sqlite:${user.home}/.nexial/localdb/nexial"/>
-                <entry key="nexial.localdb.autocommit" value="true"/>
-                <entry key="nexial.localdb.treatNullAs" value="(null)"/>
-            </map>
+  <bean id="localdb" class="org.nexial.core.plugins.db.LocalDbCommand"
+        p:dbName="nexial.localdb"
+        p:dbFile="${user.home}/.nexial/localdb/nexial"
+        p:rdbms-ref="rdbms">
+    <property name="connectionProps">
+      <map key-type="java.lang.String" value-type="java.lang.String">
+        <entry key="nexial.localdb.type" value="sqlite"/>
+        <entry key="nexial.localdb.url" value="jdbc:sqlite:${user.home}/.nexial/localdb/nexial"/>
+        <entry key="nexial.localdb.autocommit" value="true"/>
+        <entry key="nexial.localdb.treatNullAs" value="(null)"/>
+      </map>
+    </property>
+    <property name="conflictingColumnNames">
+      <list value-type="java.lang.String">
+        <value>index</value>
+        <value>select</value>
+        <value>update</value>
+        <value>insert</value>
+        <value>delete</value>
+        <value>from</value>
+        <value>where</value>
+        <value>order</value>
+        <value>commit</value>
+        <value>rollback</value>
+        <value>drop</value>
+      </list>
+    </property>
+  </bean>
+
+  <util:map id="plugins" key-type="java.lang.String" value-type="org.nexial.core.plugins.NexialCommand">
+    <entry key="aws.s3">
+      <bean class="org.nexial.core.plugins.aws.S3Command"/>
+    </entry>
+    <entry key="aws.ses">
+      <bean class="org.nexial.core.plugins.aws.SesCommand"/>
+    </entry>
+    <entry key="aws.sqs">
+      <bean class="org.nexial.core.plugins.aws.SqsCommand"/>
+    </entry>
+    <entry key="aws.vision">
+      <bean class="org.nexial.core.plugins.aws.VisionCommand"/>
+    </entry>
+    <entry key="base">
+      <bean class="org.nexial.core.plugins.base.BaseCommand"/>
+    </entry>
+    <entry key="browserstack">
+      <bean class="org.nexial.core.plugins.browserstack.BrowserStackCommand"/>
+    </entry>
+    <entry key="csv">
+      <bean class="org.nexial.core.plugins.io.CsvCommand"/>
+    </entry>
+    <entry key="desktop">
+      <bean class="org.nexial.core.plugins.desktop.DesktopCommand"/>
+    </entry>
+    <entry key="excel">
+      <bean class="org.nexial.core.plugins.io.ExcelCommand"/>
+    </entry>
+    <entry key="external">
+      <bean class="org.nexial.core.plugins.external.ExternalCommand"/>
+    </entry>
+    <entry key="image">
+      <bean class="org.nexial.core.plugins.image.ImageCommand"/>
+    </entry>
+    <entry key="io">
+      <bean class="org.nexial.core.plugins.io.IoCommand"/>
+    </entry>
+    <entry key="javaui">
+      <bean class="org.nexial.core.plugins.javaui.JavaUICommand"/>
+    </entry>
+    <entry key="jms">
+      <bean class="org.nexial.core.plugins.jms.JmsCommand">
+        <property name="jmsClient">
+          <bean class="org.nexial.core.plugins.jms.JmsClient"/>
         </property>
-        <property name="conflictingColumnNames">
-            <list value-type="java.lang.String">
-                <value>index</value>
-                <value>select</value>
-                <value>update</value>
-                <value>insert</value>
-                <value>delete</value>
-                <value>from</value>
-                <value>where</value>
-                <value>order</value>
-                <value>commit</value>
-                <value>rollback</value>
-                <value>drop</value>
-            </list>
+        <property name="jmsClientConfigs">
+          <map key-type="java.lang.String" value-type="java.lang.String">
+            <entry key="activemq" value="org.nexial.core.plugins.jms.ActiveMQJmsClientConfig"/>
+            <entry key="webspheremq" value="org.nexial.core.plugins.jms.WebsphereMQJmsClientConfig"/>
+            <entry key="rabbitmq" value="org.nexial.core.plugins.jms.RabbitMQJmsClientConfig"/>
+            <entry key="jndi" value="org.nexial.core.plugins.jms.JmsJndiClientConfig"/>
+          </map>
         </property>
-    </bean>
-
-    <util:map id="plugins" key-type="java.lang.String" value-type="org.nexial.core.plugins.NexialCommand">
-        <entry key="aws.s3">
-            <bean class="org.nexial.core.plugins.aws.S3Command"/>
-        </entry>
-        <entry key="aws.ses">
-            <bean class="org.nexial.core.plugins.aws.SesCommand"/>
-        </entry>
-        <entry key="aws.sqs">
-            <bean class="org.nexial.core.plugins.aws.SqsCommand"/>
-        </entry>
-        <entry key="aws.vision">
-            <bean class="org.nexial.core.plugins.aws.VisionCommand"/>
-        </entry>
-        <entry key="base">
-            <bean class="org.nexial.core.plugins.base.BaseCommand"/>
-        </entry>
-        <entry key="browserstack">
-            <bean class="org.nexial.core.plugins.browserstack.BrowserStackCommand"/>
-        </entry>
-        <entry key="csv">
-            <bean class="org.nexial.core.plugins.io.CsvCommand"/>
-        </entry>
-        <entry key="desktop">
-            <bean class="org.nexial.core.plugins.desktop.DesktopCommand"/>
-        </entry>
-        <entry key="excel">
-            <bean class="org.nexial.core.plugins.io.ExcelCommand"/>
-        </entry>
-        <entry key="external">
-            <bean class="org.nexial.core.plugins.external.ExternalCommand"/>
-        </entry>
-        <entry key="image">
-            <bean class="org.nexial.core.plugins.image.ImageCommand"/>
-        </entry>
-        <entry key="io">
-            <bean class="org.nexial.core.plugins.io.IoCommand"/>
-        </entry>
-        <entry key="javaui">
-            <bean class="org.nexial.core.plugins.javaui.JavaUICommand"/>
-        </entry>
-        <entry key="jms">
-            <bean class="org.nexial.core.plugins.jms.JmsCommand">
-                <property name="jmsClient">
-                    <bean class="org.nexial.core.plugins.jms.JmsClient"/>
-                </property>
-                <property name="jmsClientConfigs">
-                    <map key-type="java.lang.String" value-type="java.lang.String">
-                        <entry key="activemq" value="org.nexial.core.plugins.jms.ActiveMQJmsClientConfig"/>
-                        <entry key="webspheremq" value="org.nexial.core.plugins.jms.WebsphereMQJmsClientConfig"/>
-                        <entry key="rabbitmq" value="org.nexial.core.plugins.jms.RabbitMQJmsClientConfig"/>
-                        <entry key="jndi" value="org.nexial.core.plugins.jms.JmsJndiClientConfig"/>
-                    </map>
-                </property>
-                <property name="jmsJarInfo">
-                    <map key-type="java.lang.String" value-type="org.nexial.core.plugins.ThirdPartyDriverInfo">
-                        <entry key="webspheremq">
-                            <bean class="org.nexial.core.plugins.ThirdPartyDriverInfo">
-                                <constructor-arg name="jarFilePattern" value="com.ibm.mq.commonservices.jar, com.ibm.mq.headers.jar, com.ibm.mq.jar, com.ibm.mq.jmqi.jar, com.ibm.mq.jms.admin.jar, com.ibm.mq.jms.Nojndi.jar, com.ibm.mq.pcf.jar, com.ibm.mqjms.jar, com.ibm.msg.client.commonservices.wmq.jar, dhbcore.jar"/>
-                                <constructor-arg name="minVersion" value="7.5.0.0"/>
-                                <constructor-arg name="url" value="http://www-01.ibm.com/support/docview.wss?uid=swg21376217"/>
-                            </bean>
-                        </entry>
-                    </map>
-                </property>
-            </bean>
-        </entry>
-        <entry key="json">
-            <bean class="org.nexial.core.plugins.json.JsonCommand"/>
-        </entry>
-        <entry key="localdb" value-ref="localdb"/>
-        <entry key="macro">
-            <bean class="org.nexial.core.plugins.base.MacroCommand"/>
-        </entry>
-        <entry key="mail">
-            <bean class="org.nexial.core.plugins.mail.MailCommand"/>
-        </entry>
-        <entry key="mobile">
-            <bean class="org.nexial.core.plugins.mobile.MobileCommand"/>
-        </entry>
-        <entry key="number">
-            <bean class="org.nexial.core.plugins.base.NumberCommand"/>
-        </entry>
-        <entry key="pdf">
-            <bean class="org.nexial.core.plugins.pdf.PdfCommand"/>
-        </entry>
-        <entry key="rdbms" value-ref="rdbms"/>
-        <entry key="redis">
-            <bean class="org.nexial.core.plugins.redis.RedisCommand"/>
-        </entry>
-        <entry key="sms">
-            <bean class="org.nexial.core.plugins.sms.SmsCommand"/>
-        </entry>
-        <entry key="sound">
-            <bean class="org.nexial.core.plugins.sound.SoundCommand"/>
-        </entry>
-        <entry key="step">
-            <bean class="org.nexial.core.plugins.step.StepCommand"/>
-        </entry>
-        <entry key="ssh">
-            <bean class="org.nexial.core.plugins.ssh.SshCommand"/>
-        </entry>
-        <entry key="tn5250">
-            <bean class="org.nexial.core.plugins.tn5250.Tn5250Command"/>
-        </entry>
-        <entry key="web">
-            <bean class="org.nexial.core.plugins.web.WebCommand" p:userStack-ref="userstack"/>
-        </entry>
-        <entry key="webmail">
-            <bean class="org.nexial.core.plugins.web.WebMailCommand" p:webmailers-ref="webmailers"/>
-        </entry>
-        <entry key="webalert">
-            <bean class="org.nexial.core.plugins.web.AlertCommand"/>
-        </entry>
-        <entry key="webcookie">
-            <bean class="org.nexial.core.plugins.web.CookieCommand"/>
-        </entry>
-        <entry key="word">
-            <bean class="org.nexial.core.plugins.io.WordCommand"/>
-        </entry>
-        <entry key="ws">
-            <bean class="org.nexial.core.plugins.ws.WsCommand" p:verbose="false">
-                <property name="oauthProviderDetails">
-                    <map key-type="java.lang.String" value-type="java.util.HashMap">
-                        <entry key="google">
-                            <map key-type="java.lang.String">
-                                <entry key="url" value="https://accounts.google.com/o/oauth2/token"/>
-                                <entry key="grantType" value="refresh_token"/>
-                                <entry key="basicAuth" value="false"/>
-                            </map>
-                        </entry>
-
-                        <entry key="microsoft">
-                            <map key-type="java.lang.String">
-                                <entry key="url" value="https://login.microsoftonline.com/{0}/oauth2/v2.0/token"/>
-                                <entry key="grantType" value="password"/>
-                                <entry key="basicAuth" value="true"/>
-                            </map>
-                        </entry>
-
-                        <entry key="microsoft-refresh">
-                            <map key-type="java.lang.String">
-                                <entry key="url" value="https://login.microsoftonline.com/{0}/oauth2/v2.0/token"/>
-                                <entry key="grantType" value="refresh_token"/>
-                                <entry key="basicAuth" value="false"/>
-                            </map>
-                        </entry>
-
-                        <entry key="okta">
-                            <map key-type="java.lang.String">
-                                <entry key="url" value="https://{0}.okta.com/oauth2/default/v1/token"/>
-                                <entry key="grantType" value="password"/>
-                                <entry key="basicAuth" value="false"/>
-                            </map>
-                        </entry>
-
-                        <entry key="twitter">
-                            <map key-type="java.lang.String">
-                                <entry key="url" value="https://api.twitter.com/oauth2/token"/>
-                                <entry key="grantType" value="client_credentials"/>
-                                <entry key="basicAuth" value="true"/>
-                            </map>
-                        </entry>
-
-                        <entry key="gitlab">
-                            <map key-type="java.lang.String">
-                                <entry key="url" value="https://gitlab.com/oauth/token"/>
-                                <entry key="grantType" value="password"/>
-                                <entry key="basicAuth" value="false"/>
-                            </map>
-                        </entry>
-                    </map>
-                </property>
-            </bean>
-        </entry>
-        <entry key="ws.async">
-            <bean class="org.nexial.core.plugins.ws.AsyncWsCommand" p:verbose="false"/>
-        </entry>
-        <entry key="xml">
-            <bean class="org.nexial.core.plugins.xml.XmlCommand"/>
-        </entry>
-        <entry key="step.inTime">
-            <bean class="org.nexial.core.plugins.step.InTimeCommand"/>
-        </entry>
-    </util:map>
-
-    <bean id="browserTemplate" class="org.nexial.core.plugins.web.Browser" scope="prototype">
-        <property name="chromeOptions">
-            <array>
-                <!-- more on https://github.com/GoogleChrome/chrome-launcher/blob/master/docs/chrome-flags-for-tools.md -->
-
-                <value>disable-component-update</value>
-                <!-- Disable installation of default apps on first run -->
-                <value>disable-default-apps</value>
-                <value>disable-login-animations</value>
-                <!-- Disable popup blocking. `block-new-web-contents` is the strict version of this. -->
-                <value>disable-popup-blocking</value>
-                <!-- Reloading a page that came from a POST normally prompts the user. -->
-                <value>disable-prompt-on-repost</value>
-
-                <value>disable-smooth-scrolling</value>
-
-                <!-- Disable syncing to a Google account -->
-                <value>disable-sync</value>
-                <value>disable-infobars</value>
-                <value>hide-scrollbars</value>
-
-                <value>allow-http-screen-capture</value>
-                
-                <!-- enable testing in lower environment, local network, and localhost -->
-                <value>allow-running-insecure-content</value>
-                <value>allow-insecure-localhost</value>
-                <value>disable-web-security</value>
-                <value>disable-site-isolation-trials</value>
-                <value>enable-local-file-accesses</value>
-                <value>allow-file-access-from-files</value>
-                <value>allow-external-pages</value>
-                <value>allow-running-insecure-content</value>
-                <value>allow-cross-origin-auth-prompt</value>
-                <value>allow-failed-policy-fetch-for-test</value>
-
-                <!-- Disable all chrome extensions -->
-                <value>disable-extensions</value>
-                <value>disable-extensions-file-access-check</value>
-                <!-- : Disable some built-in extensions that aren't affected by `disable-extensions -->
-                <value>disable-component-extensions-with-background-pages</value>
-
-                <!-- Disable the default browser check, do not prompt to set it as such -->
-                <value>no-default-browser-check</value>
-                <value>ignore-certificate-errors</value>
-                <value>disable-resize-lock</value>
-                <value>disable-print-preview</value>
-                <value>disable-breakpad</value>
-                <value>enable-ui-devtools</value>
-
-                <!-- Enables input event handling by the window manager. -->
-                <value>enable-input</value>
-                
-                <!-- media -->
-                <value>mute-audio</value>
-
-                <!-- Disable some built-in extensions that aren't affected by `disable-extensions` -->
-                <value>disable-component-extensions-with-background-pages</value>
-
-                <!-- Disable various background network services, including extension updating, safe browsing service, upgrade detector, translate, UMA -->
-                <value>disable-background-networking</value>
-
-                <!-- Skip first run wizards -->
-                <value>no-first-run</value>
-
-                <!-- Disable timers being throttled in background pages/tabs -->
-                <value>disable-background-timer-throttling</value>
-
-                <!-- Disables client-side phishing detection. -->
-                <value>disable-client-side-phishing-detection</value>
-
-                <!-- disable "This type of file can harm your computer" ... dialog -->
-                <value>safebrowsing-disable-extension-blacklist</value>
-                <value>safebrowsing-disable-download-protection</value>
-
-                <!--  Avoid messages like "New printer on your network" -->
-                <value>disable-device-discovery-notifications</value>
-                <value>disable-notifications</value>
-
-                <!-- Disables Domain Reliability Monitoring, which tracks whether the browser has difficulty contacting Google-owned sites and uploads reports to Google. -->
-                <value>disable-domain-reliability</value>
-                <value>disable-hang-monitor</value>
-
-                <!-- disable client-side phishing detection -->
-                <value>disable-client-side-phishing-detection</value>
-
-                <!-- force the chrome native prompt to go silent -->
-                <!-- disable prompt: "Known your location" -->
-                <value>enable-strict-powerful-feature-restrictions</value>
-            </array>
+        <property name="jmsJarInfo">
+          <map key-type="java.lang.String" value-type="org.nexial.core.plugins.ThirdPartyDriverInfo">
+            <entry key="webspheremq">
+              <bean class="org.nexial.core.plugins.ThirdPartyDriverInfo">
+                <constructor-arg name="jarFilePattern"
+                                 value="com.ibm.mq.commonservices.jar, com.ibm.mq.headers.jar, com.ibm.mq.jar, com.ibm.mq.jmqi.jar, com.ibm.mq.jms.admin.jar, com.ibm.mq.jms.Nojndi.jar, com.ibm.mq.pcf.jar, com.ibm.mqjms.jar, com.ibm.msg.client.commonservices.wmq.jar, dhbcore.jar"/>
+                <constructor-arg name="minVersion" value="7.5.0.0"/>
+                <constructor-arg name="url" value="http://www-01.ibm.com/support/docview.wss?uid=swg21376217"/>
+              </bean>
+            </entry>
+          </map>
         </property>
-        <property name="firefoxBinArgs">
-            <list value-type="java.lang.String">
-                <value>-purgecaches</value>
-                <value>-foreground</value>
-            </list>
-        </property>
-        <property name="firefoxBooleanPrefs">
-            <map key-type="java.lang.String" value-type="java.lang.Boolean">
-                <entry key="browser.dom.window.dump.enabled" value="false"/>
-                <entry key="extensions.blocklist.enabled" value="false"/>
-                <entry key="app.update.service.enabled" value="false"/>
-                <entry key="extensions.update.enabled" value="false"/>
-                <entry key="extensions.update.autoUpdateDefault" value="false"/>
-                <entry key="general.smoothScroll" value="false"/>
-                <entry key="general.autoScroll" value="true"/>
-                <entry key="browser.download.manager.showWhenStarting" value="false"/>
-                <entry key="browser.download.manager.closeWhenDone" value="false"/>
-                <entry key="browser.download.manager.showAlertOnComplete" value="false"/>
-                <entry key="browser.download.manager.alertOnEXEOpen" value="false"/>
-                <entry key="browser.download.manager.focusWhenStarting" value="false"/>
-                <entry key="browser.download.manager.useWindow" value="false"/>
-                <entry key="browser.download.useDownloadDir" value="true"/>
-                <entry key="browser.download.show_plugins_in_list" value="false"/>
-                <entry key="browser.helperApps.alwaysAsk.force" value="false"/>
-                <entry key="pdfjs.disabled" value="true"/>
-                <entry key="security.ssl.errorReporting.automatic" value="false"/>
-                <entry key="security.ssl.errorReporting.enabled" value="false"/>
-                <entry key="browser.tabs.closeWindowWithLastTab" value="true"/>
-                <entry key="browser.tabs.crashReporting.sendReport" value="false"/>
-                <entry key="browser.urlbar.openintab" value="false"/>
-                <entry key="dom.clients.openwindow_favors_same_process" value="true"/>
-                <entry key="security.csp.enable" value="false"/>
-                <entry key="security.ssl.enable_ocsp_stapling" value="false"/>
-                <entry key="security.ssl.enable_ocsp_must_staple" value="false"/>
-                <entry key="services.sync.prefs.sync.security.OCSP.enabled" value="false"/>
-                <entry key="services.sync.prefs.sync.security.OCSP.require" value="false"/>
-                <entry key="webdriver_accept_untrusted_certs" value="true"/>
-                <entry key="webdriver_assume_untrusted_issuer" value="false"/>
-                <entry key="datareporting.healthreport.uploadEnabled" value="false"/>
-                <entry key="datareporting.healthreport.service.enabled" value="false"/>
-                <entry key="breakpad.reportURL" value="false"/>
-                <entry key="browser.search.suggest.enabled" value="false"/>
-                <entry key="privacy.popups.showBrowserMessage" value="false"/>
-                <entry key="dom.vr.enabled" value="false"/>
-                <entry key="dom.vr.oculus.enabled" value="false"/>
-                <entry key="dom.vr.openvr.enabled" value="false"/>
-                <entry key="dom.vr.osvr.enabled" value="false"/>
-                <entry key="dom.vr.poseprediction.enabled" value="false"/>
-                <entry key="dom.allow_scripts_to_close_windows" value="true"/>
-                <!-- disable saving password dialog -->
-                <entry key="signon.rememberSignons" value="false"/>
-            </map>
-        </property>
-        <property name="firefoxStringPrefs">
-            <map key-type="java.lang.String" value-type="java.lang.String">
-                <entry key="extensions.firebug.allPagesActivation" value="on"/>
-                <entry key="browser.helperApps.neverAsk.saveToDisk" value="text/xml,text/csv,text/html,text/plain,text/log,application/zlib,application/x-gzip,application/gzip,application/x-compressed,application/x-gtar,multipart/x-gzip,application/tgz,application/gnutar,application/x-tar,application/xml,application/x-msexcel,application/excel,application/x-excel,application/vnd.ms-excel,image/png,image/jpeg,application/msword,application/pdf,application/octet-stream"/>
-                <entry key="browser.helperApps.neverAsk.openFile" value="text/xml,text/csv,text/html,text/plain,text/log,application/zlib,application/x-gzip,application/gzip,application/x-compressed,application/x-gtar,multipart/x-gzip,application/tgz,application/gnutar,application/x-tar,application/xml,application/x-msexcel,application/excel,application/x-excel,application/vnd.ms-excel,image/png,image/jpeg,application/msword,application/pdf,application/octet-stream"/>
-                <entry key="security.ssl.errorReporting.url" value=""/>
-                <entry key="marionette.log.level" value="off"/>
-                <entry key="marionette.logging" value="off"/>
-            </map>
-        </property>
-        <property name="firefoxIntPrefs">
-            <map key-type="java.lang.String" value-type="java.lang.Integer">
-                <entry key="browser.link.open_newwindow" value="3"/>
-                <entry key="browser.link.open_newwindow.restriction" value="0"/>
-                <!-- don't use the default download directory when downloading file -->
-                <entry key="browser.download.folderList" value="2"/>
-                <entry key="security.cert_pinning.enforcement_level" value="0"/>
-                <entry key="security.OCSP.enabled" value="0"/>
-            </map>
-        </property>
+      </bean>
+    </entry>
+    <entry key="json">
+      <bean class="org.nexial.core.plugins.json.JsonCommand"/>
+    </entry>
+    <entry key="localdb" value-ref="localdb"/>
+    <entry key="macro">
+      <bean class="org.nexial.core.plugins.base.MacroCommand"/>
+    </entry>
+    <entry key="mail">
+      <bean class="org.nexial.core.plugins.mail.MailCommand"/>
+    </entry>
+    <entry key="mobile">
+      <bean class="org.nexial.core.plugins.mobile.MobileCommand"/>
+    </entry>
+    <entry key="number">
+      <bean class="org.nexial.core.plugins.base.NumberCommand"/>
+    </entry>
+    <entry key="pdf">
+      <bean class="org.nexial.core.plugins.pdf.PdfCommand"/>
+    </entry>
+    <entry key="rdbms" value-ref="rdbms"/>
+    <entry key="redis">
+      <bean class="org.nexial.core.plugins.redis.RedisCommand"/>
+    </entry>
+    <entry key="sms">
+      <bean class="org.nexial.core.plugins.sms.SmsCommand"/>
+    </entry>
+    <entry key="sound">
+      <bean class="org.nexial.core.plugins.sound.SoundCommand"/>
+    </entry>
+    <entry key="step">
+      <bean class="org.nexial.core.plugins.step.StepCommand"/>
+    </entry>
+    <entry key="ssh">
+      <bean class="org.nexial.core.plugins.ssh.SshCommand"/>
+    </entry>
+    <entry key="tn5250">
+      <bean class="org.nexial.core.plugins.tn5250.Tn5250Command"/>
+    </entry>
+    <entry key="web">
+      <bean class="org.nexial.core.plugins.web.WebCommand" p:userStack-ref="userstack"/>
+    </entry>
+    <entry key="webmail">
+      <bean class="org.nexial.core.plugins.web.WebMailCommand" p:webmailers-ref="webmailers"/>
+    </entry>
+    <entry key="webalert">
+      <bean class="org.nexial.core.plugins.web.AlertCommand"/>
+    </entry>
+    <entry key="webcookie">
+      <bean class="org.nexial.core.plugins.web.CookieCommand"/>
+    </entry>
+    <entry key="word">
+      <bean class="org.nexial.core.plugins.io.WordCommand"/>
+    </entry>
+    <entry key="ws">
+      <bean class="org.nexial.core.plugins.ws.WsCommand" p:verbose="false">
+        <property name="oauthProviderDetails">
+          <map key-type="java.lang.String" value-type="java.util.HashMap">
+            <entry key="google">
+              <map key-type="java.lang.String">
+                <entry key="url" value="https://accounts.google.com/o/oauth2/token"/>
+                <entry key="grantType" value="refresh_token"/>
+                <entry key="basicAuth" value="false"/>
+              </map>
+            </entry>
 
-        <!-- firefox driver mapping with browser version. https://firefox-source-docs.mozilla.org/testing/geckodriver/Support.html -->
-        <property name="firefoxDriverVersionMapping">
-            <map key-type="java.lang.String" value-type="java.lang.String">
-                <!--<entry key="min.browser.version_max.browser.version" value="driver.version"/>-->
-                <entry key="91-999" value="0.29.1"/>
-                <entry key="80-90" value="0.27.0"/>
-                <entry key="60-79" value="0.26.0"/>
-                <entry key="57-59" value="0.25.0"/>
-                <entry key="55-56" value="0.20.1"/>
-                <entry key="53-54" value="0.18.0"/>
-                <entry key="1-52" value="0.17.0"/>
-            </map>
-        </property>
-        <property name="chromeBinLocations">
-            <map key-type="java.lang.String" value-type="java.util.List">
-                <entry key="windows">
-                    <list value-type="java.lang.String">
-                        <value>C:\Program Files (x86)\Google\Application\chrome.exe</value>
-                        <value>C:\Program Files (x86)\Google\Chrome\Application\chrome.exe</value>
-                        <value>C:\Program Files\Google\Application\chrome.exe</value>
-                        <value>C:\Program Files\Google\Chrome\Application\chrome.exe</value>
-                        <value>${user.home}\AppData\Local\Google\Chrome\Application\chrome.exe</value>
-                        <value>${user.home}\AppDataLocal\Google\Chrome\chrome.exe</value>
-                        <value>${user.home}\Local Settings\Application Data\Google\Chrome\chrome.exe</value>
-                    </list>
-                </entry>
-                <entry key="mac">
-                    <list value-type="java.lang.String">
-                        <value>/Applications/Google Chrome.app/Contents/MacOS/Google Chrome</value>
-                        <value>${user.home}/Applications/Google Chrome.app/Contents/MacOS/Google Chrome</value>
-                        <value>${user.home}/tools/Google Chrome.app/Contents/MacOS/Google Chrome</value>
-                    </list>
-                </entry>
-                <entry key="linux">
-                    <list value-type="java.lang.String">
-                        <value>/usr/bin/google-chrome</value>
-                        <value>/usr/bin/google-chrome-stable</value>
-                        <value>/usr/bin/chrome</value>
-                        <value>/bin/google-chrome</value>
-                        <value>/bin/google-chrome-stable</value>
-                        <value>/bin/chrome</value>
-                        <value>/etc/alternatives/google-chrome</value>
-                        <value>/etc/alternatives/google-chrome-stable</value>
-                        <value>/etc/alternatives/chrome</value>
-                        <value>/usr/bin/chromium-browser</value>
-                    </list>
-                </entry>
-            </map>
-        </property>
-        <property name="firefoxBinLocations">
-            <map key-type="java.lang.String" value-type="java.util.List">
-                <entry key="windows">
-                    <list value-type="java.lang.String">
-                        <value>C:\Program Files\Mozilla Firefox\firefox.exe</value>
-                        <value>C:\Program Files (x86)\Mozilla Firefox\firefox.exe</value>
-                        <value>${user.home}\AppData\Local\Mozilla Firefox\firefox.exe</value>
-                        <value>C:\tools\Firefox\firefox.exe</value>
-                    </list>
-                </entry>
-                <entry key="mac">
-                    <list value-type="java.lang.String">
-                        <value>/Applications/Firefox.app/Contents/MacOS/firefox-bin</value>
-                        <value>${user.home}/Applications/Firefox.app/Contents/MacOS/firefox-bin</value>
-                        <value>${user.home}/tools/Firefox.app/Contents/MacOS/firefox-bin</value>
-                    </list>
-                </entry>
-                <entry key="linux">
-                    <list value-type="java.lang.String">
-                        <value>/usr/bin/firefox</value>
-                        <value>/usr/lib64/firefox</value>
-                        <value>/usr/lib/firefox</value>
-                        <value>${user.name}/firefox/firefox</value>
-                        <value>${user.name}/lib/firefox</value>
-                        <value>${user.name}/tools/firefox</value>
-                    </list>
-                </entry>
-            </map>
-        </property>
-        <property name="edgeBinLocations">
-            <map key-type="java.lang.String" value-type="java.util.List">
-                <entry key="windows">
-                    <list value-type="java.lang.String">
-                        <value>C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe</value>
-                        <value>C:\Program Files\Microsoft\Edge\Application\msedge.exe</value>
-                    </list>
-                </entry>
+            <entry key="microsoft">
+              <map key-type="java.lang.String">
+                <entry key="url" value="https://login.microsoftonline.com/{0}/oauth2/v2.0/token"/>
+                <entry key="grantType" value="password"/>
+                <entry key="basicAuth" value="true"/>
+              </map>
+            </entry>
 
-            </map>
+            <entry key="microsoft-refresh">
+              <map key-type="java.lang.String">
+                <entry key="url" value="https://login.microsoftonline.com/{0}/oauth2/v2.0/token"/>
+                <entry key="grantType" value="refresh_token"/>
+                <entry key="basicAuth" value="false"/>
+              </map>
+            </entry>
+
+            <entry key="okta">
+              <map key-type="java.lang.String">
+                <entry key="url" value="https://{0}.okta.com/oauth2/default/v1/token"/>
+                <entry key="grantType" value="password"/>
+                <entry key="basicAuth" value="false"/>
+              </map>
+            </entry>
+
+            <entry key="twitter">
+              <map key-type="java.lang.String">
+                <entry key="url" value="https://api.twitter.com/oauth2/token"/>
+                <entry key="grantType" value="client_credentials"/>
+                <entry key="basicAuth" value="true"/>
+              </map>
+            </entry>
+
+            <entry key="gitlab">
+              <map key-type="java.lang.String">
+                <entry key="url" value="https://gitlab.com/oauth/token"/>
+                <entry key="grantType" value="password"/>
+                <entry key="basicAuth" value="false"/>
+              </map>
+            </entry>
+          </map>
         </property>
-    </bean>
+      </bean>
+    </entry>
+    <entry key="ws.async">
+      <bean class="org.nexial.core.plugins.ws.AsyncWsCommand" p:verbose="false"/>
+    </entry>
+    <entry key="xml">
+      <bean class="org.nexial.core.plugins.xml.XmlCommand"/>
+    </entry>
+    <entry key="step.inTime">
+      <bean class="org.nexial.core.plugins.step.InTimeCommand"/>
+    </entry>
+  </util:map>
+
+  <util:list id="chromeOptions" value-type="java.lang.String">
+    <!-- more on https://github.com/GoogleChrome/chrome-launcher/blob/master/docs/chrome-flags-for-tools.md -->
+
+    <value>disable-component-update</value>
+    <!-- Disable installation of default apps on first run -->
+    <value>disable-default-apps</value>
+    <value>disable-login-animations</value>
+    <!-- Disable popup blocking. `block-new-web-contents` is the strict version of this. -->
+    <value>disable-popup-blocking</value>
+    <!-- Reloading a page that came from a POST normally prompts the user. -->
+    <value>disable-prompt-on-repost</value>
+
+    <value>disable-smooth-scrolling</value>
+
+    <!-- Disable syncing to a Google account -->
+    <value>disable-sync</value>
+    <value>disable-infobars</value>
+    <value>hide-scrollbars</value>
+
+    <value>allow-http-screen-capture</value>
+
+    <!-- enable testing in lower environment, local network, and localhost -->
+    <value>allow-running-insecure-content</value>
+    <value>allow-insecure-localhost</value>
+    <value>disable-web-security</value>
+    <value>disable-site-isolation-trials</value>
+    <value>enable-local-file-accesses</value>
+    <value>allow-file-access-from-files</value>
+    <value>allow-external-pages</value>
+    <value>allow-running-insecure-content</value>
+    <value>allow-cross-origin-auth-prompt</value>
+    <value>allow-failed-policy-fetch-for-test</value>
+
+    <!-- Disable all chrome extensions -->
+    <value>disable-extensions</value>
+    <value>disable-extensions-file-access-check</value>
+    <!-- : Disable some built-in extensions that aren't affected by `disable-extensions -->
+    <value>disable-component-extensions-with-background-pages</value>
+
+    <!-- Disable the default browser check, do not prompt to set it as such -->
+    <value>no-default-browser-check</value>
+    <value>ignore-certificate-errors</value>
+    <value>disable-resize-lock</value>
+    <value>disable-print-preview</value>
+    <value>disable-breakpad</value>
+    <value>enable-ui-devtools</value>
+
+    <!-- Enables input event handling by the window manager. -->
+    <value>enable-input</value>
+
+    <!-- media -->
+    <value>mute-audio</value>
+
+    <!-- Disable some built-in extensions that aren't affected by `disable-extensions` -->
+    <value>disable-component-extensions-with-background-pages</value>
+
+    <!-- Disable various background network services, including extension updating, safe browsing service, upgrade detector, translate, UMA -->
+    <value>disable-background-networking</value>
+
+    <!-- Skip first run wizards -->
+    <value>no-first-run</value>
+
+    <!-- Disable timers being throttled in background pages/tabs -->
+    <value>disable-background-timer-throttling</value>
+
+    <!-- Disables client-side phishing detection. -->
+    <value>disable-client-side-phishing-detection</value>
+
+    <!-- disable "This type of file can harm your computer" ... dialog -->
+    <value>safebrowsing-disable-extension-blacklist</value>
+    <value>safebrowsing-disable-download-protection</value>
+
+    <!--  Avoid messages like "New printer on your network" -->
+    <value>disable-device-discovery-notifications</value>
+    <value>disable-notifications</value>
+
+    <!-- Disables Domain Reliability Monitoring, which tracks whether the browser has difficulty contacting Google-owned sites and uploads reports to Google. -->
+    <value>disable-domain-reliability</value>
+    <value>disable-hang-monitor</value>
+
+    <!-- disable client-side phishing detection -->
+    <value>disable-client-side-phishing-detection</value>
+
+    <!-- force the chrome native prompt to go silent -->
+    <!-- disable prompt: "Known your location" -->
+    <value>enable-strict-powerful-feature-restrictions</value>
+  </util:list>
+
+  <util:map id="chromeBinLocations" key-type="java.lang.String" value-type="java.util.List">
+    <entry key="windows">
+      <list value-type="java.lang.String">
+        <value>C:\Program Files (x86)\Google\Application\chrome.exe</value>
+        <value>C:\Program Files (x86)\Google\Chrome\Application\chrome.exe</value>
+        <value>C:\Program Files\Google\Application\chrome.exe</value>
+        <value>C:\Program Files\Google\Chrome\Application\chrome.exe</value>
+        <value>${user.home}\AppData\Local\Google\Chrome\Application\chrome.exe</value>
+        <value>${user.home}\AppDataLocal\Google\Chrome\chrome.exe</value>
+        <value>${user.home}\Local Settings\Application Data\Google\Chrome\chrome.exe</value>
+      </list>
+    </entry>
+    <entry key="mac">
+      <list value-type="java.lang.String">
+        <value>/Applications/Google Chrome.app/Contents/MacOS/Google Chrome</value>
+        <value>${user.home}/Applications/Google Chrome.app/Contents/MacOS/Google Chrome</value>
+        <value>${user.home}/tools/Google Chrome.app/Contents/MacOS/Google Chrome</value>
+      </list>
+    </entry>
+    <entry key="linux">
+      <list value-type="java.lang.String">
+        <value>/usr/bin/google-chrome</value>
+        <value>/usr/bin/google-chrome-stable</value>
+        <value>/usr/bin/chrome</value>
+        <value>/bin/google-chrome</value>
+        <value>/bin/google-chrome-stable</value>
+        <value>/bin/chrome</value>
+        <value>/etc/alternatives/google-chrome</value>
+        <value>/etc/alternatives/google-chrome-stable</value>
+        <value>/etc/alternatives/chrome</value>
+        <value>/usr/bin/chromium-browser</value>
+      </list>
+    </entry>
+  </util:map>
+
+  <bean id="browserTemplate" class="org.nexial.core.plugins.web.Browser" scope="prototype">
+    <property name="chromeOptions" ref="chromeOptions"/>
+    <property name="chromeBinLocations" ref="chromeBinLocations"/>
+
+    <property name="firefoxBinArgs">
+      <list value-type="java.lang.String">
+        <value>-purgecaches</value>
+        <value>-foreground</value>
+      </list>
+    </property>
+    <property name="firefoxBooleanPrefs">
+      <map key-type="java.lang.String" value-type="java.lang.Boolean">
+        <entry key="browser.dom.window.dump.enabled" value="false"/>
+        <entry key="extensions.blocklist.enabled" value="false"/>
+        <entry key="app.update.service.enabled" value="false"/>
+        <entry key="extensions.update.enabled" value="false"/>
+        <entry key="extensions.update.autoUpdateDefault" value="false"/>
+        <entry key="general.smoothScroll" value="false"/>
+        <entry key="general.autoScroll" value="true"/>
+        <entry key="browser.download.manager.showWhenStarting" value="false"/>
+        <entry key="browser.download.manager.closeWhenDone" value="false"/>
+        <entry key="browser.download.manager.showAlertOnComplete" value="false"/>
+        <entry key="browser.download.manager.alertOnEXEOpen" value="false"/>
+        <entry key="browser.download.manager.focusWhenStarting" value="false"/>
+        <entry key="browser.download.manager.useWindow" value="false"/>
+        <entry key="browser.download.useDownloadDir" value="true"/>
+        <entry key="browser.download.show_plugins_in_list" value="false"/>
+        <entry key="browser.helperApps.alwaysAsk.force" value="false"/>
+        <entry key="pdfjs.disabled" value="true"/>
+        <entry key="security.ssl.errorReporting.automatic" value="false"/>
+        <entry key="security.ssl.errorReporting.enabled" value="false"/>
+        <entry key="browser.tabs.closeWindowWithLastTab" value="true"/>
+        <entry key="browser.tabs.crashReporting.sendReport" value="false"/>
+        <entry key="browser.urlbar.openintab" value="false"/>
+        <entry key="dom.clients.openwindow_favors_same_process" value="true"/>
+        <entry key="security.csp.enable" value="false"/>
+        <entry key="security.ssl.enable_ocsp_stapling" value="false"/>
+        <entry key="security.ssl.enable_ocsp_must_staple" value="false"/>
+        <entry key="services.sync.prefs.sync.security.OCSP.enabled" value="false"/>
+        <entry key="services.sync.prefs.sync.security.OCSP.require" value="false"/>
+        <entry key="webdriver_accept_untrusted_certs" value="true"/>
+        <entry key="webdriver_assume_untrusted_issuer" value="false"/>
+        <entry key="datareporting.healthreport.uploadEnabled" value="false"/>
+        <entry key="datareporting.healthreport.service.enabled" value="false"/>
+        <entry key="breakpad.reportURL" value="false"/>
+        <entry key="browser.search.suggest.enabled" value="false"/>
+        <entry key="privacy.popups.showBrowserMessage" value="false"/>
+        <entry key="dom.vr.enabled" value="false"/>
+        <entry key="dom.vr.oculus.enabled" value="false"/>
+        <entry key="dom.vr.openvr.enabled" value="false"/>
+        <entry key="dom.vr.osvr.enabled" value="false"/>
+        <entry key="dom.vr.poseprediction.enabled" value="false"/>
+        <entry key="dom.allow_scripts_to_close_windows" value="true"/>
+        <!-- disable saving password dialog -->
+        <entry key="signon.rememberSignons" value="false"/>
+      </map>
+    </property>
+    <property name="firefoxStringPrefs">
+      <map key-type="java.lang.String" value-type="java.lang.String">
+        <entry key="extensions.firebug.allPagesActivation" value="on"/>
+        <entry key="browser.helperApps.neverAsk.saveToDisk"
+               value="text/xml,text/csv,text/html,text/plain,text/log,application/zlib,application/x-gzip,application/gzip,application/x-compressed,application/x-gtar,multipart/x-gzip,application/tgz,application/gnutar,application/x-tar,application/xml,application/x-msexcel,application/excel,application/x-excel,application/vnd.ms-excel,image/png,image/jpeg,application/msword,application/pdf,application/octet-stream"/>
+        <entry key="browser.helperApps.neverAsk.openFile"
+               value="text/xml,text/csv,text/html,text/plain,text/log,application/zlib,application/x-gzip,application/gzip,application/x-compressed,application/x-gtar,multipart/x-gzip,application/tgz,application/gnutar,application/x-tar,application/xml,application/x-msexcel,application/excel,application/x-excel,application/vnd.ms-excel,image/png,image/jpeg,application/msword,application/pdf,application/octet-stream"/>
+        <entry key="security.ssl.errorReporting.url" value=""/>
+        <entry key="marionette.log.level" value="off"/>
+        <entry key="marionette.logging" value="off"/>
+      </map>
+    </property>
+    <property name="firefoxIntPrefs">
+      <map key-type="java.lang.String" value-type="java.lang.Integer">
+        <entry key="browser.link.open_newwindow" value="3"/>
+        <entry key="browser.link.open_newwindow.restriction" value="0"/>
+        <!-- don't use the default download directory when downloading file -->
+        <entry key="browser.download.folderList" value="2"/>
+        <entry key="security.cert_pinning.enforcement_level" value="0"/>
+        <entry key="security.OCSP.enabled" value="0"/>
+      </map>
+    </property>
+    <!-- firefox driver mapping with browser version. https://firefox-source-docs.mozilla.org/testing/geckodriver/Support.html -->
+    <property name="firefoxDriverVersionMapping">
+      <map key-type="java.lang.String" value-type="java.lang.String">
+        <!--<entry key="min.browser.version_max.browser.version" value="driver.version"/>-->
+        <entry key="91-999" value="0.31.0"/>
+        <entry key="80-90" value="0.30.0"/>
+        <entry key="60-79" value="0.26.0"/>
+        <entry key="57-59" value="0.25.0"/>
+        <entry key="55-56" value="0.20.1"/>
+        <entry key="53-54" value="0.18.0"/>
+        <entry key="1-52" value="0.17.0"/>
+      </map>
+    </property>
+    <property name="firefoxBinLocations">
+      <map key-type="java.lang.String" value-type="java.util.List">
+        <entry key="windows">
+          <list value-type="java.lang.String">
+            <value>C:\Program Files\Mozilla Firefox\firefox.exe</value>
+            <value>C:\Program Files (x86)\Mozilla Firefox\firefox.exe</value>
+            <value>${user.home}\AppData\Local\Mozilla Firefox\firefox.exe</value>
+            <value>C:\tools\Firefox\firefox.exe</value>
+          </list>
+        </entry>
+        <entry key="mac">
+          <list value-type="java.lang.String">
+            <value>/Applications/Firefox.app/Contents/MacOS/firefox-bin</value>
+            <value>${user.home}/Applications/Firefox.app/Contents/MacOS/firefox-bin</value>
+            <value>${user.home}/tools/Firefox.app/Contents/MacOS/firefox-bin</value>
+          </list>
+        </entry>
+        <entry key="linux">
+          <list value-type="java.lang.String">
+            <value>/usr/bin/firefox</value>
+            <value>/usr/lib64/firefox</value>
+            <value>/usr/lib/firefox</value>
+            <value>${user.name}/firefox/firefox</value>
+            <value>${user.name}/lib/firefox</value>
+            <value>${user.name}/tools/firefox</value>
+          </list>
+        </entry>
+      </map>
+    </property>
+
+    <property name="edgeBinLocations">
+      <map key-type="java.lang.String" value-type="java.util.List">
+        <entry key="windows">
+          <list value-type="java.lang.String">
+            <value>C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe</value>
+            <value>C:\Program Files\Microsoft\Edge\Application\msedge.exe</value>
+          </list>
+        </entry>
+      </map>
+    </property>
+
+  </bean>
 
 
-    <!-- ####################################### -->
-    <!-- ### command targets / plugins       ### -->
-    <!-- ####################################### -->
-    <bean id="pluginManager" class="org.nexial.core.model.PluginManager">
-        <property name="plugins" ref="plugins"/>
-    </bean>
+  <!-- ####################################### -->
+  <!-- ### command targets / plugins       ### -->
+  <!-- ####################################### -->
+  <bean id="pluginManager" class="org.nexial.core.model.PluginManager">
+    <property name="plugins" ref="plugins"/>
+  </bean>
 
-    <util:map id="webdriverHelperConfig" key-type="org.nexial.core.NexialConst$BrowserType" value-type="java.lang.String">
-        <entry key="firefox">
-            <value><![CDATA[
+  <util:map id="webdriverHelperConfig" key-type="org.nexial.core.NexialConst$BrowserType" value-type="java.lang.String">
+    <entry key="firefox">
+      <value><![CDATA[
             {
                 "home": "${user.home}/.nexial/firefox",
                 "baseName": "geckodriver",
@@ -686,9 +692,9 @@
                 "checkUrlBase" : "https://api.github.com/repos/mozilla/geckodriver/releases"
             }
           ]]></value>
-        </entry>
-        <entry key="firefoxheadless">
-            <value><![CDATA[
+    </entry>
+    <entry key="firefoxheadless">
+      <value><![CDATA[
             {
                 "home": "${user.home}/.nexial/firefox",
                 "baseName": "geckodriver",
@@ -697,9 +703,9 @@
                 "checkUrlBase" : "https://api.github.com/repos/mozilla/geckodriver/releases"
             }
           ]]></value>
-        </entry>
-        <entry key="chrome">
-            <value><![CDATA[
+    </entry>
+    <entry key="chrome">
+      <value><![CDATA[
             {
                 "home": "${user.home}/.nexial/chrome",
                 "baseName": "chromedriver",
@@ -708,9 +714,9 @@
                 "checkUrlBase" : "https://chromedriver.storage.googleapis.com"
             }
           ]]></value>
-        </entry>
-        <entry key="chromeheadless">
-            <value><![CDATA[
+    </entry>
+    <entry key="chromeheadless">
+      <value><![CDATA[
             {
                 "home": "${user.home}/.nexial/chrome",
                 "baseName": "chromedriver",
@@ -719,9 +725,9 @@
                 "checkUrlBase" : "https://chromedriver.storage.googleapis.com"
             }
           ]]></value>
-        </entry>
-        <entry key="electron">
-            <value><![CDATA[
+    </entry>
+    <entry key="electron">
+      <value><![CDATA[
             {
                 "home": "${user.home}/.nexial/electron",
                 "baseName": "chromedriver",
@@ -730,9 +736,9 @@
                 "checkUrlBase" : "https://api.github.com/repos/electron/electron/releases/latest"
             }
           ]]></value>
-        </entry>
-        <entry key="ie">
-            <value><![CDATA[
+    </entry>
+    <entry key="ie">
+      <value><![CDATA[
             {
                 "home": "${user.home}/.nexial/ie",
                 "baseName": "IEDriverServer",
@@ -741,9 +747,9 @@
                 "checkUrlBase" : "https://selenium-release.storage.googleapis.com"
             }
           ]]></value>
-        </entry>
-        <entry key="edge">
-            <value><![CDATA[
+    </entry>
+    <entry key="edge">
+      <value><![CDATA[
             {
                 "home": "${user.home}/.nexial/edge",
                 "baseName": "MicrosoftWebDriver.exe",
@@ -752,9 +758,9 @@
                 "checkUrlBase" : "https://raw.githubusercontent.com/nexiality/nexial-core/master/support/edge/"
             }
           ]]></value>
-        </entry>
-        <entry key="edgechrome">
-            <value><![CDATA[
+    </entry>
+    <entry key="edgechrome">
+      <value><![CDATA[
             {
                 "home": "${user.home}/.nexial/edgechrome",
                 "baseName": "msedgedriver",
@@ -763,9 +769,9 @@
                 "checkUrlBase" : "https://msedgedriver.azureedge.net"
             }
           ]]></value>
-        </entry>
-        <entry key="browserstack">
-            <value><![CDATA[
+    </entry>
+    <entry key="browserstack">
+      <value><![CDATA[
             {
                 "home": "${user.home}/.nexial/browserstack",
                 "baseName": "BrowserStackLocal",
@@ -774,9 +780,9 @@
                 "checkUrlBase" : "https://www.browserstack.com/browserstack-local"
             }
           ]]></value>
-        </entry>
-        <entry key="crossbrowsertesting">
-            <value><![CDATA[
+    </entry>
+    <entry key="crossbrowsertesting">
+      <value><![CDATA[
             {
                 "home": "${user.home}/.nexial/crossbrowsertesting",
                 "baseName": "cbt_tunnels",
@@ -785,205 +791,206 @@
                 "checkUrlBase" : "https://api.github.com/repos/crossbrowsertesting/cbt-tunnel-nodejs/releases/latest"
             }
           ]]></value>
-        </entry>
+    </entry>
 
-    </util:map>
+  </util:map>
 
-    <bean id="expressionProcessor" class="org.nexial.core.variable.ExpressionProcessor"/>
+  <bean id="expressionProcessor" class="org.nexial.core.variable.ExpressionProcessor"/>
 
 
-    <!-- ####################################### -->
-    <!-- ### defaults                        ### -->
-    <!-- ####################################### -->
-    <util:map id="defaultContextProps" key-type="java.lang.String" value-type="java.lang.String">
-        <entry key="nexial.enableEmail" value="false"/>
-        <entry key="nexial.assistantMode" value="off"/>
-        <entry key="nexial.outputToCloud" value="false"/>
-        <entry key="nexial.outputCloudBase" value="${nexial.outputCloudBase:}"/>
-        <entry key="nexial.generateReport" value="true"/>
-        <entry key="nexial.screenRecorder" value="mp4"/>
-        <entry key="nexial.browser.defaultWindowSize" value="1280x960"/>
-    </util:map>
+  <!-- ####################################### -->
+  <!-- ### defaults                        ### -->
+  <!-- ####################################### -->
+  <util:map id="defaultContextProps" key-type="java.lang.String" value-type="java.lang.String">
+    <entry key="nexial.enableEmail" value="false"/>
+    <entry key="nexial.assistantMode" value="off"/>
+    <entry key="nexial.outputToCloud" value="false"/>
+    <entry key="nexial.outputCloudBase" value="${nexial.outputCloudBase:}"/>
+    <entry key="nexial.generateReport" value="true"/>
+    <entry key="nexial.screenRecorder" value="mp4"/>
+    <entry key="nexial.browser.defaultWindowSize" value="1280x960"/>
+  </util:map>
 
-    <!--
-    some reference data are considered "special" and should be elevated to "execution" level so that they can be used
-    as such for Execution Dashboard. Those data variables are listed below.
-    -->
-    <util:list id="nexial.referenceDataForExecution" list-class="java.util.ArrayList">
-        <value>nexial-mailer.aws.accessKey</value>
-        <value>nexial-mailer.aws.from</value>
-        <value>nexial-mailer.aws.region</value>
-        <value>nexial-mailer.aws.secretKey</value>
-        <value>nexial.mail.smtp.auth</value>
-        <value>nexial.mail.smtp.from</value>
-        <value>nexial.mail.smtp.host</value>
-        <value>nexial.mail.smtp.localhost</value>
-        <value>nexial.mail.smtp.password</value>
-        <value>nexial.mail.smtp.port</value>
-        <value>nexial.mail.smtp.starttls.enable</value>
-        <value>nexial.mail.smtp.username</value>
-        <value>nexial.otc.accessKey</value>
-        <value>nexial.otc.region</value>
-        <value>nexial.otc.s3PathStyleAccessEnabled</value>
-        <value>nexial.otc.secretKey</value>
-        <value>nexial.outputCloudBase</value>
-        <value>nexial.sms.accessKey</value>
-        <value>nexial.sms.region</value>
-        <value>nexial.sms.secretKey</value>
-        <value>nexial.tts.accessKey</value>
-        <value>nexial.tts.language</value>
-        <value>nexial.tts.region</value>
-        <value>nexial.tts.sampleRate</value>
-        <value>nexial.tts.secretKey</value>
-        <value>nexial.tts.voiceGender</value>
-        <value>nexial.vision.accessKey</value>
-        <value>nexial.vision.region</value>
-        <value>nexial.vision.secretKey</value>
-        <value>nexial.openExecutionReport</value>
-        <value>nexial.scriptRef.app</value>
-        <value>nexial.scriptRef.buildnum</value>
-        <value>nexial.scriptRef.release</value>
-    </util:list>
+  <!--
+  some reference data are considered "special" and should be elevated to "execution" level so that they can be used
+  as such for Execution Dashboard. Those data variables are listed below.
+  -->
+  <util:list id="nexial.referenceDataForExecution" list-class="java.util.ArrayList">
+    <value>nexial-mailer.aws.accessKey</value>
+    <value>nexial-mailer.aws.from</value>
+    <value>nexial-mailer.aws.region</value>
+    <value>nexial-mailer.aws.secretKey</value>
+    <value>nexial.mail.smtp.auth</value>
+    <value>nexial.mail.smtp.from</value>
+    <value>nexial.mail.smtp.host</value>
+    <value>nexial.mail.smtp.localhost</value>
+    <value>nexial.mail.smtp.password</value>
+    <value>nexial.mail.smtp.port</value>
+    <value>nexial.mail.smtp.starttls.enable</value>
+    <value>nexial.mail.smtp.username</value>
+    <value>nexial.otc.accessKey</value>
+    <value>nexial.otc.region</value>
+    <value>nexial.otc.s3PathStyleAccessEnabled</value>
+    <value>nexial.otc.secretKey</value>
+    <value>nexial.outputCloudBase</value>
+    <value>nexial.sms.accessKey</value>
+    <value>nexial.sms.region</value>
+    <value>nexial.sms.secretKey</value>
+    <value>nexial.tts.accessKey</value>
+    <value>nexial.tts.language</value>
+    <value>nexial.tts.region</value>
+    <value>nexial.tts.sampleRate</value>
+    <value>nexial.tts.secretKey</value>
+    <value>nexial.tts.voiceGender</value>
+    <value>nexial.vision.accessKey</value>
+    <value>nexial.vision.region</value>
+    <value>nexial.vision.secretKey</value>
+    <value>nexial.openExecutionReport</value>
+    <value>nexial.scriptRef.app</value>
+    <value>nexial.scriptRef.buildnum</value>
+    <value>nexial.scriptRef.release</value>
+  </util:list>
 
-    <!--
-      system variables that can be set via `-override` or `-D...`
-      but they should not be overridden mid-flight during test because of program initialization or connectivity
-      config (browserstack, e.g.).. Also some of them are meant to be generated via Nexial only
-      (nexial.lastAlertText, e.g.)
-    -->
-    <util:list id="readOnlyVars" list-class="java.util.ArrayList">
-        <value>file.separator</value>
-        <value>java.home</value>
-        <value>java.io.tmpdir</value>
-        <value>java.version</value>
-        <value>line.separator</value>
-        <value>nexial.forceIE32</value>
-        <value>nexial.ignoreBrowserAlert</value>
-        <value>nexial.iterationEnded</value>
-<!--        <value>nexial.lastAlertText</value>-->
-        <value>nexial.lastElapsedTime</value>
-        <value>nexial.lastOutcome</value>
-        <value>nexial.lastOutputLink</value>
-        <value>nexial.lastPlanStep</value>
-        <value>nexial.lastScreenshot</value>
-        <value>nexial.minExecSuccessRate</value>
-        <value>nexial.runID.prefix</value>
-        <value>nexial.runID</value>
-        <value>nexial.browser.ie.requireWindowFocus</value>
-        <value>nexial.browser.incognito</value>
-        <value>nexial.browser.safari.cleanSession</value>
-        <value>nexial.browser.safari.useTechPreview</value>
-        <value>nexial.browser.windowSize</value>
-        <value>nexial.browserstack.app.buildnumber</value>
-        <value>nexial.browserstack.automatekey</value>
-        <value>nexial.browserstack.browser.version</value>
-        <value>nexial.browserstack.browser</value>
-        <value>nexial.browserstack.debug</value>
-        <value>nexial.browserstack.enablelocal</value>
-        <value>nexial.browserstack.os.version</value>
-        <value>nexial.browserstack.os</value>
-        <value>nexial.browserstack.resolution</value>
-        <value>nexial.browserstack.username</value>
-        <value>nexial.delayBrowser</value>
-        <value>nexial.external.output</value>
-        <value>nexial.image.lastImagesDiff</value>
-        <value>nexial.json.lastCompareResults</value>
-        <value>nexial.scope.currentIteration</value>
-        <value>nexial.scope.fallbackToPrevious</value>
-        <value>nexial.scope.iteration</value>
-        <value>nexial.scope.lastIteration</value>
-        <value>nexial.screenRecorder</value>
-        <value>nexial.spreadsheet.program</value>
-        <value>os.arch</value>
-        <value>os.name</value>
-        <value>os.version</value>
-        <value>user.country</value>
-        <value>user.dir</value>
-        <value>user.home</value>
-        <value>user.language</value>
-        <value>user.name</value>
-        <value>user.timezone</value>
-        <value>webdriver.ie.driver.logfile</value>
-        <value>webdriver.ie.driver.loglevel</value>
-        <value>webdriver.ie.driver.silent</value>
-        <value>webdriver.ie.driver</value>
-    </util:list>
+  <!--
+    system variables that can be set via `-override` or `-D...`
+    but they should not be overridden mid-flight during test because of program initialization or connectivity
+    config (browserstack, e.g.).. Also some of them are meant to be generated via Nexial only
+    (nexial.lastAlertText, e.g.)
+  -->
+  <util:list id="readOnlyVars" list-class="java.util.ArrayList">
+    <value>file.separator</value>
+    <value>java.home</value>
+    <value>java.io.tmpdir</value>
+    <value>java.version</value>
+    <value>line.separator</value>
+    <value>nexial.forceIE32</value>
+    <value>nexial.ignoreBrowserAlert</value>
+    <value>nexial.iterationEnded</value>
+    <!--        <value>nexial.lastAlertText</value>-->
+    <value>nexial.lastElapsedTime</value>
+    <value>nexial.lastOutcome</value>
+    <value>nexial.lastOutputLink</value>
+    <value>nexial.lastPlanStep</value>
+    <value>nexial.lastScreenshot</value>
+    <value>nexial.minExecSuccessRate</value>
+    <value>nexial.runID.prefix</value>
+    <value>nexial.runID</value>
+    <value>nexial.browser.ie.requireWindowFocus</value>
+    <value>nexial.browser.incognito</value>
+    <value>nexial.browser.safari.cleanSession</value>
+    <value>nexial.browser.safari.useTechPreview</value>
+    <value>nexial.browser.windowSize</value>
+    <value>nexial.browserstack.app.buildnumber</value>
+    <value>nexial.browserstack.automatekey</value>
+    <value>nexial.browserstack.browser.version</value>
+    <value>nexial.browserstack.browser</value>
+    <value>nexial.browserstack.debug</value>
+    <value>nexial.browserstack.enablelocal</value>
+    <value>nexial.browserstack.os.version</value>
+    <value>nexial.browserstack.os</value>
+    <value>nexial.browserstack.resolution</value>
+    <value>nexial.browserstack.username</value>
+    <value>nexial.delayBrowser</value>
+    <value>nexial.external.output</value>
+    <value>nexial.image.lastImagesDiff</value>
+    <value>nexial.json.lastCompareResults</value>
+    <value>nexial.scope.currentIteration</value>
+    <value>nexial.scope.fallbackToPrevious</value>
+    <value>nexial.scope.iteration</value>
+    <value>nexial.scope.lastIteration</value>
+    <value>nexial.screenRecorder</value>
+    <value>nexial.spreadsheet.program</value>
+    <value>os.arch</value>
+    <value>os.name</value>
+    <value>os.version</value>
+    <value>user.country</value>
+    <value>user.dir</value>
+    <value>user.home</value>
+    <value>user.language</value>
+    <value>user.name</value>
+    <value>user.timezone</value>
+    <value>webdriver.ie.driver.logfile</value>
+    <value>webdriver.ie.driver.loglevel</value>
+    <value>webdriver.ie.driver.silent</value>
+    <value>webdriver.ie.driver</value>
+  </util:list>
 
-    <!--Configuration for db driver download-->
-    <util:map id="dbdriverHelperConfig" key-type="java.lang.String" value-type="java.lang.String">
-        <entry key="postgresql">
-            <value><![CDATA[
+  <!--Configuration for db driver download-->
+  <util:map id="dbdriverHelperConfig" key-type="java.lang.String" value-type="java.lang.String">
+    <entry key="postgresql">
+      <value><![CDATA[
             {
                 "home": "${user.home}/.nexial/rdbms/postgresql",
                 "fileName": "postgresql-42.2.23.jar",
                 "checkUrlBase" : "https://repo1.maven.org/maven2/org/postgresql/postgresql/42.2.23/postgresql-42.2.23.jar"
             }
           ]]></value>
-        </entry>
-        <entry key="mssql"> <!-- also set dir of mssql-jdbc_auth-8.2.2.x64.dll file in system environment variable or -Djava.library.path -->
-            <value><![CDATA[
+    </entry>
+    <entry
+        key="mssql"> <!-- also set dir of mssql-jdbc_auth-8.2.2.x64.dll file in system environment variable or -Djava.library.path -->
+      <value><![CDATA[
             {
                 "home": "${user.home}/.nexial/rdbms/mssql",
                 "fileName": "mssql-jdbc-9.2.1.jre8.jar",
                 "checkUrlBase" : "https://go.microsoft.com/fwlink/?linkid=2155948"
             }
           ]]></value>
-        </entry>
-        <entry key="mariadb">
-            <value><![CDATA[
+    </entry>
+    <entry key="mariadb">
+      <value><![CDATA[
             {
                 "home": "${user.home}/.nexial/rdbms/mariadb",
                 "fileName": "mariadb-java-client-2.7.3.jar",
                 "checkUrlBase" : "https://repo1.maven.org/maven2/org/mariadb/jdbc/mariadb-java-client/2.7.3/mariadb-java-client-2.7.3.jar"
             }
           ]]></value>
-        </entry>
-        <entry key="oracle">
-            <value><![CDATA[
+    </entry>
+    <entry key="oracle">
+      <value><![CDATA[
             {
                 "home": "${user.home}/.nexial/rdbms/oracle",
                 "fileName": "ojdbc8-21.1.0.0.jar",
                 "checkUrlBase" : "https://repo1.maven.org/maven2/com/oracle/database/jdbc/ojdbc8/21.1.0.0/ojdbc8-21.1.0.0.jar"
             }
           ]]></value>
-        </entry>
-        <entry key="db2">
-            <value><![CDATA[
+    </entry>
+    <entry key="db2">
+      <value><![CDATA[
             {
                 "home": "${user.home}/.nexial/rdbms/db2",
                 "fileName": "db2jcc-db2jcc4.jar",
                 "checkUrlBase" : "https://repo1.maven.org/maven2/com/ibm/db2/jcc/db2jcc/db2jcc4/db2jcc-db2jcc4.jar"
             }
           ]]></value>
-        </entry>
-        <entry key="mysql">
-            <value><![CDATA[
+    </entry>
+    <entry key="mysql">
+      <value><![CDATA[
             {
                 "home": "${user.home}/.nexial/rdbms/mysql",
                 "fileName": "mysql-connector-java-8.0.25.jar",
                 "checkUrlBase" : "https://repo1.maven.org/maven2/mysql/mysql-connector-java/8.0.25/mysql-connector-java-8.0.25.jar"
             }
           ]]></value>
-        </entry>
-        <entry key="hsqldb">
-            <value><![CDATA[
+    </entry>
+    <entry key="hsqldb">
+      <value><![CDATA[
             {
                 "home": "${user.home}/.nexial/rdbms/hsqldb",
                 "fileName": "hsqldb-2.6.0.jar",
                 "checkUrlBase" : "https://repo1.maven.org/maven2/org/hsqldb/hsqldb/2.6.0/hsqldb-2.6.0.jar"
             }
           ]]></value>
-        </entry>
-        <entry key="sqlite">
-            <value><![CDATA[
+    </entry>
+    <entry key="sqlite">
+      <value><![CDATA[
                 {
                     "home": "${user.home}/.nexial/rdbms/sqlite",
                     "fileName": "sqlite-jdbc-3.34.0.jar",
                     "checkUrlBase" : "https://repo1.maven.org/maven2/org/xerial/sqlite-jdbc/3.34.0/sqlite-jdbc-3.34.0.jar"
                 }
                 ]]>
-            </value>
-        </entry>
-    </util:map>
+      </value>
+    </entry>
+  </util:map>
 
 </beans>

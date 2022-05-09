@@ -73,8 +73,7 @@ import static org.nexial.core.NexialConst.BrowserType.*;
 import static org.nexial.core.NexialConst.Data.*;
 import static org.nexial.core.NexialConst.Web.*;
 import static org.nexial.core.SystemVariables.getDefaultBool;
-import static org.nexial.core.plugins.web.WebCommand.useExplicitWait;
-import static org.nexial.core.plugins.web.WebDriverCapabilityUtils.initCapabilities;
+import static org.nexial.core.plugins.web.WebDriverCapabilityUtils.*;
 import static org.nexial.core.utils.CheckUtils.requiresExecutableFile;
 import static org.openqa.selenium.PageLoadStrategy.EAGER;
 import static org.openqa.selenium.UnexpectedAlertBehaviour.ACCEPT;
@@ -139,7 +138,7 @@ public class Browser implements ForcefulTerminate {
     protected CrossBrowserTestingHelper cbtHelper;
 
     protected boolean shutdownStarted;
-
+    
     protected Map<String, List<String>> chromeBinLocations;
     protected Map<String, List<String>> firefoxBinLocations;
     protected Map<String, List<String>> edgeBinLocations;
@@ -309,7 +308,7 @@ public class Browser implements ForcefulTerminate {
             initialWinHandle = null;
             lastWinHandles.clear();
 
-            // if browser supports implicit wait and we are not using explicit wait (`WEB_ALWAYS_WAIT`), then
+            // if browser supports implicit wait and if we are not using explicit wait (`WEB_ALWAYS_WAIT`), then
             // we'll change timeout's implicit wait time
             Timeouts timeouts = driver.manage().timeouts();
             boolean timeoutChangesEnabled = browserType.isTimeoutChangesEnabled();
@@ -320,7 +319,7 @@ public class Browser implements ForcefulTerminate {
             }
 
             long pollWaitMs = context.getIntConfig("web", profile, POLL_WAIT_MS);
-            boolean explicitWait = useExplicitWait(context, profile);
+            boolean explicitWait = context.useExplicitWait(profile);
             if (explicitWait) {
                 log("detected %s; use fluent-wait (up to %s ms) during web automation", WEB_ALWAYS_WAIT, pollWaitMs);
             } else {
@@ -612,15 +611,7 @@ public class Browser implements ForcefulTerminate {
         }
 
         ChromeOptions options = new ChromeOptions();
-        if (headless) {
-            options.setHeadless(true);
-            options.addArguments("--no-sandbox");
-            options.addArguments("--disable-dev-shm-usage");
-            options.addArguments("--use-fake-device-for-media-stream");
-            options.addArguments("--autoplay-policy=user-gesture-required");
-            options.addArguments("--disable-gpu"); // applicable to windows os and linux
-            options.addArguments("--disable-software-rasterizer");
-        }
+        if (headless) { configureForHeadless(options); }
 
         List<String> configurableOptions = new ArrayList<>(this.chromeOptions);
         if (resolveConfig(CHROME_ENABLE_EXTENSION, getDefaultBool(CHROME_ENABLE_EXTENSION))) {
@@ -628,39 +619,13 @@ public class Browser implements ForcefulTerminate {
             configurableOptions.remove("disable-extensions-file-access-check");
             configurableOptions.remove("disable-component-extensions-with-background-pages");
         }
-
         options.addArguments(configurableOptions);
 
-        // time to experiment...
-        Map<String, Object> prefs = new HashMap<>();
-
-        // disable save password "bubble", in case we are running in non-incognito mode
-        prefs.put("credentials_enable_service", false);
-        prefs.put("profile.password_manager_enabled", false);
-
-        String downloadTo = resolveDownloadTo(context);
-        if (StringUtils.isNotBlank(downloadTo)) {
-            // allow PDF to be downloaded instead of displayed (pretty much useless)
-            if (context.getBooleanConfig("web", profile, OPT_DOWNLOAD_PDF)) {
-                prefs.put("plugins.always_open_pdf_externally", true);
-            }
-            prefs.put("download.default_directory", downloadTo);
-            // prefs.put("download.extensions_to_open", "application/pdf");
-        }
-
-        // https://stackoverflow.com/questions/40244670/disable-geolocation-in-selenium-chromedriver-with-python
         boolean enableGeoLocation = context.getBooleanConfig("web", profile, GEOLOCATION);
-        prefs.put("geolocation", enableGeoLocation);
-        prefs.put("profile.default_content_setting_values.geolocation", enableGeoLocation ? 1 : 2);
-        prefs.put("profile.managed_default_content_settings.geolocation", enableGeoLocation ? 1 : 2);
-
-        // To Turns off multiple download warning
-        prefs.put("profile.default_content_settings.popups", 0);
-        prefs.put("profile.default_content_setting_values.automatic_downloads", 1);
-        // Turns off download prompt
-        prefs.put("download.prompt_for_download", false);
-
-        options.setExperimentalOption("prefs", prefs);
+        addChromeExperimentalOptions(options,
+                                     enableGeoLocation,
+                                     context.getBooleanConfig("web", profile, OPT_DOWNLOAD_PDF),
+                                     resolveDownloadTo(context));
 
         handleChromeProfile(options);
 
@@ -713,25 +678,6 @@ public class Browser implements ForcefulTerminate {
             log("setting mobile emulation on Chrome as %s", emuUserAgent);
         }
 
-        // starting from chrome 80, samesite is enforced by default... we need to workaround it
-        List<String> experimentalFlags = new ArrayList<>();
-        experimentalFlags.add("same-site-by-default-cookies@1");
-        experimentalFlags.add("enable-removing-all-third-party-cookies@2");
-        experimentalFlags.add("cookies-without-same-site-must-be-secure@1");
-        Map<String, Object> localState = new HashMap<>();
-        localState.put("browser.enabled_labs_experiments", experimentalFlags);
-        options.setExperimentalOption("localState", localState);
-
-        // get rid of the infobar on top of the browser window
-        //  Disable a few things considered not appropriate for automation.
-        //     - disables the password saving UI (which covers the usecase of the removed `disable-save-password-bubble` flag)
-        //     - disables infobar animations
-        //     - disables dev mode extension bubbles (?), and doesn't show some other info bars
-        //     - disables auto-reloading on network errors (source)
-        //     - means the default browser check prompt isn't shown
-        //     - avoids showing these 3 infobars: ShowBadFlagsPrompt, GoogleApiKeysInfoBarDelegate, ObsoleteSystemInfoBarDelegate
-        options.setExperimentalOption("excludeSwitches", new String[]{"enable-automation", "load-extension"});
-
         // strategy to instruct chromedriver not to wait for full page load
         // https://stackoverflow.com/questions/44770796/how-to-make-selenium-not-wait-till-full-page-load-which-has-a-slow-script/44771628#44771628
         // but this doesn't work for older driver... so we need to catch exception
@@ -740,6 +686,13 @@ public class Browser implements ForcefulTerminate {
         } catch (WebDriverException e) {
             // oh well... i tried; never mind...
             log("unable to page load strategy to EAGER; resetting back to default");
+        }
+
+        // option to treat a list of insecure site (http://) as secure (https://) so that browser would not consider 
+        // the content transfer between these two context as security violation
+        if (context.hasData(OPT_TREAT_AS_SECURE)) {
+            String treatAsSecure = context.getStringData(OPT_TREAT_AS_SECURE);
+            options.addArguments(KEY_TREAT_AS_SECURE, treatAsSecure);
         }
 
         ChromeDriverService driverService = null;

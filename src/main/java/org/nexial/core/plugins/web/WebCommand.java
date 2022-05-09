@@ -3689,18 +3689,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         return context.getBooleanConfig(getTarget(), getProfile(), OPT_DEBUG_HIGHLIGHT);
     }
 
-    protected boolean useExplicitWait() { return useExplicitWait(context, getProfile()); }
-
-    protected static boolean useExplicitWait(ExecutionContext context, String profile) {
-        if (context == null) { return false; }
-        if (context.hasConfig("web", profile, WEB_EXPLICIT_WAIT)) {
-            return context.getBooleanConfig("web", profile, WEB_EXPLICIT_WAIT);
-        }
-        if (context.hasConfig("web", profile, WEB_ALWAYS_WAIT)) {
-            return context.getBooleanConfig("web", profile, WEB_ALWAYS_WAIT);
-        }
-        return getDefaultBool(WEB_EXPLICIT_WAIT);
-    }
+    protected boolean useExplicitWait() { return context.useExplicitWait(getProfile()); }
 
     private boolean isElementVisible(String locator, long maxWait) {
         By by = locatorHelper.findBy(locator);

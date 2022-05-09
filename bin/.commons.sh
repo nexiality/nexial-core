@@ -77,6 +77,7 @@ function checkJava() {
 
 		java_version=$("$JAVA" -version 2>&1 | awk -F '"' '/version/ {print $2}')
 		JAVA_SUPPORTS_MODULE="true"
+		if [[ "$java_version" = 18* ]] ; then JAVA_VERSION=18 ; fi
 		if [[ "$java_version" = 17* ]] ; then JAVA_VERSION=17 ; fi
 		if [[ "$java_version" = 16* ]] ; then JAVA_VERSION=16 ; fi
 		if [[ "$java_version" = 15* ]] ; then JAVA_VERSION=15 ; fi

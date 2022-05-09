@@ -1998,6 +1998,10 @@ public final class NexialConst {
 
         public static final String SESSION_ID = "sessionId";
 
+        // promiscuous security
+        public static final String KEY_TREAT_AS_SECURE = "unsafely-treat-insecure-origin-as-secure";
+        public static final String OPT_TREAT_AS_SECURE = registerSysVar(NS_BROWSER + ".treatAsSecure");
+
         private Web() { }
 
         // reference by enclosing class to force initialization (possibly prior to any reference at runtime)
