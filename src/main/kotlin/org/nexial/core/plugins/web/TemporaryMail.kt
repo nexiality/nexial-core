@@ -17,7 +17,9 @@
 
 package org.nexial.core.plugins.web
 
+import org.apache.commons.io.FileUtils
 import org.apache.commons.lang3.StringUtils
+import org.apache.commons.lang3.SystemUtils.JAVA_IO_TMPDIR
 import org.json.JSONObject
 import org.nexial.core.NexialConst.BrowserType
 import org.nexial.core.NexialConst.Web.BROWSER
@@ -29,6 +31,7 @@ import org.openqa.selenium.*
 import org.openqa.selenium.OutputType.FILE
 import org.openqa.selenium.interactions.Actions
 import org.openqa.selenium.support.ui.FluentWait
+import java.io.File
 import java.time.Duration
 import java.time.LocalDateTime
 import java.time.ZoneId
@@ -148,11 +151,18 @@ class TemporaryMail : WebMailer() {
 
         val bodyElem = driver.findElement<WebElement>(By.cssSelector("body"))
                        ?: throw WebDriverException("Unable to navigate to $startUrl")
-        (driver as TakesScreenshot).getScreenshotAs(FILE)
+        val screenshot = (driver as TakesScreenshot).getScreenshotAs(FILE)
+        FileUtils.moveFileToDirectory(screenshot, File(JAVA_IO_TMPDIR), true)
         ConsoleUtils.log("DEBUG...\n${bodyElem.text}")
+
         if (StringUtils.containsIgnoreCase(bodyElem.text, "Checking your browser")) {
             Thread.sleep(6500)
-            (driver as TakesScreenshot).getScreenshotAs(FILE)
+            val screenshot2 = (driver as TakesScreenshot).getScreenshotAs(FILE)
+            FileUtils.moveFileToDirectory(screenshot2, File(JAVA_IO_TMPDIR), true)
+
+            val bodyElem2 = driver.findElement<WebElement>(By.cssSelector("body"))
+                            ?: throw WebDriverException("Unable to navigate to $startUrl")
+            ConsoleUtils.log("DEBUG...\n${bodyElem2.text}")
         }
 
         val inboxSelector = By.cssSelector("#user_mailbox")
