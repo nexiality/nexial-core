@@ -158,7 +158,7 @@ class TemporaryMail : WebMailer() {
         if (StringUtils.containsIgnoreCase(bodyElem.text, "Checking your browser")) {
             Thread.sleep(6500)
             val screenshot2 = (driver as TakesScreenshot).getScreenshotAs(FILE)
-            FileUtils.moveFile(screenshot, File(StringUtils.appendIfMissing(JAVA_IO_TMPDIR, "/") + "TempMail2.png"))
+            FileUtils.moveFile(screenshot2, File(StringUtils.appendIfMissing(JAVA_IO_TMPDIR, "/") + "TempMail2.png"))
 
             val bodyElem2 = driver.findElement<WebElement>(By.cssSelector("body"))
                             ?: throw WebDriverException("Unable to navigate to $startUrl")
