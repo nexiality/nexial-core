@@ -144,7 +144,13 @@ class TemporaryMail : WebMailer() {
 
     private fun initInbox(driver: WebDriver, profile: WebMailProfile) {
         driver.get(startUrl)
+        Thread.sleep(750)
+
         val waiter = newWaiter(driver)
+
+        val bodyElem = driver.findElement<WebElement>(By.cssSelector("body"))
+                       ?: throw WebDriverException("Unable to navigate to $startUrl")
+        if (StringUtils.containsIgnoreCase(bodyElem.text, "Checking your browser")) Thread.sleep(6500)
 
         val inboxSelector = By.cssSelector("#user_mailbox")
         val submitSelector = By.cssSelector("#user_set")
@@ -157,7 +163,7 @@ class TemporaryMail : WebMailer() {
         val submitElem = driver.findElement<WebElement>(submitSelector)
         Actions(driver).click(submitElem).perform()
 
-        Thread.sleep(3000)
+        Thread.sleep(2750)
 
         val messageSelector = By.cssSelector("#message-list")
         waiter.until { driver.findElement<WebElement>(messageSelector) }
