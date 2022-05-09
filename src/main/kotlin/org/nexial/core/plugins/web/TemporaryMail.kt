@@ -157,7 +157,7 @@ class TemporaryMail : WebMailer() {
         val submitElem = driver.findElement<WebElement>(submitSelector)
         Actions(driver).click(submitElem).perform()
 
-        Thread.sleep(2000)
+        Thread.sleep(3000)
 
         val messageSelector = By.cssSelector("#message-list")
         waiter.until { driver.findElement<WebElement>(messageSelector) }
