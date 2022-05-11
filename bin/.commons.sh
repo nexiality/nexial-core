@@ -144,7 +144,7 @@ function resolveEnv() {
     esac
 
 		# JAVA_VERSION=`echo "$(${JAVA} -version 2>&1)" | grep " version" | awk '{ print substr($3, 2, length($3)-2); }'`
-		NEXIAL_VERSION=$(cat ${NEXIAL_HOME}/version.txt > /dev/null 2>&1)
+		NEXIAL_VERSION=$(cat ${NEXIAL_HOME}/version.txt)
 
     echo "» ENVIRONMENT: "
     echo "  CURRENT TIME:     `date \"+%Y-%m-%d %H:%M:%S\"`"
