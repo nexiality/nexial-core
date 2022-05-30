@@ -843,11 +843,11 @@ public class WebServiceClient {
 
         URL url = new URL(request.getUrl());
 
-        CredentialsProvider digestCredsProvider = new BasicCredentialsProvider();
-        digestCredsProvider.setCredentials(new AuthScope(url.getHost(), url.getPort()),
+        CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
+        credentialsProvider.setCredentials(new AuthScope(url.getHost(), url.getPort()),
                                            new UsernamePasswordCredentials(user, pwd));
 
-        return digestCredsProvider;
+        return credentialsProvider;
     }
 
     protected HttpClientContext newDigestEnabledHttpContext(Request request) throws MalformedURLException {

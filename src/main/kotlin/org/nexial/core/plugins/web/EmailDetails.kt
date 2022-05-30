@@ -41,14 +41,14 @@ data class EmailDetails(
 
     override fun toString(): String {
         return "id         =$id\n" +
-            "subject    =$subject\n" +
-            "from       =$from\n" +
-            "to         =$to\n" +
-            "time       =$time\n" +
-            "content    =$content\n" +
-            "html       =$html\n" +
-            "link      =$link\n" +
-            "links      =$links\n" +
-            "attachments=${getAttachments()}"
+               "subject    =$subject\n" +
+               "from       =$from\n" +
+               "to         =$to\n" +
+               "time       =$time\n" +
+               "content    =$content\n" +
+               "html       =$html\n" +
+               "link       =$link\n" +
+               "links      =$links\n" +
+               "attachments=${getAttachments()}"
     }
 }

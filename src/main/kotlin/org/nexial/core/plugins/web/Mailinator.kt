@@ -25,6 +25,7 @@ import org.java_websocket.extensions.permessage_deflate.PerMessageDeflateExtensi
 import org.java_websocket.handshake.ServerHandshake
 import org.json.JSONObject
 import org.jsoup.Jsoup
+import org.nexial.commons.utils.RegexUtils
 import org.nexial.core.NexialConst.Web.OPT_DELAY_BROWSER
 import org.nexial.core.NexialConst.WebMail.BROWSER_CONFIG
 import org.nexial.core.NexialConst.WebMail.MAILINATOR_BROWSER_PROFILE
@@ -54,7 +55,8 @@ class Mailinator : WebMailer() {
     // private val timeFormat = "EEE MMM dd yyyy HH:mm:ss zZ"
     private val locators = Locators(url)
 
-    override fun search(context: ExecutionContext, profile: WebMailProfile, searchCriteria: String, duration: Long): Set<String> {
+    override fun search(context: ExecutionContext, profile: WebMailProfile, searchCriteria: String,
+                        duration: Long): Set<String> {
         val matchingEmails = mutableSetOf<String>()
 
         val client = MailinatorClient(profile.inbox, searchCriteria, duration)
@@ -66,7 +68,7 @@ class Mailinator : WebMailer() {
         // fallback to headless browser
         if (matchingEmails.isEmpty()) matchingEmails.addAll(searchViaWebCommand(context, profile, searchCriteria))
 
-        // if neither WS or headless browser works, then we give up
+        // if neither WS nor headless browser works, then we give up
         if (matchingEmails.isEmpty()) return emptySet()
 
         val wsClient = WebServiceClient(null).configureAsQuiet().disableContextConfiguration()
@@ -119,16 +121,14 @@ class Mailinator : WebMailer() {
         return emailIds
     }
 
-    private fun toEmailDetails(jsonObject: JSONObject): EmailDetails {
+    internal fun toEmailDetails(jsonObject: JSONObject): EmailDetails {
         val email = EmailDetails(
-            id = JSONPath.find(jsonObject, "data.id")
-                 ?: throw IllegalArgumentException("email id not found"),
+            id = JSONPath.find(jsonObject, "data.id") ?: throw IllegalArgumentException("email id not found"),
             subject = JSONPath.find(jsonObject, "data.subject")
                       ?: throw IllegalArgumentException("email subject not found"),
             to = JSONPath.find(jsonObject, "data.headers.to")
                  ?: throw IllegalArgumentException("email recipient not found"),
-            from = JSONPath.find(jsonObject, "data.from")
-                   ?: throw IllegalArgumentException("email sender not found"),
+            from = JSONPath.find(jsonObject, "data.from") ?: throw IllegalArgumentException("email sender not found"),
             time = Instant.ofEpochMilli(NumberUtils.toLong(JSONPath.find(jsonObject, "data.time")))
                 .atZone(ZoneId.systemDefault())
                 .toLocalDateTime())
@@ -164,54 +164,48 @@ class Mailinator : WebMailer() {
             }
         }
 
-        email.links = getUrlLinks(messageBody)
-        val htmlBody = email.html?.let { removeConditionalComments(it) }
+        email.links = harvestLinks(messageBody)
 
-        val parse = Jsoup.parse(htmlBody)
-        val urls = parse.select("a[href]")
-        val labels: MutableList<String> = mutableListOf()
-
-        for (url in urls) {
-            val key = url.text().trim()
-            if (key.isNotEmpty() && !key.startsWith("http://") && !key.startsWith("https://")) {
-                labels.add(key)
-            }
-        }
-
-        for (label in labels) {
-            val result = getUrl(label, messageBody)
-            val url = if (result.isNotEmpty()) "http" + StringUtils.substringBefore(
-                StringUtils.substringAfter(result, "<http"),
-                ">"
-            ) else StringUtils.EMPTY
-
-            if (StringUtils.isNotEmpty(url)) {
-                if (!email.link!!.contains(label)) {
-                    email.link!![label] = url
+        if (StringUtils.isNotBlank(email.html)) {
+            val labels = extractLinkLabels(email.html!!)
+            for (label in labels) {
+                val result = harvestUrlByLabel(messageBody, label)
+                if (result.isNotEmpty()) {
+                    val url = "http" + StringUtils.substringBefore(StringUtils.substringAfter(result, "<http"), ">")
+                    if (!email.link.contains(label)) email.link[label] = url
+                    messageBody = StringUtils.substringAfter(messageBody, result)
                 }
-                messageBody = StringUtils.substringAfter(messageBody, result)
             }
         }
+
         return email
     }
 
-    private fun getUrlLinks(messageBody: String?): MutableList<String> {
+    internal fun extractLinkLabels(html: String) =
+        Jsoup.parse(removeConditionalComments(html))
+            .select("a[href]")
+            .mapNotNull { url ->
+                val key = url.text().trim()
+                if (key.isNotEmpty() && !key.startsWith("http://") && !key.startsWith("https://")) key else null
+            }
+
+    private fun harvestLinks(messageBody: String): MutableList<String> {
         val urlLinks: MutableList<String> = mutableListOf()
         val pattern = Pattern.compile("(http|https).*?(\\s+|>)")
         val matcher = pattern.matcher(messageBody)
-        while (matcher.find()) {
-            urlLinks.add(matcher.group().trim('>').trim())
-        }
+        while (matcher.find()) urlLinks.add(matcher.group().trim('>').trim())
         return urlLinks
     }
 
-    private fun getUrl(label: String?, messageBody: String?): String {
-        val pattern = Pattern.compile("$label\\s+<(http|https):.*?>")
-        val matcher = pattern.matcher(messageBody)
-        while (matcher.find()) {
-            return matcher.group()
-        }
-        return StringUtils.EMPTY
+    private fun harvestUrlByLabel(messageBody: String, label: String): String {
+        val labelNormalized = label
+            .replace("\\", "\\\\")
+            .replace("/", "\\/")
+            .replace("(", "\\(")
+            .replace(")", "\\)")
+            .replace("[", "\\[")
+            .replace("]", "\\]")
+        return RegexUtils.firstMatches(messageBody, "$labelNormalized\\s+<(http|https):.*?>") ?: ""
     }
 
     private fun openEmailListingPage(web: WebCommand, profile: WebMailProfile) {
@@ -294,10 +288,12 @@ private class MailinatorClient(val inbox: String, val subjectSearch: String, val
             code == 1000 || StringUtils.isEmpty(reason) -> {
                 disconnectReason = reasonOK
             }
+
             code == 1006                                -> {
                 disconnectReason = reason?.substringBefore(".") ?: reasonUnknown
                 ConsoleUtils.log("$logPrefix [$code] $disconnectReason")
             }
+
             else                                        -> {
                 disconnectReason = reason
                 ConsoleUtils.log("$logPrefix [$code] $reason")
