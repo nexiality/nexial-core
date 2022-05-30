@@ -391,7 +391,8 @@ public class Nexial {
             // 2. parse plan file to determine number of executions (1 row per execution)
             Excel excel = new Excel(testPlanFile, DEF_OPEN_EXCEL_AS_DUP, false);
             List<Worksheet> plans = retrieveValidPlans(subplans, excel);
-            ConsoleUtils.log(FOUND_PLANS + testPlanFile + ": " + System.getProperty(SUBPLANS_INCLUDED));
+            ConsoleUtils.log(FOUND_PLANS + testPlanFile + ": " + 
+                             System.getProperty(SUBPLANS_INCLUDED, "all subplans included"));
 
             Map<File, List<String>> scriptToScenarioCache = new HashMap<>();
             List<File> dataFileCache = new ArrayList<>();

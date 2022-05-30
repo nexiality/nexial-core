@@ -107,6 +107,7 @@ class Mailinator : WebMailer() {
         } else
             context.findPlugin("web") as WebCommand
 
+        val currentProfile = web.profile
         web.switchBrowser(MAILINATOR_BROWSER_PROFILE, BROWSER_CONFIG)
         openEmailListingPage(web, profile)
 
@@ -116,8 +117,8 @@ class Mailinator : WebMailer() {
         val search = normalizeXpathText(searchCriteria.trim())
         val emailRowLocator = String.format(locators.matchedEmail, indexSubject + 2, search)
         val emailIds = web.getAttributeValues(emailRowLocator, "id").map { it.trim() }.toList()
-        web.closeAll()
-        web.switchBrowser("", "")
+        // web.close()
+        web.switchBrowser(currentProfile, "")
         return emailIds
     }
 
