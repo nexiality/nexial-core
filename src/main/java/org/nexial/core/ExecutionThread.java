@@ -52,6 +52,7 @@ import static org.nexial.core.NexialConst.Exec.*;
 import static org.nexial.core.NexialConst.Iteration.*;
 import static org.nexial.core.NexialConst.LogMessage.*;
 import static org.nexial.core.NexialConst.Project.appendLog;
+import static org.nexial.core.NexialConst.Rdbms.DAO_PREFIX;
 import static org.nexial.core.NexialConst.Web.*;
 import static org.nexial.core.SystemVariables.getDefault;
 import static org.nexial.core.SystemVariables.getDefaultBool;
@@ -250,9 +251,6 @@ public final class ExecutionThread extends Thread {
             }
         }
 
-        System.setProperty(OPT_OPEN_EXEC_REPORT,
-                           context.getStringData(OPT_OPEN_EXEC_REPORT, getDefault(OPT_OPEN_EXEC_REPORT)));
-
         onScriptComplete(context, executionSummary, iterationManager, ticktock);
 
         ExecutionThread.unset();
@@ -429,6 +427,9 @@ public final class ExecutionThread extends Thread {
         summary.aggregatedNestedExecutions(context);
         NexialListenerFactory.fireEvent(NexialExecutionEvent.newScriptEndEvent(summary.getScriptFile(), summary));
 
+        System.setProperty(OPT_OPEN_EXEC_REPORT,
+                           context.getStringData(OPT_OPEN_EXEC_REPORT, getDefault(OPT_OPEN_EXEC_REPORT)));
+
         CloudWebTestingPlatform.reportCloudBrowserStatus(context, summary, ScriptComplete);
 
         StringBuilder cloudOutputBuffer = new StringBuilder();
@@ -460,6 +461,9 @@ public final class ExecutionThread extends Thread {
 
         context.getExecutionEventListener().onScriptComplete();
 
+        // clear off RDBMS related context variables
+        context.removeDataByPrefix(DAO_PREFIX);
+        
         if (context.hasData(LAST_PLAN_STEP)) {
             System.setProperty(LAST_PLAN_STEP, context.getStringData(LAST_PLAN_STEP, getDefault(LAST_PLAN_STEP)));
         }
