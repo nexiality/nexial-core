@@ -17,19 +17,6 @@
 
 package org.nexial.core.plugins.db;
 
-import java.io.File;
-import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
-import java.net.URL;
-import java.net.URLClassLoader;
-import java.sql.Connection;
-import java.sql.Driver;
-import java.sql.DriverManager;
-import java.sql.SQLException;
-import java.util.Map;
-import java.util.Properties;
-import javax.sql.DataSource;
-
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.dbcp2.BasicDataSource;
@@ -43,6 +30,19 @@ import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.jdbc.datasource.SingleConnectionDataSource;
+
+import java.io.File;
+import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.sql.Connection;
+import java.sql.Driver;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+import java.util.Map;
+import java.util.Properties;
+import javax.sql.DataSource;
 
 import static java.io.File.separator;
 import static java.sql.Connection.TRANSACTION_SERIALIZABLE;
@@ -145,6 +145,7 @@ public class DataAccess implements ApplicationContextAware {
             newDs.setAccessToUnderlyingConnectionAllowed(true);
             newDs.setPoolPreparedStatements(true);
             newDs.setUrl(url);
+            context.setData(DAO_DS_PREFIX + db, newDs);
 
             // username/password are not required
             String username = context.getStringData(db + OPT_DB_USER);

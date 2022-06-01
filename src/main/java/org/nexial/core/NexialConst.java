@@ -1533,8 +1533,8 @@ public final class NexialConst {
     public static final class Rdbms {
         // plugin:rdbms
         public static final String DAO_PREFIX = NAMESPACE + "dao.";
-        public static final String OPT_INCLUDE_PACK_SINGLE_ROW = registerSysVar(NAMESPACE + "rdbms.packSingleRow",
-                                                                                false);
+        public static final String DAO_DS_PREFIX = NAMESPACE + "dao.ds.";
+        public static final String OPT_INCLUDE_PACK_SINGLE_ROW = registerSysVar(NAMESPACE + "rdbms.packSingleRow", false);
         public static final String SQL_DELIM = ";";
         public static final String SQL_COMMENT = "--";
         public static final String SQL_VAR = "nexial:";

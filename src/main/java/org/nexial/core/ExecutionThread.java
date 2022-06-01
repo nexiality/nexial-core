@@ -19,6 +19,7 @@ package org.nexial.core;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
+import org.apache.commons.dbcp2.BasicDataSource;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -30,6 +31,7 @@ import org.nexial.core.aws.NexialS3Helper;
 import org.nexial.core.excel.Excel;
 import org.nexial.core.logs.ExecutionLogger;
 import org.nexial.core.model.*;
+import org.nexial.core.plugins.db.SimpleExtractionDao;
 import org.nexial.core.plugins.web.CloudWebTestingPlatform;
 import org.nexial.core.reports.ExecutionMailConfig;
 import org.nexial.core.reports.ExecutionReporter;
@@ -40,10 +42,12 @@ import org.nexial.core.variable.Syspath;
 
 import java.io.File;
 import java.io.IOException;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import static java.io.File.separator;
 import static org.nexial.core.NexialConst.*;
@@ -52,6 +56,7 @@ import static org.nexial.core.NexialConst.Exec.*;
 import static org.nexial.core.NexialConst.Iteration.*;
 import static org.nexial.core.NexialConst.LogMessage.*;
 import static org.nexial.core.NexialConst.Project.appendLog;
+import static org.nexial.core.NexialConst.Rdbms.DAO_DS_PREFIX;
 import static org.nexial.core.NexialConst.Rdbms.DAO_PREFIX;
 import static org.nexial.core.NexialConst.Web.*;
 import static org.nexial.core.SystemVariables.getDefault;
@@ -427,6 +432,34 @@ public final class ExecutionThread extends Thread {
         summary.aggregatedNestedExecutions(context);
         NexialListenerFactory.fireEvent(NexialExecutionEvent.newScriptEndEvent(summary.getScriptFile(), summary));
 
+        // clear off RDBMS related context variables
+        Map<String, Object> existingDataSources = context.getObjectByPrefix(DAO_DS_PREFIX);
+        if (MapUtils.isNotEmpty(existingDataSources)) {
+            for (Entry<String, Object> entry : existingDataSources.entrySet()) {
+                Object ds = entry.getValue();
+                if (ds instanceof BasicDataSource) {
+                    try {
+                        ((BasicDataSource) ds).close();
+                    } catch (SQLException e) {
+                        // can be ignored
+                        ConsoleUtils.log("Error shutting down opened connection(s): " + e.getMessage());
+                    }
+                }
+                ds = null;
+            }
+        }
+        context.removeDataByPrefix(DAO_DS_PREFIX);
+
+        Map<String, Object> existingDaos = context.getObjectByPrefix(DAO_PREFIX);
+        if (MapUtils.isNotEmpty(existingDaos)) {
+            for (Entry<String, Object> entry : existingDaos.entrySet()) {
+                Object dao = entry.getValue();
+                if (dao instanceof SimpleExtractionDao) { ((SimpleExtractionDao) dao).close(); }
+                dao = null;
+            }
+        }
+        context.removeDataByPrefix(DAO_PREFIX);
+
         System.setProperty(OPT_OPEN_EXEC_REPORT,
                            context.getStringData(OPT_OPEN_EXEC_REPORT, getDefault(OPT_OPEN_EXEC_REPORT)));
 
@@ -461,9 +494,6 @@ public final class ExecutionThread extends Thread {
 
         context.getExecutionEventListener().onScriptComplete();
 
-        // clear off RDBMS related context variables
-        context.removeDataByPrefix(DAO_PREFIX);
-        
         if (context.hasData(LAST_PLAN_STEP)) {
             System.setProperty(LAST_PLAN_STEP, context.getStringData(LAST_PLAN_STEP, getDefault(LAST_PLAN_STEP)));
         }

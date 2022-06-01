@@ -180,6 +180,19 @@ public class SimpleExtractionDao extends JdbcDaoSupport {
 
     public void setContext(ExecutionContext context) { this.context = context; }
 
+    public void close() {
+        if (transactedConnection != null) {
+            try {
+                transactedConnection.close();
+            } catch (SQLException e) {
+                // can be ignored
+                ConsoleUtils.log("Error when closing opened transacted connection: " + e.getMessage());
+            }
+            
+            transactedConnection = null;
+        }
+    }
+
     public JdbcResult executeSql(String sql, File saveTo) {
         long startTime = System.currentTimeMillis();
         JdbcResult result = new JdbcResult(sql);
