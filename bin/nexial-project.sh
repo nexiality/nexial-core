@@ -53,6 +53,7 @@ else
 fi
 
 PROJECT_NAME="`basename "${PROJECT_HOME}"`"
+echo "  PROJECT_NAME:   ${PROJECT_NAME}"
 echo "  PROJECT_HOME:   ${PROJECT_HOME}"
 
 # create project.id file to uniquely identify a "project" across enterprise (i.e. same SCM)
@@ -132,7 +133,7 @@ if [[ `find ${PROJECT_HOME}/artifact/bin -name "run-script.sh" | wc -l | sed 's/
     echo "» SKIPPED creating run-script.sh; already exist"
 else
     echo "» creating run-script.sh"
-    sed -e 's/%PROJECT_NAME%/${PROJECT_NAME}/g' ${NEXIAL_HOME}/template/run-script.sh.txt > ${PROJECT_HOME}/artifact/bin/run-script.sh
+    sed -e "s/%PROJECT_NAME%/${PROJECT_NAME}/g" ${NEXIAL_HOME}/template/run-script.sh.txt > ${PROJECT_HOME}/artifact/bin/run-script.sh
 fi
 
 ## create default run-plan.sh, if none exists
@@ -140,7 +141,7 @@ if [[ `find ${PROJECT_HOME}/artifact/bin -name "run-plan.sh" | wc -l | sed 's/ /
     echo "» SKIPPED creating run-plan.sh; already exist"
 else
     echo "» creating run-plan.sh"
-    sed -e 's/%PROJECT_NAME%/${PROJECT_NAME}/g' ${NEXIAL_HOME}/template/run-plan.sh.txt > ${PROJECT_HOME}/artifact/bin/run-plan.sh
+    sed -e "s/%PROJECT_NAME%/${PROJECT_NAME}/g" ${NEXIAL_HOME}/template/run-plan.sh.txt > ${PROJECT_HOME}/artifact/bin/run-plan.sh
 fi
 
 ## create script/data/macro based on input

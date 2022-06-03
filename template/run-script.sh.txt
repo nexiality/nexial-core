@@ -36,5 +36,5 @@ CURRENT_SCRIPT=${PROJECT_HOME}/artifact/script/$1
 echo setting CURRENT_SCRIPT  as ${CURRENT_SCRIPT}
 
 echo
-cd ${NEXIAL_HOME$}/bin
-nexial.sh -script ${CURRENT_SCRIPT}
+cd ${NEXIAL_HOME}/bin
+./nexial.sh -script ${CURRENT_SCRIPT}

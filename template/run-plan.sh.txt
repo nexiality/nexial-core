@@ -36,5 +36,5 @@ CURRENT_PLAN=${PROJECT_HOME}/artifact/plan/$1
 echo setting CURRENT_PLAN    as ${CURRENT_PLAN}
 
 echo
-cd ${NEXIAL_HOME$}/bin
-nexial.sh -plan ${CURRENT_PLAN}
+cd ${NEXIAL_HOME}/bin
+./nexial.sh -plan ${CURRENT_PLAN}
