@@ -1257,8 +1257,9 @@ public class Excel {
 
             Arrays.sort(output);
             ArrayUtils.reverse(output);
-            ConsoleUtils.log("resolving WPS Spreadsheet as '" + output[0]);
-            return output[0];
+            String location = StringUtils.trim(output[0]);
+            ConsoleUtils.log("resolving WPS Spreadsheet as '" + location);
+            return location;
         } catch (IOException | InterruptedException e) {
             ConsoleUtils.error("ERROR!!! Unable to determine WPS spreadsheet program location: " + e.getMessage());
             return null;

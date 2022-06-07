@@ -700,6 +700,38 @@ public class TestStep extends TestStepManifest {
                     String param = mergedParams.get(paramIdx);
                     if (StringUtils.isBlank(param)) { continue; }
 
+                    String origParamValue = Excel.getCellValue(paramCell);
+                    if (StringUtils.isBlank(origParamValue)) {
+                        paramCell.setCellType(BLANK);
+                        continue;
+                    }
+
+                    // respect the crypts... if value has crypt:, then keep it as is
+                    if (context.containsCrypt(origParamValue)) {
+                        paramCell.setCellComment(toSystemComment(paramCell, "detected crypto"));
+                        continue;
+                    } else if(i == COL_IDX_PARAMS_START && StringUtils.equals(getCommandFQN(), CMD_VERBOSE)) {
+                        message = StringUtils.trim(platformSpecificEOL(message));
+                        if (StringUtils.length(message) > MAX_VERBOSE_CHAR) {
+                            message = StringUtils.abbreviate(message, MAX_VERBOSE_CHAR);
+                        }
+                        paramCell.setCellValue(message);
+                        paramCell.setCellComment(toSystemComment(paramCell, origParamValue));
+                        continue;
+                    }
+
+                    String taintedValue = CellTextReader.getOriginal(origParamValue, param);
+                    boolean tainted = !StringUtils.equals(origParamValue, taintedValue);
+                    if (tainted) {
+                        paramCell.setCellValue(context.truncateForDisplay(taintedValue));
+                        if (StringUtils.isNotEmpty(origParamValue)) {
+                            paramCell.setCellComment(toSystemComment(paramCell, origParamValue));
+                        }
+                        paramCell.setCellStyle(styleTaintedParam);
+                    } else {
+                        paramCell.setCellStyle(styleParam);
+                    }
+
                     String link = resolveParamAsLink(param);
                     if (link != null) {
                         // create hyperlink where path is referenced
@@ -747,47 +779,6 @@ public class TestStep extends TestStepManifest {
                         // if `link` contains double quote, it's likely not a link..
                         if (!StringUtils.containsAny(link, "\"")) { worksheet.setHyperlink(paramCell, link, param); }
                         continue;
-                    } else {
-                        paramCell.setCellValue(context.truncateForDisplay(param));
-                        paramCell.setCellStyle(styleParam);
-                    }
-
-                    String origParamValue = Excel.getCellValue(paramCell);
-                    if (StringUtils.isBlank(origParamValue)) {
-                        paramCell.setCellType(BLANK);
-                        continue;
-                    }
-
-                    if (i == COL_IDX_PARAMS_START && StringUtils.equals(getCommandFQN(), CMD_VERBOSE)) {
-                        if (context.containsCrypt(origParamValue)) {
-                            paramCell.setCellComment(toSystemComment(paramCell, "detected crypto"));
-                        } else {
-                            message = StringUtils.trim(platformSpecificEOL(message));
-                            if (StringUtils.length(message) > MAX_VERBOSE_CHAR) {
-                                message = StringUtils.abbreviate(message, MAX_VERBOSE_CHAR);
-                            }
-                            paramCell.setCellValue(message);
-                            paramCell.setCellComment(toSystemComment(paramCell, origParamValue));
-                        }
-                        continue;
-                    }
-
-                    // respect the crypts... if value has crypt:, then keep it as is
-                    if (context.containsCrypt(origParamValue)) {
-                        paramCell.setCellComment(toSystemComment(paramCell, "detected crypto"));
-                        continue;
-                    }
-
-                    String taintedValue = CellTextReader.getOriginal(origParamValue, param);
-                    boolean tainted = !StringUtils.equals(origParamValue, taintedValue);
-                    if (tainted) {
-                        paramCell.setCellValue(context.truncateForDisplay(taintedValue));
-                        if (StringUtils.isNotEmpty(origParamValue)) {
-                            paramCell.setCellComment(toSystemComment(paramCell, origParamValue));
-                        }
-                        paramCell.setCellStyle(styleTaintedParam);
-                    } else {
-                        paramCell.setCellStyle(styleParam);
                     }
 
                     ExcelStyleHelper.handleTextWrap(paramCell);
