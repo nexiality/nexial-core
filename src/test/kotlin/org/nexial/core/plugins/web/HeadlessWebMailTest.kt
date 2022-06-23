@@ -17,11 +17,13 @@
 
 package org.nexial.core.plugins.web
 
+import org.junit.Ignore
 import org.junit.Test
 import org.nexial.core.ExcelBasedTests
 
 class HeadlessWebMailTest : ExcelBasedTests() {
 
+    @Ignore("need to figure out the best way to sent SMTP mails on Jenkins...")
     @Test
     @Throws(Exception::class)
     fun webmails() {
