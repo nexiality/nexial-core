@@ -1034,7 +1034,7 @@ public final class NexialConst {
         public static final String USER_PROJECTS_DIR = IS_OS_WINDOWS ?
                                                        "C:\\projects" + separator :
                                                        USER_HOME + "/projects" + separator;
-        public static final String NEXIAL_INSTALLER_MIN_VERSION = "1.4.5";
+        public static final String NEXIAL_INSTALLER_MIN_VERSION = "1.4.6";
         public static final String PROJECT_CACHE_LOCATION = USER_NEXIAL_HOME + "projectCache" + separator;
         public static final String BROWSER_META_CACHE_PATH = USER_NEXIAL_HOME + "browser-meta.json";
         public static final String BATCH_EXT = (IS_OS_WINDOWS ? "cmd" : "sh");
@@ -1156,6 +1156,7 @@ public final class NexialConst {
             cmdOptions.addOption(OVERRIDE, true, RB.Tools.text("cli.override"));
             cmdOptions.addOption(OUTPUT, true, RB.Tools.text("cli.output"));
             cmdOptions.addOption(INTERACTIVE, false, RB.Tools.text("cli.interactive"));
+            // cmdOptions.addOption(READY, false, RB.Tools.text("cli.ready"));
             return cmdOptions;
         }
     }
@@ -1533,7 +1534,6 @@ public final class NexialConst {
     public static final class Rdbms {
         // plugin:rdbms
         public static final String DAO_PREFIX = NAMESPACE + "dao.";
-        public static final String DAO_DS_PREFIX = NAMESPACE + "dao.ds.";
         public static final String OPT_INCLUDE_PACK_SINGLE_ROW = registerSysVar(NAMESPACE + "rdbms.packSingleRow", false);
         public static final String SQL_DELIM = ";";
         public static final String SQL_COMMENT = "--";

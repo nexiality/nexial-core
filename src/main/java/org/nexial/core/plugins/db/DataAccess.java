@@ -145,7 +145,6 @@ public class DataAccess implements ApplicationContextAware {
             newDs.setAccessToUnderlyingConnectionAllowed(true);
             newDs.setPoolPreparedStatements(true);
             newDs.setUrl(url);
-            context.setData(DAO_DS_PREFIX + db, newDs);
 
             // username/password are not required
             String username = context.getStringData(db + OPT_DB_USER);

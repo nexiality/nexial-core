@@ -53,7 +53,6 @@ else
 fi
 
 PROJECT_NAME="`basename "${PROJECT_HOME}"`"
-echo "  PROJECT_NAME:   ${PROJECT_NAME}"
 echo "  PROJECT_HOME:   ${PROJECT_HOME}"
 
 # create project.id file to uniquely identify a "project" across enterprise (i.e. same SCM)
