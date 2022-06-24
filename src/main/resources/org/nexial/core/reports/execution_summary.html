@@ -466,27 +466,77 @@
         </div>
 
         <div class="wsDetail-filter">
-            <div class="wsDetail-filter-method">
-                <span class="wsDetail-filter-title">Filter by method:</span>
-                <span onClick="toggleWsDisplay(this)" class="wsDetail-filter-button method-GET">GET</span>
-                <span onClick="toggleWsDisplay(this)" class="wsDetail-filter-button method-POST">POST</span>
-                <span onClick="toggleWsDisplay(this)" class="wsDetail-filter-button method-PATCH">PATCH</span>
-                <span onClick="toggleWsDisplay(this)" class="wsDetail-filter-button method-PUT">PUT</span>
-                <span onClick="toggleWsDisplay(this)" class="wsDetail-filter-button method-DELETE">DELETE</span>
-                <span onClick="toggleWsDisplay(this)" class="wsDetail-filter-button method-HEAD">HEAD</span>
+            <div>
+                <span class="filter-selected"> Filter the api results</span>
             </div>
-            <div class="wsDetail-filter-returnCode">
-                <span class="wsDetail-filter-title">Filter by return code:</span>
-                <span onClick="toggleWsDisplay(this)" class="wsDetail-filter-button returnCode-200">200</span>
-                <span onClick="toggleWsDisplay(this)" class="wsDetail-filter-button returnCode-201">201</span>
-                <span onClick="toggleWsDisplay(this)" class="wsDetail-filter-button returnCode-202">202</span>
-                <span onClick="toggleWsDisplay(this)" class="wsDetail-filter-button returnCode-204">204</span>
-                <span onClick="toggleWsDisplay(this)" class="wsDetail-filter-button returnCode-207">207</span>
-                <span onClick="toggleWsDisplay(this)" class="wsDetail-filter-button returnCode-2xx">2xx</span>
-                <span onClick="toggleWsDisplay(this)" class="wsDetail-filter-button returnCode-3xx">3xx</span>
-                <span onClick="toggleWsDisplay(this)" class="wsDetail-filter-button returnCode-400">4xx</span>
-                <span onClick="toggleWsDisplay(this)" class="wsDetail-filter-button returnCode-5xx">5xx</span>
+            </br>
+            <div class="filter-selected">
+                <label>Methods</label>
+                <input class="filter-display filter-display-width" id="methodName" value="All" disabled/>
+                <label>Return Codes</label>
+                <span class="meta-title">2xx</span>
+                <input class="filter-display" id="selected-2xx" value="All" disabled/>
+                <span class="meta-title">3xx</span>
+                <input class="filter-display" id="selected-3xx" value="All" disabled/>
+                <span class="meta-title">4xx</span>
+                <input class="filter-display" id="selected-4xx" value="All" disabled/>
+                <span class="meta-title">5xx</span>
+                <input class="filter-display" id="selected-5xx" value="All" disabled/>
             </div>
+
+            <div class="dropdown margin-left-10">
+                <button class="dropbtn dropbtn-method">Method</button>
+                <div id="myDropdown" class="wsDetail-filter-method dropdown-content">
+                    <span onClick="toggleWsDisplay(this)" class="method-dropBTN wsDetail-filter-button method-GET">GET</span>
+                    <span onClick="toggleWsDisplay(this)" class="method-dropBTN wsDetail-filter-button method-POST">POST</span>
+                    <span onClick="toggleWsDisplay(this)" class="method-dropBTN wsDetail-filter-button method-PATCH">PATCH</span>
+                    <span onClick="toggleWsDisplay(this)" class="method-dropBTN wsDetail-filter-button method-PUT">PUT</span>
+                    <span onClick="toggleWsDisplay(this)" class="method-dropBTN wsDetail-filter-button method-DELETE">DELETE</span>
+                    <span onClick="toggleWsDisplay(this)" class="method-dropBTN wsDetail-filter-button method-HEAD">HEAD</span>
+                </div>
+            </div>
+
+            <div class="dropdown">
+                <button onclick="toggleReturnCodeGroup(this)" class="dropbtn dropbtn-2XX">2xx</button>
+                <div id="myDropdown1" class="wsDetail-filter-returnCode dropdown-content">
+                    <span onClick="toggleWsDisplay(this)" class="wsDetail-filter-button returnCode-200 2xx">200</span>
+                    <span onClick="toggleWsDisplay(this)" class="wsDetail-filter-button returnCode-200 2xx">201</span>
+                    <span onClick="toggleWsDisplay(this)" class="wsDetail-filter-button returnCode-200 2xx">202</span>
+                    <span onClick="toggleWsDisplay(this)" class="wsDetail-filter-button returnCode-200 2xx">204</span>
+                    <span onClick="toggleWsDisplay(this)" class="wsDetail-filter-button returnCode-200 2xx">207</span>
+                </div>
+            </div>
+            <div class="dropdown">
+                <button onclick="toggleReturnCodeGroup(this)" class="dropbtn dropbtn-3XX">3xx</button>
+                <div id="myDropdown2" class="wsDetail-filter-returnCode dropdown-content">
+                    <span onClick="toggleWsDisplay(this)" class="wsDetail-filter-button returnCode-301 3xx">301</span>
+                    <span onClick="toggleWsDisplay(this)" class="wsDetail-filter-button returnCode-302 3xx">302</span>
+                    <span onClick="toggleWsDisplay(this)" class="wsDetail-filter-button returnCode-303 3xx">303</span>
+                    <span onClick="toggleWsDisplay(this)" class="wsDetail-filter-button returnCode-304 3xx">304</span>
+                </div>
+            </div>
+            <div class="dropdown">
+                <button onclick="toggleReturnCodeGroup(this)" class="dropbtn dropbtn-4XX">4xx</button>
+                <div id="myDropdown3" class="wsDetail-filter-returnCode dropdown-content">
+                    <span onClick="toggleWsDisplay(this)" class="wsDetail-filter-button returnCode-400 4xx">400</span>
+                    <span onClick="toggleWsDisplay(this)" class="wsDetail-filter-button returnCode-400 4xx">401</span>
+                    <span onClick="toggleWsDisplay(this)" class="wsDetail-filter-button returnCode-400 4xx">402</span>
+                    <span onClick="toggleWsDisplay(this)" class="wsDetail-filter-button returnCode-400 4xx">403</span>
+                    <span onClick="toggleWsDisplay(this)" class="wsDetail-filter-button returnCode-400 4xx">404</span>
+                </div>
+            </div>
+            <div class="dropdown">
+                <button onclick="toggleReturnCodeGroup(this)" class="dropbtn dropbtn-5XX">5xx</button>
+                <div id="myDropdown4" class="wsDetail-filter-returnCode dropdown-content">
+                    <span onClick="toggleWsDisplay(this)" class="wsDetail-filter-button returnCode-500 5xx">500</span>
+                    <span onClick="toggleWsDisplay(this)" class="wsDetail-filter-button returnCode-501 5xx">501</span>
+                    <span onClick="toggleWsDisplay(this)" class="wsDetail-filter-button returnCode-502 5xx">502</span>
+                    <span onClick="toggleWsDisplay(this)" class="wsDetail-filter-button returnCode-503 5xx">503</span>
+                </div>
+            </div>
+
+            <button onclick="selectAll()" class="dropbtn selectAll">Select All</button>
+            <button onclick="clearAll()" class="dropbtn clearAll">Clear All</button>
         </div>
 
         <th:block data-th-if="${wsLogs.details}" data-th-each="wsDetail : ${wsLogs.details}">
