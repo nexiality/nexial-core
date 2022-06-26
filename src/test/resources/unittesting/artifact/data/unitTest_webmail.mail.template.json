@@ -1,0 +1,14 @@
+{
+     "sender": {
+          "email": "${sib.sender}"
+     },
+     "to": [ { "email": "${webmail.inbox}@mailinator.com" } ],
+     "htmlContent": "<!DOCTYPE html><html><body>${sib.content}</body></html>",
+     "subject": "${sib.subject}",
+     "replyTo": { "email": "${sib.replyTo}" },
+     "headers": {
+          "sender.ip": "1.2.3.4",
+          "X-Mailin-custom": "nexial",
+          "idempotencyKey": "nexial-$(sysdate|now|epoch)"
+     }
+}

@@ -23,15 +23,20 @@ import org.nexial.core.ExcelBasedTests
 
 class HeadlessWebMailTest : ExcelBasedTests() {
 
-    @Ignore("need to figure out the best way to sent SMTP mails on Jenkins...")
     @Test
     @Throws(Exception::class)
     fun webmails() {
         val executionSummary = testViaExcel("unitTest_webmail.xlsx", "mailinator", "mailinator_version")
         assertNoFail(executionSummary, "mailinator")
-        assertPassFail(executionSummary, "mailinator_version", TestOutcomeStats.allPassed())
-        // unable to run on Jenkins/AIX... chrome headless doesn't seem to be redirecting correctly and at times the network request is blocked by temp-mail
-        // todo: need to run this locally
-        // assertNoFail(executionSummary, "temporary-mail")
+        assertNoFail(executionSummary, "mailinator_version")
+    }
+
+    @Ignore("skip for CI; chrome headless doesn't seem to be redirecting correctly and " +
+            "at times the network request is blocked by temp-mail")
+    @Test
+    @Throws(Exception::class)
+    fun testTempMail() {
+        val executionSummary = testViaExcel("unitTest_webmail.xlsx", "temporary-mail")
+        assertNoFail(executionSummary, "temporary-mail")
     }
 }
