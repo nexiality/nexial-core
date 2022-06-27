@@ -159,7 +159,7 @@
             <entry key="sqlite" value="org.sqlite.JDBC"/>
             <entry key="hsqldb" value="org.hsqldb.jdbc.JDBCDriver"/>
             <!-- https://bitbucket.org/dbschema/mongodb-jdbc-driver/src/master/ -->
-            <entry key="mongodb" value="com.dbschema.MongoJdbcDriver"/>
+            <entry key="mongodb" value="com.wisecoders.dbschema.mongodb.JdbcDriver"/>
             <entry key="mariadb" value="org.mariadb.jdbc.Driver"/>
           </map>
         </property>

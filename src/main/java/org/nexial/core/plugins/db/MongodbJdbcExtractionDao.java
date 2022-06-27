@@ -17,6 +17,14 @@
 
 package org.nexial.core.plugins.db;
 
+import com.mongodb.client.result.DeleteResult;
+import com.mongodb.client.result.UpdateResult;
+import com.wisecoders.dbschema.mongodb.resultSet.ObjectAsResultSet;
+import com.wisecoders.dbschema.mongodb.resultSet.OkResultSet;
+import org.apache.commons.lang3.StringUtils;
+import org.bson.Document;
+import org.nexial.core.utils.JsonUtils;
+
 import java.io.File;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
@@ -25,15 +33,6 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-
-import org.apache.commons.lang3.StringUtils;
-import org.bson.Document;
-import org.nexial.core.utils.JsonUtils;
-
-import com.dbschema.resultSet.ObjectAsResultSet;
-import com.dbschema.resultSet.OkResultSet;
-import com.mongodb.client.result.DeleteResult;
-import com.mongodb.client.result.UpdateResult;
 
 import static org.nexial.core.plugins.db.SqlComponent.Type.*;
 

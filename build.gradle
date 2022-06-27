@@ -227,8 +227,6 @@ dependencies {
 	compile("org.ini4j:ini4j:+")
 
 	// support: data sources
-	// compile("org.mongodb:mongodb-driver-async:${mongoDriverVersion}")
-	compile("org.mongodb:mongo-java-driver:${mongoDriverVersion}")
 	// support Azure database connectivity
 	implementation("com.microsoft.azure:msal4j:${msal4jVersion}")
 
