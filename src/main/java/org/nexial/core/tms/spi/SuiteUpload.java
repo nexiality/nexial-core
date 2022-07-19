@@ -17,93 +17,80 @@
 
 package org.nexial.core.tms.spi;
 
-import org.apache.commons.io.FilenameUtils;
-import org.json.simple.JSONObject;
-import org.nexial.core.tms.TMSOperation;
-import org.nexial.core.tms.model.TmsSuite;
-import org.nexial.core.tms.model.TmsTestCase;
-
-import java.io.File;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.nexial.core.excel.ExcelConfig.ADDR_PLAN_EXECUTION_START;
+import org.nexial.core.tms.model.TmsSuite;
+import org.nexial.core.tms.model.TmsTestCase;
+import org.nexial.core.utils.ConsoleUtils;
+
+import static org.nexial.core.tms.TmsConst.ID;
 
 /**
- * Create a new suite (fresh import) for the nexial test file passed in as argument
+ * Create a new suite (fresh import) for the nexial test file passed in as an argument.
  */
 public class SuiteUpload {
 
-    private String planPath;
-    private String subplan;
-    private Map<String, Map<String, String>> testCaseToStep;
-    private TMSOperation tms;
+    private final Map<Integer, Map<String, String>> testCaseToStep = new HashMap<>();
+    private final String suiteName;
+    private final String testPath;
+    private final TMSOperation tms;
 
-    public SuiteUpload(String projectId) {
-        tms = new TmsFactory().getTmsInstance(projectId);
+    public SuiteUpload(String suiteName, String testPath, TMSOperation tms) {
+//        tms = new TmsFactory().getTmsInstance(projectId);
+        this.tms = tms;
+        this.suiteName = suiteName;
+        this.testPath = testPath;
     }
 
-    public SuiteUpload(String planPath, String subplan, String projectId) {
-        this.planPath = planPath;
-        this.subplan = subplan;
-        tms = new TmsFactory().getTmsInstance(projectId);
-    }
-
-    public Map<String, Map<String, String>> getTestCaseToStep() {
-        return testCaseToStep;
-    }
+    public Map<Integer, Map<String, String>> getTestCaseToStep() { return testCaseToStep; }
 
     /**
-     * Create a new suite for the Nexial script file passed in
+     * Create a new suite for the Nexial script file passed in as an argument.
      *
-     * @param testCases  List of valid {@link TmsTestCase} instances for each scenario inside the script
-     * @param scriptName name of the script file
+     * @param testCases List of valid {@link TmsTestCase} instances for each scenario inside the script
      * @return TmsSuite object containing details of the newly created suite
      */
-    protected TmsSuite uploadScript(List<TmsTestCase> testCases,
-                                    String scriptName) {
-        JSONObject createSuiteResponse = tms.createSuite(scriptName);
-        String id = createSuiteResponse.get("id").toString();
-        String url = createSuiteResponse.get("url").toString();
-
-        JSONObject addSectionResponse = tms.addSection(scriptName, id);
-        Map<String, String> testCaseToScenario = tms.addCases(addSectionResponse, testCases);
-
-        return new TmsSuite(scriptName, id, testCaseToScenario, url);
+    protected TmsSuite uploadScript(List<TmsTestCase> testCases) throws TmsException {
+        TmsSuite tmsSuite = tms.createSuite(suiteName, testPath);
+//        JSONObject tmsSuite = new JSONObject();
+        String suiteId = tmsSuite.getId();
+//        String suiteId = "3";
+        ConsoleUtils.log("Test suite created with id: " + suiteId);
+        String sectionId = tms.addSection(suiteId, suiteName);
+        Map<String, String> testCaseToScenario = tms.addCases(sectionId, testCases);
+//        Map<String, String> testCaseToScenario = tms.addCases("4", testCases);
+        tmsSuite.setTestCases(testCaseToScenario);
+        return tmsSuite;
     }
 
     /**
      * Create a new suite for the plan file passed in
      *
-     * @param testCasesToPlanStep {@link Map} of {@link TmsTestCase} instance representing the scenarios specified in
-     *                            each plan step
-     * @return TmsSuite object containing details of the newly created suite
+     * @param testCasesToPlanStep {@link Map} of {@link TmsTestCase} instance representing the scenarios
+     *        specified in each plan step
+     * @return {@link TmsSuite} object containing details of the newly created suite
      */
-    protected TmsSuite uploadPlan(LinkedHashMap<String, List<TmsTestCase>> testCasesToPlanStep) {
-        TmsSuite suite = null;
-        testCaseToStep = new HashMap<>();
+    protected TmsSuite uploadPlan(LinkedHashMap<Integer, List<TmsTestCase>> testCasesToPlanStep) throws TmsException {
         try {
-            int i = ADDR_PLAN_EXECUTION_START.getRowStartIndex() + 1; // row number to plan test cases
-            String suiteName = FilenameUtils.removeExtension(new File(planPath).getName());
-            suiteName = suiteName + "/" + subplan; // generate the suite name (<plan name>/<subplan name>)
-            Map<String, String> addCasesResponseList = new HashMap<>();
-            JSONObject createSuiteResponse = tms.createSuite(suiteName);
-            JSONObject addSectionResponse =
-                tms.addSection(suiteName, createSuiteResponse.get("id").toString());
-            for (String row : testCasesToPlanStep.keySet()) {
-                Map<String, String> caseToScenario =
-                    tms.addCases(addSectionResponse, testCasesToPlanStep.get(row));
-                addCasesResponseList.putAll(caseToScenario);
-                testCaseToStep.put(String.valueOf(i), caseToScenario);
-                i++;
+            TmsSuite tmsSuite = tms.createSuite(suiteName, testPath);
+            String suiteId = tmsSuite.getId();
+            String sectionId = tms.addSection(suiteId, suiteName);
+
+            Map<String, String> newTestCaseResponse = new HashMap<>();
+            for (Map.Entry<Integer, List<TmsTestCase>> entry : testCasesToPlanStep.entrySet()) {
+                Integer row = entry.getKey();
+                List<TmsTestCase> testCases = entry.getValue();
+                Map<String, String> caseToScenario = tms.addCases(sectionId, testCases);
+                newTestCaseResponse.putAll(caseToScenario);
+                testCaseToStep.put(row, caseToScenario);
             }
-            suite = new TmsSuite(suiteName, createSuiteResponse.get("id").toString(), addCasesResponseList,
-                                 createSuiteResponse.get("url").toString());
-        } catch (Exception exception) {
-            exception.printStackTrace();
+            tmsSuite.setTestCases(newTestCaseResponse);
+            return tmsSuite;
+        } catch (Exception e) {
+            throw new TmsException("Unable to upload complete suite due to " + e.getMessage());
         }
-        return suite;
     }
 }

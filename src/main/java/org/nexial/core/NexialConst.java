@@ -103,6 +103,7 @@ public final class NexialConst {
 
     public static final String OPT_SPRING_XML = "nexial.spring.config";
     public static final String DEF_SPRING_XML = "/nexial.xml";
+    public static final String SPRING_INTEGRATION_CONTEXT = "classpath:/nexial-integration.xml";
     public static final String ENV_NEXIAL_LIB = "NEXIAL_LIB";
     public static final String ENV_NEXIAL_HOME = "NEXIAL_HOME";
     public static final String TEMP = JAVA_IO_TMPDIR + separator;
@@ -1411,6 +1412,7 @@ public final class NexialConst {
         // env. properties (mainly to export to)
         public static final String OUTPUT_LOCATION = NAMESPACE + "output";
         public static final String JUNIT_XML_LOCATION = NAMESPACE + "junitxml";
+        public static final String TRX_LOCATION = NAMESPACE + "trx";
         public static final String EXEC_OUTPUT_PATH = NAMESPACE + "execution.output";
         public static final String SUCCESS_RATE = NAMESPACE + "success.rate";
         public static final String EXIT_STATUS = NAMESPACE + "exit.status";
@@ -1614,6 +1616,7 @@ public final class NexialConst {
         public static final String WS_JSON_CONTENT_TYPE = "application/json";
         public static final String WS_XML_CONTENT_TYPE = "application/xml";
         public static final String WS_OCTET_STREAM_CONTENT_TYPE = "application/octet-stream";
+        public static final String WS_MULTIPART_CONTENT_TYPE = "multipart/form-data";
         public static final String WS_JSON_CONTENT_TYPE2 = WS_JSON_CONTENT_TYPE + ";" + CONTENT_TYPE_CHARSET + "UTF-8";
         public static final String WS_FORM_CONTENT_TYPE = "application/x-www-form-urlencoded";
         public static final String WS_JSON_CONTENT_TYPE3 = WS_JSON_CONTENT_TYPE + "-patch+json";

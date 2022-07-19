@@ -1,0 +1,33 @@
+[
+  {
+    "path": "\/fields\/Microsoft.VSTS.TCM.Steps",
+    "op": "add",
+    "value": "<steps id='0'>[# th-if="${testCase.testSteps}" th:each="teststep : ${testCase.testSteps}"]
+    <step type='ValidateStep' ><parameterizedString isformatted='true'>
+    <![CDATA[<b style=\"font-size:15px;text-align: left!important;\">[(${teststep.name})]</b>
+        <table class='stepTable' style='border:1px solid;width:500px;background-color:#f0ecf5;'>
+        <tr style='border:1px solid;background-color:#c1bcbc !important;'>
+            <th style='border:1px solid;width:40px;padding:5px;'>Row</th>
+            <th style='border:1px solid;padding:5px;'>Description</th>
+        </tr>
+        [# th-if="${teststep.tmsCustomSteps}" th:each="rowData : ${teststep.tmsCustomSteps}"]
+        <tr class='stepData' style='border:1px solid;'>
+            <td style='padding:5px;text-align: center;'>[(${rowData.rowIndex} + 1)]</td>
+            <td nowrap style='border:1px solid;padding:5px;'>
+            [(${@org.apache.commons.lang3.StringUtils@replace(formatter.formatTeststepDescription(rowData.description), "\"", "\\\"")})]</td>
+        </tr>
+        [/]
+        </table><p style=\"color:#6b807f;\">[(${teststep.messageId})]</p>]]>
+    </parameterizedString><parameterizedString isformatted='true'></parameterizedString><description/></step>[/]</steps>"
+  },
+  {
+    "path": "\/fields\/System.Title",
+    "op": "add",
+    "value": "[(${testCase.testCaseName})]"
+  },
+  {
+    "path": "\/fields\/System.Description",
+    "op": "add",
+    "value": "testCase.description"
+  }
+]

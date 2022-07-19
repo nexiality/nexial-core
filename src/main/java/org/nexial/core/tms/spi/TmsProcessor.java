@@ -22,198 +22,279 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.lang3.ObjectUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.nexial.core.tms.model.Scenario;
-import org.nexial.core.tms.model.TestFile;
-import org.nexial.core.tms.model.TmsSuite;
-import org.nexial.core.tms.model.TmsTestCase;
-import org.nexial.core.tms.model.TmsTestFile;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
-import static org.nexial.core.tms.TmsConst.PLAN;
-import static org.nexial.core.tms.TmsConst.SCRIPT;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.jetbrains.annotations.NotNull;
+import org.nexial.commons.utils.FileUtil;
+import org.nexial.commons.utils.TextUtils;
+import org.nexial.core.model.ExecutionSummary;
+import org.nexial.core.tms.model.*;
+import org.nexial.core.utils.ConsoleUtils;
+
+import static org.nexial.core.excel.Excel.MIN_EXCEL_FILE_SIZE;
+import static org.nexial.core.tms.TmsConst.*;
 import static org.nexial.core.tms.spi.ReadPlan.scriptToStep;
 import static org.nexial.core.tms.spi.TmsMetaJson.*;
+import static org.nexial.core.utils.ExecUtils.RUNTIME_ARGS;
 
+/**
+ * Perform processing on script excel, plan excel and project.tms.json to retrieve testcases meta data
+ */
 public class TmsProcessor {
-    private String projectId;
+    public static String projectId;
+
     /**
      * Receive the arguments passed by the user and determines what operations to perform based on the input. If suite
      * for the file pointed to by the file path is existing, update the suite, otherwise create a new suite
      *
      * @param filepath the path of the nexial test file
-     * @param subplan the subplan name in case the input path points to plan
-     * @param scenarios list of scenarios that the user wants to update in the suite
+     * @param subplan  the subplan name in case the input path points to plan
      */
-    public void importToTms(String filepath, String subplan, List<String> scenarios) {
+    public void importToTms(String filepath, String subplan) throws TmsException {
         TmsTestFile tmsFile = getJsonEntryForFile(filepath, subplan);
+        if (!FileUtil.isFileReadWritable(filepath, MIN_EXCEL_FILE_SIZE)) {
+            throw new TmsException("File '" + filepath + "' is not readable or writable");
+        }
         projectId = tmsFile.getProjectId();
         TestFile file = tmsFile.getFile();
-        TestFile updatedTestFile;
-        if (StringUtils.isEmpty(subplan)) {
-            updatedTestFile = processScript(filepath, scenarios, file);
-        } else {
-            updatedTestFile = processPlan(filepath, file, subplan);
-        }
+        TMSOperation tms = TmsFactory.INSTANCE.getTmsInstance(projectId);
+        TestFile updatedTestFile = StringUtils.isEmpty(subplan) ? processScript(filepath, file, tms) :
+                                           processPlan(filepath, file, subplan, tms);
         updateMeta(filepath, updatedTestFile);
     }
 
     /**
-     * Process a nexial script file and create of update a suite depending upon whether a suite corresponding to the script
-     * is existing or not
+     * Import execution results to a respective test script/plan suite if present
      *
-     * @param filepath the path of the script file
-     * @param scenarios {@link List} of scenario names that the user wants to update specifically
-     * @param file the {@link TestFile} instance representing the entry for the script file in the project.tms.json
-     * @return the updated TestFile instance for the script file
+     * @param summary {@link ExecutionSummary} of the nexial script/plan execution
      */
-     private TestFile processScript(String filepath, List<String> scenarios, TestFile file) {
-        TmsSuite suite = null;
-        List<TmsTestCase> testCases = ReadScript.loadScript(filepath);
-        if (file == null) {
-            System.out.println("Initiating suite creation");
-            SuiteUpload upload = new SuiteUpload(projectId);
-            suite = upload.uploadScript(testCases, FilenameUtils.removeExtension(new File(filepath).getName()));
-            System.out.println("Suite creation complete. New suite id is " + suite.getId());
+    public void importResultsToTms(ExecutionSummary summary) throws TmsException {
 
-        } else {
-            String suiteId = file.getSuiteId();
-            SuiteUpdate update = new SuiteUpdate(filepath, file, projectId);
-            System.out.println("Initiating suite update for suiteId: " + suiteId);
-            if (update.shouldUpdateSuite()) {
-                suite = update.scriptSuiteUpdate(testCases, scenarios);
-            } else {
-                System.exit(0);
-            }
+        Map<String, String> referenceData = summary.getReferenceData();
+        if(referenceData == null || !referenceData.containsKey(RUNTIME_ARGS)) {
+            throw new TmsException("Unable to find runtime args. Exiting...");
         }
-        System.out.println("Updating test file: " + filepath);
-        UpdateTestFiles.updateScriptFile(filepath, suite, true);
-        return getScriptJson(filepath, suite, testCases, file);
+        List<String> runtimeArgs = TextUtils.toList(referenceData.get(RUNTIME_ARGS), " ", true);
+
+        if(runtimeArgs.contains(SCRIPT_ARG)) {
+            String filepath = runtimeArgs.get(runtimeArgs.indexOf(SCRIPT_ARG) + 1);
+            uploadResults(filepath, "", summary);
+        } else if(runtimeArgs.contains(PLAN_ARG)){
+            String filepath = runtimeArgs.get(runtimeArgs.indexOf(PLAN_ARG) + 1);
+            for (String path : TextUtils.toList(filepath, ",", true)) {
+                List<String> subplans = summary.getNestedExecutions().stream()
+                        .filter(exec -> exec.getPlanFile() != null &&
+                                                exec.getPlanFile().equals(path))
+                        .map(ExecutionSummary::getPlanName).distinct()
+                        .collect(Collectors.toList());
+                if (CollectionUtils.isEmpty(subplans)) {
+                    throw new TmsException("No subplan results found. Exiting...");
+                }
+                for (String subplan : subplans) { uploadResults(path, subplan, summary); }
+            }
+        } else {
+            throw new TmsException("Unable to find runtime args to upload result. Exiting....");
+        }
     }
 
 
     /**
-     * Retrieve a new json entry from the project.tms.json file for the script
+     * Return the {@link Scenario} instances for each test case from the project.tms.json for the testFile specified
      *
-     * @param filepath path of the script file
-     * @param suite existing suite details
-     * @param tmsTestCases the {@link TmsTestCase} instances for the scenarios in the script file
-     * @param file the existing json entry in the project.tms.json corresponding to the Script file
-     * @return updated json entry for the script
+     * @param testFile the json entry for the input nexial testFile path
+     * @return List of scenarios from the project.tms.json testFile
      */
-    private TestFile getScriptJson(String filepath, TmsSuite suite,
-                                          List<TmsTestCase> tmsTestCases, TestFile file) {
+    static List<Scenario> getTestCaseFromJsonPlan(TestFile testFile) {
         List<Scenario> scenarios = new ArrayList<>();
-        for (TmsTestCase tmsTestCase : tmsTestCases) {
-            String scenarioName = tmsTestCase.getName();
-            String testCase = suite.getTestCases().get(scenarioName);
-            scenarios.add(new Scenario(scenarioName, scenarioName, testCase));
-        }
-        if (file == null) {
-            return new TestFile(getRelativePath(filepath), SCRIPT, suite.getId(), null, null, scenarios,
-                                suite.getSuiteUrl(), null);
-        }
-        file.setScenarios(scenarios);
-        return file;
+        if (testFile == null || testFile.getPlanSteps() == null) { return scenarios; }
+        testFile.getPlanSteps().forEach(file -> scenarios.addAll(Objects.requireNonNull(file.getScenarios())));
+        return scenarios;
     }
 
     /**
-     * Process a nexial script file and create of update a suite depending upon whether a suite corresponding to the script
-     * is existing or not
-     *
-     * @param testPath the path of the plan file
-     * @param file the existing json entry in the project.tms.json corresponding to the plan file
-     * @param subplan the subplan name
-     * @return the updated TestFile instance for the script file
+     * Process a nexial script testFile and create or update a suite depending upon whether a suite corresponding
+     * to the script is existing or not
+     * @param testPath the path of the script testFile
+     * @param testFile     the {@link TestFile} instance representing the entry for the script testFile in the project.tms.json
+     * @param tms instance of {@link TMSOperation} user want to perform
+     * @return the updated TestFile instance for the script testFile
      */
-    private TestFile processPlan(String testPath, TestFile file, String subplan) {
-        LinkedHashMap<String, List<TmsTestCase>> testCasesToPlanStep = ReadPlan.loadPlan(testPath, subplan);
-        Map<String, Map<String, String>> testCaseMap = null;
-        TmsSuite suite = null;
-        if (ObjectUtils.isEmpty(file)) {
-            System.out.println("Initiating suite upload");
-            SuiteUpload upload = new SuiteUpload(testPath, subplan, projectId);
-            suite = upload.uploadPlan(testCasesToPlanStep);
-            System.out.println("Suite uploading complete");
-            testCaseMap = upload.getTestCaseToStep();
+    private TestFile processScript(String testPath, TestFile testFile, TMSOperation tms) throws TmsException {
+        TmsSuite suite;
+        boolean isUpdated;
+        List<TmsTestCase> testCases = ReadScript.loadScript(testPath);
+        String suiteName = FilenameUtils.removeExtension(new File(testPath).getName());
+        if (testFile == null) {
+            SuiteUpload upload = new SuiteUpload(suiteName, testPath, tms);
+            ConsoleUtils.log("Initiated suite upload.");
+            suite = upload.uploadScript(testCases);
+            isUpdated = suite != null;
+            if(!isUpdated) {
+                throw new TmsException("Unable to upload the suite. Exiting...");
+            }
+            ConsoleUtils.log("Completed suite upload with id: " + suite.getId());
         } else {
-            SuiteUpdate update = new SuiteUpdate(testPath, file, projectId);
-            if (update.shouldUpdateSuite()) {
-                suite = update.planSuiteUpdate(testCasesToPlanStep);
-                testCaseMap = update.getTestCaseToStep();
-            }
-            else {
-                System.exit(-1);
-            }
+            String suiteId = testFile.getSuiteId();
+            SuiteUpdate update = new SuiteUpdate(suiteName, testFile, testPath, tms);
+            ConsoleUtils.log("Initiated suite update for suite: " + suiteId);
+            if (!update.shouldUpdateSuite()) { System.exit(0); }
+            suite = update.scriptSuiteUpdate(testCases);
+            isUpdated = update.isUpdated() && suite != null;
+            ConsoleUtils.log("Completed suite update for suite: " + suiteId);
         }
-        // update the plan file with test case ids
-        System.out.println("Updating test file: " + testPath);
-        UpdateTestFiles.updatePlanFile(testPath, suite, subplan);
-        System.out.println("Test File update complete");
-        return getPlanJson(testPath, suite, testCaseMap, file, subplan);
+        if(isUpdated) UpdateTestFiles.updateScriptFile(testPath, suite, true);
+        return getScriptJson(testPath, suite, testCases, testFile);
     }
 
     /**
-     * Get the scenario names based on the {@link TmsTestCase} instances retrieved from the plan file
+     * Retrieve a new json entry from the project.tms.json testFile for the script
      *
-     * @param testCases the {@link TmsTestCase} instances retrieved from the plan file
-     * @return the scenario names
-     */
-    static List<String> getScenarioNames(List<TmsTestCase> testCases) {
-        List<String> scenarioNames = new ArrayList<>();
-        for (TmsTestCase testCase : testCases) {
-            scenarioNames.add(testCase.getName());
-        }
-        return scenarioNames;
-    }
-
-    /**
-     * Retrieve a new json entry from the project.tms.json file for the plan file
-     *
-     * @param filepath path of the script file
-     * @param suite existing suite details
-     * @param testCaseToStep the {@link TmsTestCase} instances for the scenarios in the subplan file to each plan step
-     * @param file the existing json entry in the project.tms.json corresponding to the plan file and subplan
-     * @param subplan the subplan name
+     * @param filepath     path of the script testFile
+     * @param suite        existing suite details
+     * @param tmsTestCases the {@link TmsTestCase} instances for the scenarios in the script testFile
+     * @param testFile         the existing json entry in the project.tms.json corresponding to the Script testFile
      * @return updated json entry for the script
      */
-    private static TestFile getPlanJson(String filepath, TmsSuite suite,
-                                        Map<String, Map<String, String>> testCaseToStep,
-                                        TestFile file, String subplan) {
+    private TestFile getScriptJson(String filepath, TmsSuite suite, List<TmsTestCase> tmsTestCases, TestFile testFile) {
+        List<Scenario> scenarios = new ArrayList<>();
+        Map<String, String> cache = new LinkedHashMap<>();
+        for (TmsTestCase tmsTestCase : tmsTestCases) {
+            String testCaseName = tmsTestCase.getName();
+            String testCaseId = Objects.requireNonNull(suite.getTestCases()).get(testCaseName);
+            if (testCaseId == null) { continue; }
+            scenarios.add(new Scenario(testCaseName, testCaseName, testCaseId));
+            cache.put(testCaseName, tmsTestCase.getCache());
+        }
+        if (testFile == null) {
+            testFile = new TestFile(getRelativePath(filepath), SCRIPT, suite.getId(),
+                                null, null, scenarios, suite.getSuiteUrl(), cache);
+        } else {
+            testFile.setScenarios(scenarios);
+            testFile.setCache(cache);
+        }
+        return testFile;
+
+    }
+
+    /**
+     * Process a nexial script testFile and create of update a suite depending upon whether a suite corresponding
+     * to the script is existing or not
+     * @param testPath the path of the plan testFile
+     * @param testFile     the existing json entry in the project.tms.json corresponding to the plan testFile
+     * @param subplan  the subplan name
+     * @param tms instance of {@link TMSOperation} user want to perform
+     * @return the updated TestFile instance for the script testFile
+     */
+    private TestFile processPlan(String testPath, TestFile testFile, String subplan, TMSOperation tms)
+            throws TmsException {
+        Map<Integer, Map<String, String>> testCaseMap;
+        TmsSuite suite;
+        boolean isUpdated;
+
+        LinkedHashMap<Integer, List<TmsTestCase>> testCasesToPlanStep = ReadPlan.loadPlan(testPath, subplan);
+        String suiteName = FilenameUtils.removeExtension(new File(testPath).getName()) + "/" + subplan;
+
+        if (testFile == null) {
+           ConsoleUtils.log("Initiated suite upload");
+            SuiteUpload upload = new SuiteUpload(suiteName, testPath, tms);
+            suite = upload.uploadPlan(testCasesToPlanStep);
+            testCaseMap = upload.getTestCaseToStep();
+            isUpdated = true;
+            ConsoleUtils.log("Suite upload completed for suite: " + suite.getId());
+        } else {
+           ConsoleUtils.log("Initiating suite update for suite: " + testFile.getSuiteId());
+            SuiteUpdate update = new SuiteUpdate(suiteName, testFile, testPath, tms);
+            if (!update.shouldUpdateSuite()) {
+                throw new TmsException("Unable to upload the suite. Exiting...");
+            }
+            suite = update.planSuiteUpdate(testCasesToPlanStep);
+            testCaseMap = update.getTestCaseToStep();
+            isUpdated = update.isUpdated();
+            ConsoleUtils.log("Suite update completed for suite: " + suite.getId());
+        }
+        // update the plan testFile with test case ids
+        if(isUpdated) UpdateTestFiles.updatePlanFile(testPath, suite, subplan);
+        ConsoleUtils.log("Test file update completed.");
+        return getPlanJson(testPath, suite, getScriptFiles(testCaseMap), testFile,
+                           subplan, retrieveCache(testCasesToPlanStep));
+    }
+
+    /**
+     * Retrieve a new json entry from the project.tms.json testFile for the plan testFile
+     *
+     * @param filepath    path of the script testFile
+     * @param suite       existing suite details
+     * @param scriptFiles the List of {@link TestFile} instances for the scenarios in the subplan testFile to each plan step
+     * @param testFile    the existing json entry in the project.tms.json corresponding to the plan testFile and subplan
+     * @param subplan     the subplan name
+     * @param cache       {@link Map} of scenario to the cache
+     * @return updated json entry for the script
+     */
+    private static TestFile getPlanJson(String filepath, TmsSuite suite, List<TestFile> scriptFiles,
+                                        TestFile testFile, String subplan, Map<String, String> cache) {
+
+        if (testFile == null) {
+            testFile = new TestFile(getRelativePath(filepath), PLAN, suite.getId(),
+                    subplan, scriptFiles, null, suite.getSuiteUrl(), cache);
+        } else {
+            testFile.setPlanSteps(scriptFiles);
+            testFile.setCache(cache);
+        }
+        return testFile;
+    }
+
+    /**
+     * Retrieve list of script files as a {@link TestFile} from subplan of plan file
+     *
+     * @param testCaseToStep map of plan step to testcases with testcase name and testcase id
+     * @return {@link List} of {@link TestFile} with script data
+     */
+    @NotNull
+    private static List<TestFile> getScriptFiles(Map<Integer, Map<String, String>> testCaseToStep) {
         List<TestFile> scriptFiles = new ArrayList<>();
-        for (String step : testCaseToStep.keySet()) {
+        testCaseToStep.forEach((step, testCases) -> {
             TestFile script = new TestFile();
             script.setPath(getRelativePath(scriptToStep.get(step)));
             script.setFileType(SCRIPT);
-            script.setStepId(step);
-            Map<String, String> map = testCaseToStep.get(step);
+            script.setStepId(String.valueOf(step));
             List<Scenario> scenarios = new ArrayList<>();
-            for (String testCase : map.keySet()) {
-                scenarios.add(new Scenario(testCase, StringUtils.substringBetween(testCase, "/"), map.get(testCase)));
-            }
+
+            testCases.forEach((testCase, testCaseId) -> scenarios.add(
+                new Scenario(testCase, StringUtils.substringBetween(testCase, "/"), testCaseId)));
             script.setScenarios(scenarios);
             scriptFiles.add(script);
-        }
-        if (ObjectUtils.isNotEmpty(file)) {
-            file.setPlanSteps(scriptFiles);
-            return file;
-        }
-        return new TestFile(getRelativePath(filepath), PLAN, suite.getId(), subplan, scriptFiles, null,
-                            suite.getSuiteUrl(), null);
+        });
+        return scriptFiles;
     }
 
     /**
-     * Return the {@link Scenario} instances for each test case from the project.tms.json for the file specified
-     * @param file the json entry for the input nexial file path
-     * @return List of scenarios from the project.tms.json file
+     * Upload execution result to already imported testcases to provided tms tool
+     *
+     * @param testPath path of script file/plan file for which result to be uploaded
+     * @param subplan of the plan file only, empty in case of script file
+     * @param summary {@link ExecutionSummary} from the execution output file
      */
-    static List<Scenario> getTestCaseFromJsonPlan(TestFile file) {
-        List<Scenario> scenarios = new ArrayList<>();
-        if (ObjectUtils.isEmpty(file)) { return scenarios; }
-        for (TestFile script : file.getPlanSteps()) {
-            scenarios.addAll(script.getScenarios());
+    private void uploadResults(String testPath, String subplan, ExecutionSummary summary) throws TmsException {
+        if (!FileUtil.isFileReadWritable(testPath, MIN_EXCEL_FILE_SIZE)) {
+            throw new TmsException("File " + testPath + " is not readable or writable");
         }
-        return scenarios;
+        TmsTestFile tmsFile = getJsonEntryForFile(testPath, subplan);
+        projectId = tmsFile.getProjectId();
+        TestFile file = tmsFile.getFile();
+        if (file == null) {
+            throw new TmsException("Script is not imported to tms. So can't import Test results");
+        }
+        String suiteName = FilenameUtils.removeExtension(new File(testPath).getName());
+        if (StringUtils.isNotEmpty(subplan)) { suiteName += "/" + subplan; }
+        String suiteId = file.getSuiteId();
+        TMSOperation tms = TmsFactory.INSTANCE.getTmsInstance(projectId);
+        SuiteUpdate update = new SuiteUpdate(suiteName, file, testPath, tms);
+        ConsoleUtils.log("Initiating Test Result upload for suiteId: " + suiteId);
+        update.addResults(summary, StringUtils.isEmpty(subplan));
+        ConsoleUtils.log("Test result upload completed for suiteId: " + suiteId);
     }
 }

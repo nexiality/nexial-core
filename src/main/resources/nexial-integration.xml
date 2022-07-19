@@ -84,6 +84,12 @@
                   p:templateMode="HTML" p:suffix=".html" p:prefix="org/nexial/core/reports/"/>
         </property>
     </bean>
+    <bean id="textTemplateEngine" class="org.thymeleaf.TemplateEngine" lazy-init="true">
+        <property name="templateResolver">
+            <bean class="org.thymeleaf.templateresolver.ClassLoaderTemplateResolver"
+                  p:templateMode="TEXT" p:suffix=".txt" p:prefix="org/nexial/core/reports/"/>
+        </property>
+    </bean>
 
     <!--<bean id="mailNotifier" class="org.nexial.core.reports.MailNotifier" lazy-init="true"-->
     <!--p:mailTemplateEngine-ref="mailTemplateEngine"-->
@@ -94,10 +100,40 @@
 
     <bean id="executionResultHelper" class="org.nexial.core.reports.ExecutionReporter" lazy-init="true"
           p:templateEngine-ref="htmlTemplateEngine"
+          p:templateEngine1-ref="textTemplateEngine"
+          p:vstestFile="vstest.trx"
           p:executionTemplate="execution_summary"
           p:htmlOutputFile="execution-output.html"
           p:detailJsonFile="execution-detail.json"
           p:junitFile="junit.xml"
           p:summaryJsonFile="execution-summary.json"/>
+
+    <bean id="tmsEngine" class="org.thymeleaf.TemplateEngine" lazy-init="true">
+        <property name="templateResolver">
+            <bean class="org.thymeleaf.templateresolver.ClassLoaderTemplateResolver"
+                  p:templateMode="TEXT" p:prefix="org/nexial/core/tms/spi/template/" p:suffix=".txt"/>
+        </property>
+    </bean>
+
+    <bean id="azureFormatter" class="org.nexial.core.tms.spi.azureDevOps.AzureDevOpsFormatter"
+          p:templateEngine-ref="tmsEngine"
+          p:executionTemplate="azureTemplate"/>
+
+    <bean id="testrailFormatter" class="org.nexial.core.tms.spi.testrail.TestRailFormatter"
+          p:templateEngine-ref="tmsEngine"
+          p:executionTemplate="testrailTemplate"/>
+
+    <bean id="jiraFormatter" class="org.nexial.core.tms.spi.jira.JiraFormatter"
+          p:templateEngine-ref="tmsEngine"
+          p:executionTemplate="jiraTemplate"/>
+
+    <bean id="tms-testrail" class="org.nexial.core.tms.spi.testrail.TestRailOperations"
+          p:formatter-ref="testrailFormatter"/>
+
+    <bean id="tms-jira" class="org.nexial.core.tms.spi.jira.JiraOperations"
+          p:formatter-ref="jiraFormatter"/>
+
+    <bean id="tms-azure" class="org.nexial.core.tms.spi.azureDevOps.AzureDevOpsOperations"
+          p:formatter-ref="azureFormatter"/>
 
 </beans>

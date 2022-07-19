@@ -30,8 +30,7 @@ import org.nexial.core.NexialConst.Mobile.*
 import org.nexial.core.NexialConst.RB
 import org.nexial.core.NexialConst.Web.BROWSER_WINDOW_SIZE
 import org.nexial.core.NexialConst.Web.OPT_SECURE_BROWSERSTACK
-import org.nexial.core.NexialConst.Ws.WS_CONTENT_TYPE
-import org.nexial.core.NexialConst.Ws.WS_JSON_CONTENT_TYPE
+import org.nexial.core.NexialConst.Ws.*
 import org.nexial.core.SystemVariables
 import org.nexial.core.SystemVariables.getDefaultBool
 import org.nexial.core.model.ExecutionContext
@@ -152,7 +151,7 @@ class BrowserStackHelper(context: ExecutionContext) : CloudWebTestingPlatform(co
     fun reportExecutionStatus(summary: ExecutionSummary) = reportExecutionStatus(context, summary)
 
     fun uploadApp(config: BrowserStackConfig, app: String, customId: String?): Map<String, String> {
-        val uploadResponse = newWebClient(config, "multipart/form-data").postMultipart(
+        val uploadResponse = newWebClient(config, WS_MULTIPART_CONTENT_TYPE).postMultipart(
             UPLOAD, "${if (StringUtils.isNotBlank(customId)) "custom_id=$customId\n" else ""}file=$app", "file")
 
         // 5. validate upload outcome

@@ -234,6 +234,8 @@ public final class ExecutionThread extends Thread {
                                                                                               iterationIndex,
                                                                                               iterSummary));
                     executionSummary.addNestSummary(iterSummary);
+                    executionSummary.getResultSummary().getAttachments().add(testScriptFile.getAbsolutePath());
+
                     completedTests.add(testScriptFile);
 
                     ExecutionReporter.openExecutionResult(context, testScriptFile);

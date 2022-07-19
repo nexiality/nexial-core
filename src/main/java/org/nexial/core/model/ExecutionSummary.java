@@ -35,6 +35,7 @@ import org.nexial.core.excel.Excel.Worksheet;
 import org.nexial.core.excel.ExcelAddress;
 import org.nexial.core.excel.ExcelArea;
 import org.nexial.core.excel.ExcelStyleHelper;
+import org.nexial.core.tms.model.ResultSummary;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.ExecUtils;
 import org.nexial.core.utils.OutputFileUtils;
@@ -143,6 +144,7 @@ public class ExecutionSummary {
     private String planName;
     private String planFile;
     private String planDescription;
+    private transient ResultSummary resultSummary = new ResultSummary();
 
     // supplemental
     private String outputPath;
@@ -363,6 +365,14 @@ public class ExecutionSummary {
     public void updateExecutionLogLocation(String url) { executionLog = url; }
 
     public Map<String, String> getLogs() { return logs; }
+
+    public ResultSummary getResultSummary() {
+        return resultSummary;
+    }
+
+    public void setResultSummary(ResultSummary resultSummary) {
+        this.resultSummary = resultSummary;
+    }
 
     public String resolveDataFile() {
         if (StringUtils.isNotBlank(dataFile)) { return dataFile; }

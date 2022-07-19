@@ -18,8 +18,9 @@
 package org.nexial.core.tms.spi;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.*;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.jetbrains.annotations.NotNull;
 import org.nexial.core.ExecutionInputPrep;
@@ -32,6 +33,7 @@ import org.nexial.core.tms.model.TmsTestCase;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.InputFileUtils;
 
+import java.util.stream.Collectors;
 import static org.nexial.core.NexialConst.Data.DEF_OPEN_EXCEL_AS_DUP;
 import static org.nexial.core.excel.ExcelConfig.ADDR_PLAN_EXECUTION_START;
 
@@ -39,37 +41,33 @@ import static org.nexial.core.excel.ExcelConfig.ADDR_PLAN_EXECUTION_START;
  * Parse the Nexial Plan file and return the test cases accordingly
  */
 public class ReadPlan extends Nexial {
-
-    protected static Map<String, String> scriptToStep;
+    protected static Map<Integer, String> scriptToStep;
 
     /**
      * Parse the specified nexial plan file for the specified sub plan and return the test cases associated with each plan
-     *  step
+     * step
      *
      * @param testPlanPath the path of the plan file
-     * @param subplan the subplan name
+     * @param subplan      the subplan name
      * @return an {@link Map} of the test cases associated with the plan steps in the plan
      */
-    public static LinkedHashMap<String, List<TmsTestCase>> loadPlan(String testPlanPath, String subplan) {
-        Nexial nexial = new Nexial();
-        File testPlanFile = new File(testPlanPath);
-        TestProject project = getTestProject(testPlanPath, testPlanFile);
-        Excel excel = null;
+    public static LinkedHashMap<Integer, List<TmsTestCase>> loadPlan(String testPlanPath, String subplan)
+            throws TmsException {
         try {
-            excel = new Excel(testPlanFile, DEF_OPEN_EXCEL_AS_DUP, false);
-        } catch (IOException e) {
-            System.err.println("Unable to read excel file: " + e.getMessage());
-            System.exit(-1);
-        }
-        List<Worksheet> plans = nexial.retrieveValidPlans(null, excel);
+            File testPlanFile = new File(testPlanPath);
+            Excel excel = new Excel(testPlanFile, DEF_OPEN_EXCEL_AS_DUP, false);
 
-        Worksheet subplanWorksheet = plans.stream().filter(plan -> plan.getName().equals(subplan)).findFirst().get();
-        if (plans.stream().noneMatch(plan -> plan.getName().equals(subplan))) {
-            throw new IllegalArgumentException("The sub plan name provided does not exist in plan " + testPlanPath);
+            List<Worksheet> subplanSheets = InputFileUtils.retrieveValidPlanSequence(excel).stream()
+                    .filter(splan -> StringUtils.equals(splan.getName(), subplan))
+                    .collect(Collectors.toList());
+            if (CollectionUtils.isEmpty(subplanSheets)) {
+                throw new TmsException("Unable to find provide subplan '" + subplan +
+                                               "' from file '" + testPlanPath + "'");
+            }
+            return getSubPlanMap(testPlanFile, subplanSheets.get(0));
+        } catch (Exception e) {
+            throw new TmsException("Unable to read excel file: " + e.getMessage());
         }
-
-        List<ExecutionDefinition> executions = getExecutions(testPlanPath, nexial, testPlanFile, project, subplanWorksheet);
-        return getSubPlanMap(executions);
     }
 
     /**
@@ -80,15 +78,14 @@ public class ReadPlan extends Nexial {
      * @return TestProject instance for the specified plan
      */
     @NotNull
-    private static TestProject getTestProject(String testPlanPath, File testPlanFile) {
+    private static TestProject getTestProject(String testPlanPath, File testPlanFile) throws TmsException {
         if (!InputFileUtils.isValidPlanFile(testPlanPath)) {
-            throw new RuntimeException(
-                    "specified test plan (" + testPlanPath + ") is not readable or does not contain valid format.");
+            throw new TmsException("specified test plan (" + testPlanPath + ") is not readable or does not contain valid format.");
         }
         TestProject project = TestProject.newInstance(testPlanFile);
         if (!project.isStandardStructure()) {
             ConsoleUtils.log("specified plan (" + testPlanFile + ") not following standard project " +
-                             "structure, related directories would not be resolved from commandline arguments.");
+                                     "structure, related directories would not be resolved from commandline arguments.");
         }
         return project;
     }
@@ -96,35 +93,34 @@ public class ReadPlan extends Nexial {
     /**
      * Return a {@link List} of {@link ExecutionDefinition}s. Each instance representing a single plan step
      *
-     * @param testPlanPath the path of the plan file
-     * @param nexial {@link Nexial} instance
-     * @param testPlanFile the test plan file
-     * @param project the TestProject for the plan file
-     * @param subplan the sub plan name
+     * @param testPlanFile the path of the plan file
+     * @param subplan      the sub plan name
      * @return List of {@link ExecutionDefinition}s
      */
-    private static List<ExecutionDefinition> getExecutions(String testPlanPath, Nexial nexial, File testPlanFile,
-                                                           TestProject project,
-                                                           Worksheet subplan) {
+    private static List<ExecutionDefinition> getExecutions(File testPlanFile, Worksheet subplan) throws TmsException {
+        Nexial nexial = new Nexial();
+
         int rowStartIndex = ADDR_PLAN_EXECUTION_START.getRowStartIndex();
         int lastExecutionRow = subplan.findLastDataRow(ADDR_PLAN_EXECUTION_START);
+        TestProject project = getTestProject(testPlanFile.getAbsolutePath(), testPlanFile);
+
         // map to store the script association with plan step (row number)
         scriptToStep = new HashMap<>();
         List<ExecutionDefinition> executions = new ArrayList<>();
+
         //parsing the subplan sheet
         for (int i = rowStartIndex; i < lastExecutionRow; i++) {
             XSSFRow row = subplan.getSheet().getRow(i);
-            String msgSuffix = " specified in ROW " + (row.getRowNum() + 1) +
-                               " of " + subplan.getName() + " in " + testPlanFile;
+            int rowNum = row.getRowNum() + 1;
+            String msgSuffix = " specified in ROW " + rowNum + " of " + subplan.getName() + " in " + testPlanFile;
 
             if (ExecutionInputPrep.isPlanStepDisabled(row)) { continue; }
 
-            File testScript = nexial.deriveScriptFromPlan(row, project, testPlanPath);
+            File testScript = nexial.deriveScriptFromPlan(row, project, testPlanFile.getAbsolutePath());
 
             if (!InputFileUtils.isValidScript(testScript.getAbsolutePath())) {
                 throw new RuntimeException("Invalid/unreadable test script" + msgSuffix);
             }
-            String rowNum = String.valueOf(row.getRowNum() + 1);
             // storing the script to step association
             scriptToStep.put(rowNum, testScript.getAbsolutePath());
             List<String> scenarios = nexial.deriveScenarioFromPlan(row, nexial.deriveScenarios(testScript));
@@ -133,8 +129,7 @@ public class ReadPlan extends Nexial {
             exec.setPlanFile(subplan.getFile().getAbsolutePath());
             exec.setTestScript(testScript.getAbsolutePath());
             exec.setScenarios(scenarios);
-            // using the description field to store the row number for each execution
-            exec.setDescription(rowNum);
+            exec.setPlanSequence(rowNum);
             executions.add(exec);
         }
         return executions;
@@ -144,15 +139,17 @@ public class ReadPlan extends Nexial {
      * Loop over the executions present for the plan and retrieve the test cases belonging to the scripts specified in the
      * plan steps
      *
-     * @param executions List of {@link ExecutionDefinition} representing the plan steps
+     * @param testPlanFile {@link File} representing the plan file
+     * @param worksheet    {@link Worksheet} representing the subplan worksheet
      * @return a {@link Map} of the test cases associated with each plan step
      */
-    private static LinkedHashMap<String, List<TmsTestCase>> getSubPlanMap(List<ExecutionDefinition> executions) {
-        LinkedHashMap<String, List<TmsTestCase>> testCasesToPlanStep = new LinkedHashMap<>();
+    private static LinkedHashMap<Integer, List<TmsTestCase>> getSubPlanMap(File testPlanFile, Worksheet worksheet)
+        throws TmsException {
+        List<ExecutionDefinition> executions = getExecutions(testPlanFile, worksheet);
+
+        LinkedHashMap<Integer, List<TmsTestCase>> testCasesToPlanStep = new LinkedHashMap<>();
         for (ExecutionDefinition exec : executions) {
-            List<TmsTestCase> testCases = ReadScript.loadScript(exec.getTestScript());
-            resolveTestCases(testCases, exec);
-            testCasesToPlanStep.put(exec.getDescription(), testCases);
+            testCasesToPlanStep.put(exec.getPlanSequence(), resolveTestCases(exec));
         }
         return testCasesToPlanStep;
     }
@@ -160,18 +157,20 @@ public class ReadPlan extends Nexial {
     /**
      * Filter out the scenarios not specified in the plan step for each execution
      *
-     * @param testCases {@link List} of test cases. In this case it represents the scenarios present in the script mentioned
-     *                              in the plan step
      * @param exec {@link ExecutionDefinition} instance representing single plan step
+     * @return a {@link List} of {@link TmsTestCase}
      */
-    private static void resolveTestCases(List<TmsTestCase> testCases, ExecutionDefinition exec) {
+    private static List<TmsTestCase> resolveTestCases(ExecutionDefinition exec) throws TmsException {
+        List<TmsTestCase> testCases = ReadScript.loadScript(exec.getTestScript());
         List<String> execScenarios = exec.getScenarios();
-        Iterator<TmsTestCase> iterator = testCases.iterator();
-        while (iterator.hasNext()) {
-            TmsTestCase testCase = iterator.next();
-            testCase.setRow(exec.getDescription());
-            // removing scenarios not specified in execution
-            if (!execScenarios.contains(testCase.getName())) { iterator.remove(); }
-        }
+        List<TmsTestCase> testCases1 = new ArrayList<>();
+
+        testCases.stream()
+                .filter(testCase -> execScenarios.contains(testCase.getName()))
+                .forEach(testCase -> {
+                    testCase.setPlanTestCaseName(exec.getPlanSequence());
+                    testCases1.add(testCase);
+                });
+        return testCases1;
     }
 }

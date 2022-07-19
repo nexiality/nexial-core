@@ -1,0 +1,6 @@
+{
+  "fields": {
+    "summary": "[(${testCase.testCaseName})]",
+    "description": "h3. [(${testCase.description})].\n\n----\n[# th-if="${testCase.testSteps}" th:each="teststep : ${testCase.testSteps}"]*[(${teststep.name})]*\n[# th-if="${teststep.tmsCustomSteps}" th:each="rowData : ${teststep.tmsCustomSteps}"]{color:#888291}[ROW [(${@org.apache.commons.lang3.StringUtils@leftPad((rowData.rowIndex + 1).toString(), 3, "0")})]]{color} [(${@org.apache.commons.lang3.StringUtils@replace(formatter.formatTeststepDescription(rowData.description), "\"", "\\\"")})]\n[/]{color:#9c9797}[(${teststep.messageId})]{color}\n\n[/]"
+  }
+}

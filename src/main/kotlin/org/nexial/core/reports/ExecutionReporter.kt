@@ -38,12 +38,16 @@ import java.io.IOException
 
 class ExecutionReporter {
     private var templateEngine: TemplateEngine? = null
+    private var templateEngine1: TemplateEngine? = null
     private var executionTemplate: String? = null
+    // for text version of execution summary
     private var reportPath: String? = null
     private var htmlOutputFile: String? = null
     private var detailJsonFile: String? = null
     private var summaryJsonFile: String? = null
     private var junitFile: String? = null
+    // vstestFile for Azure pipeline execution
+    private var vstestFile: String? = null
 
     fun setTemplateEngine(templateEngine: TemplateEngine) {
         this.templateEngine = templateEngine
@@ -53,9 +57,15 @@ class ExecutionReporter {
         this.executionTemplate = executionTemplate
     }
 
+    fun setTemplateEngine1(templateEngine1: TemplateEngine) {
+        this.templateEngine1 = templateEngine1
+    }
+
     fun setReportPath(reportPath: String) {
         this.reportPath = reportPath
     }
+
+    fun getReportPath() = reportPath
 
     fun setHtmlOutputFile(htmlOutputFile: String) {
         this.htmlOutputFile = htmlOutputFile
@@ -71,6 +81,10 @@ class ExecutionReporter {
 
     fun setJunitFile(junitFile: String) {
         this.junitFile = junitFile
+    }
+
+    fun setVstestFile(vstestFile: String) {
+        this.vstestFile = vstestFile
     }
 
     @Throws(IOException::class)
@@ -102,12 +116,25 @@ class ExecutionReporter {
         }
 
         val content = templateEngine!!.process(executionTemplate!!, engineContext)
+
+        generateSummaryText(engineContext)
+
         return if (StringUtils.isNotBlank(content)) {
             FileUtils.writeStringToFile(output, content, DEF_FILE_ENCODING)
             output
         } else {
             ConsoleUtils.error("No HTML content generated for this execution...")
             null
+        }
+    }
+
+    private fun generateSummaryText(engineContext: Context) {
+        // create text file for Azure DevOps
+        val textContent = templateEngine1!!.process(executionTemplate, engineContext)
+        if (StringUtils.isNotBlank(textContent)) {
+            FileUtils.writeStringToFile(File("$reportPath$executionTemplate.txt"), textContent, DEF_FILE_ENCODING)
+        }  else {
+            ConsoleUtils.error("No text content generated for this execution...")
         }
     }
 
@@ -138,7 +165,16 @@ class ExecutionReporter {
 
         // convert to JUnit XML
         JUnitReportHelper.toJUnitXml(summary, output)
+        return output
+    }
 
+    @Throws(IOException::class)
+    fun generateTrx(summary: ExecutionSummary?): File? {
+        if (summary == null) return null
+
+        val output = File(reportPath!! + vstestFile)
+        ConsoleUtils.log("generating JUnit XML output for this execution to " + output.absolutePath)
+        TRXReportHelper("$reportPath$executionTemplate.txt", reportPath + htmlOutputFile, summary, output).toTrxXml()
         return output
     }
 

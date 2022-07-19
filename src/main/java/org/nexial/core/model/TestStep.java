@@ -44,6 +44,7 @@ import org.nexial.core.plugins.base.ContextScreenRecorder;
 import org.nexial.core.plugins.javaui.JavaUICommand;
 import org.nexial.core.plugins.javaui.JavaUIProfile;
 import org.nexial.core.plugins.web.WebDriverExceptionHelper;
+import org.nexial.core.tms.model.ResultSummary;
 import org.nexial.core.utils.*;
 import org.nexial.core.variable.Syspath;
 import org.openqa.selenium.WebDriverException;
@@ -51,10 +52,7 @@ import org.openqa.selenium.WebDriverException;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
@@ -881,6 +879,29 @@ public class TestStep extends TestStepManifest {
             testCaseSummary.addStepDetails(testStep, nestedTestResults, result.isSuccess());
             testCaseSummary.addNestedMessages(testStep, nestedTestResults);
         }
+    }
+
+    private void updateResultSummary() {
+        ExecutionSummary scenarioSummary = testCase.getTestScenario().getExecutionSummary();
+        ResultSummary resultSummary = scenarioSummary.getResultSummary();
+        if(resultSummary == null) resultSummary = new ResultSummary();
+        List<String> screenshots = resultSummary.getAttachments();
+        // add screenshots to scenario summary
+        nestedTestResults.forEach(msg -> {
+            if (msg instanceof NestedScreenCapture) {
+                screenshots.add(((NestedScreenCapture) msg).getLink());
+            }
+        });
+        Map<String, List<String>> activities = resultSummary.getActivities();
+        List<String> stepData;
+        if (activities.containsKey(testCase.getName())) {
+            stepData = activities.get(testCase.getName());
+        } else{
+            stepData = new ArrayList<>();
+        }
+
+        stepData.add("[Row " + rowIndex + "] " + description);
+        activities.put(testCase.getName(), stepData);
     }
 
     @Nullable

@@ -17,11 +17,20 @@
 
 package org.nexial.core.tms.model
 
+/**
+ * Enum to store the various keywords used in BDD
+ */
+enum class BDDKeywords(val keyword: String) {
+    FEATURE("FEATURE"),
+    RULE("RULE"),
+    GIVEN("GIVEN"),
+    SCENARIO("SCENARIO"),
+    EXAMPLE("EXAMPLE"),
+    WHEN("WHEN"),
+    THEN("THEN"),
+    AND("AND"),
+    BUT("BUT"),
+    BACKGROUND("BACKGROUND"),
+    SCENARIO_OUTLINE("SCENARIO OUTLINE");
 
-data class TMSAccessData(val source: String, val user: String,
-                         val password: String, val url: String,
-                         val organisation: String? = null)
-
-data class TestcaseOrder(val id: Int, val testName: String, val sequenceNumber: Int, val suiteEntryType:String)
-
-
+}

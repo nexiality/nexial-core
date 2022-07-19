@@ -1,0 +1,11 @@
+{
+  "template_id": 2,
+  "title": "[(${testCase.testCaseName})]",
+  "custom_preconds": "[(${testCase.description})]",
+  "custom_steps_separated": [[# th-if="${testCase.testSteps}" th:each="teststep : ${testCase.testSteps}" th:with="lastIndex=${testCase.testSteps.size - 1}"]
+    {
+        "content": "[(${teststep.name})]",
+        "expected": "||| Row|Description\n[# th-if="${teststep.tmsCustomSteps}" th:each="rowData : ${teststep.tmsCustomSteps}"]||[(${rowData.rowIndex} + 1)]|[(${@org.apache.commons.lang3.StringUtils@replace(formatter.formatTeststepDescription(rowData.description), "\"", "\\\"")})]\n[/]\n[(${teststep.messageId})]"
+    }[# th:if="${teststepStat.index < lastIndex}"],[/][/]
+  ]
+}
