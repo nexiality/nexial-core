@@ -20,9 +20,8 @@ package org.nexial.core.tms.spi.testrail
 
 import org.apache.commons.lang3.EnumUtils
 import org.apache.commons.lang3.StringUtils
+import org.nexial.core.tms.BDDKeywords
 
-import org.nexial.core.tms.model.BDDKeywords
-import org.nexial.core.tms.model.BDDKeywords.AND
 import org.nexial.core.tms.spi.TmsFormatter
 import org.nexial.core.tms.tools.TmsImporter
 import org.thymeleaf.TemplateEngine
@@ -40,7 +39,7 @@ class TestRailFormatter(override var templateEngine: TemplateEngine? = null,
     override fun formatTeststepDescription(stepDescription: String): String {
         if (TmsImporter.formatBddKeywords && StringUtils.isNotBlank(stepDescription)) {
             val firstWord = stepDescription.trim().substringBefore(" ").uppercase()
-            if (EnumUtils.isValidEnum(BDDKeywords::class.java, firstWord) && firstWord == AND.keyword) {
+            if (EnumUtils.isValidEnum(BDDKeywords::class.java, firstWord) && firstWord == BDDKeywords.AND.keyword) {
                return " $stepDescription"
             }
         }

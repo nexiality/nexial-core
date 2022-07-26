@@ -960,14 +960,17 @@ public class Nexial {
             ConsoleUtils.error(runId, RB.Tools.text("execution.junit.fail", e.getMessage()));
         }
 
-        File trxReport;
-        try {
-            trxReport = reporter.generateTrx(summary);
-            ConsoleUtils.log(RB.Tools.text("execution.trx.report", trxReport));
-            if (trxReport != null) { System.setProperty(TRX_LOCATION, trxReport.getAbsolutePath()); }
-        } catch (IOException e) {
-            ConsoleUtils.error(runId, RB.Tools.text("execution.trx.fail", e.getMessage()));
+        // add variable to generate
+        if(isGenerateTrxReport()) {
+            try {
+                File trxReport = reporter.generateTrx(summary);
+                ConsoleUtils.log(RB.Tools.text("execution.trx.report", trxReport));
+                if (trxReport != null) { System.setProperty(TRX_LOCATION, trxReport.getAbsolutePath()); }
+            } catch (IOException e) {
+                ConsoleUtils.error(runId, RB.Tools.text("execution.trx.fail", e.getMessage()));
+            }
         }
+
 
         List<File> generatedJsons = null;
         if (isGenerateExecReport()) {

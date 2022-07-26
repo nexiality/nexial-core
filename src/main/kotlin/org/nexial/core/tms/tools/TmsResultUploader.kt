@@ -25,20 +25,19 @@ import org.apache.commons.lang3.ArrayUtils
 import org.apache.commons.lang3.StringUtils
 import org.nexial.commons.utils.FileUtil
 import org.nexial.commons.utils.RegexUtils
-import org.nexial.core.NexialConst.DEF_CHARSET
-import org.nexial.core.NexialConst.OPT_OUT_DIR
+import org.nexial.core.NexialConst.*
 import org.nexial.core.model.ExecutionSummary
 import org.nexial.core.tms.TmsConst.EXECUTION_SUMMARY
 import org.nexial.core.tms.TmsConst.LATEST_FROM
 import org.nexial.core.tms.TmsConst.OUTPUT
 import org.nexial.core.tms.TmsConst.REGEX_PATTERN
+import org.nexial.core.tms.spi.TmsException
 
 import org.nexial.core.tms.spi.TmsProcessor
 import org.nexial.core.utils.ConsoleUtils
 import java.io.File
 import java.io.File.separator
 import java.io.FileFilter
-import kotlin.system.exitProcess
 
 /**
  * Upload the Nexial Test result of the already imported test script/plan by providing output in the argument.
@@ -51,17 +50,22 @@ object TmsResultUploader {
     @Throws(ParseException::class)
     @JvmStatic
     fun main(args: Array<String>) {
-        val cmd = DefaultParser().parse(initCmdOptions(), args)
-        if (cmd.hasOption(OUTPUT)) {
-            val output = cmd.getOptionValue(OUTPUT)
-            importResultsToTms(output)
-        } else if (cmd.hasOption(LATEST_FROM)) {
-            val project = cmd.getOptionValue(LATEST_FROM)
-            uploadLatestResult(project)
-        } else {
-            ConsoleUtils.error("Options are unsupported for uploading execution result.")
-            exitProcess(-1)
+        try{
+            val cmd = DefaultParser().parse(initCmdOptions(), args)
+            val outputToUpload = if (cmd.hasOption(OUTPUT)) {
+                cmd.getOptionValue(OUTPUT)
+            } else if (cmd.hasOption(LATEST_FROM)) {
+                val project = cmd.getOptionValue(LATEST_FROM)
+                findLatestOutput(project)
+            } else {
+                throw TmsException("Options are not supported for uploading execution result.")
+            }
+            importResultsToTms(outputToUpload)
+        } catch (e: Exception) {
+            ConsoleUtils.error(e.message)
+            e.printStackTrace()
         }
+
     }
 
     /**
@@ -71,26 +75,19 @@ object TmsResultUploader {
      */
     private fun importResultsToTms(output: String) {
         if (!FileUtils.isDirectory(File(output))) {
-            ConsoleUtils.error("$output is not a output directory.")
-            exitProcess(-1)
+            throw TmsException("$output is not a output directory.")
         }
 
         System.setProperty(OPT_OUT_DIR, output)
         val executionSummary = "$output/$EXECUTION_SUMMARY"
         val executionSummaryFile = File(executionSummary)
         if (!FileUtil.isFileReadable(executionSummaryFile)) {
-            ConsoleUtils.error("File '$executionSummary' doesn't exist or is not readable.")
-            exitProcess(-1)
+            throw TmsException("File '$executionSummary' doesn't exist or is not readable.")
         }
 
-        val summary = Gson().fromJson(
-            FileUtils.readFileToString(executionSummaryFile, DEF_CHARSET), ExecutionSummary::class.java)
-        try {
-            TmsProcessor().importResultsToTms(summary)
-        } catch(e: Exception) {
-            ConsoleUtils.error(e.message)
-            e.printStackTrace()
-        }
+        val summary = GSON.fromJson(FileUtils.readFileToString(executionSummaryFile, DEF_CHARSET),
+                ExecutionSummary::class.java)
+        TmsProcessor.importResultsToTms(summary)
     }
 
     /**
@@ -98,28 +95,25 @@ object TmsResultUploader {
      *
      * @param project fully qualified project path to upload the latest results from
      */
-    private fun uploadLatestResult(project: String) {
+    private fun findLatestOutput(project: String) : String {
         if (System.getenv("NEXIAL_OUTPUT") != null) {
-            ConsoleUtils.error("Upload is NOT supported if 'NEXIAL_OUTPUT' is set up.")
-            exitProcess(-1)
+            throw TmsException("Upload is NOT supported if 'NEXIAL_OUTPUT' is set up.")
         }
 
         val nexialOutput = StringUtils.appendIfMissing(project, separator) + OUTPUT
         if (!FileUtils.isDirectory(File(nexialOutput))) {
-            ConsoleUtils.error("Nexial output '$nexialOutput' is not a directory.")
-            exitProcess(-1)
+            throw TmsException("Nexial output '$nexialOutput' is not a directory.")
         }
 
         val directories = File(nexialOutput).listFiles(
             FileFilter { it.isDirectory && RegexUtils.match(it.name, REGEX_PATTERN) })
 
         if (ArrayUtils.isEmpty(directories)) {
-            ConsoleUtils.error("There is no output folder available to upload.")
-            exitProcess(-1)
+            throw TmsException("There is no output folder available to upload.")
         }
 
-        val outputFolder = directories.sortedDescending()[0]
-        importResultsToTms(outputFolder.absolutePath)
+        // get latest directory
+        return directories!!.sortedDescending()[0].absolutePath
     }
 
     /**

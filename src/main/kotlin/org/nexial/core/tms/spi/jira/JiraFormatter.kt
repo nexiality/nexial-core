@@ -20,12 +20,11 @@ package org.nexial.core.tms.spi.jira
 import org.apache.commons.lang3.EnumUtils
 import org.apache.commons.lang3.StringUtils
 import org.nexial.commons.utils.RegexUtils
+import org.nexial.core.tms.BDDKeywords
 import org.nexial.core.tms.TmsConst.COLOR_END_TEXT
 import org.nexial.core.tms.TmsConst.COMMENT_REGEX
 import org.nexial.core.tms.TmsConst.DATA_VAR_REGEX
 import org.nexial.core.tms.TmsConst.JIRA_COMMENT_COLOR
-import org.nexial.core.tms.model.BDDKeywords
-import org.nexial.core.tms.model.BDDKeywords.AND
 import org.nexial.core.tms.spi.TmsFormatter
 import org.nexial.core.tms.tools.TmsImporter
 import org.thymeleaf.TemplateEngine
@@ -43,7 +42,7 @@ class JiraFormatter(override var templateEngine: TemplateEngine? = null,
             } else if (EnumUtils.isValidEnum(BDDKeywords::class.java, firstWord.uppercase())) {
                 // bold BDD keywords
                 step1 = step1.replaceFirst(firstWord, "*$firstWord*")
-                if (AND.keyword == firstWord.uppercase()) step1 = "  $step1"
+                if (BDDKeywords.AND.keyword == firstWord.uppercase()) step1 = "  $step1"
             } else {
                 step1 = "  $step1"
             }

@@ -20,9 +20,10 @@ package org.nexial.core.tms.model
 import org.apache.commons.lang3.StringUtils
 import org.apache.commons.lang3.SystemUtils.USER_NAME
 import org.nexial.core.NexialConst.Project.DEF_REL_LOC_ARTIFACT
+import org.nexial.core.tms.TmsConst.INPROGRESS
+import org.nexial.core.tms.TmsConst.TEST_RUN_TYPE
 import org.nexial.core.tms.spi.TmsSource
 import org.nexial.core.tms.spi.TmsSource.*
-import org.nexial.core.tms.spi.jira.Id
 import org.nexial.core.utils.ExecUtils.NEXIAL_MANIFEST
 import java.io.File
 import java.util.*
@@ -30,9 +31,8 @@ import java.util.*
 /**
  * Represents a TMS Test Suite
  */
-class TmsSuite(val id: String, val name: String, var suiteUrl: String?, var testCases: Map<String, String>?) {
-    constructor(name: String, id: String, testCases: Map<String, String>?) : this(id, name, null, testCases)
-}
+class TmsSuite(val id: String, var name: String, val suiteUrl: String? = null,
+               var testCases: Map<String, String>? = null)
 
 /**
  * Represents a TMS Test Suite Description
@@ -71,36 +71,21 @@ class TmsSuiteDesc(val filePath: String) {
 }
 
 // might need to add or remove add some fields for azure
-data class TestRun(var id: Int = 0, var name: String? = null,
-                   var isAutomated: Boolean = true,
-                   var plan: Plan? = null,
-                   var startDate: String? = System.currentTimeMillis().toString(),
-                   var completeDate: String = System.currentTimeMillis().toString(),
-                   var state: String = "InProgress",
-                   var type: String = "NoConfigRun",
-                   val build: Build? = Build("1", NEXIAL_MANIFEST),
-                   val comment: String = "",
-                   var runSummary: List<RunSummary>? = mutableListOf()) {
-    constructor(id: Int, name: String) : this(id, name, true)
-}
-
-data class RunSummary(val duration: Long, val resultCount: Int, val testOutcome: String)
+data class TestRun(val id: Int = 0, val name: String? = null,
+                   val automated: Boolean = true,
+                   val plan: Plan? = null,
+                   val startDate: String? = System.currentTimeMillis().toString(),
+                   val completeDate: String = System.currentTimeMillis().toString(),
+                   val state: String = INPROGRESS,
+                   val type: String = TEST_RUN_TYPE)
 
 data class ResultSummary(var attachments: MutableList<String> = mutableListOf(),
-                         var activities: Map<String, List<String>> = HashMap(), var storage: String? = null)
+                         var activities: Map<String, List<String>> = mutableMapOf(), var storage: String? = null)
 
-data class AzureTestResult(var id: Int, val testCaseTitle: String, val state: String, val automatedTestName: String,
-                           val automatedTestStorage: String, val automatedTestType: String, var startedDate: String,
-                           var completedDate: String,var testPoint: Id? = null, val outcome: String,
-                           val failureType: String)
 
-//data class TestRun(val id: Int, val name: String)
-data class TestRailTestRun(val suite_id: String?, val name: String,
-                           val include_all: Boolean, val case_ids: MutableSet<Int>?)
-
-data class TestResultAttachment(var attachmentType: String, val comment: String,
-                                val fileName: String, val encodedData: String)
-
-data class Build(val id: String, val name: String)
 data class Plan(val id: String?)
-data class Pipeline(val pipelineId: Int)
+
+data class TestResult(val name: String, val suiteId: String, val sectionId: String,
+                      val durationInMs: Long,
+                      val outcome: Boolean, val passCount: Int = 0,
+                      val failCount: Int = 0, val skipCount: Int = 0)

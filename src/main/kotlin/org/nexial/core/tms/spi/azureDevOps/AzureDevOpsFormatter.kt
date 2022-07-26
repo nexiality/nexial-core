@@ -22,11 +22,11 @@ package org.nexial.core.tms.spi.azureDevOps
 import org.apache.commons.lang3.EnumUtils
 import org.apache.commons.lang3.StringUtils
 import org.nexial.commons.utils.RegexUtils
+import org.nexial.core.tms.BDDKeywords
 import org.nexial.core.tms.TmsConst.COMMENT_COLOR
 import org.nexial.core.tms.TmsConst.COMMENT_REGEX
 import org.nexial.core.tms.TmsConst.DATA_VAR_BACKGROUND_COLOR
 import org.nexial.core.tms.TmsConst.DATA_VAR_REGEX
-import org.nexial.core.tms.model.BDDKeywords
 import org.nexial.core.tms.spi.TmsFormatter
 import org.nexial.core.tms.tools.TmsImporter
 import org.thymeleaf.TemplateEngine
@@ -46,14 +46,11 @@ class AzureDevOpsFormatter(override var templateEngine: TemplateEngine? = null,
             val firstWord = step1.trimStart().substringBefore(" ")
 
             if (RegexUtils.match(step1, COMMENT_REGEX, true)) {
-                step1 =
-                    "$paddingStyleDiv<code style='color:$COMMENT_COLOR;'><i>$step1</i></code>$endDiv"
+                step1 = "$paddingStyleDiv<code style='color:$COMMENT_COLOR;'><i>$step1</i></code>$endDiv"
             } else if (EnumUtils.isValidEnum(BDDKeywords::class.java, firstWord.uppercase())) {
                 // bold BDD keywords
                 step1 = step1.replaceFirst(firstWord, "<b>$firstWord</b>")
-                if (firstWord.uppercase() == BDDKeywords.AND.keyword) {
-                    step1 = "$paddingStyleDiv$step1$endDiv"
-                }
+                if (firstWord.uppercase() == BDDKeywords.AND.keyword) { step1 = "$paddingStyleDiv$step1$endDiv" }
             } else {
                 step1 = "$paddingStyleDiv$step1$endDiv"
             }

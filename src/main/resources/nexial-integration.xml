@@ -115,25 +115,27 @@
         </property>
     </bean>
 
-    <bean id="azureFormatter" class="org.nexial.core.tms.spi.azureDevOps.AzureDevOpsFormatter"
-          p:templateEngine-ref="tmsEngine"
-          p:executionTemplate="azureTemplate"/>
+    <bean id="tms-testrail" class="org.nexial.core.tms.spi.testrail.TestRailOperations">
+        <constructor-arg name="formatter">
+            <bean id="testrailFormatter" class="org.nexial.core.tms.spi.testrail.TestRailFormatter"
+                  p:templateEngine-ref="tmsEngine"
+                  p:executionTemplate="testrailTemplate"/>
+        </constructor-arg>
+    </bean>
 
-    <bean id="testrailFormatter" class="org.nexial.core.tms.spi.testrail.TestRailFormatter"
-          p:templateEngine-ref="tmsEngine"
-          p:executionTemplate="testrailTemplate"/>
+    <bean id="tms-jira" class="org.nexial.core.tms.spi.jira.JiraOperations">
+        <constructor-arg name="formatter">
+            <bean id="jiraFormatter" class="org.nexial.core.tms.spi.jira.JiraFormatter"
+                  p:templateEngine-ref="tmsEngine"
+                  p:executionTemplate="jiraTemplate"/>
+        </constructor-arg>
+    </bean>
 
-    <bean id="jiraFormatter" class="org.nexial.core.tms.spi.jira.JiraFormatter"
-          p:templateEngine-ref="tmsEngine"
-          p:executionTemplate="jiraTemplate"/>
-
-    <bean id="tms-testrail" class="org.nexial.core.tms.spi.testrail.TestRailOperations"
-          p:formatter-ref="testrailFormatter"/>
-
-    <bean id="tms-jira" class="org.nexial.core.tms.spi.jira.JiraOperations"
-          p:formatter-ref="jiraFormatter"/>
-
-    <bean id="tms-azure" class="org.nexial.core.tms.spi.azureDevOps.AzureDevOpsOperations"
-          p:formatter-ref="azureFormatter"/>
-
+    <bean id="tms-azure" class="org.nexial.core.tms.spi.azureDevOps.AzureDevOpsOperations">
+        <constructor-arg name="formatter">
+            <bean id="azureFormatter" class="org.nexial.core.tms.spi.azureDevOps.AzureDevOpsFormatter"
+                  p:templateEngine-ref="tmsEngine"
+                  p:executionTemplate="azureTemplate"/>
+        </constructor-arg>
+    </bean>
 </beans>

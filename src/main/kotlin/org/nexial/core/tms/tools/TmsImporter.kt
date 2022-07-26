@@ -33,7 +33,6 @@ import org.nexial.core.tms.spi.TmsException
 import org.nexial.core.tms.spi.TmsProcessor
 import org.nexial.core.utils.ConsoleUtils
 import org.nexial.core.utils.InputFileUtils
-import kotlin.system.exitProcess
 
 /**
  * Imports the Nexial Test script or plan file as a suite to provided TMS tool e.g. Testrail, AzureDevOps.
@@ -50,21 +49,22 @@ object TmsImporter {
     @Throws(ParseException::class)
     @JvmStatic
     fun main(args: Array<String>) {
-        val cmd = DefaultParser().parse(initCmdOptions(), args)
-        val cmdArgs = getArgs(cmd)
-        val filepath = cmdArgs.first
-        val subplan = cmdArgs.second
-
         val watch = StopWatch()
-        watch.start()
+
         try {
-            TmsProcessor().importToTms(filepath, subplan)
+            val cmd = DefaultParser().parse(initCmdOptions(), args)
+            val cmdArgs = getArgs(cmd)
+            val filepath = cmdArgs.first
+            val subplan = cmdArgs.second
+
+            watch.start()
+            TmsProcessor.importToTms(filepath, subplan)
             watch.stop()
             ConsoleUtils.log("Total time taken to update/upload suite:: ${watch.time/1000} secs")
         } catch(e: Exception) {
             ConsoleUtils.error(e.message)
             e.printStackTrace()
-            watch.stop()
+            if(watch.isStarted) watch.stop()
         }
 
     }
@@ -99,10 +99,10 @@ object TmsImporter {
             }
         } else {
             throw TmsException("The option '-plan' or '-script' is required for the Nexial script/plan import. " +
-                    "In case of Plan file import, subplan option is required too.")
+                    "'subplan' option is Required for Plan file import, .")
         }
-        if (cmd.hasOption(BDD_KEYWORDS)) formatBddKeywords = true
-        if (cmd.hasOption(CLOSE_RUN)) closePreviousRun = true
+        formatBddKeywords = cmd.hasOption(BDD_KEYWORDS)
+        closePreviousRun = cmd.hasOption(CLOSE_RUN)
         return Pair(filepath, subplan)
     }
 

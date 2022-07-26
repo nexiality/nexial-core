@@ -18,11 +18,13 @@
 package org.nexial.core.tms.spi
 
 import org.apache.commons.lang3.StringUtils
-import org.nexial.core.NexialConst.Doc.DOCUMENTATION_URL
 import org.nexial.core.NexialConst.Project.DEF_REL_PROJ_META_JSON
 import org.nexial.core.NexialConst.SPRING_INTEGRATION_CONTEXT
 import org.nexial.core.NexialConst.TMSSettings.*
 import org.nexial.core.tms.TmsConst.CLASSPATH_NEXIAL_INIT_XML
+import org.nexial.core.tms.TmsConst.CONFIG_DOCUMENTATION_MSG
+import org.nexial.core.tms.TmsConst.TMS_SOURCE_MISSING_MSG
+import org.nexial.core.tms.TmsConst.TMS_URL_MISSING_MSG
 import org.springframework.context.support.ClassPathXmlApplicationContext
 
 /**
@@ -31,27 +33,26 @@ import org.springframework.context.support.ClassPathXmlApplicationContext
 object TmsFactory {
     fun getTmsInstance(projectId: String): TMSOperation {
         if (StringUtils.isEmpty(projectId)) {
-            throw TmsException(
-                "ProjectId is not defined in $DEF_REL_PROJ_META_JSON;" +
-                        " Please do check configuration from documentation $DOCUMENTATION_URL/userguide/TmsManagement"
-            )
+            throw TmsException("ProjectId is not defined in $DEF_REL_PROJ_META_JSON; $CONFIG_DOCUMENTATION_MSG")
         }
 
         ClassPathXmlApplicationContext(CLASSPATH_NEXIAL_INIT_XML)
-        val source = System.getProperty(TMS_SOURCE)
+        val source = System.getProperty(TMS_SOURCE) ?: throw TmsException(TMS_SOURCE_MISSING_MSG)
         val context = ClassPathXmlApplicationContext(SPRING_INTEGRATION_CONTEXT)
         return context.getBean("tms-$source") as TMSOperation
     }
 
     fun loadTmsData(): TMSAccessData {
         val source = System.getProperty(TMS_SOURCE)
-        val username = System.getProperty(TMS_USERNAME)
-        val password = System.getProperty(TMS_PASSWORD)
         val url = System.getProperty(TMS_URL)
-        if (StringUtils.isAnyEmpty(source, url)) {
-            throw TmsException("TMS source and URL can not empty; " +
-                    "Please do check TMS configuration from documentation $DOCUMENTATION_URL/userguide/TmsManagement")
-        }
+        if (StringUtils.isEmpty(source)) { throw TmsException(TMS_SOURCE_MISSING_MSG) }
+        if (StringUtils.isEmpty(url)) { throw TmsException(TMS_URL_MISSING_MSG) }
+
+        val username = System.getProperty(TMS_USERNAME)
+        val password = System.getProperty(TMS_ACCESS_TOKEN)
+            ?: System.getProperty(TMS_PASSWORD)
+            ?: throw TmsException("TMS password and accessToken both can not empty; " +
+                    "Please provide one of the $TMS_PASSWORD or $TMS_ACCESS_TOKEN. $CONFIG_DOCUMENTATION_MSG")
         return TMSAccessData(source, username, password, url)
     }
 }

@@ -17,11 +17,19 @@
 
 package org.nexial.core.tms.spi
 
+import org.apache.commons.io.FileUtils
+import org.json.JSONArray
+import org.nexial.commons.utils.RegexUtils
+import org.nexial.core.excel.ExcelConfig.PLAN_ROW_START_INDEX
 import org.nexial.core.model.ExecutionSummary
-import org.nexial.core.tms.model.TestFile
-import org.nexial.core.tms.model.TestRun
-import org.nexial.core.tms.model.TmsSuite
-import org.nexial.core.tms.model.TmsTestCase
+import org.nexial.core.tms.TmsConst.OUTPUT_EXCEL_PATTERN
+import org.nexial.core.tms.model.*
+import org.nexial.core.tms.spi.TmsMetaJson.getRelativePath
+import org.nexial.core.utils.ConsoleUtils
+import org.nexial.core.utils.ExecUtils
+import java.io.File
+import java.util.*
+import kotlin.collections.LinkedHashMap
 
 interface TMSOperation {
     /**
@@ -44,11 +52,11 @@ interface TMSOperation {
     fun updateSuite(parentId: String, testPath: String): TmsSuite
 
     /**
-     * Add section (mainly for TestRail and for others suite create response)
+     * Create a new section inside the suite associated with the specified suite id
      *
-     * @param sectionName the name of section
-     * @param parentId suite id
-     * @return the ID from section created for suite
+     * @param parentId     the suite id in which the section is to be added
+     * @param sectionName the name of the section
+     * @return the json response of the API after section creation
      */
     @Throws(TmsException::class)
     fun addSection(parentId: String, sectionName: String): String
@@ -61,39 +69,28 @@ interface TMSOperation {
      * @return the map of the added testcase name to testId
      */
     @Throws(TmsException::class)
-    fun addCases(parentId: String, testCases: List<TmsTestCase>): Map<String, String> {
-        val testCaseToScenario = mutableMapOf<String, String>()
+    fun addCases(parentId: String, testCases: List<TmsTestCase>): Map<String, String> { val testCaseToScenario = mutableMapOf<String, String>()
         testCases.forEach { testCaseToScenario.putAll(updateCase(parentId, it, true)) }
         return testCaseToScenario
     }
 
-    /**/
-
-    /*val testCaseToScenario = mutableMapOf<String, String>()
-    testCases.forEach { testCaseToScenario.putAll(updateCase(parentId, it, true)) }
-    return testCaseToScenario*/
-
-    /*val testCaseIdToTestName = mutableMapOf<String, String>()
-    testCases.forEach { testCaseIdToTestName.putAll(updateCase(parentId, it, true)) }
-    return testCaseIdToTestName*/
-
     /**
-     * Add test cases (mainly for TestRail and for others suite create response)
+     * Adds or update a single test case based on the input parameters
      *
-     * @param parentId testcase id to update
-     * @param testCase TmsTestcase to update
-     * @param isNewTestCase to check if is new testcase
-     * @return the map of the added testcase name to testId
+     * @param parentId  in case of new test case, this will represent the section id in which new test case
+     *                  is to be added, otherwise it represents the test case id of the test case to update
+     * @param testCase   an instance of [TmsTestCase] containing Test Case and Test Steps
+     * @param isNewTestCase true if a new test case is to be added, false if an existing test case is to be updated
+     * @return a [Map] of the test case id to the test case name
      */
     @Throws(TmsException::class)
     fun updateCase(parentId: String, testCase: TmsTestCase, isNewTestCase: Boolean): Map<String, String>
 
     /**
-     * Delete test case
-     *
-     * @param parentId the id of section
-     * @param testcaseId id of testcase to delete
-     * @return pass is testcase deleted else false
+     * Delete the specified test cases from the suite
+     * @param parentId    [List] sectionId of test cases to delete
+     * @param testcaseId [String] test case id to delete
+     * @return [Boolean] true if testcase deleted otherwise false
      */
     @Throws(TmsException::class)
     fun delete(parentId: String, testcaseId: String) : Boolean
@@ -109,37 +106,124 @@ interface TMSOperation {
     fun updateCaseOrder(rootId: String, parentId: String?, order: List<TestcaseOrder>)
 
     /**
-     * Retrieve sections if required
+     * Retrieve all the sections associated with the suite id passed in
      *
-     * @param parentId the id of section
-     * @return array of sections if any else empty array
+     * @param parentId the suite id
+     * @return JSONArray containing the sections belonging to the suite
      */
     @Throws(TmsException::class)
     fun getSectionId(parentId: String): String
 
     /**
-     * Retrieve existing active runs in case of TestRails
+     * Get all the existing active runs for the suite id passed in
      *
-     * @param parentId the id of section
-     * @return array of active runs if any else empty array
+     * @param parentId the suite id
+     * @return a [JSONArray] containing the active runs
      */
     @Throws(TmsException::class)
     fun getExistingActiveRuns(parentId: String): List<TestRun>
 
     /**
-     * Close test runs      *
-     * @param runId of the test run
+     * Close the Test Run associated with the Test Run id passed in
+     * @param runId test run id
      */
     @Throws(TmsException::class)
     fun closeRun(runId: String)
 
     /**
      * Add test results for testcases
-     * @param summary executionSummary to add results from
-     * @param parentId the id of section
-     * @param scenarioIds list of scenarioIds to update
-     * @param suiteUrl url of the suite
+     * @param summary [ExecutionSummary] to add results from
+     * @param file [TestFile] url of the suite
      */
     @Throws(TmsException::class)
     fun addResults(summary: ExecutionSummary, file: TestFile)
+
+    fun getFilesToUpload(outputDir: String) = FileUtils
+        .listFiles(File(outputDir), arrayOf("xlsx"), false)
+        .filter { !it.name.startsWith("~") }.filter { RegexUtils.match(it.name, OUTPUT_EXCEL_PATTERN) }
+        .map { it.absolutePath }.toMutableList()
+
+    fun getScenarios(summary: ExecutionSummary, file: TestFile): LinkedHashMap<String, TestResult> {
+        val scenarioIdsToStatus = linkedMapOf<String, TestResult>()
+        val planSteps = file.planSteps
+
+        if (planSteps == null || planSteps.isEmpty()) {
+            // script run
+            val scenarios = file.scenarios!!
+            gatherScenarioResult(summary.nestedExecutions[0], scenarioIdsToStatus, scenarios, file)
+        } else {
+            // plan test
+            summary.nestedExecutions.forEach { scriptExec ->
+                val scriptImportedFilter = planSteps.filter { getRelativePath(scriptExec.scriptFile) == it.path!! }
+                    .filter { it.stepId!!.toInt() == scriptExec.planSequence + PLAN_ROW_START_INDEX }
+                if(scriptImportedFilter.isNotEmpty() && file.subplan == scriptExec.planName) {
+                    val scenarios = scriptImportedFilter.first().scenarios!!
+                    gatherScenarioResult(scriptExec, scenarioIdsToStatus, scenarios, file)
+                }
+            }
+        }
+        return scenarioIdsToStatus
+    }
+
+    fun gatherScenarioResult(scriptExec: ExecutionSummary, scenarioIdsToStatus: LinkedHashMap<String, TestResult>,
+                             scenarios: List<Scenario>, file: TestFile) {
+        scriptExec.nestedExecutions.forEach { iterExec ->
+            iterExec.nestedExecutions.forEach { gatherTestStats(scenarioIdsToStatus, scenarios, it, file) }
+        }
+    }
+
+    private fun gatherTestStats(scenarioIdsToStatus: LinkedHashMap<String, TestResult>, scenarios: List<Scenario>,
+                                scenarioExec: ExecutionSummary, file: TestFile) {
+        val scenarioName = scenarioExec.name
+        val testCaseId = getTestcaseId(scenarios, scenarioName) ?: return
+
+        var isPassed = scenarioExec.failCount == 0
+        var passCount = scenarioExec.passCount
+        var failCount = scenarioExec.failCount
+        var skipCount = scenarioExec.skippedCount
+        var elapsedTime = scenarioExec.elapsedTime
+
+        val statMap: TestResult
+        if (scenarioIdsToStatus.containsKey(testCaseId)) {
+            statMap = scenarioIdsToStatus[testCaseId]!!
+            isPassed = isPassed && statMap.outcome
+            passCount += statMap.passCount
+            failCount += statMap.failCount
+            skipCount += statMap.skipCount
+            elapsedTime += statMap.durationInMs
+        }
+
+        scenarioIdsToStatus[testCaseId] = TestResult(scenarioName, file.suiteId!!,
+            testCaseId, elapsedTime, isPassed, passCount, failCount, skipCount)
+    }
+
+    /**
+     * Returns  testcase id of testcase if imported else null
+     *
+     * @param scenarios [List] of [Scenario] imported
+     * @param testcaseName the name of scenario whose testcase id to get
+     * @return testcase id whose test results to be updated
+     */
+    private fun getTestcaseId(scenarios: List<Scenario>, testcaseName: String): String? {
+        val scenario = scenarios.filter { it.name == testcaseName }
+        return if(scenario.isNotEmpty()) scenario.first().testCaseId else null
+    }
+
+    /**
+     * To check if user want to close test run during result upload
+     * @return [Boolean] true if user select option to close run or false if don't want to close
+     */
+    fun shouldCloseTestRun(): Boolean {
+        if(ExecUtils.isRunningInZeroTouchEnv()) { return false }
+
+        /* prompt the user if the user chooses to close existing runs, call close runs method */
+        ConsoleUtils.log("Please select an option to close.")
+        println("""
+            1.Close existing runs.
+            2.Exit the process without closing test run.
+            """.trimIndent())
+        print("Input your choice >> ")
+        val scan = Scanner(System.`in`)
+        return scan.nextInt() == 1
+    }
 }

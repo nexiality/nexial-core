@@ -979,6 +979,7 @@ public final class NexialConst {
         public static final String TMS_URL = NEXIAL_TMS + "url";
         public static final String TMS_SOURCE = NEXIAL_TMS + "source";
         public static final String TMS_USERNAME = NEXIAL_TMS + "username";
+        public static final String TMS_ACCESS_TOKEN = NEXIAL_TMS + "accessToken";
         public static final String TMS_PASSWORD = NEXIAL_TMS + "password";
         public static final String TMS_ORG = NEXIAL_TMS + "organization";
         public static final String TMS_SUITE_ISSUE_TYPE = NEXIAL_TMS + "suiteIssueType";
@@ -1193,6 +1194,7 @@ public final class NexialConst {
 
         // note: only consider sysprop, not data variable
         public static final String GENERATE_EXEC_REPORT = registerSysVar(NAMESPACE + "generateReport", true);
+        public static final String GENERATE_TRX_REPORT = registerSysVar(NAMESPACE + "generateTrxReport", false);
 
         public static final String ASSISTANT_MODE = registerSysVar(NAMESPACE + "assistantMode", false);
         // synonymous to `assistantMode`, but reads better
@@ -2169,6 +2171,10 @@ public final class NexialConst {
 
     public static boolean isOutputToCloud() {
         return BooleanUtils.toBoolean(System.getProperty(OUTPUT_TO_CLOUD, getDefaultBool(OUTPUT_TO_CLOUD) + ""));
+    }
+
+    public static boolean isGenerateTrxReport() {
+        return BooleanUtils.toBoolean(System.getProperty(GENERATE_TRX_REPORT, getDefaultBool(GENERATE_TRX_REPORT) + ""));
     }
 
     public static boolean isGenerateExecReport() {

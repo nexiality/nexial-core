@@ -20,6 +20,7 @@ import org.nexial.core.tms.TmsConst.FINISH
 import org.nexial.core.tms.TmsConst.ID
 import org.nexial.core.tms.TmsConst.MESSAGE
 import org.nexial.core.tms.TmsConst.NAME
+import org.nexial.core.tms.TmsConst.NAT
 import org.nexial.core.tms.TmsConst.OUTCOME
 import org.nexial.core.tms.TmsConst.OUTPUT1
 import org.nexial.core.tms.TmsConst.PASSED
@@ -47,8 +48,8 @@ import java.io.FileOutputStream
 import java.util.*
 
 // Create trx report uploading to AzureDevops pipeline for execution run
-class TRXReportHelper(val summaryTextOutput: String, val executionSummaryHTML: String,
-                      val summary: ExecutionSummary, val output: File) {
+class TRXReportHelper(val summary: ExecutionSummary, val output: File,
+                      val summaryTextOutput: String, val executionSummaryHtml: String) {
     var testId = 1
 
     @Throws(Exception::class)
@@ -103,13 +104,15 @@ class TRXReportHelper(val summaryTextOutput: String, val executionSummaryHTML: S
         val unitTests = mutableListOf<Element>()
 
         results.forEach { result ->
-            val unitTest = Element(UNIT_TEST)
-            if(result.getAttributeValue(TEST_ID) == null) return@forEach
-            unitTest.setAttribute(ID, result.getAttributeValue(TEST_ID))
-            unitTest.setAttribute(NAME, result.getAttributeValue(TEST_NAME_TMS))
-            unitTest.setAttribute(STORAGE, "${storage}[${result.getAttributeValue(STORAGE)}]")
-            result.removeAttribute(STORAGE)
-            unitTests.add(unitTest)
+            val scenarioName = result.getAttributeValue(TEST_NAME_TMS)
+            if(result.getAttributeValue(TEST_ID) != null && !scenarioName.startsWith(NAT)) {
+                val unitTest = Element(UNIT_TEST)
+                unitTest.setAttribute(ID, result.getAttributeValue(TEST_ID))
+                unitTest.setAttribute(NAME, scenarioName)
+                unitTest.setAttribute(STORAGE, "${storage}[${result.getAttributeValue(STORAGE)}]")
+                result.removeAttribute(STORAGE)
+                unitTests.add(unitTest)
+            }
         }
         return unitTests
     }
@@ -126,7 +129,7 @@ class TRXReportHelper(val summaryTextOutput: String, val executionSummaryHTML: S
         val filterFiles = mutableListOf<String>()
         summary.nestedExecutions.forEach { filterFiles.addAll(it.resultSummary.attachments) }
 
-        val file1 = File(executionSummaryHTML)
+        val file1 = File(executionSummaryHtml)
         val file2 = File(summaryTextOutput)
         if (file1.exists()) filterFiles.add(file1.absolutePath)
         if (file2.exists()) filterFiles.add(file2.absolutePath)
@@ -146,18 +149,15 @@ class TRXReportHelper(val summaryTextOutput: String, val executionSummaryHTML: S
         return unitTestResults
     }
 
-    private fun toUnitTestResult(scenario: ExecutionSummary, iteration: ExecutionSummary): List<Element> {
-        val outputLink = iteration.testScriptLink
-        val executionLog = iteration.executionLog
-        val unitTestResults: MutableList<Element> = ArrayList()
-        val storage = "${iteration.iterationIndex}"
-        val unitTestResult = toUnitTestResult(scenario, storage)
+    private fun toUnitTestResult(scenario: ExecutionSummary, iteration: ExecutionSummary): MutableList<Element> {
+        val unitTestResult = toUnitTestResult(scenario, "${iteration.iterationIndex}") ?: return mutableListOf()
         val toOutputLog = toOutputLog(scenario)
         val files = scenario.resultSummary.attachments
-        if (toOutputLog != null) {
-            files.add(toOutputLog)
-        }
+        if (toOutputLog != null) { files.add(toOutputLog) }
 
+        val outputLink = iteration.testScriptLink
+        val executionLog = iteration.executionLog
+        val unitTestResults = mutableListOf<Element>()
         toResultFiles(files, unitTestResult)
         toErrorOutput(unitTestResult, scenario, outputLink, executionLog)
         unitTestResults.add(unitTestResult)
@@ -215,9 +215,9 @@ class TRXReportHelper(val summaryTextOutput: String, val executionSummaryHTML: S
         output.addContent(stdOutput)
     }
 
-    private fun toUnitTestResult(scenario: ExecutionSummary, storage: String): Element {
+    private fun toUnitTestResult(scenario: ExecutionSummary, storage: String): Element? {
+        if(scenario.name == null || scenario.name.startsWith(NAT)) return null
         val unitTestResult = Element(UNIT_TEST_RESULT)
-        if(scenario.name == null) return unitTestResult
         unitTestResult.setAttribute(EXECUTION_ID, scenario.name)
         unitTestResult.setAttribute(TEST_ID, testId.toString())
         unitTestResult.setAttribute(TEST_NAME_TMS, scenario.name)

@@ -16,14 +16,37 @@
  */
 package org.nexial.core.tms
 
+import org.nexial.core.NexialConst.Doc.DOCUMENTATION_URL
 import org.nexial.core.NexialConst.STD_DATE_FORMAT
 import java.io.File
 import java.text.SimpleDateFormat
 
 /**
+ * Enum to store the various keywords used in BDD
+ */
+enum class BDDKeywords(val keyword: String) {
+    FEATURE("FEATURE"),
+    RULE("RULE"),
+    GIVEN("GIVEN"),
+    SCENARIO("SCENARIO"),
+    EXAMPLE("EXAMPLE"),
+    WHEN("WHEN"),
+    THEN("THEN"),
+    AND("AND"),
+    BUT("BUT"),
+    BACKGROUND("BACKGROUND"),
+    SCENARIO_OUTLINE("SCENARIO OUTLINE");
+}
+
+/**
  * Test Management System related constants
  */
 object TmsConst {
+    private const val API_VERSION = "api-version="
+    const val CONFIG_DOCUMENTATION_MSG = "Please do check TMS configuration from documentation " +
+            "$DOCUMENTATION_URL/userguide/TmsManagement"
+    const val TMS_SOURCE_MISSING_MSG = "TMS source can not empty; $CONFIG_DOCUMENTATION_MSG"
+    const val TMS_URL_MISSING_MSG = "TMS URL can not empty; $CONFIG_DOCUMENTATION_MSG"
     val simpleDateFormat = SimpleDateFormat(STD_DATE_FORMAT)
     val dataFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX")
 
@@ -57,21 +80,16 @@ object TmsConst {
     const val SUITE_ID = "suite_id"
     const val SUCCESS_CODE = 1
     const val FAILED_CODE = 5
+    const val STATUS_ID = "status_id"
+    const val PASS_COUNT = "passCount"
+    const val FAIL_COUNT = "failCount"
+    const val SKIPPED_COUNT = "skipCount"
 
     // BDD  formatting related constants
     const val COMMENT_REGEX = "^\\s*\\(.+\\)\\s*$"
     const val DATA_VAR_REGEX = "(.*?)(\\$\\{.+?\\})(.*?)"
     const val COMMENT_COLOR = "#9c9797"
     const val DATA_VAR_BACKGROUND_COLOR = "#f9ebeb"
-
-    // Azure Template const
-    const val HTML_TEMPLATE = "/AzureHtmlTemplate.html"
-    const val ACTIVITY_NAME = "{{ACTIVITY_NAME}}"
-    const val WORK_ITEM = "workItem"
-    const val API_VERSION_6_0_PREVIEW_1 = "api-version=6.0-preview.1"
-    const val API_VERSION_6_0_PREVIEW_2 = "api-version=6.0-preview.2"
-    const val API_VERSION_6_0 = "api-version=6.0"
-    const val API_VERSION_5_0_PREVIEW = "api-version=5.0-preview.1"
 
     // JIRA CONSTANTS
     const val LATEST_FROM = "latestFrom"
@@ -96,6 +114,19 @@ object TmsConst {
     const val ACCOUNT_ID = "accountId"
     const val EMAIL_ADDRESS = "emailAddress"
     const val DISPLAY_NAME = "displayName"
+
+
+    // Azure Template const
+    const val HTML_TEMPLATE = "/AzureHtmlTemplate.html"
+    const val WORK_ITEM = "workItem"
+    const val API_VERSION_6_0_PREVIEW_1 = "${API_VERSION}6.0-preview.1"
+    const val API_VERSION_6_0_PREVIEW_2 = "${API_VERSION}6.0-preview.2"
+    const val API_VERSION_6_0 = "${API_VERSION}6.0"
+    const val API_VERSION_5_0_PREVIEW_1 = "${API_VERSION}5.0-preview.1"
+    const val API_VERSION_5_0_PREVIEW_5 = "${API_VERSION}5.0-preview.5"
+    const val INPROGRESS = "InProgress"
+    const val COMPLETED = "Completed"
+    const val TEST_RUN_TYPE = "NoConfigRun"
 
     // Azure pipeline trx constants
     const val TEST_RUN = "TestRun"

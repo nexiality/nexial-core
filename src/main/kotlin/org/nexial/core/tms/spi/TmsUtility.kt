@@ -36,11 +36,12 @@ enum class TmsSource { AZURE, TESTRAIL, JIRA; }
  */
 data class TMSAccessData(val source: String, val user: String?, val password: String, val url: String)
 
+data class TmsException(val msg: String) : Exception(msg)
 
-data class TestcaseOrder(val id: String, val testName: String, val sequenceNumber: Int, val suiteEntryType: String) {
-    override fun toString() =
-        "{ \"id\": $id , \"testName\" : \"$testName\", " +
-        "\"sequenceNumber\": $sequenceNumber, \"suiteEntryType\": \"$suiteEntryType\" }"
+data class TestcaseOrder(val id: String, val testName: String,
+                         val sequenceNumber: Int, val suiteEntryType: String = "testCase") {
+    override fun toString() = "{ \"id\": $id , \"testName\" : \"$testName\", " +
+            "\"sequenceNumber\": $sequenceNumber, \"suiteEntryType\": \"$suiteEntryType\" }"
 }
 
 object TmsMD5Cache {
@@ -99,5 +100,3 @@ object ResponseHandler {
         throw TmsException("Operation failed with status code '$statusCode' with $error.")
     }
 }
-
-class TmsException(val msg: String) : Exception(msg)
