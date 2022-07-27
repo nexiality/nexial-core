@@ -63,10 +63,8 @@ object TmsImporter {
             ConsoleUtils.log("Total time taken to update/upload suite:: ${watch.time/1000} secs")
         } catch(e: Exception) {
             ConsoleUtils.error(e.message)
-            e.printStackTrace()
             if(watch.isStarted) watch.stop()
         }
-
     }
 
     fun addCmdOptions(): Options {
