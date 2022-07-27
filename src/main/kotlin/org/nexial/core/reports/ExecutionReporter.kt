@@ -173,7 +173,7 @@ class ExecutionReporter {
         if (summary == null) return null
 
         val output = File(reportPath!! + vstestFile)
-        ConsoleUtils.log("generating JUnit XML output for this execution to " + output.absolutePath)
+        ConsoleUtils.log("generating vstest trx test output for this execution to " + output.absolutePath)
         TRXReportHelper(summary, output, "$reportPath$executionTemplate.txt", reportPath + htmlOutputFile).toTrxXml()
         return output
     }
