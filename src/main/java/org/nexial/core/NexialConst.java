@@ -981,7 +981,6 @@ public final class NexialConst {
         public static final String TMS_USERNAME = NEXIAL_TMS + "username";
         public static final String TMS_ACCESS_TOKEN = NEXIAL_TMS + "accessToken";
         public static final String TMS_PASSWORD = NEXIAL_TMS + "password";
-        public static final String TMS_ORG = NEXIAL_TMS + "organization";
         public static final String TMS_SUITE_ISSUE_TYPE = NEXIAL_TMS + "suiteIssueType";
         public static final String TMS_CASE_ISSUE_TYPE = NEXIAL_TMS + "caseIssueType";
 
