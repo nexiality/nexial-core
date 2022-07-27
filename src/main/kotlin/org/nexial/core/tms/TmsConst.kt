@@ -72,6 +72,7 @@ object TmsConst {
     const val NBSP = "&nbsp;"
     const val ID = "id"
     const val KEY = "key"
+    const val PROJECT = "project"
     const val CASE_IDS = "case_ids"
     const val RUN = "run"
     const val NAME = "name"

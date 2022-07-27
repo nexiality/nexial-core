@@ -878,6 +878,7 @@ public class TestStep extends TestStepManifest {
             ExecutionSummary testCaseSummary = testCase.getExecutionSummary();
             testCaseSummary.addStepDetails(testStep, nestedTestResults, result.isSuccess());
             testCaseSummary.addNestedMessages(testStep, nestedTestResults);
+            if(isGenerateTrxReport()) updateResultSummary();
         }
     }
 
@@ -892,16 +893,6 @@ public class TestStep extends TestStepManifest {
                 screenshots.add(((NestedScreenCapture) msg).getLink());
             }
         });
-        Map<String, List<String>> activities = resultSummary.getActivities();
-        List<String> stepData;
-        if (activities.containsKey(testCase.getName())) {
-            stepData = activities.get(testCase.getName());
-        } else{
-            stepData = new ArrayList<>();
-        }
-
-        stepData.add("[Row " + rowIndex + "] " + description);
-        activities.put(testCase.getName(), stepData);
     }
 
     @Nullable

@@ -41,6 +41,7 @@ import org.nexial.core.tms.TmsConst.FOCUSSED_COMMENT_ID
 import org.nexial.core.tms.TmsConst.ID
 import org.nexial.core.tms.TmsConst.KEY
 import org.nexial.core.tms.TmsConst.PASSED_COLOR
+import org.nexial.core.tms.TmsConst.PROJECT
 import org.nexial.core.tms.TmsConst.RESULT_LINK_TEXT
 import org.nexial.core.tms.TmsConst.STORY
 import org.nexial.core.tms.TmsConst.SUBTASK
@@ -347,7 +348,7 @@ class JiraOperations(val formatter: TmsFormatter) : TMSOperation {
     private fun checkForValidIssueType(issueType: MutableMap<String, Any>, expectedProjectId: String): Boolean {
         if (issueType.containsKey("scope")) {
             val scope = issueType["scope"] as Map<*, *>
-            val project = if(scope.containsKey("project")) scope["project"] as Map<*, *> else return false
+            val project = if(scope.containsKey(PROJECT)) scope[PROJECT] as Map<*, *> else return false
             val projectId = if(project.containsKey(ID)) project[ID] as String else return false
             return projectId == expectedProjectId
         }
