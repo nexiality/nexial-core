@@ -298,8 +298,9 @@ class JiraOperations(val formatter: TmsFormatter) : TMSOperation {
         val projectInfo = ResponseHandler.handleResponse(client.get("${url}project/$projectId", "")) as JSONObject
         if (!projectInfo.has(ID)) { throw TmsException("Unable to retrieve project id") }
 
-        val suiteIssueInfo = retrieveIssueInfo(suiteType, projectInfo.getString(ID))
-        val caseIssueInfo = retrieveIssueInfo(caseType, projectInfo[ID] as String)
+        val projectId = projectInfo.getString(ID)
+        val suiteIssueInfo = retrieveIssueInfo(suiteType, projectId)
+        val caseIssueInfo = retrieveIssueInfo(caseType, projectId)
         if ((suiteIssueInfo["hierarchyLevel"] as Double) != (caseIssueInfo["hierarchyLevel"] as Double + 1)) {
             throw TmsException("Please do check hierarchy level for issue types under JIRA settings. " +
                     "$suiteType issue does not support child issue of type $caseType.")
@@ -347,7 +348,7 @@ class JiraOperations(val formatter: TmsFormatter) : TMSOperation {
         if (issueType.containsKey("scope")) {
             val scope = issueType["scope"] as Map<*, *>
             val project = if(scope.containsKey("project")) scope["project"] as Map<*, *> else return false
-            val projectId = if(scope.containsKey("id")) project["id"] as String else return false
+            val projectId = if(project.containsKey(ID)) project[ID] as String else return false
             return projectId == expectedProjectId
         }
         return false
