@@ -20,6 +20,7 @@ package org.nexial.core.tms.spi
 import org.apache.commons.collections4.CollectionUtils
 import org.apache.commons.collections4.MapUtils
 import org.apache.commons.lang3.StringUtils
+import org.nexial.core.NexialConst.NL
 import org.nexial.core.model.ExecutionSummary
 import org.nexial.core.tms.model.Scenario
 import org.nexial.core.tms.model.TestFile
@@ -51,10 +52,11 @@ class SuiteUpdate(private val file: TestFile, private val testPath: String,
             println("Closing test runs for $suiteId")
             2
         } else {
-            println("""1. Proceed with the update.
-            2. Close existing runs and then continue with the update.
-            3. Exit the process.
-            """.trimIndent())
+            ConsoleUtils.log("There are active runs for Test Suite $suiteId.")
+            println("Please select an option")
+            println("1. Proceed with the update$NL" +
+                 "2. Close existing runs and then continue with the update$NL" +
+                 "3. Exit the process and manually close test runs")
             print("Input your choice >> ")
             val scan = Scanner(System.`in`)
             val choice = scan.nextInt()
@@ -73,11 +75,12 @@ class SuiteUpdate(private val file: TestFile, private val testPath: String,
                 ConsoleUtils.log("Closed corresponding test runs and continue updating testcases.")
                 return true
             }
-            else -> {
-                ConsoleUtils.log("Exiting updating operation on the test suite.")
-                return false
+            3 -> {
+                ConsoleUtils.log("Active runs for suite $suiteId is/are ${existingRuns.forEach { it.id.toString() }}")
             }
         }
+         ConsoleUtils.log("Exiting updating operation on the test suite without closing test run")
+         return false
     }
 
     /**

@@ -244,11 +244,12 @@ class AzureDevOpsOperations(val formatter: TmsFormatter) : TMSOperation {
     private fun createResultPayload(testResults: Map<String, TestResult>): MutableList<AzureTestResult> {
         val azureTestResults = mutableListOf<AzureTestResult>()
         testResults.forEach { (testCaseId, res) ->
+            val pointId = getTestPointId(testCaseId) ?: return@forEach
             val outcome = if(res.outcome) "Passed" else "Failed"
             val comment = "PASS: ${res.passCount} | " + "FAIL: ${res.failCount} | SKIPPED: ${res.skipCount} "
             azureTestResults.add(
                 AzureTestResult(res.name, Id(res.suiteId), Id(getSectionId(res.suiteId)),
-                Id(testCaseId), Id(getTestPointId(testCaseId)), res.name, res.name, res.durationInMs.toString(),
+                Id(testCaseId), Id(pointId), res.name, res.name, res.durationInMs.toString(),
                 outcome, comment))
         }
         return azureTestResults
@@ -285,12 +286,17 @@ class AzureDevOpsOperations(val formatter: TmsFormatter) : TMSOperation {
      * @param testCaseId [String] of test whose pointId to find out
      * @return point id of testcase [String] to be retrieved for test results
      */
-    private fun getTestPointId(testCaseId: String) : String {
+    private fun getTestPointId(testCaseId: String) : String? {
         val pointPayload = PointPayload(PointFilter(mutableListOf(testCaseId)))
         val response = handleResponse(client.post("${url}test/points?api-version=7.1-preview.2",
             GSON.toJson(pointPayload))) as JSONObject
         return if(response.has("points")){
-            response.getJSONArray("points").getJSONObject(0).getInt("id").toString()
+            val pointsArray = response.getJSONArray("points")
+            if(pointsArray == null || pointsArray.length() == 0) {
+                null
+            } else {
+                pointsArray.getJSONObject(0).getInt("id").toString()
+            }
         } else
             throw TmsException("Unable to find point id for test case. Test case with id $testCaseId might not exist")
     }

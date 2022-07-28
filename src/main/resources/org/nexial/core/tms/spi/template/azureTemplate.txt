@@ -28,6 +28,6 @@
   {
     "path": "\/fields\/System.Description",
     "op": "add",
-    "value": "testCase.description"
+    "value": "[(${testCase.description})]"
   }
 ]

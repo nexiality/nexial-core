@@ -217,7 +217,7 @@ interface TMSOperation {
         if(ExecUtils.isRunningInZeroTouchEnv()) { return false }
 
         /* prompt the user if the user chooses to close existing runs, call close runs method */
-        ConsoleUtils.log("Please select an option to close.")
+        println("Please select an option to close.")
         println("""
             1.Close existing runs.
             2.Exit the process without closing test run.
