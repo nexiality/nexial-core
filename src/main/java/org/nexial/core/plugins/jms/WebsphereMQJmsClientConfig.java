@@ -45,34 +45,17 @@ public class WebsphereMQJmsClientConfig extends JmsClientConfig {
 
     @Override
     public Connection createConnection() throws JMSException {
-        // MQConnectionFactory cf = new MQConnectionFactory();
-        // cf.setTransportType(WMQ_CM_CLIENT);
-        //
-        // if (StringUtils.contains(url, ",")) {
-        //     cf.setConnectionNameList(url);
-        // } else {
-        //     if (StringUtils.contains(url, ":")) {
-        //         String host = StringUtils.substringBefore(url, ":");
-        //         String port = StringUtils.substringAfter(url, ":");
-        //         ConsoleUtils.log("Using host '" + host + "' and port '" + port + "' to connect to WebSphere MQ");
-        //         cf.setHostName(host);
-        //         cf.setPort(NumberUtils.toInt(port));
-        //     }
-        // }
-        //
-        // cf.setChannel(channel);
-        // cf.setQueueManager(queueManager);
-
         // before configuring connection, let's make sure we have the right libraries in CLASSPATH
         Class connectionClass;
         ConnectionFactory cf;
         Object transportType;
         try {
             connectionClass = Class.forName("com.ibm.mq.jms.MQConnectionFactory");
-            cf = (ConnectionFactory) connectionClass.newInstance();
+            cf = (ConnectionFactory) connectionClass.getDeclaredConstructor().newInstance();
             transportType = Class.forName("com.ibm.msg.client.wmq.common.CommonConstants")
                                  .getField("WMQ_CM_CLIENT").get(null);
-        } catch (InstantiationException | IllegalAccessException | ClassCastException | ClassNotFoundException | NoSuchFieldException e) {
+        } catch (InstantiationException | IllegalAccessException | ClassCastException | ClassNotFoundException |
+                 NoSuchFieldException | NoSuchMethodException | InvocationTargetException e) {
             String message = driverInfo != null ?
                              driverInfo.toString() :
                              "Fail to load requested JMS connector.  Make sure the appropriate jar is added to lib/.";

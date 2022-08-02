@@ -976,6 +976,6 @@ class CrossBrowserTestingLocalHelper(context: ExecutionContext) : WebDriverHelpe
             else -> ""
         }
 
-        return "${config.baseName}-$env$arch"
+        return "${config.baseName + if (IS_OS_WINDOWS) "s" else ""}-$env$arch"
     }
 }

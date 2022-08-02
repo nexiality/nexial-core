@@ -17,26 +17,23 @@
 
 package org.nexial.core.plugins.web
 
-import org.junit.Ignore
 import org.junit.Test
 import org.nexial.core.ExcelBasedTests
 
 class HeadlessWebMailTest : ExcelBasedTests() {
 
-    @Test
-    @Throws(Exception::class)
-    fun webmails() {
-        val executionSummary = testViaExcel("unitTest_webmail.xlsx", "mailinator", "mailinator_version")
-        assertNoFail(executionSummary, "mailinator")
-        assertNoFail(executionSummary, "mailinator_version")
-    }
+	@Test
+	@Throws(Exception::class)
+	fun webmails() {
+		val executionSummary = testViaExcel("unitTest_webmail.xlsx", "mailinator", "mailinator_version")
+		assertNoFail(executionSummary, "mailinator")
+		assertNoFail(executionSummary, "mailinator_version")
+	}
 
-    @Ignore("skip for CI; chrome headless doesn't seem to be redirecting correctly and " +
-            "at times the network request is blocked by temp-mail")
-    @Test
-    @Throws(Exception::class)
-    fun testTempMail() {
-        val executionSummary = testViaExcel("unitTest_webmail.xlsx", "temporary-mail")
-        assertNoFail(executionSummary, "temporary-mail")
-    }
+	@Test
+	@Throws(Exception::class)
+	fun testTempMail() {
+		val executionSummary = testViaExcel("unitTest_webmail.xlsx", "temporary-mail")
+		assertNoFail(executionSummary, "temporary-mail")
+	}
 }

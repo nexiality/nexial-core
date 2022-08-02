@@ -124,7 +124,7 @@ class JavaUICommand : BaseCommand(), CanTakeScreenshot {
                            appLocation = config.appLocation,
                            exe = config.appFileName,
                            args = config.appArgs)
-        System.setProperty(SystemVariable.agent, config.agent ?: embedded)
+        System.setProperty(SystemVariable.agent, config.agent)
         when (config.agent) {
             "", embedded -> jubula.startEmbeddedAgent()
             else         -> {

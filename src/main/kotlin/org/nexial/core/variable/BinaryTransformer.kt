@@ -28,7 +28,7 @@ import java.io.IOException
 import java.lang.reflect.Method
 import java.util.*
 
-class BinaryTransformer<T : BinaryDataType> : Transformer<T>() {
+class BinaryTransformer : Transformer<BinaryDataType>() {
 
     private val functionToParam: MutableMap<String, Int> = discoverFunctions(BinaryTransformer::class.java)
     private val functions = toFunctionMap(functionToParam, BinaryTransformer::class.java, BinaryDataType::class.java)
@@ -37,7 +37,7 @@ class BinaryTransformer<T : BinaryDataType> : Transformer<T>() {
 
     override fun listSupportedMethods(): MutableMap<String, Method> = functions
 
-    fun save(data: T, path: String): T {
+    fun save(data: BinaryDataType, path: String): BinaryDataType {
         if (data.getValue() == null) return data
 
         require(!StringUtils.isBlank(path)) { "path is empty/blank" }
@@ -52,7 +52,7 @@ class BinaryTransformer<T : BinaryDataType> : Transformer<T>() {
         }
     }
 
-    fun saveEncoded(data: T, path: String, append: String): T {
+    fun saveEncoded(data: BinaryDataType, path: String, append: String): BinaryDataType {
         if (data.getValue() == null) return data
         require(!StringUtils.isBlank(path)) { "path is empty/blank" }
 
@@ -62,19 +62,19 @@ class BinaryTransformer<T : BinaryDataType> : Transformer<T>() {
         return data
     }
 
-    fun base64encode(data: T) = TextDataType(Base64.getEncoder().encodeToString(data.getValue()))
+    fun base64encode(data: BinaryDataType) = TextDataType(Base64.getEncoder().encodeToString(data.getValue()))
 
-    fun size(data: T) = NumberDataType(if (data.value == null) "0" else data.value.size.toString())
+    fun size(data: BinaryDataType) = NumberDataType(if (data.value == null) "0" else data.value.size.toString())
 
-    fun loadBase64(data: T, file: String) = loadExternal(data, file, false)
+    fun loadBase64(data: BinaryDataType, file: String) = loadExternal(data, file, false)
 
-    fun loadBinary(data: T, file: String) = loadExternal(data, file, true)
+    fun loadBinary(data: BinaryDataType, file: String) = loadExternal(data, file, true)
 
     override fun text(data: ExpressionDataType<*>?) = TextDataType(data?.textValue)
 
-    fun text(data: T) = TextDataType(data.textValue)
+    fun text(data: BinaryDataType) = TextDataType(data.textValue)
 
-    private fun loadExternal(data: T, file: String, binary: Boolean): T {
+    private fun loadExternal(data: BinaryDataType, file: String, binary: Boolean): BinaryDataType {
         if (!FileUtil.isFileReadable(file)) {
             ConsoleUtils.error("Unreadable/invalid file: $file")
             return data

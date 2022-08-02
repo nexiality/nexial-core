@@ -17,16 +17,18 @@
 
 package org.nexial.commons.conversion;
 
-import com.itextpdf.text.DocumentException;
-import org.apache.commons.io.output.NullOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+
 import org.junit.Assert;
 import org.junit.Test;
 import org.nexial.commons.conversion.Tif2PdfConverter.DocumentMetaData;
 import org.nexial.commons.utils.FileUtil;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import com.itextpdf.text.DocumentException;
+
+import static org.apache.commons.io.output.NullOutputStream.NULL_OUTPUT_STREAM;
 
 public class Tif2PdfConverterTest {
     private Tif2PdfConverter converter = new Tif2PdfConverter();
@@ -56,7 +58,7 @@ public class Tif2PdfConverterTest {
         for (String arg : args) {
             DocumentMetaData metaData = new DocumentMetaData();
             metaData.setTitle(arg);
-            converter.convert(arg, new NullOutputStream(), metaData);
+            converter.convert(arg, NULL_OUTPUT_STREAM, metaData);
         }
     }
 

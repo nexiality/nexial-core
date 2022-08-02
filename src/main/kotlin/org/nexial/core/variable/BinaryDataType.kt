@@ -42,7 +42,7 @@ class BinaryDataType : ExpressionDataType<ByteArray> {
         init()
     }
 
-    private var transformer: BinaryTransformer<BinaryDataType> = BinaryTransformer()
+    private var transformer = BinaryTransformer()
 
     override fun getName() = BINARY
 

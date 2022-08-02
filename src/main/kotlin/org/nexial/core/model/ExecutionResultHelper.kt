@@ -161,9 +161,9 @@ class ExecutionResultHelper(private val allSteps: List<TestStep>, val worksheet:
      * This method refills macro expanded and transform to section commands.
      * Also, merge verbose output and add nested messaged to output excel.
      *
-     * @param testStep current teststep from test scenario
+     * @param testStep current test step from test scenario
      * @param isRepeatUntil is it part of repeat until loop command
-     * @param currentRowIdx current row index of worksheet to write teststep
+     * @param currentRowIdx current row index of worksheet to write test step
      * @param lastRow last row number of the worksheet
      * @constructor Creates an empty group.
      */
@@ -212,7 +212,7 @@ class ExecutionResultHelper(private val allSteps: List<TestStep>, val worksheet:
                     }
                 }
 
-                // ignore sections inside repeatuntil and section inside section as well
+                // ignore sections inside repeat-until and section inside section as well
                 if (macroStep.commandFQN == CMD_SECTION && j !in repeatUntilStartIndex..repeatUntilEndIndex &&
                     (sectionEndIndex == -1 || j > sectionEndIndex)) {
                     // get step count
@@ -221,7 +221,7 @@ class ExecutionResultHelper(private val allSteps: List<TestStep>, val worksheet:
                     sectionEndIndex = j + steps
                 }
 
-                // check repeatuntil inside macro ended or not
+                // check repeat-until inside macro ended or not
                 if (repeatUntilStartIndex != -1 && j > repeatUntilEndIndex) {
                     repeatUntilStartIndex = -1
                     repeatUntilEndIndex = -1
@@ -337,7 +337,7 @@ class ExecutionResultHelper(private val allSteps: List<TestStep>, val worksheet:
                 // nested screen capture will add to new row (after test step)
                 // shift rows only once by messageCount
                 // if (i == 0) {
-                // +1 if lastRow is the same as currentRow. Otherwise shiftRow on a single row block
+                // +1 if lastRow is the same as currentRow. Otherwise, shiftRow on a single row block
                 // causes problem for createRow (later on).
                 worksheet.shiftRows(currentRowIdx, lastDataRow + if (currentRowIdx == lastDataRow) 1 else 0, 1)
 

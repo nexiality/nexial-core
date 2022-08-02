@@ -195,8 +195,10 @@
 
     <div class="value value-plan" data-th-if="${showPlan}">
         <b>PLAN:</b>
-        <a data-th-href="${script.planFile}" data-th-attr="title=${script.planFile}"
-           data-th-utext="${@org.nexial.commons.utils.FileUtil@extractFilename(script.planFile) + '/' + script.planName}">Plan Name</a>
+        <a data-th-href="${script.planFile}"
+           data-th-attr="title=${script.planFile}"
+           data-th-with="planFileName=${@org.nexial.commons.utils.FileUtil@extractFilename(script.planFile)}"
+           data-th-utext="${planFileName + '/' + script.planName}">Plan Name</a>
     </div>
 
     <div class="exec-summary-header" data-th-if="${scriptStat.first or showPlan}">
@@ -234,7 +236,7 @@
                     </td>
                     <td class="value value-iteration" data-th-utext="${script.nestedExecutions.size()}">1234</td>
                     <td class="value value-scenarioPassed" data-th-utext="${script.resolveTotalScenariosPassed()}">1 / 2</td>
-                    <td class="value value-datetime exectime" data-th-utext="${#dates.format(new java.util.Date(script.startTime), 'yyyy/MM/dd HH:mm:ss')}">2018/12/16 12:53:21</td>
+                    <td class="value value-datetime exectime" data-th-with="formattedStartTime=${@org.nexial.commons.utils.DateUtility@format(script.startTime, 'yyyy/MM/dd HH:mm:ss')}" data-th-utext="${formattedStartTime}">2018/12/16 12:53:21</td>
                     <td class="value value-time value-tally exectime" data-th-utext="${#dates.format(#dates.create(0,0,0,0,0,0, (script.endTime - script.startTime)), 'HH:mm:ss')}">00:42:11</td>
                     <td class="value value-num value-tally passfail" data-th-utext="${#numbers.formatInteger(script.totalSteps, 1, 'DEFAULT')}">23456</td>
                     <td class="value value-num value-tally passfail" data-th-utext="${#numbers.formatInteger(script.passCount, 1, 'DEFAULT')}">12345</td>
@@ -282,7 +284,7 @@
                             </div>
                         </td>
                         <td class="value value-scenarioPassed" data-th-utext="${iteration.totalLevelPassed + ' / ' + iteration.nestedExecutions.size()}">1 / 2</td>
-                        <td class="value value-datetime exectime" data-th-utext="${#dates.format(new java.util.Date(iteration.startTime), 'yyyy/MM/dd HH:mm:ss')}">2018/12/16 12:53:21</td>
+                        <td class="value value-datetime exectime" data-th-with="formattedStartTime=${@org.nexial.commons.utils.DateUtility@format(iteration.startTime, 'yyyy/MM/dd HH:mm:ss')}" data-th-utext="${formattedStartTime}">2018/12/16 12:53:21</td>
                         <td class="value value-time value-tally exectime" data-th-utext="${#dates.format(#dates.create(0,0,0,0,0,0, (iteration.endTime - iteration.startTime)), 'HH:mm:ss')}">00:42:11</td>
                         <td class="value value-num value-tally passfail" data-th-utext="${#numbers.formatInteger(iteration.executed, 1, 'DEFAULT')}">23456</td>
                         <td class="value value-num value-tally passfail" data-th-utext="${#numbers.formatInteger(iteration.passCount, 1, 'DEFAULT')}">12345</td>
@@ -309,7 +311,7 @@
                                     </table>
                                 </div>
                             </td>
-                            <td class="value value-datetime exectime" data-th-utext="${#dates.format(new java.util.Date(scenario.startTime), 'yyyy/MM/dd HH:mm:ss')}">2018/12/16 12:53:21</td>
+                            <td class="value value-datetime exectime" data-th-with="formattedStartTime=${@org.nexial.commons.utils.DateUtility@format(scenario.startTime, 'yyyy/MM/dd HH:mm:ss')}" data-th-utext="${formattedStartTime}">2018/12/16 12:53:21</td>
                             <td class="value value-time value-tally exectime" data-th-utext="${#dates.format(#dates.create(0,0,0,0,0,0, (scenario.endTime - scenario.startTime)), 'HH:mm:ss')}">00:42:11</td>
                             <td class="value value-num value-tally passfail" data-th-utext="${#numbers.formatInteger(scenario.executed, 1, 'DEFAULT')}">23456</td>
                             <td class="value value-num value-tally passfail" data-th-utext="${#numbers.formatInteger(scenario.passCount, 1, 'DEFAULT')}">12345</td>
@@ -330,7 +332,7 @@
                                     </div>
                                     <div data-th-if="${#lists.isEmpty(activity.getStepDetails())}"><span data-th-attr="title=${activity.name}" data-th-utext="${activity.name}">Act 1</span></div>
                                 </td>
-                                <td class="value value-datetime exectime" data-th-utext="${#dates.format(new java.util.Date(activity.startTime), 'yyyy/MM/dd HH:mm:ss')}">2018/12/16 12:53:21</td>
+                                <td class="value value-datetime exectime" data-th-with="formattedStartTime=${@org.nexial.commons.utils.DateUtility@format(activity.startTime, 'yyyy/MM/dd HH:mm:ss')}" data-th-utext="${formattedStartTime}">2018/12/16 12:53:21</td>
                                 <td class="value value-time exectime" data-th-utext="${#dates.format(#dates.create(0,0,0,0,0,0, (activity.endTime - activity.startTime)), 'HH:mm:ss')}">00:42:11</td>
                                 <td class="value value-num passfail" data-th-utext="${#numbers.formatInteger(activity.executed, 1, 'DEFAULT')}">23456</td>
                                 <td class="value value-num passfail" data-th-utext="${#numbers.formatInteger(activity.passCount, 1, 'DEFAULT')}">12345</td>

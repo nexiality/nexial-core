@@ -16,8 +16,8 @@
  */
 
 buildscript {
-	ext.kotlin_version = '1.5.31'
-	ext.springBootVersion = '2.4.2'
+	ext.kotlin_version = '1.7.0'
+	ext.springBootVersion = '2.7.1'
 	repositories {
 		mavenLocal()
 		mavenCentral()
@@ -39,7 +39,7 @@ plugins {
 apply plugin: 'java'
 apply plugin: 'eclipse'
 apply plugin: 'idea'
-apply plugin: 'maven'
+//apply plugin: 'maven'
 apply plugin: 'org.springframework.boot'
 apply plugin: 'distribution'
 
@@ -70,7 +70,7 @@ repositories {
 }
 
 // spring 5
-springBoot { mainClassName = componentMainClass }
+springBoot { mainClass = componentMainClass }
 bootRun { sourceResources sourceSets.main }
 
 configurations {
@@ -81,46 +81,46 @@ configurations {
 sourceSets.main.compileClasspath += configurations.provided
 
 dependencies {
-	compile("org.apache.logging.log4j:log4j-api:${log4jVersion}")
-	compile("org.apache.logging.log4j:log4j-core:${log4jVersion}")
-	compile("org.apache.logging.log4j:log4j-to-slf4j:${log4jVersion}")
+	implementation("org.apache.logging.log4j:log4j-api:${log4jVersion}")
+	implementation("org.apache.logging.log4j:log4j-core:${log4jVersion}")
+	implementation("org.apache.logging.log4j:log4j-to-slf4j:${log4jVersion}")
 
-	compile("org.apache.httpcomponents:httpcore:${httpcoreVersion}")
-	compile("org.apache.httpcomponents:httpclient:${httpclientVersion}")
-	compile("org.apache.httpcomponents:fluent-hc:${httpclientFluent}")
-	compile("org.apache.httpcomponents:httpmime:+")
-	compile("org.apache.httpcomponents:httpasyncclient:${httpasyncclient}")
+	implementation("org.apache.httpcomponents:httpcore:${httpcoreVersion}")
+	implementation("org.apache.httpcomponents:httpclient:${httpclientVersion}")
+	implementation("org.apache.httpcomponents:fluent-hc:${httpclientFluent}")
+	implementation("org.apache.httpcomponents:httpmime:${httpclientVersion}")
+	implementation("org.apache.httpcomponents:httpasyncclient:${httpAsyncClientVersion}")
 
 	// support: apache commons
-	compile("org.apache.commons:commons-lang3:${commonsLang3Version}")
-	compile("org.apache.commons:commons-collections4:${commonsCollection4Version}")
-	compile("commons-beanutils:commons-beanutils:+")
-	compile("commons-cli:commons-cli:+")
-	compile("commons-fileupload:commons-fileupload:+")
-	compile("commons-io:commons-io:${commonsIoVersion}")
-	compile("org.apache.commons:commons-dbcp2:${commonsDbcp2Version}")
-	// compile("org.apache.commons:commons-email:+")
-	compile("org.apache.commons:commons-text:+")
-	compile("org.apache.commons:commons-compress:+")
-	compile("commons-validator:commons-validator:+") {
+	implementation("org.apache.commons:commons-lang3:${commonsLang3Version}")
+	implementation("org.apache.commons:commons-collections4:${commonsCollection4Version}")
+	implementation("commons-beanutils:commons-beanutils:${beanutilsVersion}")
+	implementation("commons-cli:commons-cli:${commonsCliVersion}")
+	implementation("commons-fileupload:commons-fileupload:${fileuploadVersion}")
+	implementation("commons-io:commons-io:${commonsIoVersion}")
+	implementation("org.apache.commons:commons-dbcp2:${commonsDbcp2Version}")
+	// implementation("org.apache.commons:commons-email:+")
+	implementation("org.apache.commons:commons-text:${commonsTextVersion}")
+	implementation("org.apache.commons:commons-compress:${commonsCompressVersion}")
+	implementation("commons-validator:commons-validator:${commonsValidatorVersion}") {
 		exclude module: "commons-collections"
 	}
 
 	// csv
-	compile("com.univocity:univocity-parsers:+")
+	implementation("com.univocity:univocity-parsers:2.9.1")
 
 	// spring (forces version unification)
-	compile("org.springframework.boot:spring-boot-starter-logging") {
+	implementation("org.springframework.boot:spring-boot-starter-logging") {
 		exclude module: "log4j-to-slf4j"
 	}
-	compile("org.springframework.boot:spring-boot-starter") {
+	implementation("org.springframework.boot:spring-boot-starter") {
 		exclude module: "log4j-to-slf4j"
 	}
-	compile("org.springframework.boot:spring-boot-configuration-processor")
-	compile("org.springframework.boot:spring-boot-starter-jdbc")
-	compile("org.springframework.boot:spring-boot-starter-mail")
+	implementation("org.springframework.boot:spring-boot-configuration-processor")
+	implementation("org.springframework.boot:spring-boot-starter-jdbc")
+	implementation("org.springframework.boot:spring-boot-starter-mail")
 	// note: can't get rid of jackson completely because it's references in tika and aws-* libs. boo!
-	compile("org.springframework.boot:spring-boot-starter-web") {
+	implementation("org.springframework.boot:spring-boot-starter-web") {
 		exclude module: "jackson-databind"
 		exclude module: "jackson-annotations"
 		exclude module: "jackson-core"
@@ -129,187 +129,196 @@ dependencies {
 		exclude module: "jackson-datatype-jsr310"
 		exclude module: "spring-boot-starter-json"
 	}
-	compile("org.springframework:spring-tx")
-	compile("org.springframework.boot:spring-boot-starter-websocket")
-	compile("org.springframework.boot:spring-boot-starter-thymeleaf")
-	compile("com.fasterxml.jackson.module:jackson-module-kotlin:2.9.+")
+	implementation("org.springframework:spring-tx")
+	implementation("org.springframework.boot:spring-boot-starter-websocket")
+	implementation("org.springframework.boot:spring-boot-starter-thymeleaf")
+	implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.13.+")
 
-	compile("javax.validation:validation-api:${validationApiVersion}")
-	compile("org.yaml:snakeyaml:${snakeYamlVersion}")
+	implementation("javax.validation:validation-api:${validationApiVersion}")
+	implementation("org.yaml:snakeyaml:${snakeYamlVersion}")
 
 	// unit testing
-	compile("junit:junit:${junitVersion}")
+	implementation("junit:junit:${junitVersion}")
 
 	// selenium
 	// for IE webdriver: https://developer.microsoft.com/en-us/microsoft-edge/tools/webdriver/
-	compile("org.seleniumhq.selenium:selenium-java:${seleniumVersion}")
-	compile("org.seleniumhq.selenium:selenium-api:${seleniumVersion}")
-	// compile("org.seleniumhq.selenium:selenium-server:${seleniumVersion}")
-	compile("org.seleniumhq.selenium:selenium-remote-driver:${seleniumVersion}")
-	compile("org.seleniumhq.selenium:selenium-support:${seleniumVersion}")
-	compile("org.seleniumhq.selenium:selenium-firefox-driver:${seleniumVersion}")
-	compile("org.seleniumhq.selenium:selenium-ie-driver:${seleniumVersion}")
-	compile("org.seleniumhq.selenium:selenium-safari-driver:${seleniumVersion}")
-	compile("org.seleniumhq.selenium:selenium-chrome-driver:${seleniumVersion}")
+	implementation("org.seleniumhq.selenium:selenium-java:${seleniumVersion}")
+	implementation("org.seleniumhq.selenium:selenium-api:${seleniumVersion}")
+	// implementation("org.seleniumhq.selenium:selenium-server:${seleniumVersion}")
+	implementation("org.seleniumhq.selenium:selenium-remote-driver:${seleniumVersion}")
+	implementation("org.seleniumhq.selenium:selenium-support:${seleniumVersion}")
+	implementation("org.seleniumhq.selenium:selenium-firefox-driver:${seleniumVersion}")
+	implementation("org.seleniumhq.selenium:selenium-ie-driver:${seleniumVersion}")
+	implementation("org.seleniumhq.selenium:selenium-safari-driver:${seleniumVersion}")
+	implementation("org.seleniumhq.selenium:selenium-chrome-driver:${seleniumVersion}")
+	implementation("org.seleniumhq.selenium:selenium-edge-driver:${seleniumVersion}")
 
-	// https://mvnrepository.com/artifact/io.appium/java-client
-	//	compile("io.appium:java-client:${appiumVersion}")
-	compile("io.appium:java-client:${appiumVersion}")
+	implementation("io.appium:java-client:${appiumVersion}")
 
 	// winium
 	// for Winium.Desktop.Driver.exe download: https://github.com/2gis/Winium.Desktop/releases/latest
-	compile("com.github.2gis.winium:winium-webdriver:+")
-	compile("com.github.2gis.winium:winium-elements-desktop:+")
+	implementation("com.github.2gis.winium:winium-webdriver:+")
+	implementation("com.github.2gis.winium:winium-elements-desktop:+")
 
-	compile("org.slf4j:jul-to-slf4j:1.7.+")
+	implementation("org.slf4j:jul-to-slf4j:${jul2Slf4jVersion}")
 	// logback lib already references in spring boot logging starter
-	compile("ch.qos.logback:logback-access:+")
-	compile("ch.qos.logback.contrib:logback-json-core:+")
-	//	compile("org.logback-extensions:logback-ext-spring:+")
-	compile("org.fusesource.jansi:jansi:${jansiVersion}")
+	implementation("ch.qos.logback:logback-access:+")
+	implementation("ch.qos.logback.contrib:logback-json-core:+")
+	//	implementation("org.logback-extensions:logback-ext-spring:+")
+	implementation("org.fusesource.jansi:jansi:${jansiVersion}")
 
-	//	compile("ch.qos.logback.contrib:logback-mongodb-core:+")
+	//	implementation("ch.qos.logback.contrib:logback-mongodb-core:+")
 
 	// support: aws
-	compile("com.amazonaws:aws-java-sdk-core:+")
-	compile("com.amazonaws:aws-java-sdk-s3:+")
-	compile("com.amazonaws:aws-java-sdk-polly:+")
-	compile("com.amazonaws:aws-java-sdk-sns:+")
-	compile("com.amazonaws:aws-java-sdk-ses:+")
-	compile('com.amazonaws:aws-java-sdk-sqs:+')
-	compile("com.amazonaws:aws-java-sdk-sts:+")
-	// compile("com.amazonaws:aws-java-sdk-textract:+")
-	compile("com.amazonaws:aws-java-sdk-rekognition:+")
+	implementation("com.amazonaws:aws-java-sdk-core:+")
+	implementation("com.amazonaws:aws-java-sdk-s3:+")
+	implementation("com.amazonaws:aws-java-sdk-polly:+")
+	implementation("com.amazonaws:aws-java-sdk-sns:+")
+	implementation("com.amazonaws:aws-java-sdk-ses:+")
+	implementation('com.amazonaws:aws-java-sdk-sqs:+')
+	implementation("com.amazonaws:aws-java-sdk-sts:+")
+	// implementation("com.amazonaws:aws-java-sdk-textract:+")
+	implementation("com.amazonaws:aws-java-sdk-rekognition:+")
 
 	// support: browsermob
-	// compile("net.lightbody.bmp:browsermob-proxy:+")
-	// compile("net.lightbody.bmp:browsermob-core:+")
-	// compile("net.lightbody.bmp:browsermob-rest:+") {
+	// implementation("net.lightbody.bmp:browsermob-proxy:+")
+	// implementation("net.lightbody.bmp:browsermob-core:+")
+	// implementation("net.lightbody.bmp:browsermob-rest:+") {
 	// 	exclude module: "servlet-api"
 	// }
 
 	// support: pdf
 	// https://mvnrepository.com/artifact/com.itextpdf/itext7-core
-	// compile("com.itextpdf:itext7-core:+")
-	compile("com.itextpdf:itextpdf:${itextVersion}")
-	compile("com.itextpdf.tool:xmlworker:${itextVersion}")
+	// implementation("com.itextpdf:itext7-core:+")
+	implementation("com.itextpdf:itextpdf:${itextVersion}")
+	implementation("com.itextpdf.tool:xmlworker:${itextVersion}")
 
-	compile("org.apache.pdfbox:pdfbox:${pdfboxVersion}")
-	compile("org.apache.pdfbox:pdfbox-tools:${pdfboxVersion}")
-	compile("org.apache.pdfbox:fontbox:${pdfboxVersion}")
-	compile("org.apache.pdfbox:xmpbox:${pdfboxVersion}")
+	implementation("org.apache.pdfbox:pdfbox:${pdfboxVersion}")
+	implementation("org.apache.pdfbox:pdfbox-tools:${pdfboxVersion}")
+	implementation("org.apache.pdfbox:fontbox:${pdfboxVersion}")
+	implementation("org.apache.pdfbox:xmpbox:${pdfboxVersion}")
 
 	// support: poi/msoffice
-	compile("org.apache.poi:poi:${poiVersion}"){
+	implementation("org.apache.poi:poi:${poiVersion}") {
 		exclude group: 'org.apache.poi', module: 'poi-ooxml-schemas'
+		exclude group: 'org.apache.logging.log4j', module: 'log4j-api'
 	}
-	compile("org.apache.poi:poi-ooxml:${poiVersion}"){
+	implementation("org.apache.poi:poi-ooxml:${poiVersion}") {
 		exclude group: 'org.apache.poi', module: 'poi-ooxml-schemas'
+		exclude group: 'org.apache.logging.log4j', module: 'log4j-api'
 	}
+	implementation("org.apache.xmlbeans:xmlbeans:3.0.+")
+
 
 	// support: json
-	compile("org.json:json:${jsonVersion}")
-//	compile("com.cedarsoftware:java-util:+")
-	compile("com.cedarsoftware:json-io:+")
-	// compile("com.github.fge:json-schema-validator:+") {
+	implementation("org.json:json:${jsonVersion}")
+	//	implementation("com.cedarsoftware:java-util:+")
+	implementation("com.cedarsoftware:json-io:4.13.0")
+	// implementation("com.github.fge:json-schema-validator:+") {
 	// 	exclude module: "mailapi"
 	// }
-	compile("com.networknt:json-schema-validator:1+")
-	compile("com.google.code.gson:gson:${gsonVersion}")
-	compile("org.danilopianini:gson-extras:+")
-	compile("com.jayway.jsonpath:json-path:${jsonpathVersion}")
-	compile("org.jdom:jdom2:+")
-	compile("org.jsoup:jsoup:+")
+	implementation("com.networknt:json-schema-validator:1.0.70")
+	implementation("com.google.code.gson:gson:${gsonVersion}")
+	implementation("org.danilopianini:gson-extras:+")
+	implementation("com.jayway.jsonpath:json-path:${jsonpathVersion}")
+	implementation("org.jdom:jdom2:+")
+	implementation("org.jsoup:jsoup:+")
 	// v23r* is not compatible with selenium 3.4.0
-	compile("com.google.guava:guava:${guavaVersion}")
+	implementation("com.google.guava:guava:${guavaVersion}")
 
 	// support: ini
-	compile("org.ini4j:ini4j:+")
+	implementation("org.ini4j:ini4j:0.5.4")
 
 	// support: data sources
 	// support Azure database connectivity
 	implementation("com.microsoft.azure:msal4j:${msal4jVersion}")
 
 	// support: redis
-	compile("redis.clients:jedis:${jedisVersion}")
+	implementation("redis.clients:jedis:${jedisVersion}")
 
 	// support: joda-time
-	compile("joda-time:joda-time:+")
+	implementation("joda-time:joda-time:+")
 
 	// support: others
-	compile("net.sourceforge.jregex:jregex:+")
-	compile("org.aspectj:aspectjweaver:+")
-	compile("jaxen:jaxen:+")
-	compile("xalan:xalan:+")
-	compile("io.jsonwebtoken:jjwt:+")
-	compile("org.thymeleaf:thymeleaf:${thymeleafVersion}")
-	compile("javax.media:jmf:+")
-	compile("com.github.stephenc.monte:monte-screen-recorder:+")
+	implementation("net.sourceforge.jregex:jregex:+")
+	implementation("org.aspectj:aspectjweaver:+")
+	implementation("jaxen:jaxen:+")
+	implementation("xalan:xalan:+")
+	implementation("io.jsonwebtoken:jjwt:+")
+	implementation("org.thymeleaf:thymeleaf:${thymeleafVersion}")
+	implementation("javax.media:jmf:+")
+	implementation("com.github.stephenc.monte:monte-screen-recorder:+")
 	// invalid SSL for dcm4che.org, hence disabling this one for now
-	//	compile("xuggle:xuggle-xuggler:5.4")
+	//	implementation("xuggle:xuggle-xuggler:5.4")
 
 	// support: jms
-	compile("org.apache.geronimo.specs:geronimo-jms_1.1_spec:1.1.1")
-	compile("javax.transaction:jta:1.1")
-	compile("org.apache.activemq:activemq-client:${activemqVersion}")
-	compile("com.rabbitmq.jms:rabbitmq-jms:1.+")
+	implementation("org.apache.geronimo.specs:geronimo-jms_1.1_spec:1.1.1")
+	implementation("javax.transaction:jta:1.1")
+	implementation("org.apache.activemq:activemq-client:${activemqVersion}")
+	implementation("com.rabbitmq.jms:rabbitmq-jms:1.+")
 
-	compile("javax.mail:javax.mail-api:${javaxMailVersion}")
-	compile("com.sun.mail:smtp:${sunMailVersion}")
+	implementation("javax.mail:javax.mail-api:${javaxMailVersion}")
+	implementation("com.sun.mail:smtp:${sunMailVersion}")
 
 	// https://mvnrepository.com/artifact/pl.touk/throwing-function
-	compile("pl.touk:throwing-function:1.3")
+	implementation("pl.touk:throwing-function:${throwingFunctionVersion}")
 
-	compile("org.apache.tika:tika-core:${tikaVersion}")
-	compile("org.apache.tika:tika-parsers:${tikaVersion}") {
+	implementation("org.apache.tika:tika-core:${tikaVersion}") {
+		exclude group: 'org.apache.poi', module: 'poi'
+		exclude group: 'org.apache.poi', module: 'poi-scratchpad'
+		exclude group: 'org.apache.poi', module: 'poi-ooxml'
+	}
+	implementation("org.apache.tika:tika-parsers:${tikaVersion}") {
 		exclude group: 'org.bouncycastle', module: 'bcprov-jdk15on'
 		exclude group: 'edu.ucar', module: 'grib'
 		exclude group: 'edu.ucar', module: 'cdm'
+		exclude group: 'org.apache.poi', module: 'poi'
+		exclude group: 'org.apache.poi', module: 'poi-scratchpad'
+		exclude group: 'org.apache.poi', module: 'poi-ooxml'
 	}
 
 	// support: ssh, scp, sftp
-	compile("com.jcraft:jsch:+")
+	implementation("com.jcraft:jsch:${jschVersion}")
 
-	compile("org.java-websocket:Java-WebSocket:1.5.+")
+	implementation("org.java-websocket:Java-WebSocket:${websocketVersion}")
 
-  	compile("org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version")
+	implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version")
 	implementation("org.jetbrains.kotlin:kotlin-reflect:$kotlin_version")
 	implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutinesVersion")
 
-	compile("com.googlecode.soundlibs:jlayer:1.0.1.4")
+	implementation("com.googlecode.soundlibs:jlayer:1.0.1.4")
 
 	// console with color
-	compile("com.diogonunes:JCDP:2.0.3.1")
+	implementation("com.diogonunes:JCDP:${jcdpVersion}")
 
 	// ashot
-	compile("ru.yandex.qatools.ashot:ashot:${ashotVersion}")
+	implementation("ru.yandex.qatools.ashot:ashot:${ashotVersion}")
 
-	compile("com.github.romankh3:image-comparison:${imageComparisonVersion}")
+	implementation("com.github.romankh3:image-comparison:${imageComparisonVersion}")
 
-	// fmpeg (NOTE: THIS IS IN CONFLICT AGAINST THE SAME isoparser PULLED IN VIA THE TIKA DEPEDNENCIES)
+	// fmpeg (NOTE: THIS IS IN CONFLICT AGAINST THE SAME isoparser PULLED IN VIA THE TIKA DEPENDENCIES)
 	// https://mvnrepository.com/artifact/org.bytedeco/ffmpeg
 	// compile group: 'org.bytedeco', name: 'ffmpeg', version: '4.2.1-1.5.2'
-	// compile("org.mp4parser:isoparser:1.9.+")
-	compile("com.googlecode.mp4parser:isoparser:1.1.22")
+	// implementation("org.mp4parser:isoparser:1.9.+")
+	implementation("com.googlecode.mp4parser:isoparser:1.1.22")
 
-	// https://mvnrepository.com/artifact/net.dongliu/apk-parser
-	compile("net.dongliu:apk-parser:2.6.10")
+	implementation("net.dongliu:apk-parser:2.6.10")
 
 	//	non-distributable libs
-	compile fileTree(dir: 'lib', include: '*.jar')
+	implementation fileTree(dir: 'lib', include: '*.jar')
 
-	compile("com.mikesamuel:json-sanitizer:${jsonSanitizerVersion}")
+	implementation("com.mikesamuel:json-sanitizer:${jsonSanitizerVersion}")
 
-//	implementation 'org.owasp:java-file-io:1.0.0'
-//	https://github.com/augustd/owasp-java-fileio/tree/master/src/main/java/org/owasp/fileio	
-	
+	//	implementation 'org.owasp:java-file-io:1.0.0'
+	//	https://github.com/augustd/owasp-java-fileio/tree/master/src/main/java/org/owasp/fileio
+
 	// provided("javax.servlet:javax.servlet-api:${servletApiVersion}") { force = true }
 
 	// annotationProcessor "org.springframework.boot:spring-boot-configuration-processor"
 
-	testCompile("org.springframework.boot:spring-boot-starter-test")
-	testCompile("junit:junit:${junitVersion}")
-	testCompile("org.jetbrains.kotlin:kotlin-test")
+	testImplementation("org.springframework.boot:spring-boot-starter-test")
+	// testImplementation("junit:junit:${junitVersion}")
+	implementation("org.jetbrains.kotlin:kotlin-test")
 }
 
 jar {
@@ -324,7 +333,7 @@ jar {
 
 tasks.withType(Test) {
 	mkdir "${System.properties['user.home']}${System.properties['file.separator']}tmp"
-	maxParallelForks = 8
+	maxParallelForks = 10
 	systemProperty 'nexial.home', projectDir
 	systemProperty 'user.country', 'US'
 	systemProperty 'user.language', 'en'
@@ -334,8 +343,16 @@ tasks.withType(Test) {
 
 test {
 	maxHeapSize = "256m"
-	//	jvmArgs '-XX:MaxPermSize=512m'
-	jvmArgs '-Xss24m'
+	jvmArgs '-Xss24m',
+	        '-Dfile.encoding=UTF-8',
+	        '--add-exports', 'java.base/sun.nio.ch=ALL-UNNAMED',
+	        '--add-exports', 'jdk.unsupported/sun.misc=ALL-UNNAMED',
+	        '--add-opens', 'java.base/java.io=ALL-UNNAMED',
+	        '--add-opens', 'java.base/java.lang.reflect=ALL-UNNAMED',
+	        '--add-opens', 'java.base/java.lang=ALL-UNNAMED',
+	        '--add-opens', 'java.base/java.text=ALL-UNNAMED',
+	        '--add-opens', 'java.base/java.util=ALL-UNNAMED',
+	        '--add-opens', 'java.desktop/java.awt.font=ALL-UNNAMED'
 	reports.html.enabled = true
 	reports.junitXml.enabled = true
 	exclude '**/*Manual*'
@@ -388,7 +405,6 @@ task distro {
 	dependsOn build
 }
 
-
 task generateNexialLib(type: Zip) {
 	group "generate-nexial-lib"
 	description "create nexial-lib-x.x.zip"
@@ -412,11 +428,11 @@ distributions {
 		contents {
 			into('lib') {
 				from jar
-				from(project.configurations.runtime){
-					ConfigurableFileTree  tree = fileTree(dir: 'lib', include: '*.jar')
+				from(project.configurations.runtimeClasspath) {
+					ConfigurableFileTree tree = fileTree(dir: 'lib', include: '*.jar')
 					tree.each { File file -> exclude file.name }
 				}
-				from('lib'){
+				from('lib') {
 					include "nexial-lib-version.txt"
 				}
 			}

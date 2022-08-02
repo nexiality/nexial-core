@@ -83,11 +83,11 @@ public class Date {
 
     public String addHour(String date, int hours) { return modifyDate(date, HOUR_OF_DAY, hours); }
 
-    public String addMinute(String date, String minutes) { return addMinute(date, NumberUtils.toInt(minutes));}
+    public String addMinute(String date, String minutes) { return addMinute(date, NumberUtils.toInt(minutes)); }
 
     public String addMinute(String date, int minutes) { return modifyDate(date, MINUTE, minutes); }
 
-    public String addSecond(String date, String seconds) { return addSecond(date, NumberUtils.toInt(seconds));}
+    public String addSecond(String date, String seconds) { return addSecond(date, NumberUtils.toInt(seconds)); }
 
     public String addSecond(String date, int seconds) { return modifyDate(date, SECOND, seconds); }
 
@@ -192,13 +192,13 @@ public class Date {
 
         double timeNumber = NumberUtils.toDouble(date);
 
-        int hour = new Double(timeNumber).intValue();
+        int hour = Double.valueOf(timeNumber).intValue();
         timeNumber = 60 * (timeNumber - hour);
 
-        int minute = new Double(timeNumber).intValue();
+        int minute = Double.valueOf(timeNumber).intValue();
         timeNumber = 60 * (timeNumber - minute);
 
-        int second = new Double(timeNumber).intValue();
+        int second = Double.valueOf(timeNumber).intValue();
         int millisecond = (int) Math.round(1000 * (timeNumber - second));
 
         Calendar c = new GregorianCalendar();
@@ -252,13 +252,6 @@ public class Date {
                 }
                 break;
             }
-            // case MONTH: {
-            //     if (variant < 1 || variant > 12) {
-            //         throw new IllegalArgumentException("Invalid month: " + variant + ". Consider a number between " +
-            //                                            "1 and 12.");
-            //     }
-            //     break;
-            // }
             case DAY_OF_WEEK: {
                 // in Nexial we treat 0 as Sunday, but in java.util.Calendar Sunday is 1
                 // so we need to adjust accordingly
@@ -269,30 +262,6 @@ public class Date {
                 if (variant == 8) { variant = 1; }
                 break;
             }
-            // case DAY_OF_MONTH: {
-            //     if (variant < 1 || variant > 31) {
-            //         throw new IllegalArgumentException("Invalid day of the month: " + variant + ". " +
-            //                                            "Consider a value between 1 and 31.");
-            //     }
-            //     break;
-            // }
-            // case HOUR_OF_DAY: {
-            //     if (variant < 0 || variant > 24) {
-            //         throw new IllegalArgumentException("Invalid hour of the day: " + variant + ". " +
-            //                                            "Consider a value between 0 and 24.");
-            //     }
-            //     if (variant == 24) { variant = 0; }
-            //     break;
-            // }
-            // case MINUTE:
-            // case SECOND: {
-            //     if (variant < 0 || variant > 60) {
-            //         throw new IllegalArgumentException("Invalid minute: " + variant + ". " +
-            //                                            "Consider a value between 0 and 60.");
-            //     }
-            //     // if (variant == 60) { variant = 0; }
-            //     break;
-            // }
         }
 
         final int dateValue = variant;

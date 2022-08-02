@@ -17,6 +17,13 @@
 
 package org.nexial.core.model;
 
+import java.io.File;
+import java.io.IOException;
+import java.text.MessageFormat;
+import java.text.NumberFormat;
+import java.util.*;
+import java.util.stream.Collectors;
+
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.io.FileUtils;
@@ -38,13 +45,6 @@ import org.nexial.core.excel.ExcelStyleHelper;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.ExecUtils;
 import org.nexial.core.utils.OutputFileUtils;
-
-import java.io.File;
-import java.io.IOException;
-import java.text.MessageFormat;
-import java.text.NumberFormat;
-import java.util.*;
-import java.util.stream.Collectors;
 
 import static java.io.File.separator;
 import static java.lang.System.lineSeparator;
@@ -150,14 +150,12 @@ public class ExecutionSummary {
     private WebServiceLogs wsLogs;
 
     private final transient List<StepDetails> stepDetails = new LinkedList<>();
+    private transient boolean stepDetailsHasError = false;
+    private transient boolean stepDetailsHasLinks = false;
 
     public List<StepDetails> getStepDetails() { return stepDetails; }
 
-    private transient boolean stepDetailsHasError = false;
-
     public boolean isStepDetailsHasError() { return stepDetailsHasError; }
-
-    private transient boolean stepDetailsHasLinks = false;
 
     public boolean isStepDetailsHasLinks() { return stepDetailsHasLinks; }
 
@@ -436,8 +434,8 @@ public class ExecutionSummary {
     public void aggregatedNestedExecutions(ExecutionContext context) {
         if (CollectionUtils.isEmpty(nestedExecutions)) { return; }
 
-        //startTime = 0;
-        //endTime = 0;
+        // startTime = 0;
+        // endTime = 0;
         totalSteps = 0;
         executed = 0;
         passCount = 0;
@@ -720,7 +718,7 @@ public class ExecutionSummary {
         createCell(sheet, "E" + rowNum, DateUtility.formatLongDate(summary.startTime), STYLE_EXEC_SUMM_TIMESPAN,
                    rowHeight);
         createCell(sheet, "F" + rowNum, formatDuration(summary.getElapsedTime()), STYLE_EXEC_SUMM_DURATION, rowHeight);
-        //createCell(sheet, "F" + rowNum, formatDuration(summary.getElapsedTime()), EXEC_SUMM_DURATION);
+        // createCell(sheet, "F" + rowNum, formatDuration(summary.getElapsedTime()), EXEC_SUMM_DURATION);
         createCell(sheet, "G" + rowNum, summary.getTotalSteps(), STYLE_EXEC_SUMM_FINAL_TOTAL, rowHeight);
         createCell(sheet, "H" + rowNum, summary.getPassCount(), STYLE_EXEC_SUMM_FINAL_TOTAL, rowHeight);
         createCell(sheet, "I" + rowNum, summary.getFailCount(), STYLE_EXEC_SUMM_FINAL_TOTAL, rowHeight);
@@ -754,7 +752,7 @@ public class ExecutionSummary {
         float rowHeight = EXEC_SUMMARY_HEIGHT;
         createCell(sheet, "D" + rowNum, summary.getName(), STYLE_EXEC_SUMM_ACTIVITY, rowHeight);
         createCell(sheet, "F" + rowNum, formatDuration(summary.getElapsedTime()), STYLE_EXEC_SUMM_DURATION, rowHeight);
-        //createCell(sheet, "F" + rowNum, formatDuration(summary.getElapsedTime()), EXEC_SUMM_DURATION);
+        // createCell(sheet, "F" + rowNum, formatDuration(summary.getElapsedTime()), EXEC_SUMM_DURATION);
         createCell(sheet, "G" + rowNum, summary.getTotalSteps(), STYLE_EXEC_SUMM_TOTAL, rowHeight);
         createCell(sheet, "H" + rowNum, summary.getPassCount(), STYLE_EXEC_SUMM_PASS, rowHeight);
         createCell(sheet, "I" + rowNum, summary.getFailCount(), STYLE_EXEC_SUMM_FAIL, rowHeight);
@@ -789,7 +787,7 @@ public class ExecutionSummary {
         float rowHeight = EXEC_SUMMARY_HEIGHT;
         createCell(sheet, "E" + rowNum, DateUtility.formatLongDate(startTime), STYLE_EXEC_SUMM_TIMESPAN, rowHeight);
         createCell(sheet, "F" + rowNum, formatDuration(endTime - startTime), STYLE_EXEC_SUMM_FINAL_TOTAL, rowHeight);
-        //createCell(sheet, "F" + rowNum, formatDuration(endTime - startTime), EXEC_SUMM_FINAL_TOTAL);
+        // createCell(sheet, "F" + rowNum, formatDuration(endTime - startTime), EXEC_SUMM_FINAL_TOTAL);
         createCell(sheet, "G" + rowNum, totalSteps, STYLE_EXEC_SUMM_FINAL_TOTAL, rowHeight);
         createCell(sheet, "H" + rowNum, passCount, STYLE_EXEC_SUMM_FINAL_TOTAL, rowHeight);
         createCell(sheet, "I" + rowNum, failCount, STYLE_EXEC_SUMM_FINAL_TOTAL, rowHeight);

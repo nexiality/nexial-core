@@ -785,7 +785,7 @@
       <value><![CDATA[
             {
                 "home": "${user.home}/.nexial/crossbrowsertesting",
-                "baseName": "cbt_tunnels",
+                "baseName": "cbt_tunnel",
                 "checkFrequency": 2592000000,
                 "checkFrequencyDescription": "Every 1 month",
                 "checkUrlBase" : "https://api.github.com/repos/crossbrowsertesting/cbt-tunnel-nodejs/releases/latest"

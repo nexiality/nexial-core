@@ -128,7 +128,8 @@
     <tr>
         <td nowrap="nowrap" class="execLabel1">Time Span:</td>
         <td class="execValue1"
-            data-th-utext="${#dates.format(new java.util.Date(summary.startTime), 'yyyy/MM/dd HH:mm:ss')} + ' - ' + ${#dates.format(new java.util.Date(summary.endTime), 'yyyy/MM/dd HH:mm:ss')} + '<br/> (' + ${#dates.format(#dates.create(0,0,0,0,0,0,summary.elapsedTime), 'HH:mm:ss.SSS')} + ')'">
+            data-th-with="sStartTime=${@org.nexial.commons.utils.DateUtility@format(summary.startTime, 'yyyy/MM/dd HH:mm:ss')},sEndTime=${@org.nexial.commons.utils.DateUtility@format(summary.endTime, 'yyyy/MM/dd HH:mm:ss')}"
+            data-th-utext="${sStartTime} + ' - ' + ${sEndTime} + '<br/> (' + ${#dates.format(#dates.create(0,0,0,0,0,0,summary.elapsedTime), 'HH:mm:ss.SSS')} + ')'">
             10/30/2018 01:31:39 - 10/30/2018 01:33:09
         </td>
         <td nowrap="nowrap" class="execLabel2">Pass/Fail:</td>

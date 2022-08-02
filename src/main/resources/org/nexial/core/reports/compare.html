@@ -3,11 +3,14 @@
   <table class="compare-result-stats">
     <tr>
       <th class="stats-label">Generated on:</th>
-      <td class="stats-value" data-th-utext="${@org.nexial.commons.utils.DateUtility@format(@java.lang.System@currentTimeMillis(), 'yyyy-MM-dd HH:mm:ss')}"></td>
+      <td class="stats-value" data-th-with="genDate=${@org.nexial.commons.utils.DateUtility@format(@java.lang.System@currentTimeMillis(), 'yyyy-MM-dd HH:mm:ss')}" data-th-utext="${genDate}"></td>
     </tr>
     <tr>
       <th class="stats-label">Matches:</th>
-      <td class="stats-value" data-th-utext="${report.matchCount + ' lines matched / ' + report.mismatchCount + ' lines mismatched / ' + @org.nexial.core.plugins.io.IoCommand@formatPercent(report.matchPercent) + ' matched'}"></td>
+      <td class="stats-value"
+          data-th-with="matchPercent=${@org.nexial.core.plugins.io.IoCommand@formatPercent(report.matchPercent)}"
+          data-th-utext="${report.matchCount + ' lines matched / ' + report.mismatchCount + ' lines mismatched / ' + matchPercent + ' matched'}">
+      </td>
     </tr>
     <tr>
       <th class="stats-label">Legend:</th>
@@ -30,8 +33,11 @@
       <tbody>
       <th:block th:each="match,matchStat : ${report.fileMatches}">
         <tr data-th-attr="class=${matchStat.index % 2 == 0 ? 'compare-result-row-even' : 'compare-result-row-odd'}">
-          <td rowspan="2" class="compare-result-analysis" data-th-classappend="${match.message == 'content matched exactly' ? 'compare-result-matched' : ''}"
-              data-th-utext="${match.message + '<br/>' + @org.nexial.commons.utils.TextUtils@toString(match.additionalMessages, '<br/>  ', '', '')}">
+          <td rowspan="2"
+              class="compare-result-analysis"
+              data-th-classappend="${match.message == 'content matched exactly' ? 'compare-result-matched' : ''}"
+              data-th-with="additionalMessages=${@org.nexial.commons.utils.TextUtils@toString(match.additionalMessages, '<br/>  ', '', '')}"
+              data-th-utext="${match.message + '<br/>' + additionalMessages}">
             MISMATCH DUE TO LETTER CASE
           </td>
           <td class="compare-result-expected">E</td>
@@ -48,8 +54,11 @@
       </th:block>
       <th:block th:each="match,matchStat : ${report.lineMatches}">
         <tr data-th-attr="class=${(report.fileMatches.size + matchStat.index) % 2 == 0 ? 'compare-result-row-even' : 'compare-result-row-odd'}">
-          <td rowspan="2" class="compare-result-analysis" data-th-classappend="${match.message == 'perfect match' ? 'compare-result-matched' : ''}"
-              data-th-utext="${match.message + '<br/>&nbsp;&nbsp;' + @org.nexial.commons.utils.TextUtils@toString(match.additionalMessages, '<br/>  ', '', '')}">
+          <td rowspan="2"
+              class="compare-result-analysis"
+              data-th-classappend="${match.message == 'perfect match' ? 'compare-result-matched' : ''}"
+              data-th-with="additionalMessages=${@org.nexial.commons.utils.TextUtils@toString(match.additionalMessages, '<br/>  ', '', '')}"
+              data-th-utext="${match.message + '<br/>&nbsp;&nbsp;' + additionalMessages}">
             MISMATCH DUE TO LETTER CASE
           </td>
           <td class="compare-result-expected">E</td>

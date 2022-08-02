@@ -17,6 +17,10 @@
 
 package org.nexial.core.plugins.jms;
 
+import java.lang.reflect.InvocationTargetException;
+import java.util.Map;
+import javax.validation.constraints.NotNull;
+
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
@@ -25,9 +29,6 @@ import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.model.StepResult;
 import org.nexial.core.plugins.ThirdPartyDriverInfo;
 import org.nexial.core.plugins.base.BaseCommand;
-
-import javax.validation.constraints.NotNull;
-import java.util.Map;
 
 import static org.nexial.core.NexialConst.MS_UNDEFINED;
 import static org.nexial.core.utils.CheckUtils.fail;
@@ -47,11 +48,11 @@ public class JmsCommand extends BaseCommand {
     @Override
     public String getTarget() { return "jms"; }
 
-    public void setJmsClient(JmsClient jmsClient) { this.jmsClient = jmsClient;}
+    public void setJmsClient(JmsClient jmsClient) { this.jmsClient = jmsClient; }
 
     public void setJmsClientConfigs(Map<String, String> jmsClientConfigs) { this.jmsClientConfigs = jmsClientConfigs; }
 
-    public void setJmsJarInfo(Map<String, ThirdPartyDriverInfo> jmsJarInfo) {this.jmsJarInfo = jmsJarInfo; }
+    public void setJmsJarInfo(Map<String, ThirdPartyDriverInfo> jmsJarInfo) { this.jmsJarInfo = jmsJarInfo; }
 
     public StepResult sendText(String config, String id, String payload) {
         requiresNotBlank(config, "Invalid config", config);
@@ -116,7 +117,7 @@ public class JmsCommand extends BaseCommand {
         try {
             configClass = jmsClientConfigs.get(provider);
 
-            Object configObject = Class.forName(configClass).newInstance();
+            Object configObject = Class.forName(configClass).getDeclaredConstructor().newInstance();
             if (configObject instanceof JmsClientConfig) {
                 JmsClientConfig configInstance = (JmsClientConfig) configObject;
                 configInstance.setDriverInfo(jmsJarInfo.get(provider));
@@ -126,11 +127,11 @@ public class JmsCommand extends BaseCommand {
 
             throw new IllegalArgumentException("JMS provider '" + provider + "' via '" + configClass +
                                                "' currently NOT SUPPORTED");
-        } catch (InstantiationException | IllegalAccessException | ClassNotFoundException e) {
+        } catch (InstantiationException | IllegalAccessException | ClassNotFoundException | NoSuchMethodException |
+                 InvocationTargetException e) {
             throw new IllegalArgumentException("JMS provider '" + provider + "' via '" + configClass +
                                                "' cannot be loaded: " + e.getMessage());
         }
 
     }
-
 }
