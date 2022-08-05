@@ -84,10 +84,12 @@ class EmailNotification(context: ExecutionContext, event: ExecutionEvent, data: 
     }
 
     private fun configureMailData(recipientList: MutableList<String>, content: String): MailData {
+        // default assignment
         var body = content
         var subject = MAIL_NOTIF_SUBJECT_PREFIX + event.description
 
         mailData = MailData()
+        mailData.toAddr = recipientList
 
         TextUtils.toMap(content, EVENT_CONFIG_SEP, "=").forEach { (key, value) ->
             when (key) {
@@ -102,9 +104,12 @@ class EmailNotification(context: ExecutionContext, event: ExecutionEvent, data: 
             }
         }
 
-        if (StringUtils.isNotEmpty(body)) body = OutputFileUtils.resolveContent(StringUtils.trim(body), context, false)
+        mailData.subject = subject
+        mailData.content =
+            if (StringUtils.isNotEmpty(body)) OutputFileUtils.resolveContent(StringUtils.trim(body), context, false)
+            else body
 
-        return mailData.setToAddr(recipientList).setSubject(subject).setContent(body)
+        return mailData
     }
 
     override fun perform() {

@@ -17,9 +17,6 @@
 
 package org.nexial.core.plugins.mail;
 
-import java.util.Map;
-import java.util.Properties;
-
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -27,6 +24,10 @@ import org.apache.commons.lang3.math.NumberUtils;
 import org.nexial.core.ExecutionThread;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.utils.CheckUtils;
+
+import java.util.Map;
+import java.util.Properties;
+import javax.validation.constraints.NotNull;
 
 import static org.nexial.core.NexialConst.Data.MIME_HTML;
 import static org.nexial.core.NexialConst.Mailer.*;
@@ -65,6 +66,7 @@ class MailProfile {
 
     public int getBufferSize() { return bufferSize; }
 
+    @NotNull
     protected Properties toProperties() {
         Properties properties = new Properties();
         properties.setProperty(MAIL_KEY_MAIL_HOST, host);
@@ -79,6 +81,7 @@ class MailProfile {
         return properties;
     }
 
+    @NotNull
     protected static MailProfile newInstance(String profile) {
         requiresNotBlank(profile, "Invalid profile", profile);
 

@@ -1077,17 +1077,7 @@ public class Browser implements ForcefulTerminate {
     }
 
     protected void setWindowSize(WebDriver driver) {
-        // not suitable for cef, electron or mobile
-        // for safari, we can only change position AFTER browser is opened
-        if (isRunChromeEmbedded() ||
-            isRunElectron() ||
-            isMobile() ||
-            (isRunBrowserStack() && browserStackHelper.browser == safari) ||
-            (isRunCrossBrowserTesting() && cbtHelper.browser == safari)) {
-            return;
-        }
-
-        setWindowSizeForcefully(driver);
+        if (!shouldNotResizeOrReposition()) { setWindowSizeForcefully(driver); }
     }
 
     protected void setWindowSizeForcefully(WebDriver driver) {
@@ -1121,6 +1111,7 @@ public class Browser implements ForcefulTerminate {
 
     protected void setWindowPosition(WebDriver driver) {
         if (driver == null) { return; }
+        if (shouldNotResizeOrReposition()) { return; }
 
         Window window = driver.manage().window();
         if (window == null) { return; }
@@ -1145,6 +1136,18 @@ public class Browser implements ForcefulTerminate {
         }
 
         window.setPosition(position);
+    }
+
+    /**
+     * not suitable for cef, electron or mobile
+     * for safari, we can only change position AFTER browser is opened
+     */
+    private boolean shouldNotResizeOrReposition() {
+        return isRunChromeEmbedded() ||
+               isRunElectron() ||
+               isMobile() ||
+               (isRunBrowserStack() && browserStackHelper.browser == safari) ||
+               (isRunCrossBrowserTesting() && cbtHelper.browser == safari);
     }
 
     private void handleFirefoxProfile(FirefoxOptions options, DesiredCapabilities capabilities) {

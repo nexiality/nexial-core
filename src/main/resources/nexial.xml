@@ -726,6 +726,17 @@
             }
           ]]></value>
     </entry>
+    <entry key="chromeembedded">
+      <value><![CDATA[
+            {
+                "home": "${user.home}/.nexial/chrome.embedded",
+                "baseName": "chromedriver",
+                "checkFrequency": 311040000000,
+                "checkFrequencyDescription": "Like, 10 years",
+                "checkUrlBase" : "https://chromedriver.storage.googleapis.com"
+            }
+          ]]></value>
+    </entry>
     <entry key="electron">
       <value><![CDATA[
             {
