@@ -15,6 +15,7 @@
  *
  */
 
+@file:Suppress("invisible_reference", "invisible_member")
 package org.nexial.core.interactive
 
 import org.apache.commons.lang3.StringUtils

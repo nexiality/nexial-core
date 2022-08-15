@@ -19,6 +19,7 @@ package org.nexial.core.plugins.browserstack
 
 import org.apache.commons.lang3.StringUtils
 import org.apache.commons.lang3.SystemUtils.*
+import org.nexial.commons.utils.EnvUtils
 import org.nexial.core.model.ExecutionContext
 import org.nexial.core.plugins.web.WebDriverHelper
 import org.nexial.core.plugins.web.WebDriverManifest
@@ -27,37 +28,37 @@ import java.io.File
 import java.io.IOException
 
 class BrowserStackLocalHelper(context: ExecutionContext) : WebDriverHelper(context) {
-    override fun resolveLocalDriverPath(): String {
-        return StringUtils.appendIfMissing(File(context.replaceTokens(config.home)).absolutePath, File.separator) +
-               config.baseName + if (IS_OS_WINDOWS) ".exe" else ""
-    }
 
-    @Throws(IOException::class)
-    override fun resolveDriverManifest(pollForUpdates: Boolean): WebDriverManifest {
-        val (manifest: WebDriverManifest, hasDriver) = initManifestAndCheckDriver()
+	override fun resolveLocalDriverPath(): String =
+		StringUtils.appendIfMissing(File(context.replaceTokens(config.home)).absolutePath, File.separator) +
+		config.baseName + if (IS_OS_WINDOWS) ".exe" else ""
 
-        // never check is turned on, and we already have a driver, so just keep this one
-        if (manifest.neverCheck && hasDriver) return manifest
+	@Throws(IOException::class)
+	override fun resolveDriverManifest(pollForUpdates: Boolean): WebDriverManifest {
+		val (manifest: WebDriverManifest, hasDriver) = initManifestAndCheckDriver()
 
-        if (pollForUpdates && manifest.lastChecked + config.checkFrequency > System.currentTimeMillis()) {
-            // we still have time... no need to check now
-            return manifest
-        }
-        // else, need to check online, poll online for newer driver
+		// never check is turned on, and we already have a driver, so just keep this one
+		if (manifest.neverCheck && hasDriver) return manifest
 
-        val env = when {
-            IS_OS_WINDOWS -> "win32"
-            IS_OS_LINUX   -> "linux-x64"
-            IS_OS_MAC     -> "darwin-x64"
-            else          -> throw IllegalArgumentException("OS $OS_NAME not supported for $browserType")
-        }
+		if (pollForUpdates && manifest.lastChecked + config.checkFrequency > System.currentTimeMillis()) {
+			// we still have time... no need to check now
+			return manifest
+		}
+		// else, need to check online, poll online for newer driver
 
-        val downloadUrl = "${config.checkUrlBase}/${config.baseName}-$env.zip"
-        ConsoleUtils.log("[BrowserStackLocal] derived download URL as $downloadUrl")
+		val env = when {
+			IS_OS_WINDOWS -> "win32"
+			IS_OS_LINUX   -> if (EnvUtils.getOsArchBit() == 64) "linux-x64" else "linux-ia32"
+			IS_OS_MAC     -> "darwin-x64"
+			else          -> throw IllegalArgumentException("OS $OS_NAME not supported for $browserType")
+		}
 
-        manifest.driverUrl = downloadUrl
-        manifest.lastChecked = System.currentTimeMillis()
+		val downloadUrl = "${config.checkUrlBase}/${config.baseName}-$env.zip"
+		ConsoleUtils.log("[BrowserStackLocal] derived download URL as $downloadUrl")
 
-        return manifest
-    }
+		manifest.driverUrl = downloadUrl
+		manifest.lastChecked = System.currentTimeMillis()
+
+		return manifest
+	}
 }

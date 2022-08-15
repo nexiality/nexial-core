@@ -115,7 +115,7 @@ public class Browser implements ForcefulTerminate {
     protected List<String> firefoxBinArgs;
 
     protected String initialWinHandle;
-    protected Stack<String> lastWinHandles = new Stack<String>() {
+    protected Stack<String> lastWinHandles = new Stack<>() {
         @Override
         public synchronized void addElement(String obj) { if (!contains(obj)) { super.addElement(obj); } }
 
@@ -138,7 +138,7 @@ public class Browser implements ForcefulTerminate {
     protected CrossBrowserTestingHelper cbtHelper;
 
     protected boolean shutdownStarted;
-    
+
     protected Map<String, List<String>> chromeBinLocations;
     protected Map<String, List<String>> firefoxBinLocations;
     protected Map<String, List<String>> edgeBinLocations;
@@ -445,22 +445,21 @@ public class Browser implements ForcefulTerminate {
         if (!isRunFireFox() && !isRunFirefoxHeadless() && !(driver instanceof FirefoxDriver)) {
             // close before quite doesn't seem to work for firefox driver or electron app
             log("Close the current window...");
-            try { driver.close(); } catch (Throwable e) { }
+            try { driver.close(); } catch (Throwable ignored) { }
         }
 
         try {
             log("Quit this driver, closing every associated window.");
             driver.quit();
             Thread.sleep(1000);
-        } catch (Throwable e) {
-            error("Error occurred while shutting down webdriver - " + ExceptionUtils.getRootCauseMessage(e));
+        } catch (Throwable ignored) {
         } finally {
             driver = null;
         }
     }
 
     protected String updateWinHandle() {
-        try { initialWinHandle = driver.getWindowHandle(); } catch (WebDriverException e) { }
+        try { initialWinHandle = driver.getWindowHandle(); } catch (WebDriverException ignored) { }
         resyncWinHandles();
         return initialWinHandle;
     }
@@ -573,9 +572,6 @@ public class Browser implements ForcefulTerminate {
         }
         log("enabling chrome remote port: %s", port);
         options.addArguments("--remote-debugging-port=" + port);
-
-        // options.addArguments("--auto-open-devtools-for-tabs"); // open devtools
-        // options.addArguments("--headless");
 
         Builder cdsBuilder = new Builder();
         if (context.getBooleanData(ELECTRON_LOG_ENABLED, getDefaultBool(ELECTRON_LOG_ENABLED))) {
@@ -841,7 +837,7 @@ public class Browser implements ForcefulTerminate {
                 if (longitude != 0 && latitude != 0) {
                     String geoPosition = String.format("{\"location\": {\"lat\":%s, \"lng\":%s}, \"accuracy\":27000.0}",
                                                        longitude, latitude);
-//                    options.addPreference("geo.wifi.uri", "data:application/json," + geoPosition);
+                    //                    options.addPreference("geo.wifi.uri", "data:application/json," + geoPosition);
                     options.addPreference("geo.provider.network.url", "data:application/json," + geoPosition);
                 }
             }
@@ -956,17 +952,17 @@ public class Browser implements ForcefulTerminate {
 
         if (!runWin64) {
             capabilities = capabilities
-                // .useCreateProcessApiToLaunchIe()
-                // .useShellWindowsApiToAttachToIe()
-                .takeFullPageScreenshot();
+                               // .useCreateProcessApiToLaunchIe()
+                               // .useShellWindowsApiToAttachToIe()
+                               .takeFullPageScreenshot();
         } else {
             capabilities = capabilities
-                // https://stackoverflow.com/a/32691070/4615880
-                // https://github.com/seleniumhq/selenium-google-code-issue-archive/issues/5116
-                //      (search for "After investigation of this issue")
-                .requireWindowFocus()
-                // .useCreateProcessApiToLaunchIe()
-                .useShellWindowsApiToAttachToIe();
+                               // https://stackoverflow.com/a/32691070/4615880
+                               // https://github.com/seleniumhq/selenium-google-code-issue-archive/issues/5116
+                               //      (search for "After investigation of this issue")
+                               .requireWindowFocus()
+                               // .useCreateProcessApiToLaunchIe()
+                               .useShellWindowsApiToAttachToIe();
         }
 
         // With the creation of the IEDriverServer.exe, it should be possible to create and use multiple
@@ -1027,13 +1023,12 @@ public class Browser implements ForcefulTerminate {
 
         // Whether to make sure the session has no cookies, cache entries, local storage, or databases.
         options.setUseTechnologyPreview(context.getBooleanConfig("web", profile, SAFARI_USE_TECH_PREVIEW));
+        // options.setAutomaticInspection(true);
 
         // todo: Create a SafariDriverService to specify what Safari flavour should be used and pass the service instance to a SafariDriver constructor.  When SafariDriver API updates to better code.. can't do this now
         SafariDriver safari = new SafariDriver(options);
         MutableCapabilities capabilities = (MutableCapabilities) safari.getCapabilities();
         initCapabilities(context, capabilities);
-        // setCapability(capabilities, "javascriptEnabled", true);
-        // setCapability(capabilities, "databaseEnabled", true);
 
         browserVersion = capabilities.getVersion();
         browserPlatform = capabilities.getPlatform();
@@ -1230,7 +1225,8 @@ public class Browser implements ForcefulTerminate {
             // but good enough
             initialWinHandle = IterableUtils.get(currentWinHandles, currentWinHandles.size() - 1);
             currentWinHandles.forEach(handle -> lastWinHandles.push(handle));
-            debug("webdriver readiness check: last window handle appeared to be invalid; reverting to %s", initialWinHandle);
+            debug("webdriver readiness check: last window handle appeared to be invalid; reverting to %s",
+                  initialWinHandle);
             return true;
         }
 

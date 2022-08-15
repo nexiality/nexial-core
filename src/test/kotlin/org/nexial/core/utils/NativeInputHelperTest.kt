@@ -15,6 +15,7 @@
  *
  */
 
+@file:Suppress("invisible_reference", "invisible_member")
 package org.nexial.core.utils
 
 import org.junit.Assert

@@ -37,6 +37,7 @@ import java.math.BigDecimal;
 import java.util.*;
 
 import static org.json.JSONObject.NULL;
+import static org.nexial.core.NexialConst.REGEX_PREFIX;
 import static org.nexial.core.utils.JSONPath.Option.*;
 import static org.nexial.core.utils.JsonUtils.isSimpleType;
 
@@ -80,7 +81,7 @@ import static org.nexial.core.utils.JsonUtils.isSimpleType;
  * <li>{@code new JSONPath(json, "data2['qrt']").get() --> "999.01"}</li>
  * <li>{@code new JSONPath(json, "data2[\"qrt\"]").get() --> "999.01"}</li>
  * </ul>
- *
+ * <p>
  * Class name kept as uppercase "JSON" to avoid confusion against jayway's JsonPath
  */
 public class JSONPath {
@@ -783,7 +784,7 @@ public class JSONPath {
         if (StringUtils.contains(current, "[")) {
             // composite key found. e.g. a[b], a[2], a[c.d]
             if (StringUtils.endsWith(current, "]")) {
-                // this composite key does not contains dot-based name
+                // this composite key does not contain dot-based name
                 current = StringUtils.substringBefore(current, "[");
             } else {
                 // special case where array reference containing dot. ie. key1[key2.key3] or key4[5]
@@ -814,7 +815,10 @@ public class JSONPath {
     private String postParseSubstitution(String data) {
         if (StringUtils.isEmpty(data)) { return data; }
         for (Map.Entry<String, String> subst : ESCAPED_CHARS_REPLACER.entrySet()) {
-            data = StringUtils.replace(data, subst.getValue(), StringUtils.removeStart(subst.getKey(), "\\"));
+            String replaceWith = TextUtils.isSubstringBetween(data, REGEX_PREFIX, "]", subst.getValue()) ?
+                                 subst.getKey() :
+                                 StringUtils.removeStart(subst.getKey(), "\\");
+            data = StringUtils.replace(data, subst.getValue(), replaceWith);
         }
         return data;
     }
@@ -844,7 +848,7 @@ public class JSONPath {
         if (isFilter) {
             JsonPathFilters filters = new JsonPathFilters(key);
             // jsonArray.forEach(item -> filters.filter(item, matches));
-            for (int i = 0; i < jsonArray.length(); i++) { filters.filter(jsonArray.opt(i), matches);}
+            for (int i = 0; i < jsonArray.length(); i++) { filters.filter(jsonArray.opt(i), matches); }
         } else {
             filterByNodeName(key, jsonArray, matches);
         }

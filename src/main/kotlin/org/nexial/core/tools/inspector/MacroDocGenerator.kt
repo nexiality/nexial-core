@@ -64,7 +64,7 @@ class MacroDocGenerator(val options: InspectorOptions, val logger: InspectorLogg
                 val macroCache = cacheHelper.readCache<MacroCache>(cacheFile)
                 if (macroCache != null) {
                     // while this is not needed for Kotlin code, the loaded JSON might not have "macros", hence the null check
-                    if (macroCache.macros != null && macroCache.macros.isNotEmpty()) {
+                    if (macroCache.macros.isNotEmpty()) {
                         macroFile.data += macroCache.macros
                         scannedMacroFiles += macroFile
                     } else macroCache.macros = arrayListOf()

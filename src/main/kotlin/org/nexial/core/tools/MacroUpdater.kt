@@ -52,6 +52,7 @@ import org.springframework.util.CollectionUtils
 import java.io.File
 import java.io.File.separator
 import java.io.IOException
+import kotlin.system.exitProcess
 
 object MacroUpdater {
     private val updated = mutableListOf<UpdateLog>()
@@ -184,9 +185,9 @@ object MacroUpdater {
     }
 
     private fun updateScenario(sheet: Worksheet, options: MacroUpdaterOptions, updateLog: UpdateLog): Boolean {
-        var hasUpdate = false
-        if (sheet.name == SHEET_SYSTEM) return hasUpdate
+        if (sheet.name == SHEET_SYSTEM) return false
 
+        var hasUpdate = false
         val lastCommandRow = sheet.findLastDataRow(ADDR_COMMAND_START)
         val firstRow = "" + COL_TEST_CASE + (ADDR_COMMAND_START.rowStartIndex + 1)
         val area = ExcelArea(sheet, ExcelAddress("$firstRow:${COL_COMMAND + 3}$lastCommandRow"), false)
@@ -300,7 +301,7 @@ object MacroUpdater {
         } catch (e: IOException) {
             System.err.println("\n\nFile $file is either is in use by other process or got deleted. " +
                                "Please close the file if it is open and re run the program\n\n")
-            System.exit(RC_EXCEL_IN_USE)
+            exitProcess(RC_EXCEL_IN_USE)
         } finally {
             try {
                 workBook.close()

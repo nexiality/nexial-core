@@ -33,7 +33,6 @@ import static org.nexial.core.NexialConst.DEF_FILE_ENCODING;
 import static org.nexial.core.NexialConst.TEMP;
 
 public class TextUtilsTest {
-
     @Test
     public void testSubstringBetweenClosestPair() {
         assertEquals("a", TextUtils.substringBetweenFirstPair("((a))", "(", ")"));
@@ -506,12 +505,15 @@ public class TextUtilsTest {
         assert propMap != null;
         assertEquals(propMap.size(), 7);
         assertEquals(propMap.get("environment"), "PROD");
-        assertEquals(propMap.get("mySite.url"), "https://abcdefg.qwertyu.com/user21/logon.aspx?key1=Integon&key2=63befb2pdosk8e358adf39f95e63700e&partnerId=qpwoslkgRater&redirectUrl=~/rating/Default.aspx ");
+        assertEquals(propMap.get("mySite.url"),
+                     "https://abcdefg.qwertyu.com/user21/logon.aspx?key1=Integon&key2=63befb2pdosk8e358adf39f95e63700e&partnerId=qpwoslkgRater&redirectUrl=~/rating/Default.aspx ");
         assertEquals(propMap.get("yoursite.url"), "http://1qazxswedfg.xvbghy.com/PolicyReview/ ");
-        assertEquals(propMap.get("theirSite.url"), "https://rfgthyuj.mvncbxvs.com/09sidu7/logon.aspx?key1=Integon&key2=63befb211f2cfe358w23er455e63700e&partnerId=asdfrtyu7890jhg&redirectUrl=~//rating/search/quotesearch.aspx \t\t\t\t\t");
+        assertEquals(propMap.get("theirSite.url"),
+                     "https://rfgthyuj.mvncbxvs.com/09sidu7/logon.aspx?key1=Integon&key2=63befb211f2cfe358w23er455e63700e&partnerId=asdfrtyu7890jhg&redirectUrl=~//rating/search/quotesearch.aspx \t\t\t\t\t");
         assertEquals(propMap.get("username"), "tech21					");
         assertEquals(propMap.get("passwordClue"), "agency19	");
-        assertEquals(propMap.get("mySuperDuperDB.url"), "jdbc:sqlserver://myserver09sdb04:1433;databaseName=dbase21;integratedSecurity=true;authenticationScheme=JavaKerberos");
+        assertEquals(propMap.get("mySuperDuperDB.url"),
+                     "jdbc:sqlserver://myserver09sdb04:1433;databaseName=dbase21;integratedSecurity=true;authenticationScheme=JavaKerberos");
     }
 
     @Test
@@ -788,5 +790,26 @@ public class TextUtilsTest {
         assertEquals(Arrays.asList("a", "b", "c"), TextUtils.groups("{a}{b}{c}", "{", "}", false));
         assertEquals(Arrays.asList("a", "b", "c"), TextUtils.groups("{a} \n\n  {b} \t {c}", "{", "}", false));
         assertEquals(Arrays.asList("a\n", " b", "c "), TextUtils.groups("{a\n} \n\n  { b} \t {c }", "{", "}", false));
+    }
+
+    @Test
+    public void testIsSubstringBetween() {
+        assertTrue(TextUtils.isSubstringBetween("This is a test", " is", "test", "a"));
+        assertTrue(TextUtils.isSubstringBetween("This is another test", " is", "test", "a"));
+        assertTrue(TextUtils.isSubstringBetween("This is another test", " is", "test", "another"));
+        assertTrue(TextUtils.isSubstringBetween("This is another test", " is", "test", " another "));
+        assertFalse(TextUtils.isSubstringBetween("This is another test", " is", "test", "another  "));
+        assertFalse(TextUtils.isSubstringBetween("This is another test", " is", "test", "another t"));
+        assertFalse(TextUtils.isSubstringBetween("This is another test", " is", "test", "s another"));
+
+        assertTrue(TextUtils.isSubstringBetween("Every good boy know the truth", null, "boy", "goo"));
+        assertTrue(TextUtils.isSubstringBetween("Every good boy know the truth", null, "the", "w "));
+        assertFalse(TextUtils.isSubstringBetween("Every good boy know the truth", null, "the", "truth"));
+        assertFalse(TextUtils.isSubstringBetween("Every good boy know the truth", null, "the", "he "));
+
+        assertTrue(TextUtils.isSubstringBetween("Every good boy know the truth", "boy", null, "know"));
+        assertTrue(TextUtils.isSubstringBetween("Every good boy know the truth", "boy", null, " know"));
+        assertFalse(TextUtils.isSubstringBetween("Every good boy know the truth", "boy", null, "y know"));
+        assertFalse(TextUtils.isSubstringBetween("Every good boy know the truth", "boy", null, "good"));
     }
 }

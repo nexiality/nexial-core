@@ -232,7 +232,7 @@ public class Nexial {
             Runtime.getRuntime().addShutdownHook(new Thread(ShutdownAdvisor::forcefullyTerminate));
 
             // interactive mode, only for stepwise or blockwise execution.
-            if (main.isInteractiveMode()) {
+            if (main.isInteractiveMode() || main.isReadyMode()) {
                 if (ExecUtils.isRunningInZeroTouchEnv()) {
                     ConsoleUtils.error(RB.Tools.text("error.noCICD"));
                     System.exit(RC_NOT_SUPPORT_ZERO_TOUCH_ENV);
@@ -289,6 +289,11 @@ public class Nexial {
         ConsoleUtils.log(NEXIAL_MANIFEST + " starting up...");
         System.setProperty(NEXIAL_VERSION, NEXIAL_MANIFEST);
 
+        boolean readyMode = false;
+        if (ArrayUtils.contains(args, "-" + READY)) {
+            readyMode = true;
+            args = ArrayUtils.removeElement(args, "-" + READY);
+        }
         CommandLine cmd = new DefaultParser().parse(OPTIONS, args);
 
         if (cmd.hasOption(OUTPUT)) {
@@ -348,7 +353,7 @@ public class Nexial {
                 executionMode = EXECUTE_SCRIPT;
             }
             ConsoleUtils.log(RB.Tools.text("cli.initComplete"));
-        } else if (cmd.hasOption(READY)) {
+        } else if (readyMode) {
             this.executionMode = ExecutionMode.READY;
             // todo: add ReadyLauncher initialization
         } else {
@@ -733,14 +738,16 @@ public class Nexial {
 
     protected void interact() {
         // there should only be 1 execution (ie script) since we've checked this earlier
-        if (CollectionUtils.isEmpty(executions)) {
+        if (!isReadyMode() && CollectionUtils.isEmpty(executions)) {
             throw new IllegalArgumentException(RB.Tools.text("interactive.missingScript"));
         }
 
         initSpringContext();
 
         NexialInteractive interactive = new NexialInteractive();
-        interactive.setExecutionDefinition(executions.get(0));
+        interactive.setExecutionMode(executionMode);
+        interactive.setExecutionDefinition(CollectionUtils.isNotEmpty(executions) ?
+                                           executions.get(0) : new ExecutionDefinition());
         interactive.startSession();
     }
 

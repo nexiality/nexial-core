@@ -642,9 +642,9 @@
         </entry>
         <entry key="mac">
           <list value-type="java.lang.String">
-            <value>/Applications/Firefox.app/Contents/MacOS/firefox-bin</value>
-            <value>${user.home}/Applications/Firefox.app/Contents/MacOS/firefox-bin</value>
-            <value>${user.home}/tools/Firefox.app/Contents/MacOS/firefox-bin</value>
+            <value>/Applications/Firefox.app/Contents/MacOS/firefox</value>
+            <value>${user.home}/Applications/Firefox.app/Contents/MacOS/firefox</value>
+            <value>${user.home}/tools/Firefox.app/Contents/MacOS/firefox</value>
           </list>
         </entry>
         <entry key="linux">

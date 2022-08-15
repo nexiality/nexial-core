@@ -17,7 +17,6 @@
 
 package org.nexial.core.plugins.web;
 
-import com.google.gson.JsonObject;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.IterableUtils;
 import org.apache.commons.collections4.MapUtils;
@@ -62,13 +61,10 @@ import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.FluentWait;
 import org.openqa.selenium.support.ui.Select;
 import org.openqa.selenium.support.ui.WebDriverWait;
-import ru.yandex.qatools.ashot.AShot;
-import ru.yandex.qatools.ashot.Screenshot;
-import ru.yandex.qatools.ashot.coordinates.WebDriverCoordsProvider;
-import ru.yandex.qatools.ashot.shooting.ShootingStrategies;
 
+import com.google.gson.JsonObject;
 import java.awt.*;
-import java.awt.image.BufferedImage;
+import java.awt.image.*;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
@@ -80,8 +76,12 @@ import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
 import javax.imageio.ImageIO;
 import javax.validation.constraints.NotNull;
+import ru.yandex.qatools.ashot.AShot;
+import ru.yandex.qatools.ashot.Screenshot;
+import ru.yandex.qatools.ashot.coordinates.WebDriverCoordsProvider;
+import ru.yandex.qatools.ashot.shooting.ShootingStrategies;
 
-import static java.awt.Image.SCALE_DEFAULT;
+import static java.awt.Image.*;
 import static java.io.File.separator;
 import static java.lang.Thread.sleep;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;

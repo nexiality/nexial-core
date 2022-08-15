@@ -110,7 +110,11 @@ public final class ConsoleUtils {
     @SuppressWarnings("PMD.SystemPrintln")
     public static void error(String id, String format, Object... args) {
         if (System.err == null) { throw new RuntimeException("System.err is null!"); }
-        error(id, String.format(format, args));
+        try {
+            error(id, String.format(format, args));
+        } catch (IllegalArgumentException e) {
+            error(id, format + " " + ArrayUtils.toString(args));
+        }
     }
 
     @SuppressWarnings("PMD.SystemPrintln")

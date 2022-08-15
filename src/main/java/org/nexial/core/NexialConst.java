@@ -19,6 +19,7 @@ package org.nexial.core;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+
 import org.apache.commons.cli.Options;
 import org.apache.commons.collections4.ListUtils;
 import org.apache.commons.collections4.MapUtils;
@@ -396,7 +397,7 @@ public final class NexialConst {
 
     // @formatter:on
 
-    //screen recording
+    // screen recording
     public static final class Recording {
         public enum Types { mp4, avi }
 
@@ -450,7 +451,6 @@ public final class NexialConst {
         // possible options: first, last, error
         public static final String DUP_PROJ_PROP_KEYS = registerSysVar(NAMESPACE + "projectPropertiesDups", "error");
 
-
         public static final String FAIL_IMMEDIATE = registerSysVar(NAMESPACE + "failImmediate", false);
         public static final String END_IMMEDIATE = registerSysVar(NAMESPACE + "endImmediate");
         public static final String END_SCRIPT_IMMEDIATE = registerSysVar(NAMESPACE + "endScriptImmediate");
@@ -474,7 +474,7 @@ public final class NexialConst {
         public static final String OPT_VAR_EXCLUDE_LIST = registerSysVar(NS_VAR + "ignored");
         public static final String OPT_VAR_DEFAULT_AS_IS = registerSysVar(NS_VAR + "defaultAsIs", false);
 
-        //runtime data variables
+        // runtime data variables
         public static final String NS_REQUIRED_VAR = SCOPE + "required.variables";
 
         // supersede `OPT_EXPRESSION_RESOLVE_URL` for wider coverage
@@ -1534,7 +1534,8 @@ public final class NexialConst {
     public static final class Rdbms {
         // plugin:rdbms
         public static final String DAO_PREFIX = NAMESPACE + "dao.";
-        public static final String OPT_INCLUDE_PACK_SINGLE_ROW = registerSysVar(NAMESPACE + "rdbms.packSingleRow", false);
+        public static final String OPT_INCLUDE_PACK_SINGLE_ROW = registerSysVar(NAMESPACE + "rdbms.packSingleRow",
+                                                                                false);
         public static final String SQL_DELIM = ";";
         public static final String SQL_COMMENT = "--";
         public static final String SQL_VAR = "nexial:";

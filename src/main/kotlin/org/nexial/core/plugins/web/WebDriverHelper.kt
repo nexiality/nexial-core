@@ -29,8 +29,12 @@ import org.apache.commons.lang3.math.NumberUtils
 import org.json.JSONArray
 import org.json.JSONObject
 import org.nexial.commons.proc.ProcessInvoker
-import org.nexial.commons.utils.*
+import org.nexial.commons.utils.CollectionUtil
+import org.nexial.commons.utils.EnvUtils
+import org.nexial.commons.utils.FileUtil
 import org.nexial.commons.utils.FileUtil.isFileReadable
+import org.nexial.commons.utils.RegexUtils
+import org.nexial.commons.utils.TextUtils
 import org.nexial.core.NexialConst.*
 import org.nexial.core.NexialConst.BrowserType.*
 import org.nexial.core.NexialConst.Data.WIN32_CMD
@@ -133,41 +137,12 @@ abstract class WebDriverHelper protected constructor(protected var context: Exec
 	 * @return [WebDriverManifest] instance with transient information about driver download url and target version
 	 */
 	@Throws(IOException::class)
-	protected open fun resolveDriverManifest(pollForUpdates: Boolean): WebDriverManifest {
-		val (manifest: WebDriverManifest, hasDriver) = initManifestAndCheckDriver()
+	protected abstract fun resolveDriverManifest(pollForUpdates: Boolean): WebDriverManifest
 
-		// never check is turned on, and we already have a driver, so just keep this one
-		if (manifest.neverCheck && hasDriver) return manifest
-
-		if (pollForUpdates && manifest.lastChecked + config.checkFrequency > System.currentTimeMillis()) {
-			// we still have time... no need to check now
-			return manifest
-		}
-		// else, need to check online, poll online for newer driver
-
-		// first ws call to check existing/available versions of this driver
-		val wsClient = newIsolatedWsClient()
-		val response = wsClient.get(config.checkUrlBase, null)
-		if (response.returnCode >= 400) {
-			// error in checking online
-			throw IOException("Error when accessing ${config.checkUrlBase}: ${response.statusText}")
-		}
-
-		val availableDriverContent = StringUtils.trim(response.body)
-		when {
-			TextUtils.isBetween(availableDriverContent, "[", "]") ->
-				extractDriverInfos(JSONArray(availableDriverContent), manifest, pollForUpdates)
-
-			TextUtils.isBetween(availableDriverContent, "{", "}") ->
-				extractDriverInfo(JSONObject(availableDriverContent), manifest, pollForUpdates)
-
-			else                                                  ->
-				ConsoleUtils.error("Unknown content downloaded from ${config.checkUrlBase}; IGNORED...")
-		}
-
-		return manifest
-	}
-
+	/**
+	 * so far, only gecko driver page returns array for response
+	 * we might need to adjust this function when a non-gecko page is found to also return JSON array as response
+	 */
 	protected open fun extractDriverInfos(json: JSONArray, manifest: WebDriverManifest, pollForUpdates: Boolean) {
 
 		val tags = JSONPath.find(json, "tag_name")
@@ -178,7 +153,7 @@ abstract class WebDriverHelper protected constructor(protected var context: Exec
 		val latestVersion = tagNumbersSorted[0]
 
 		if (!pollForUpdates || manifest.driverVersionExpanded < latestVersion) {
-			val targetVersion = tagNumbers[latestVersion]
+			val targetVersion = tagNumbers[latestVersion]!!
 			resolveDownloadUrlFromJSONArray(manifest, targetVersion, json)
 		}
 	}
@@ -190,13 +165,9 @@ abstract class WebDriverHelper protected constructor(protected var context: Exec
 		manifest.compatibleDriverVersion = null
 	}
 
-	protected fun resolveDownloadUrlFromJSONArray(
-		manifest: WebDriverManifest,
-		targetVersion: String?,
-		json: JSONArray,
-	) {
+	protected fun resolveDownloadUrlFromJSONArray(manifest: WebDriverManifest, targetVersion: String, json: JSONArray) {
 		// get latest
-		val driverSearchName = resolveDriverSearchName(targetVersion!!)
+		val driverSearchName = resolveDriverSearchName(targetVersion)
 		var driverUrl = JSONPath.find(
 			json,
 			"[tag_name=$targetVersion].assets[name=$driverSearchName].browser_download_url"
@@ -345,13 +316,13 @@ abstract class WebDriverHelper protected constructor(protected var context: Exec
 				"wmic datafile where name=\"" + binaryLocation!!.replace("\\", "\\\\") + "\" get version"
 			)
 		else if (IS_OS_LINUX || IS_OS_MAC)
-			arrayOf("bash", "-c", "firefox --version")
+			arrayOf("bash", "-c", "$binaryLocation --version")
 		else null
 
 	protected open fun resolveDriverSearchName(tag: String): String {
 		val assetRegex = when {
 			IS_OS_WINDOWS -> "win64"
-			IS_OS_MAC_OSX -> "macos"
+			IS_OS_MAC     -> "macos"
 			IS_OS_LINUX   -> "linux64"
 			else          -> throw java.lang.IllegalArgumentException("OS $OS_NAME not supported for $browserType")
 		}
@@ -382,14 +353,15 @@ abstract class WebDriverHelper protected constructor(protected var context: Exec
 		return config
 	}
 
-	protected fun toReleaseNumberMap(tags: String): Map<Double, String> {
+	private fun toReleaseNumberMap(tags: String): Map<Double, String> {
 		val map = HashedMap<Double, String>()
 		val tagStrings = StringUtils.split(tags, ",")
 		Arrays.stream(tagStrings).forEach { tag -> map[expandVersion(tag)] = StringUtils.unwrap(tag, "\"") }
 		return map
 	}
 
-	protected fun newIsolatedWsClient() = WebServiceClient(context).configureAsQuiet().disableContextConfiguration()
+	protected fun newIsolatedWsClient(): WebServiceClient =
+		WebServiceClient(context).configureAsQuiet().disableContextConfiguration()
 
 	protected fun initManifestAndCheckDriver(): Pair<WebDriverManifest, Boolean> {
 		return Pair(initWebDriverManifest(), isFileReadable(driverLocation, DRIVER_MIN_SIZE))
@@ -750,38 +722,27 @@ class FirefoxDriverHelper(context: ExecutionContext) : WebDriverHelper(context) 
 			// error in checking online
 			throw IOException("Error when accessing ${config.checkUrlBase}: ${response.statusText}")
 		}
-		FileUtils.deleteQuietly(File(File(driverLocation).parent))
+		FileUtils.deleteQuietly(File(driverLocation).parentFile)
+
 		val availableDriverContent = StringUtils.trim(response.body)
-		when {
-			TextUtils.isBetween(availableDriverContent, "[", "]") -> {
-				if (StringUtils.isBlank(driverVersion)) {
-					extractDriverInfos(
-						JSONArray(availableDriverContent), manifest,
-						pollForUpdates
-					)
-				} else {
-					resolveDownloadUrlFromJSONArray(
-						manifest, driverVersion, JSONArray(availableDriverContent)
-					)
-				}
-			}
-
-			TextUtils.isBetween(availableDriverContent, "{", "}") -> {
-				if (StringUtils.isBlank(driverVersion)) {
-					extractDriverInfo(JSONObject(availableDriverContent), manifest, pollForUpdates)
-				} else {
-					resolveDownloadUrlFromJSONObject(
-						manifest, driverVersion!!,
-						JSONObject(availableDriverContent)
-					)
-				}
-			}
-
-			else                                                  ->
-				ConsoleUtils.error("Unknown content downloaded from ${config.checkUrlBase}; IGNORED...")
+		if (StringUtils.isBlank(driverVersion)) {
+			extractDriverInfos(JSONArray(availableDriverContent), manifest, pollForUpdates)
+		} else {
+			resolveDownloadUrlFromJSONArray(manifest, driverVersion!!, JSONArray(availableDriverContent))
 		}
 
 		return manifest
+	}
+
+	override fun resolveDriverSearchName(tag: String): String {
+		val assetRegex = when {
+			IS_OS_WINDOWS -> "win64"
+			IS_OS_MAC     -> if (StringUtils.containsIgnoreCase(OS_ARCH, "aarch")) "macos-aarch64" else "macos"
+			IS_OS_LINUX   -> if (EnvUtils.getOsArchBit() == 64) "linux64" else "linux32"
+			else          -> throw java.lang.IllegalArgumentException("OS $OS_NAME not supported for $browserType")
+		}
+
+		return "REGEX:.+$tag-$assetRegex\\..+"
 	}
 }
 
@@ -790,6 +751,31 @@ class FirefoxDriverHelper(context: ExecutionContext) : WebDriverHelper(context) 
  * @constructor
  */
 class ElectronDriverHelper(context: ExecutionContext) : WebDriverHelper(context) {
+
+	@Throws(IOException::class)
+	override fun resolveDriverManifest(pollForUpdates: Boolean): WebDriverManifest {
+		val (manifest: WebDriverManifest, hasDriver) = initManifestAndCheckDriver()
+
+		// never check is turned on, and we already have a driver, so just keep this one
+		if (manifest.neverCheck && hasDriver) return manifest
+
+		if (pollForUpdates && manifest.lastChecked + config.checkFrequency > System.currentTimeMillis()) {
+			// we still have time... no need to check now
+			return manifest
+		}
+		// else, need to check online, poll online for newer driver
+
+		// first ws call to check existing/available versions of this driver
+		val wsClient = newIsolatedWsClient()
+		val response = wsClient.get(config.checkUrlBase, null)
+		if (response.returnCode >= 400) {
+			// error in checking online
+			throw IOException("Error when accessing ${config.checkUrlBase}: ${response.statusText}")
+		}
+
+		extractDriverInfo(JSONObject(StringUtils.trim(response.body)), manifest, pollForUpdates)
+		return manifest
+	}
 
 	override fun resolveLocalDriverPath(): String {
 		return StringUtils.appendIfMissing(File(context.replaceTokens(config.home)).absolutePath, separator) +
@@ -806,7 +792,11 @@ class ElectronDriverHelper(context: ExecutionContext) : WebDriverHelper(context)
 
 		val arch = when (EnvUtils.getOsArchBit()) {
 			32   -> "ia32"
-			64   -> "x64"
+
+			64   -> {
+				if (StringUtils.containsIgnoreCase(OS_ARCH, "arm64")) "arm64" else "x64"
+			}
+
 			else -> "ia32"
 		}
 
@@ -863,7 +853,7 @@ class ChromeDriverHelper(context: ExecutionContext) : WebDriverHelper(context) {
 			val env = when {
 				IS_OS_WINDOWS -> "win32"
 				IS_OS_LINUX   -> "linux64"
-				IS_OS_MAC     -> "mac64"
+				IS_OS_MAC     -> if (StringUtils.containsIgnoreCase(OS_ARCH, "aarch")) "mac64_m1" else "mac64"
 				else          -> throw IllegalArgumentException("OS $OS_NAME not supported for $browserType")
 			}
 
@@ -957,6 +947,31 @@ class IEDriverHelper(context: ExecutionContext) : WebDriverHelper(context) {
 }
 
 class CrossBrowserTestingLocalHelper(context: ExecutionContext) : WebDriverHelper(context) {
+
+	@Throws(IOException::class)
+	override fun resolveDriverManifest(pollForUpdates: Boolean): WebDriverManifest {
+		val (manifest: WebDriverManifest, hasDriver) = initManifestAndCheckDriver()
+
+		// never check is turned on, and we already have a driver, so just keep this one
+		if (manifest.neverCheck && hasDriver) return manifest
+
+		if (pollForUpdates && manifest.lastChecked + config.checkFrequency > System.currentTimeMillis()) {
+			// we still have time... no need to check now
+			return manifest
+		}
+		// else, need to check online, poll online for newer driver
+
+		// first ws call to check existing/available versions of this driver
+		val wsClient = newIsolatedWsClient()
+		val response = wsClient.get(config.checkUrlBase, null)
+		if (response.returnCode >= 400) {
+			// error in checking online
+			throw IOException("Error when accessing ${config.checkUrlBase}: ${response.statusText}")
+		}
+
+		extractDriverInfo(JSONObject(StringUtils.trim(response.body)), manifest, pollForUpdates)
+		return manifest
+	}
 
 	override fun resolveLocalDriverPath(): String {
 		return StringUtils.appendIfMissing(File(context.replaceTokens(config.home)).absolutePath, separator) +

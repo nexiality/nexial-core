@@ -17,11 +17,6 @@
 
 package org.nexial.core.utils;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Map;
-import javax.validation.constraints.NotNull;
-
 import org.junit.Before;
 import org.junit.Test;
 import org.nexial.commons.utils.ResourceUtils;
@@ -33,6 +28,11 @@ import org.nexial.core.model.ExecutionSummary;
 import org.nexial.core.model.MockExecutionContext;
 import org.nexial.core.model.TestProject;
 import org.nexial.core.plugins.base.BaseCommand;
+
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Map;
+import javax.validation.constraints.NotNull;
 
 public class ConsoleUtilsTest {
     private MockExecutionContext context;
@@ -58,6 +58,7 @@ public class ConsoleUtilsTest {
             Arrays.asList("progressively slowing down", "Assert Nested Data Ref.", "Assert Count"));
         session.setSteps(Arrays.asList("5", "17", "6", "15", "12", "14", "14", "13", "14"));
         session.setIteration(2);
+        session.setAutoRun(true);
 
         InteractiveConsole.Companion.showMenu(session);
     }
@@ -102,6 +103,7 @@ public class ConsoleUtilsTest {
         session.setExecutionDefinition(execDef);
         session.setScript(ResourceUtils.getResourceFilePath("/showcase/artifact/script/io-showcase.xlsx"));
         session.setException(new Exception("error! error!"));
+        session.setAutoRun(true);
 
         InteractiveConsole.Companion.showRun(scenarioSummary, session);
     }

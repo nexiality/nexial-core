@@ -190,7 +190,7 @@ class Mailinator : WebMailer() {
                 if (key.isNotEmpty() && !key.startsWith("http://") && !key.startsWith("https://")) key else null
             }
 
-    private fun harvestLinks(messageBody: String): MutableList<String> {
+    fun harvestLinks(messageBody: String): MutableList<String> {
         val urlLinks: MutableList<String> = mutableListOf()
         val pattern = Pattern.compile("(http|https).*?(\\s+|>)")
         val matcher = pattern.matcher(messageBody)

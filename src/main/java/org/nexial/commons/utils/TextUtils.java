@@ -733,6 +733,26 @@ public final class TextUtils {
         return StringUtils.startsWith(text, start) && StringUtils.endsWith(text, end);
     }
 
+    /**
+     * determine if {@literal substring} is between {@literal start} string and {@literal end} string of the specified
+     * {@literal text} string.
+     */
+    public static boolean isSubstringBetween(String text, String start, String end, String substring) {
+        if (StringUtils.isEmpty(text)) { return false; }
+        if (StringUtils.isEmpty(substring)) { return true; }
+        if (!StringUtils.contains(text, substring)) { return false; }
+
+        int posStart = StringUtils.isNotEmpty(start) ? text.indexOf(start) + start.length() : -1;
+        int posEnd = StringUtils.isNotEmpty(end) ? text.indexOf(end, posStart == -1 ? 0 : posStart) : -1;
+
+        if (posStart == -1) {
+            return posEnd == -1 || text.indexOf(substring) + substring.length() <= posEnd;
+        } else {
+            int posMatch = text.indexOf(substring, posStart);
+            return posEnd == -1 ? posMatch != -1 : posMatch != -1 && (posMatch + substring.length() <= posEnd);
+        }
+    }
+
     public static String wrapIfMissing(String text, String start, String end) {
         if (StringUtils.isEmpty(text)) { return start + end; }
         return StringUtils.prependIfMissing(StringUtils.appendIfMissing(text, end), start);
@@ -1312,8 +1332,8 @@ public final class TextUtils {
         values.forEach(row -> {
             StringBuilder rowBuffer = new StringBuilder();
             row.forEach(cell -> rowBuffer
-                .append(cell.contains(delim) ? StringUtils.wrapIfMissing(cell, "\"") : cell)
-                .append(delim));
+                                    .append(cell.contains(delim) ? StringUtils.wrapIfMissing(cell, "\"") : cell)
+                                    .append(delim));
             csvBuffer.append(StringUtils.removeEnd(rowBuffer.toString(), delim)).append(recordDelim);
         });
         return csvBuffer.toString();

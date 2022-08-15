@@ -2,25 +2,25 @@
 
 function reportBadInputAndExit() {
     echo
-    echo ERROR: Required input not found.
-    echo USAGE: $0 [project name] [optional: testcase id, testcase id, ...]
+    echo "ERROR: Required input not found."
+    echo "USAGE: $0 [project name] [optional: testcase id, testcase id, ...]"
     echo
-    echo  [project_name]        is required. Note that this can be just the name of the
-    echo                        project - which will automatically be created under ${PROJECT_BASE} -
-    echo                        or, a PREEXISTING, fully qualified path.
-    echo  [script_name]         is the script to create. Nexial will copy the script
-    echo                        template to the specified project based on this name.
-    echo                        A corresponding data file will also be created.
-    echo                        Note: this is optional.
-    echo  macro:[macro_name]    is the macro to create. Nexial will copy the macro
-    echo                        template to the specified project based on this name.
-    echo                        Note: this is optional.
-    echo.
-    echo  It is possible to specify multiple scripts and macros to create. For example,
-    echo
-    echo        ${sh_name} my_project Script1 macro:CommonLib Script2 macro:Navigations ...
-    echo
-    echo
+    echo " [project_name]        is required. Note that this can be just the name of the"
+    echo "                       project - which will automatically be created under ${PROJECT_BASE} -"
+    echo "                       or, a PREEXISTING, fully qualified path."
+    echo " [script_name]         is the script to create. Nexial will copy the script"
+    echo "                       template to the specified project based on this name."
+    echo "                       A corresponding data file will also be created."
+    echo "                       Note: this is optional."
+    echo " macro:[macro_name]    is the macro to create. Nexial will copy the macro"
+    echo "                       template to the specified project based on this name."
+    echo "                       Note: this is optional."
+    echo ""
+    echo " It is possible to specify multiple scripts and macros to create. For example,"
+    echo ""
+    echo "	${sh_name} my_project Script1 macro:CommonLib Script2 macro:Navigations ..."
+    echo ""
+    echo ""
     exit -1
 }
 

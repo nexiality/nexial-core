@@ -34,61 +34,62 @@ import java.util.stream.Collectors
  */
 object WebDriverExceptionHelper {
 
-    private const val noException = "No error or exception found"
+	private const val noException = "No error or exception found"
 
-    @JvmStatic
-    fun analyzeError(context: ExecutionContext, step: TestStep, e: WebDriverException?): String {
-        return if (e == null) noException else resolveCommandDetail(context, step) + "\n" + resolveErrorMessage(e)
-    }
+	@JvmStatic
+	fun analyzeError(context: ExecutionContext, step: TestStep, e: WebDriverException?): String {
+		return if (e == null) noException else resolveCommandDetail(context, step) + "\n" + resolveErrorMessage(e)
+	}
 
-    @JvmStatic
-    fun resolveErrorMessage(e: WebDriverException): String {
-        val error = e.message
-        val messageLines = StringUtils.split(error, "\n")
-        val errorSummary = if (ArrayUtils.getLength(messageLines) > 2)
-            "${messageLines[0]} ${messageLines[1]}..."
-        else
-            error
+	@JvmStatic
+	fun resolveErrorMessage(e: WebDriverException): String {
+		val error = e.message
+		val messageLines = StringUtils.split(error, "\n")
+		val errorSummary = if (ArrayUtils.getLength(messageLines) > 2)
+			"${messageLines[0]} ${messageLines[1]}..."
+		else
+			error
 
-        val heading = when (e) {
-            is ElementNotInteractableException -> "Specified element disable or not ready: "
-            is ElementNotSelectableException   -> "Specified element cannot be selected: "
-            is ElementNotVisibleException      -> "Specified element is not visible: "
-            is InvalidElementStateException    -> "Specified element definition or state: "
-            is JavascriptException             -> "JavaScript error: "
-            is MoveTargetOutOfBoundsException  -> "Target element to move is outside of browser window dimension: "
-            is NoAlertPresentException         -> "Specified alert dialog not found: "
-            is NoSuchCookieException           -> "Specified cookie not found: "
-            is NoSuchElementException          -> "Specified element not found: "
-            is NoSuchFrameException            -> "Specified frame invalid or not found: "
-            is NoSuchWindowException           -> "Specified window invalid or not found: "
-            is NotFoundException               -> "Specified web element/window not found: "
-            is ScreenshotException             -> "Unable to capture screenshot: "
-            is UnhandledAlertException         -> "JavaScript alert dialog not properly handled: "
-            is TimeoutException                -> "Timed out while referencing web element(s): "
-            is StaleElementReferenceException  -> 
-                "Referenced element is either no longer available or attached to the specified locator: "
-            is SessionNotCreatedException      ->
-                if (StringUtils.contains(e.message, "AppiumDriver")) "Unable to start Appium service: "
-                else "Unable to start WebDriver session: "
-            else                               -> "UNKNOWN ERROR: "
-        }
+		val heading = when (e) {
+			is ElementNotVisibleException      -> "Specified element is not visible: "
+			is ElementNotInteractableException -> "Specified element disable or not ready: "
+			is ElementNotSelectableException   -> "Specified element cannot be selected: "
+			is InvalidElementStateException    -> "Specified element definition or state: "
+			is JavascriptException             -> "JavaScript error: "
+			is MoveTargetOutOfBoundsException  -> "Target element to move is outside of browser window dimension: "
+			is NoAlertPresentException         -> "Specified alert dialog not found: "
+			is NoSuchCookieException           -> "Specified cookie not found: "
+			is NoSuchElementException          -> "Specified element not found: "
+			is NoSuchFrameException            -> "Specified frame invalid or not found: "
+			is NoSuchWindowException           -> "Specified window invalid or not found: "
+			is NotFoundException               -> "Specified web element/window not found: "
+			is ScreenshotException             -> "Unable to capture screenshot: "
+			is UnhandledAlertException         -> "JavaScript alert dialog not properly handled: "
+			is TimeoutException                -> "Timed out while referencing web element(s): "
+			is StaleElementReferenceException  -> "Referenced element is unavailable or no longer attached to the specified locator: "
+			is SessionNotCreatedException      ->
+				if (StringUtils.contains(e.message, "AppiumDriver")) "Unable to start Appium service: "
+				else "Unable to start WebDriver session: "
 
-        return heading + errorSummary
-    }
+			is NoSuchSessionException          -> "WebDriver session no longer valid: "
+			else                               -> "UNKNOWN ERROR: "
+		}
 
-    private fun resolveCommandDetail(context: ExecutionContext?, step: TestStep?): String {
-        if (step == null) return "UNKNOWN COMMAND OR PARAMETER"
+		return heading + errorSummary
+	}
 
-        val ctx = context ?: ExecutionThread.get()
-        val parameters: List<String> = if (ctx == null) ArrayList(step.params) else {
-            step.params
-                .stream()
-                .map { p -> if (StringUtils.startsWith(p, CRYPT_IND)) p else ctx.replaceTokens(p, true) }
-                .collect(Collectors.toList())
-        }
+	private fun resolveCommandDetail(context: ExecutionContext?, step: TestStep?): String {
+		if (step == null) return "UNKNOWN COMMAND OR PARAMETER"
 
-        val paramString = TextUtils.toString(parameters, ", ", "'", "'")
-        return "EXECUTING COMMAND: ${step.commandFQN}($paramString)"
-    }
+		val ctx = context ?: ExecutionThread.get()
+		val parameters: List<String> = if (ctx == null) ArrayList(step.params) else {
+			step.params
+				.stream()
+				.map { p -> if (StringUtils.startsWith(p, CRYPT_IND)) p else ctx.replaceTokens(p, true) }
+				.collect(Collectors.toList())
+		}
+
+		val paramString = TextUtils.toString(parameters, ", ", "'", "'")
+		return "EXECUTING COMMAND: ${step.commandFQN}($paramString)"
+	}
 }

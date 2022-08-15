@@ -17,17 +17,26 @@
 package org.nexial.core.interactive
 
 import org.apache.commons.collections4.CollectionUtils
+import org.apache.commons.lang3.RandomStringUtils
 import org.apache.commons.lang3.RegExUtils
 import org.apache.commons.lang3.StringUtils
 import org.apache.commons.lang3.math.NumberUtils
+import org.apache.tika.utils.SystemUtils.IS_OS_MAC
+import org.apache.tika.utils.SystemUtils.IS_OS_WINDOWS
+import org.java_websocket.WebSocket
 import org.nexial.commons.logging.LogbackUtils
+import org.nexial.commons.proc.ProcessInvoker
+import org.nexial.commons.proc.ProcessInvoker.WORKING_DIRECTORY
 import org.nexial.commons.proc.RuntimeUtils
+import org.nexial.commons.utils.EnvUtils
 import org.nexial.commons.utils.RegexUtils
 import org.nexial.commons.utils.TextUtils
 import org.nexial.core.CommandConst.CMD_REPEAT_UNTIL
 import org.nexial.core.CommandConst.CMD_SECTION
 import org.nexial.core.ExecutionInputPrep
 import org.nexial.core.ExecutionThread
+import org.nexial.core.Nexial.ExecutionMode
+import org.nexial.core.Nexial.ExecutionMode.READY
 import org.nexial.core.NexialConst.*
 import org.nexial.core.NexialConst.Data.*
 import org.nexial.core.NexialConst.Iteration.CURR_ITERATION
@@ -53,39 +62,80 @@ import org.nexial.core.interactive.InteractiveConsole.Commands.SET_SCENARIO
 import org.nexial.core.interactive.InteractiveConsole.Commands.SET_SCRIPT
 import org.nexial.core.interactive.InteractiveConsole.Commands.SET_STEPS
 import org.nexial.core.interactive.InteractiveConsole.Commands.TOGGLE_RECORDING
-import org.nexial.core.model.*
+import org.nexial.core.model.ExecutionContext
+import org.nexial.core.model.ExecutionDefinition
+import org.nexial.core.model.ExecutionSummary
 import org.nexial.core.model.ExecutionSummary.ExecutionLevel
 import org.nexial.core.model.ExecutionSummary.ExecutionLevel.*
+import org.nexial.core.model.TestCase
+import org.nexial.core.model.TestScenario
 import org.nexial.core.tools.TempCleanUp
 import org.nexial.core.utils.ConsoleUtils
 import org.nexial.core.utils.ExecUtils
 import java.io.File
 import java.util.*
 
-class NexialInteractive {
+class NexialInteractive : ConnectedEventListener, CloseEventListener {
 
+    private lateinit var runId: String
     lateinit var executionDefinition: ExecutionDefinition
     private val tmpComma = "~~!@!~~"
     private val rangeSeparator = "-"
     private val listSeparator = ","
-    private var autoRun = false
+    private var autoRun = true
+
+    lateinit var executionMode: ExecutionMode
+    private lateinit var wsServer: NexialWebSocket
+    private lateinit var callbackUrl: String
+
+    override fun onConnected(ws: WebSocket) {
+        InteractiveConsole.showReadyMenu(callbackUrl)
+        processReadyMenu()
+    }
+
+    override fun onClose(ws: WebSocket, code: Int, reason: String, remote: Boolean) {
+        ConsoleUtils.log(runId, "terminating FrontDesk...")
+        val procName = "neutralino-" +
+                       if (IS_OS_WINDOWS) "win_x64.exe" else if (IS_OS_MAC) "mac_x64" else "linux_x64"
+        RuntimeUtils.terminateInstance(procName)
+    }
 
     fun startSession() {
         // start of test suite (one per test plan in execution)
-        val runId = ExecUtils.deriveRunId()
+        runId = ExecUtils.deriveRunId()
 
-        executionDefinition.runId = runId
-        LogbackUtils.registerLogDirectory(appendLog(executionDefinition))
+        // todo: determine execution mode
+        if (executionMode == READY) {
+            ConsoleUtils.log(runId, "starting Ready Mode...")
+            val handshake = RandomStringUtils.randomAlphanumeric(15)
+            wsServer = NexialWebSocket(handshake = handshake)
+            wsServer.addConnectedListener(this)
+            wsServer.start()
+            ConsoleUtils.log(runId, "waiting on connection...")
 
-        val scriptLocation = executionDefinition.testScript
+            callbackUrl =
+                "${if (wsServer.secure) WS_PREFIX_SECURE else WS_PREFIX}${EnvUtils.getHostName()}:${wsServer.port}"
+            ProcessInvoker.invokeNoWait(FRONTDESK_LAUNCHER,
+                                        listOf("run", "--", "$HANDSHAKE_KEY=$handshake", "$CALLBACK_KEY=$callbackUrl"),
+                                        mapOf(Pair(WORKING_DIRECTORY, FRONTDESK_HOME))
+            )
+        }
 
-        ConsoleUtils.log(runId, "[$scriptLocation] resolve RUN ID as $runId")
+        if (executionDefinition.testScript != null) {
+            executionDefinition.runId = runId
+            LogbackUtils.registerLogDirectory(appendLog(executionDefinition))
 
-        val session = InteractiveSession(ExecutionContext(executionDefinition))
-        session.executionDefinition = executionDefinition
+            val scriptLocation = executionDefinition.testScript
 
-        InteractiveConsole.showMenu(session)
-        processMenu(session)
+            ConsoleUtils.log(runId, "[$scriptLocation] resolve RUN ID as $runId")
+
+            val session = InteractiveSession(ExecutionContext(executionDefinition))
+            session.executionDefinition = executionDefinition
+            session.autoRun = autoRun
+
+            InteractiveConsole.showMenu(session)
+            processMenu(session)
+        }
     }
 
     private fun processMenu(session: InteractiveSession) {
@@ -237,17 +287,19 @@ class NexialInteractive {
 
                 AUTORUN          -> {
                     autoRun = !autoRun
+                    session.autoRun = autoRun
                     if (autoRun)
-                        ConsoleUtils.log("Autorun ENABLED: Nexial Interactive will automatically execute after steps" +
+                        ConsoleUtils.log(runId,
+                                         "Autorun ENABLED: Nexial Interactive will automatically execute after steps" +
                                          " are specified via Option 5 or 6.")
                     else
-                        ConsoleUtils.log("Autorun DISABLED: Use Option X to execute specified steps.")
-                        
+                        ConsoleUtils.log(runId, "Autorun DISABLED: Use Option X to execute specified steps.")
+
                     InteractiveConsole.showMenu(session)
                 }
 
                 CLEAR_TEMP       -> {
-                    ConsoleUtils.log("Scanning fo Nexial-generated temp files to purge...")
+                    ConsoleUtils.log(runId, "Scanning fo Nexial-generated temp files to purge...")
                     TempCleanUp.cleanTempFiles(verbose = true, 1)
                     InteractiveConsole.showMenu(session)
                 }
@@ -259,10 +311,46 @@ class NexialInteractive {
 
                 EXIT             -> {
                     proceed = false
-                    ConsoleUtils.log("Ending Nexial Interactive session...")
+                    ConsoleUtils.log(runId, "Ending Nexial Interactive session...")
                 }
 
                 else             -> {
+                    error("Unknown command $input. Try again...\n")
+                }
+            }
+        }
+    }
+
+    private fun processReadyMenu() {
+        var proceed = true
+        while (proceed) {
+            print("> command: ")
+            val input = Scanner(System.`in`).nextLine()
+            val command = StringUtils.upperCase(StringUtils.trim(StringUtils.substringBefore(input, " ")))
+            val argument = StringUtils.trim(StringUtils.substringAfter(input, " "))
+
+            when (command) {
+                RELOAD_MENU -> {
+                    InteractiveConsole.showReadyMenu(callbackUrl)
+                }
+
+                // TOGGLE_RECORDING -> {
+                //     toggleRecording(session)
+                //     InteractiveConsole.showMenu(session)
+                // }
+
+                // HELP             -> {
+                //     InteractiveConsole.showHelp(session)
+                //     InteractiveConsole.showMenu(session)
+                // }
+
+                EXIT        -> {
+                    proceed = false
+                    wsServer.terminateClientsAndClose()
+                    ConsoleUtils.log(runId, "Ending Nexial Interactive session...")
+                }
+
+                else        -> {
                     error("Unknown command $input. Try again...\n")
                 }
             }

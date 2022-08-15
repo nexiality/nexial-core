@@ -81,7 +81,8 @@ object ProjectInspector {
 
     internal fun getMessage(key: String, replacements: List<Pair<String, String>>?): String {
         val message = RESOURCES.getProperty(key)
-        return if (StringUtils.isBlank(message) || replacements == null || replacements.isEmpty()) message
+        return if (StringUtils.isBlank(message) || replacements.isNullOrEmpty())
+            message
         else {
             var replaced = message
             replacements.forEach { replaced = replaced.replace("{${it.first}}", it.second) }
@@ -143,7 +144,7 @@ class CacheHelper<T>(val options: InspectorOptions, val logger: InspectorLogger)
 
     inline fun <reified T> readCache(cacheFile: File?) = if (cacheFile != null) {
         logger.log(deriveCacheName(cacheFile), "reading from cache...")
-        GSON.fromJson<T>(FileUtils.readFileToString(cacheFile, DEF_FILE_ENCODING), T::class.java)
+        GSON.fromJson(FileUtils.readFileToString(cacheFile, DEF_FILE_ENCODING), T::class.java)
     } else null
 
     internal fun saveCache(cacheObject: Any, cacheFile: File?) {

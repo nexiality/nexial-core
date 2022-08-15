@@ -32,7 +32,11 @@ import org.nexial.core.excel.Excel
 import org.nexial.core.excel.ExcelAddress
 import org.nexial.core.excel.ExcelArea
 import org.nexial.core.excel.ExcelConfig.*
-import org.nexial.core.model.*
+import org.nexial.core.model.ExecutionContext
+import org.nexial.core.model.ExecutionDefinition
+import org.nexial.core.model.StepResult
+import org.nexial.core.model.TestProject
+import org.nexial.core.model.TestScenario
 import org.nexial.core.plugins.base.BaseCommand
 import org.nexial.core.utils.ConsoleUtils
 import org.nexial.core.utils.ExecUtils.IGNORED_CLI_OPT
@@ -44,15 +48,6 @@ import java.util.*
 import kotlin.math.min
 
 data class InteractiveSession(val context: ExecutionContext) {
-
-    init {
-        System.getProperties().toMap().forEach { (name, _) ->
-            val n = name.toString()
-            if (IGNORED_CLI_OPT.none { StringUtils.startsWith(n, it) }) context.setData(n, System.getProperty(n))
-        }
-
-        ExecutionThread.set(context)
-    }
 
     // system
     val startTime: Long = System.currentTimeMillis()
@@ -126,6 +121,17 @@ data class InteractiveSession(val context: ExecutionContext) {
                 }
             }
         }
+
+    var autoRun = false
+
+    init {
+        System.getProperties().toMap().forEach { (name, _) ->
+            val n = name.toString()
+            if (IGNORED_CLI_OPT.none { StringUtils.startsWith(n, it) }) context.setData(n, System.getProperty(n))
+        }
+
+        ExecutionThread.set(context)
+    }
 
     private fun loadTestScript(reloadExcel: Boolean) {
         if (reloadExcel) {
