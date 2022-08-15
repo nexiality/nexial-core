@@ -966,11 +966,11 @@ public class ExpressionProcessorTest {
         assertEquals("420", subject.process("[JSON(" + jsonFile + ") =>" +
                                             " extract(details.minutes) list distinct descending last]"));
         assertEquals("600.0", subject.process("[JSON(" + jsonFile + ") =>" +
-                                              " extract(details[date1=REGEX:2016-05-0\\.+].minutes) list average]"));
+                                              " extract(details[date1=REGEX:2016-05-0.+].minutes) list average]"));
         assertEquals("2", subject.process("[JSON(" + jsonFile + ") => " +
-                                          "extract(details[date1=REGEX:2016-05-0\\.+].minutes => count)]"));
+                                          "extract(details[date1=REGEX:2016-05-0.+].minutes => count)]"));
         assertEquals("3300", subject.process("[JSON(" + jsonFile + ") => " +
-                                             "extract(details[date1=REGEX:2016-05-1\\.+].minutes => sum)]"));
+                                             "extract(details[date1=REGEX:2016-05-1.+].minutes => sum)]"));
         assertEquals("7th", subject.process("[JSON(" + jsonFile + ") => replace(details[type1=A2].type1,7th)" +
                                             "                           extract(details[type1=7th].type1)]"));
         assertNull(subject.process("[JSON(" + jsonFile + ") => extract(error)]"));
