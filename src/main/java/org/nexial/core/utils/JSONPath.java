@@ -87,9 +87,10 @@ import static org.nexial.core.utils.JsonUtils.isSimpleType;
 public class JSONPath {
     private static final Map<String, String> ESCAPED_CHARS_REPLACER = TextUtils.toMap("\\.=~~~>~~|" +
                                                                                       "\\]=~~}~~|" +
-                                                                                      "\\[=~~{~~|",
+                                                                                      "\\[=~~{~~",
                                                                                       "|", "=");
     private static final String FUNCTION_PREFIX = "=>";
+    private static final String REGEX_NOT_SIMPLY_ARRAY = "\\[.*([\\{\\[].+[\\}\\]]\\,?)+.*\\]";
 
     private final transient Logger logger = LoggerFactory.getLogger(getClass());
     private final Object dataStruc;
@@ -104,21 +105,16 @@ public class JSONPath {
         PREPEND, APPEND, OVERWRITE, DELETE, OVERWRITE_OR_ADD;
 
         String handle(Object existingValue, Object newValue) {
+            String existingValueString = existingValue == null ? null : Objects.toString(existingValue);
             switch (this) {
                 case PREPEND:
-                    if (newValue == null) {
-                        return existingValue == null ? null : Objects.toString(existingValue);
-                    } else {
-                        return existingValue == null ? Objects.toString(newValue) :
-                               Objects.toString(newValue) + existingValue;
-                    }
+                    if (newValue == null) { return existingValueString; }
+                    return existingValue == null ?
+                           Objects.toString(newValue) : Objects.toString(newValue) + existingValue;
                 case APPEND:
-                    if (newValue == null) {
-                        return existingValue == null ? null : Objects.toString(existingValue);
-                    } else {
-                        return existingValue == null ? Objects.toString(newValue) :
-                               Objects.toString(existingValue) + newValue;
-                    }
+                    if (newValue == null) { return existingValueString; }
+                    return existingValue == null ?
+                           Objects.toString(newValue) : Objects.toString(existingValue) + newValue;
                 case OVERWRITE:
                 case OVERWRITE_OR_ADD:
                     return newValue == null ? null : Objects.toString(newValue);
@@ -133,32 +129,20 @@ public class JSONPath {
     private static class JsonPathFunctions {
 
         static String invoke(String parsed, String function) {
-            switch (function) {
-                case "sum":
-                    return sum(parsed);
-                case "count":
-                    return count(parsed);
-                case "first":
-                    return first(parsed);
-                case "last":
-                    return last(parsed);
-                case "average":
-                    return average(parsed);
-                case "max":
-                    return max(parsed);
-                case "min":
-                    return min(parsed);
-                case "unique":
-                    return unique(parsed);
-                case "distinct":
-                    return distinct(parsed);
-                case "ascending":
-                    return ascending(parsed);
-                case "descending":
-                    return descending(parsed);
-                default:
-                    throw new IllegalArgumentException("Unknown/unsupported function: " + function);
-            }
+            return switch (function) {
+                case "sum" -> sum(parsed);
+                case "count" -> count(parsed);
+                case "first" -> first(parsed);
+                case "last" -> last(parsed);
+                case "average" -> average(parsed);
+                case "max" -> max(parsed);
+                case "min" -> min(parsed);
+                case "unique" -> unique(parsed);
+                case "distinct" -> distinct(parsed);
+                case "ascending" -> ascending(parsed);
+                case "descending" -> descending(parsed);
+                default -> throw new IllegalArgumentException("Unknown/unsupported function: " + function);
+            };
         }
 
         static String sum(String parsed) {
@@ -275,16 +259,13 @@ public class JSONPath {
             if (!isArray(parsed)) { throw new IllegalArgumentException("not an array: " + parsed); }
 
             // check if `parsed` is an array wrapping JSON object or JSON array
-            String REGEX_NOT_SIMPLY_ARRAY = "\\[.*([\\{\\[].+[\\}\\]]\\,?)+.*\\]";
             if (RegexUtils.match(parsed, REGEX_NOT_SIMPLY_ARRAY)) {
                 // match means this array is not simple/primitive array
                 return null;
             }
 
             List<String> array = TextUtils.toList(TextUtils.unwrap(parsed, "[", "]"), ",", true);
-            if (removeQuotes) {
-                for (int i = 0; i < array.size(); i++) { array.set(i, StringUtils.unwrap(array.get(i), "\"")); }
-            }
+            if (removeQuotes) { array.replaceAll(str -> StringUtils.unwrap(str, "\"")); }
             return array;
         }
 
@@ -360,8 +341,7 @@ public class JSONPath {
 
         if (parsedVal == null || parsedVal == NULL) { return null; }
 
-        if (parsedVal instanceof JSONArray) {
-            JSONArray array = (JSONArray) parsedVal;
+        if (parsedVal instanceof JSONArray array) {
             return handleFunctions(array.length() < 1 ? "[]" : simplifyPrimitives(array));
         } else {
             return handleFunctions(simplifyPrimitives(parsedVal));
@@ -520,13 +500,10 @@ public class JSONPath {
 
         parsedVal = option.handle(parsedVal, modifyWith);
 
-        if (dataStruc instanceof JSONObject) {
-            JSONObject json = (JSONObject) dataStruc;
+        if (dataStruc instanceof JSONObject json) {
             if (StringUtils.isEmpty(key)) {
                 // key must have been a dotted index, hence expect only 1 element and just update the value
-                Iterator keys = json.keys();
-                String key = (String) keys.next();
-                json.put(key, parsedVal);
+                json.put(json.keys().next(), parsedVal);
             } else {
                 if (TextUtils.isBetween(key, "[", "]")) {
                     json.put(fromIndexToSimpleKey(key), parsedVal);
@@ -547,11 +524,7 @@ public class JSONPath {
         if (child != null) { return child.getNative(); }
         if (parsedVal == null) { return null; }
         if (parsedVal == NULL) { return null; }
-        if (parsedVal instanceof JSONArray) {
-            JSONArray array = (JSONArray) parsedVal;
-            if (array.length() < 1) { return null; }
-            return array;
-        }
+        if (parsedVal instanceof JSONArray array) { return array.length() < 1 ? null : array; }
         return parsedVal;
     }
 
@@ -566,17 +539,13 @@ public class JSONPath {
             return;
         }
 
-        if (obj instanceof JSONObject) {
-            JSONObject json = (JSONObject) obj;
+        if (obj instanceof JSONObject json) {
             Object nodeValue = json.opt(nodeName);
             if (nodeValue != null) { matches.put(nodeValue); }
             return;
         }
 
-        if (obj instanceof JSONArray) {
-            filterByNodeName(nodeName, (JSONArray) obj, matches);
-            return;
-        }
+        if (obj instanceof JSONArray) { filterByNodeName(nodeName, (JSONArray) obj, matches); }
     }
 
     private String simplifyPrimitives(JSONArray array) {
@@ -632,7 +601,7 @@ public class JSONPath {
         }
 
         switch (option) {
-            case DELETE: {
+            case DELETE -> {
                 if (indexKey != -1) {
                     array.remove(indexKey);
                     return;
@@ -652,17 +621,10 @@ public class JSONPath {
                             array.remove(i);
                             i--;
                         }
-                        continue;
                     }
                 }
-
-                return;
             }
-
-            case OVERWRITE_OR_ADD:
-            case OVERWRITE:
-            case APPEND:
-            case PREPEND: {
+            case OVERWRITE_OR_ADD, OVERWRITE, APPEND, PREPEND -> {
                 if (indexKey != -1) {
                     array.put(indexKey, option.handle(parsedVal, modifyWith));
                     return;
@@ -682,8 +644,7 @@ public class JSONPath {
                             continue;
                         }
 
-                        if (obj instanceof JSONObject) {
-                            JSONObject json = (JSONObject) obj;
+                        if (obj instanceof JSONObject json) {
                             if (json.has(nameKey)) {
                                 json.put(nameKey, option.handle(json.opt(nameKey), modifyWith));
                                 matched = true;
@@ -691,10 +652,7 @@ public class JSONPath {
                             continue;
                         }
 
-                        if (obj instanceof JSONArray) {
-                            modify(((JSONArray) obj), modifyWith, option);
-                            continue;
-                        }
+                        if (obj instanceof JSONArray) { modify(((JSONArray) obj), modifyWith, option); }
                     } else if (filters != null) {
                         Object newValue = filters.modify(obj, modifyWith, option);
                         if (newValue != null) { array.put(i, newValue); }
@@ -707,13 +665,8 @@ public class JSONPath {
                                     (modifyWith == null ? "null" : "\"" + modifyWith + "\"") + "}";
                     array.put(new JSONObject(source));
                 }
-
-                return;
             }
-
-            default: {
-                logger.debug("key=" + key + " for a JSON Array, but action " + option + " is not supported");
-            }
+            default -> logger.debug("key=" + key + " for a JSON Array, but action " + option + " is not supported");
         }
     }
 
@@ -723,17 +676,14 @@ public class JSONPath {
             return true;
         }
 
-        if (matchTarget instanceof JSONObject) {
-            JSONObject json = (JSONObject) matchTarget;
+        if (matchTarget instanceof JSONObject json) {
             if (json.opt(nodeName) != null) {
-                // array.remove(i);
                 json.remove(nodeName);
                 return true;
             }
         }
 
-        if (matchTarget instanceof JSONArray) {
-            JSONArray matchTargetArray = (JSONArray) matchTarget;
+        if (matchTarget instanceof JSONArray matchTargetArray) {
             for (int i = 0; i < matchTargetArray.length(); i++) {
                 deleteMatch(matchTargetArray, matchTargetArray.get(i), i, nodeName);
                 // no need to return true (which will delete this array), since we are already deleting the matched node
@@ -815,7 +765,8 @@ public class JSONPath {
     private String postParseSubstitution(String data) {
         if (StringUtils.isEmpty(data)) { return data; }
         for (Map.Entry<String, String> subst : ESCAPED_CHARS_REPLACER.entrySet()) {
-            String replaceWith = TextUtils.isSubstringBetween(data, REGEX_PREFIX, "]", subst.getValue()) ?
+            String replaceWith = StringUtils.equals(subst.getKey(), "\\.") &&
+                                 TextUtils.isSubstringBetween(data, REGEX_PREFIX, "]", subst.getValue()) ?
                                  subst.getKey() :
                                  StringUtils.removeStart(subst.getKey(), "\\");
             data = StringUtils.replace(data, subst.getValue(), replaceWith);
@@ -913,8 +864,7 @@ public class JSONPath {
         //  (1) child structure,
         //  (2) index key of an array,
         //  (3) key of simple value
-        if (dataStruc instanceof JSONObject) {
-            JSONObject json = (JSONObject) dataStruc;
+        if (dataStruc instanceof JSONObject json) {
             parsedVal = jsonPathKey.isFilter ?
                         new JsonPathFilters(jsonPathKey.nodeName).find(json) : json.opt(jsonPathKey.nodeName);
             return;

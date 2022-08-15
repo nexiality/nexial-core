@@ -17,8 +17,6 @@
 
 package org.nexial.core.utils;
 
-import java.util.Set;
-
 import org.apache.commons.lang3.StringUtils;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -28,6 +26,8 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.nexial.commons.utils.ResourceUtils;
+
+import java.util.Set;
 
 public class JSONPathTest {
 
@@ -418,13 +418,13 @@ public class JSONPathTest {
                                             "}");
 
         testPathValue(fixture,
-                      "work_history[date=REGEX:2016-\\.+].location",
+                      "work_history[date=REGEX:2016-.+].location",
                       "[\"California\",\"Washington\",\"Florida\",\"Florida\",\"Florida\",\"California\",\"California\",\"Arizona\",\"Arizona\"]");
         testPathValue(fixture,
-                      "work_history[location=REGEX:\\.+o\\.*n\\.*a\\.*].hours",
+                      "work_history[location=REGEX:.+o.*n.*a.*].hours",
                       "[7.5,7.0,7.0,6.5,6.5,6.5,6.5]");
         testPathValue(fixture,
-                      "work_history[hours=REGEX:8\\.+].date",
+                      "work_history[hours=REGEX:8\\..+].date",
                       "[\"2016-12-21\",\"2016-12-23\",\"2016-12-26\",\"2017-01-04\",\"2017-01-05\"]");
     }
 
@@ -455,21 +455,21 @@ public class JSONPathTest {
 
         // list where I worked in 2016 where the state ends in '...a'
         testPathValue(fixture,
-                      "work_history[date=REGEX:2016-\\.+ AND location=REGEX:\\.+a].location",
+                      "work_history[date=REGEX:2016-.+ AND location=REGEX:.+a].location",
                       "[\"California\",\"Florida\",\"Florida\",\"Florida\",\"California\",\"California\",\"Arizona\",\"Arizona\"]");
 
         // list the hours that were either 8 or more hours in a state that ends in '...a'
         testPathValue(fixture,
-                      "work_history[location=REGEX:\\.*a].hours[REGEX:(8|9)\\.*]", "[8.0,8.3,8.1,8.0,8.1]");
+                      "work_history[location=REGEX:.*a].hours[REGEX:(8|9).*]", "[8.0,8.3,8.1,8.0,8.1]");
 
         // list the hours that were worked in 2016 and in states that ends with '...a'
         testPathValue(fixture,
-                      "work_history[REGEX:(L|l)ocation=REGEX:\\.+a AND date=REGEX:2016-\\.+].hours",
+                      "work_history[REGEX:(L|l)ocation=REGEX:.+a AND date=REGEX:2016-.+].hours",
                       "[7.5,8.0,4.1,8.3,8.1,7.0,7.0,6.5,6.5]");
 
         // list the hours that were worked in 2017 and in New Year
         testPathValue(fixture, "work_history[location=New York].hours", "8.1");
-        testPathValue(fixture, "work_history[REGEX:(L|l)ocation=New York AND date=REGEX:2017-\\.+].hours", "8.1");
+        testPathValue(fixture, "work_history[REGEX:(L|l)ocation=New York AND date=REGEX:2017-.+].hours", "8.1");
 
         // list all the dates worked in Nevada
         testPathValue(fixture, "work_history[location=Naveda].date", "[\"2017-01-04\",\"2017-01-05\"]");
@@ -477,8 +477,8 @@ public class JSONPathTest {
         // list all the hours or Hours worked in South Wales
         testPathValue(fixture, "work_history[location=South Wales][REGEX:(H|h)ours]", "8.1");
         testPathValue(fixture, "work_history[location=California].hours[0]", "7.5");
-        testPathValue(fixture, "work_history[location=California].hours[REGEX:(6|7|8|9)\\.*]", "[7.5,7.0,7.0]");
-        testPathValue(fixture, "work_history[location=California].hours[REGEX:(8|9)\\.*]", null);
+        testPathValue(fixture, "work_history[location=California].hours[REGEX:(6|7|8|9).*]", "[7.5,7.0,7.0]");
+        testPathValue(fixture, "work_history[location=California].hours[REGEX:(8|9).*]", null);
     }
 
     @Test
@@ -501,11 +501,11 @@ public class JSONPathTest {
                           "]");
 
         testPathValue(fixture,
-                      "[date=REGEX:2016-\\.+].location",
+                      "[date=REGEX:2016-.+].location",
                       "[\"California\",\"Washington\",\"Florida\",\"Florida\",\"Florida\",\"California\",\"California\",\"Arizona\",\"Arizona\"]");
-        testPathValue(fixture, "[location=REGEX:\\.+o\\.*n\\.*a\\.*].hours", "[7.5,7.0,7.0,6.5,6.5,6.5,6.5]");
+        testPathValue(fixture, "[location=REGEX:.+o.*n.*a.*].hours", "[7.5,7.0,7.0,6.5,6.5,6.5,6.5]");
         testPathValue(fixture,
-                      "[hours=REGEX:8\\.+].date",
+                      "[hours=REGEX:8\\..+].date",
                       "[\"2016-12-21\",\"2016-12-23\",\"2016-12-26\",\"2017-01-04\",\"2017-01-05\"]");
         testPathValue(fixture, "[location=Arizona].hours", "[6.5,6.5,6.5,6.5]");
     }
@@ -515,9 +515,9 @@ public class JSONPathTest {
         JSONArray fixture = new JSONArray("[ \"Apple\", \"Orange\", \"Banana\" ]");
 
         testPathValue(fixture, "[Apple]", "Apple");
-        testPathValue(fixture, "[REGEX:\\.+a\\.+]", "[\"Orange\",\"Banana\"]");
-        testPathValue(fixture, "[REGEX:\\.{6}]", "[\"Orange\",\"Banana\"]");
-        testPathValue(fixture, "[REGEX:\\.+]", "[\"Apple\",\"Orange\",\"Banana\"]");
+        testPathValue(fixture, "[REGEX:.+a.+]", "[\"Orange\",\"Banana\"]");
+        testPathValue(fixture, "[REGEX:.{6}]", "[\"Orange\",\"Banana\"]");
+        testPathValue(fixture, "[REGEX:.+]", "[\"Apple\",\"Orange\",\"Banana\"]");
     }
 
     @Test
@@ -535,7 +535,7 @@ public class JSONPathTest {
         // ---------------------------------------------------------------------------------------
         // test deletes
         // ---------------------------------------------------------------------------------------
-        JSONArray result = JSONPath.delete(new JSONArray(fixture), "[hexValue=REGEX:(\\.*f\\.*f\\.*)]");
+        JSONArray result = JSONPath.delete(new JSONArray(fixture), "[hexValue=REGEX:(.*f.*f.*)]");
         Assert.assertNotNull(result);
         Assert.assertEquals(4, result.length());
 
@@ -735,7 +735,7 @@ public class JSONPathTest {
         Assert.assertNotNull(result);
         Assert.assertEquals(3, result.length());
 
-        result = JSONPath.delete(new JSONArray(fixture), "[REGEX:\\.+\\[^y\\]]");
+        result = JSONPath.delete(new JSONArray(fixture), "[REGEX:.+\\[^y\\]]");
         Assert.assertNotNull(result);
         Assert.assertEquals(3, result.length());
         Assert.assertNull(JSONPath.find(result, "Alex"));
@@ -750,7 +750,7 @@ public class JSONPathTest {
 
         // append the filtered
         JSONArray array = new JSONArray(fixture);
-        JSONPath.append(array, "[REGEX:\\.+\\[^y\\]]", " Cracker");
+        JSONPath.append(array, "[REGEX:.+\\[^y\\]]", " Cracker");
         Assert.assertEquals("[\"Johnny\",\"Sammy\",\"Tracy\",\"Alex Cracker\"]", array.toString());
 
         // ---------------------------------------------------------------------------------------
@@ -767,12 +767,12 @@ public class JSONPathTest {
         // wholesale change
         result = JSONPath.overwrite(new JSONArray(fixture), "Tracy", "Stacy");
         Assert.assertNotNull(result);
-        Assert.assertEquals("[\"Johnny\",\"Sammy\",\"Stacy\",\"Alex\"]", JSONPath.find(result, "[REGEX:\\.+]"));
+        Assert.assertEquals("[\"Johnny\",\"Sammy\",\"Stacy\",\"Alex\"]", JSONPath.find(result, "[REGEX:.+]"));
 
         // can't overwrite what's not already there
         result = JSONPath.overwrite(new JSONArray(fixture), "Kerry", "Stacy");
         Assert.assertNotNull(result);
-        Assert.assertEquals("[\"Johnny\",\"Sammy\",\"Tracy\",\"Alex\"]", JSONPath.find(result, "[REGEX:\\.+]"));
+        Assert.assertEquals("[\"Johnny\",\"Sammy\",\"Tracy\",\"Alex\"]", JSONPath.find(result, "[REGEX:.+]"));
 
         // ---------------------------------------------------------------------------------------
         // test overwrite or add
@@ -780,11 +780,11 @@ public class JSONPathTest {
         result = JSONPath.overwriteOrAdd(new JSONArray(fixture), "Kerry", "Kerry", false);
         Assert.assertNotNull(result);
         Assert.assertEquals("[\"Johnny\",\"Sammy\",\"Tracy\",\"Alex\",{\"Kerry\":\"Kerry\"}]",
-                            JSONPath.find(result, "[REGEX:\\.+]"));
+                            JSONPath.find(result, "[REGEX:.+]"));
 
         result = JSONPath.overwriteOrAdd(new JSONArray(fixture), "Tracy", "Kerry", false);
         Assert.assertNotNull(result);
-        Assert.assertEquals("[\"Johnny\",\"Sammy\",\"Kerry\",\"Alex\"]", JSONPath.find(result, "[REGEX:\\.+]"));
+        Assert.assertEquals("[\"Johnny\",\"Sammy\",\"Kerry\",\"Alex\"]", JSONPath.find(result, "[REGEX:.+]"));
     }
 
     @Test
