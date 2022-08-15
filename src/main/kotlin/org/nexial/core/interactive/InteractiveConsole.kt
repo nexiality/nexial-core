@@ -107,15 +107,15 @@ open class InteractiveConsole {
 		private const val CMD_END = " "
 		private const val FILLER = '~'
 
-		private val HDR_TIMESPAN = "${SUB1_START}timespan       $SUB2_END"
-		private val HDR_DURATION = "${SUB1_START}duration       $SUB2_END"
-		private val HDR_ITERATION = "${SUB1_START}iteration      $SUB2_END"
-		private val HDR_STATS = "${SUB1_START}total/pass/fail$SUB2_END"
+		private const val HDR_TIMESPAN = "${SUB1_START}timespan       $SUB2_END"
+		private const val HDR_DURATION = "${SUB1_START}duration       $SUB2_END"
+		private const val HDR_ITERATION = "${SUB1_START}iteration      $SUB2_END"
+		private const val HDR_STATS = "${SUB1_START}total/pass/fail$SUB2_END"
 
 		private const val MAX_LENGTH_BASE = PROMPT_LINE_WIDTH - MARGIN_LEFT.length - MARGIN_RIGHT.length
 		private const val MAX_LENGTH_SCRIPT = MAX_LENGTH_BASE - HDR_SCRIPT.length
-		private val MAX_LENGTH_REF = HDR_STATS.length - SUB1_START.length - SUB2_END.length
-		private val LEFT_MARGIN_L2_VAL = MAX_LENGTH_BASE - HDR_STATS.length
+		private const val MAX_LENGTH_REF = HDR_STATS.length - SUB1_START.length - SUB2_END.length
+		private const val LEFT_MARGIN_L2_VAL = MAX_LENGTH_BASE - HDR_STATS.length
 		private const val LEFT_MARGIN_L3_HEADER = MAX_LENGTH_BASE - SUB1_START.length
 
 		private val CONSOLE = Builder(Types.TERM).timestamping(false).build()
@@ -340,7 +340,7 @@ open class InteractiveConsole {
 					if (StringUtils.isNotEmpty(beforeKey)) CONSOLE.print(beforeKey)
 
 					CPRINTER.print(key, UNDERLINE, FColor.BLACK, BColor.WHITE)
-					CPRINTER.clear()
+					// CPRINTER.clear()
 
 					val afterKey = StringUtils.substringAfter(menu, key)
 					if (StringUtils.isNotEmpty(afterKey)) CONSOLE.print(afterKey)
@@ -359,7 +359,7 @@ open class InteractiveConsole {
 			CONSOLE.print(MARGIN_LEFT)
 			// CONSOLE.print(SUB1_START)
 			CPRINTER.print(header1, UNDERLINE, FColor.CYAN, BColor.NONE)
-			CPRINTER.clear()
+			// CPRINTER.clear()
 
 			val fillerLength = LEFT_MARGIN_L3_HEADER - header1.length + SUB1_START.length
 			CONSOLE.print(StringUtils.repeat(" ", fillerLength))
@@ -392,7 +392,7 @@ open class InteractiveConsole {
 			CPRINTER.print(fail, BOLD, if (failCount < 1) FColor.WHITE else FColor.RED, BColor.NONE)
 			if (skipCount > 0) CPRINTER.print(skippedStat, CLEAR, FColor.YELLOW, BColor.NONE)
 			if (iteration != null) CPRINTER.print(iterationStat, CLEAR, FColor.WHITE, BColor.NONE)
-			CPRINTER.clear()
+			// CPRINTER.clear()
 
 			val fillerLength = LEFT_MARGIN_L2_VAL - statDetails.length
 			CONSOLE.print(StringUtils.repeat(" ", fillerLength))
