@@ -70,26 +70,32 @@ fi
 # -----------------------------------------------------------------------------
 # zip for distribution
 # -----------------------------------------------------------------------------
-echo creating distribution ${NEXIAL_DIST_HOME}/${RELEASE_ASSET}
-cd ${NEXIAL_DIST_HOME}
-echo ${RELEASE_TAG} > ${NEXIAL_DIST_HOME}/version.txt
-zip -9 -r ${NEXIAL_DIST_HOME}/${RELEASE_ASSET} *
 
-# -----------------------------------------------------------------------------
-# create a release
-# -----------------------------------------------------------------------------
-echo "Publishing to Github..."
-echo creating a release ${RELEASE_TAG}
-cd ${NEXIAL_DIST_HOME}
-release=$(curl -XPOST -H "Authorization:token ${GITHUB_TOKEN}" --data "{\"tag_name\": \"$RELEASE_TAG\", \"target_commitish\": \"master\", \"name\": \"${RELEASE_TAG}\", \"body\": \"$RELEASE_DESCRIPTION\", \"draft\": false, \"prerelease\": ${IS_PRERELEASE}}" https://api.github.com/repos/${GITHUB_REPO}/releases)
+echo SKIPPING creating distribution ${NEXIAL_DIST_HOME}/${RELEASE_ASSET}
 
-echo ${release}
-
-# Extract the id of the release from the creation response
-id=$(echo "$release" | sed -n -e 's/"id":\ \([0-9]\+\),/\1/p' | head -n 1 | sed 's/[[:blank:]]//g')
-
-# Upload the artifact
-echo uploading distribution ${NEXIAL_DIST_HOME}/${RELEASE_ASSET}
-curl -XPOST -H "Authorization:token ${GITHUB_TOKEN}" -H "Content-Type:application/octet-stream" --data-binary @${NEXIAL_DIST_HOME}/${RELEASE_ASSET} https://uploads.github.com/repos/${GITHUB_REPO}/releases/$id/assets?name=${RELEASE_ASSET}
+# ----------------------------------------------------------------------------------------------------------------------
+# TODO: RE-ENABLE FOR DISTRIBUTION!!!
+# ----------------------------------------------------------------------------------------------------------------------
+#echo creating distribution ${NEXIAL_DIST_HOME}/${RELEASE_ASSET}
+#cd ${NEXIAL_DIST_HOME}
+#echo ${RELEASE_TAG} > ${NEXIAL_DIST_HOME}/version.txt
+#zip -9 -r ${NEXIAL_DIST_HOME}/${RELEASE_ASSET} *
+#
+## -----------------------------------------------------------------------------
+## create a release
+## -----------------------------------------------------------------------------
+#echo "Publishing to Github..."
+#echo creating a release ${RELEASE_TAG}
+#cd ${NEXIAL_DIST_HOME}
+#release=$(curl -XPOST -H "Authorization:token ${GITHUB_TOKEN}" --data "{\"tag_name\": \"$RELEASE_TAG\", \"target_commitish\": \"master\", \"name\": \"${RELEASE_TAG}\", \"body\": \"$RELEASE_DESCRIPTION\", \"draft\": false, \"prerelease\": ${IS_PRERELEASE}}" https://api.github.com/repos/${GITHUB_REPO}/releases)
+#
+#echo ${release}
+#
+## Extract the id of the release from the creation response
+#id=$(echo "$release" | sed -n -e 's/"id":\ \([0-9]\+\),/\1/p' | head -n 1 | sed 's/[[:blank:]]//g')
+#
+## Upload the artifact
+#echo uploading distribution ${NEXIAL_DIST_HOME}/${RELEASE_ASSET}
+#curl -XPOST -H "Authorization:token ${GITHUB_TOKEN}" -H "Content-Type:application/octet-stream" --data-binary @${NEXIAL_DIST_HOME}/${RELEASE_ASSET} https://uploads.github.com/repos/${GITHUB_REPO}/releases/$id/assets?name=${RELEASE_ASSET}
 
 # done!
