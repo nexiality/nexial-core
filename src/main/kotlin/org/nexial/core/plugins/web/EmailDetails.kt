@@ -32,8 +32,8 @@ data class EmailDetails(
     var html: String? = null
         internal set
 
-    internal var link: ListOrderedMap<String, String> = ListOrderedMap()
-    internal var links: MutableList<String> = mutableListOf()
+    internal var link = ListOrderedMap<String, String>()
+    internal var links = listOf<String>()
 
     fun getAttachments(): List<String> = attachmentMap.keys.toList()
     fun getLinks(): List<String> = links
