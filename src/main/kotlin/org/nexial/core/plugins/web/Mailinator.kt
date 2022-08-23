@@ -134,7 +134,21 @@ class Mailinator : WebMailer() {
 				.toLocalDateTime())
 
 		val parts = JsonUtils.toJSONArray(JSONPath.find(jsonObject, "data.parts"))
-		var messageBody = parts.getJSONObject(0).getString("body")
+		val body = mutableMapOf<String, String>()
+		parts.forEach() { part ->
+			val jsonPart = part as JSONObject
+			if (jsonPart.has("body") && jsonPart.has("headers")) {
+				val header = jsonPart.getJSONObject("headers")
+				if (header.has("content-type")) {
+					val contentType = header.getString("content-type")
+					when {
+						contentType.contains("text/html")  -> body["html"] = jsonPart.getString("body")
+						contentType.contains("text/plain") -> body["plain"] = jsonPart.getString("body")
+					}
+				}
+			}
+		}
+
 		if (parts.length() == 1) {
 			val part = parts.getJSONObject(0)
 			val contentBody = part.getString("body")
@@ -164,16 +178,17 @@ class Mailinator : WebMailer() {
 			}
 		}
 
-		email.links = harvestLinks(messageBody)
+		email.links = harvestLinks(body["html"] ?: "")
 
 		if (StringUtils.isNotBlank(email.html)) {
 			val labels = extractLinkLabels(email.html!!)
+			var bodyPlain = body["plain"] ?: ""
 			for (label in labels) {
-				val result = harvestUrlByLabel(messageBody, label)
+				val result = harvestUrlByLabel(bodyPlain, label)
 				if (result.isNotEmpty()) {
 					val url = "http" + StringUtils.substringBefore(StringUtils.substringAfter(result, "<http"), ">")
 					if (!email.link.contains(label)) email.link[label] = url
-					messageBody = StringUtils.substringAfter(messageBody, result)
+					bodyPlain = StringUtils.substringAfter(bodyPlain, result)
 				}
 			}
 		}
