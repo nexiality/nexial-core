@@ -102,6 +102,7 @@ import static org.openqa.selenium.Keys.TAB;
 import static org.openqa.selenium.Keys.*;
 
 public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLogExternally, RequireBrowser {
+    private static final String PREFIX_INDEX = "INDEX:";
     protected Browser browser;
     protected WebDriver driver;
     protected JavascriptExecutor jsExecutor;
@@ -290,22 +291,39 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     @NotNull
     public StepResult select(String locator, String text) {
         Select select = getSelectElement(locator);
+
+        List<WebElement> options = select.getOptions();
+        if (CollectionUtils.isEmpty(options)) {
+            return StepResult.fail("Unable select as no options found in select element '%s'", locator);
+        }
+
         if (StringUtils.equals(text, DROPDOWN_SELECT_ALL)) {
             if (!select.isMultiple()) { return StepResult.fail("Unable to multi-select from a single-select element"); }
 
-            List<WebElement> options = select.getOptions();
-            if (CollectionUtils.isEmpty(options)) {
-                return StepResult.fail("Unable to multi-select as no options found in select element '%s'", locator);
-            }
             options.forEach(option -> select.selectByVisibleText(option.getText()));
             return StepResult.success("selected all options from multi-select '%s'", locator);
-        } else {
+        }
+
+        if (StringUtils.startsWith(text, PREFIX_INDEX)) {
+            // select last OPTION?
+            int index = StringUtils.equals(text, PREFIX_INDEX + "last") ?
+                        options.size() - 1 :
+                        NumberUtils.toInt(StringUtils.substringAfter(text, PREFIX_INDEX), -1);
+            if (index == -1) { return StepResult.fail("Invalid index specified: " + text); }
+
             try {
-                select.selectByVisibleText(text);
-            } catch (NoSuchElementException e) {
-                return StepResult.fail("Specified text '%s' not found in select element '%s'", text, locator);
+                select.selectByIndex(index);
+                return StepResult.success("selected INDEX %s from '%s'", index, locator);
+            } catch (Exception e) {
+                return StepResult.fail("Specified INDEX %s not found in select element '%s'", index, locator);
             }
-            return StepResult.success("selected '" + text + "' from '" + locator + "'");
+        }
+
+        try {
+            select.selectByVisibleText(text);
+            return StepResult.success("selected text '%s' from '%s'", text, locator);
+        } catch (NoSuchElementException e) {
+            return StepResult.fail("Specified text '%s' not found in select element '%s'", text, locator);
         }
     }
 
@@ -443,7 +461,8 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
             // step 3: find dropdown item matching `optText`
             WebElement targetItem = findElements(optLocator)
-                .stream().filter(item -> TextUtils.polyMatch(item.getText(), optText, true)).findFirst().orElse(null);
+                                        .stream().filter(item -> TextUtils.polyMatch(item.getText(), optText, true))
+                                        .findFirst().orElse(null);
             if (targetItem == null) { return StepResult.fail("Unable to find a dropdown option '" + optText + "'"); }
 
             // step 4: click on matching item
@@ -825,8 +844,11 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         By by = locatorHelper.findBy(locator);
 
         boolean found = waitForCondition(maxWaitMs, driver ->
-            findElements(driver, by).stream().filter(item -> TextUtils.polyMatch(item.getText(), text, true))
-                                    .findFirst().orElse(null) != null);
+                                                        findElements(driver, by).stream()
+                                                                                .filter(item -> TextUtils.polyMatch(item.getText(),
+                                                                                                                    text,
+                                                                                                                    true))
+                                                                                .findFirst().orElse(null) != null);
         if (!found) {
             return StepResult.fail("No element matching to '%s' with text '%s' can be found", locator, text);
         } else {
@@ -996,7 +1018,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     }
 
     public StepResult assertIECompatMode() {
-        //ie only functionality; not for chrome,ff,safari
+        // ie only functionality; not for chrome,ff,safari
         if (!browser.isRunIE()) { return StepResult.success("not applicable to non-IE browser"); }
         if (isIENativeMode()) {
             return StepResult.fail("EXPECTS IE Compatibility Mode, but browser runs at native mode found");
@@ -1006,7 +1028,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     }
 
     public StepResult assertIENativeMode() {
-        //ie only functionality; not for chrome,ff,safari
+        // ie only functionality; not for chrome,ff,safari
         if (!browser.isRunIE()) { return StepResult.success("not applicable to non-IE browser"); }
         if (isIENativeMode()) {
             return StepResult.success("browser runs in native Mode");
@@ -1076,7 +1098,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         String msgPrefix = "EXPECTED text '" + text + "' ";
 
         // selenium.isTextPresent() isn't cutting it when text contains spaces or line breaks.
-        //if (selenium.isTextPresent(text)) { }
+        // if (selenium.isTextPresent(text)) { }
 
         // text might contain single quote; hence use resolveContainLabelXpath()
         StepResult result = assertElementPresent(LocatorHelper.resolveContainLabelXpath(text));
@@ -1472,18 +1494,18 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         String initialWinHandle = browser.getInitialWinHandle();
 
         try {
-            //get all window handles available
+            // get all window handles available
             for (String popUpHandle : driver.getWindowHandles()) {
                 wait("750");
                 if (!popUpHandle.equals(initialWinHandle)) {
-                    //switch driver to popup handle
+                    // switch driver to popup handle
                     driver.switchTo().window(popUpHandle);
                 }
             }
 
-            //take care of invalid cert error message; call method
+            // take care of invalid cert error message; call method
             dismissInvalidCert();
-            //switch back to parent window
+            // switch back to parent window
             driver.switchTo().window(initialWinHandle);
             waitForBrowserStability(1000);
             waitForTitle(parentTitle);
@@ -1772,7 +1794,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         requiresPositiveNumber(waitMs, "waitMs must be a positive integer", waitMs);
 
         // wait time removed since in a multi-window scenario, the last (main) window might no yet selected.
-        //waitForBrowserStability(context.getPollWaitMs());
+        // waitForBrowserStability(context.getPollWaitMs());
 
         return trySelectWindow(winId, waitMs);
     }
@@ -1795,30 +1817,31 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         int winIndex = NumberUtils.toInt(winId);
 
         Boolean found = newFluentWait(waitMsLong)
-            .withMessage("window/tab of " + (useIndex ? "index " + winIndex : "ID " + winIndex))
-            .until(driver -> {
-                Set<String> handles = driver.getWindowHandles();
-                if (CollectionUtils.isEmpty(handles)) { return false; }
+                            .withMessage("window/tab of " + (useIndex ? "index " + winIndex : "ID " + winIndex))
+                            .until(driver -> {
+                                Set<String> handles = driver.getWindowHandles();
+                                if (CollectionUtils.isEmpty(handles)) { return false; }
 
-                if (useIndex) {
-                    if (handles.size() > winIndex) {
-                        String handle = IterableUtils.get(handles, winIndex);
-                        driver.switchTo().window(handle);
-                        return true;
-                    } else {
-                        return false;
-                    }
-                } else {
-                    String handle =
-                        handles.stream().filter(id -> StringUtils.equals(winId, id)).findFirst().orElse(null);
-                    if (StringUtils.isBlank(handle)) {
-                        driver.switchTo().window(winId);
-                        return true;
-                    } else {
-                        return false;
-                    }
-                }
-            });
+                                if (useIndex) {
+                                    if (handles.size() > winIndex) {
+                                        String handle = IterableUtils.get(handles, winIndex);
+                                        driver.switchTo().window(handle);
+                                        return true;
+                                    } else {
+                                        return false;
+                                    }
+                                } else {
+                                    String handle =
+                                        handles.stream().filter(id -> StringUtils.equals(winId, id)).findFirst().orElse(
+                                            null);
+                                    if (StringUtils.isBlank(handle)) {
+                                        driver.switchTo().window(winId);
+                                        return true;
+                                    } else {
+                                        return false;
+                                    }
+                                }
+                            });
 
         if (found) {
             return StepResult.success("waited for popup window '5s'", winId);
@@ -1946,7 +1969,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         File f = new File(file);
         if (!f.isFile() || !f.canRead()) { return StepResult.fail("specified file '" + file + "' is not readable"); }
 
-        //driver.setFileDetector(new LocalFileDetector());
+        // driver.setFileDetector(new LocalFileDetector());
         WebElement upload = findElement(fieldLocator);
         if (upload == null) { return StepResult.fail("expected locator '" + fieldLocator + "' NOT FOUND"); }
 
@@ -2197,8 +2220,8 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
             log("using full screen capturing approach with scroll timeout " + timeout + "...");
 
             Screenshot screenshot = new AShot()
-                .shootingStrategy(ShootingStrategies.viewportPasting(timeout))
-                .takeScreenshot(driver);
+                                        .shootingStrategy(ShootingStrategies.viewportPasting(timeout))
+                                        .takeScreenshot(driver);
             try {
                 boolean screenshotTaken = ImageIO.write(screenshot.getImage(), "PNG", screenshotFile);
                 if (screenshotTaken) {
@@ -2325,7 +2348,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         Stack<String> lastWinHandles = browser.getLastWinHandles();
         if (CollectionUtils.isNotEmpty(lastWinHandles)) {
             try {
-                //do not pop if there's only 1 win handle left (that's the initial win handle).
+                // do not pop if there's only 1 win handle left (that's the initial win handle).
                 String handle = lastWinHandles.size() == 1 ? lastWinHandles.peek() : lastWinHandles.pop();
                 ConsoleUtils.log("focus returns to previous window '" + handle + "'");
                 driver = driver.switchTo().window(handle);
@@ -2350,9 +2373,9 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     public StepResult mouseOver(String locator) {
         new Actions(driver).moveToElement(toElement(locator)).build().perform();
 
-        //selenium.fireEvent(locator, "focus");
+        // selenium.fireEvent(locator, "focus");
         // work as of 2.26.0
-        //selenium.mouseOver(locator);
+        // selenium.mouseOver(locator);
 
         return StepResult.success("mouse-over on '" + locator + "'");
     }
@@ -2794,9 +2817,9 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         ensureReady();
         jsExecutor.executeScript(JsLib.mouseOut(), toElement(locator));
 
-        //selenium.fireEvent(locator, "blur");
+        // selenium.fireEvent(locator, "blur");
         // work as of 2.26.0
-        //selenium.mouseOut(locator);
+        // selenium.mouseOut(locator);
         return StepResult.success("mouse-out on '" + locator + "'");
     }
 
@@ -3066,7 +3089,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
     protected void initWebDriver() {
         // todo: revisit to handle proxy
-        //if (context.getBooleanData(OPT_PROXY_ENABLE, false)) {
+        // if (context.getBooleanData(OPT_PROXY_ENABLE, false)) {
         //	ProxyHandler proxy = new ProxyHandler();
         //	proxy.setContext(this);
         //	proxy.startProxy();
