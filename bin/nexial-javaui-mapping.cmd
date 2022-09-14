@@ -41,5 +41,4 @@ goto :eof
 	%NEXIAL_BIN%.commons.cmd %*
 
 :exit
-	endlocal
 	exit /b %RC%

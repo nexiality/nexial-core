@@ -138,5 +138,4 @@ goto :exit
     %NEXIAL_BIN%.commons.cmd %*
 
 :exit
-    endlocal
     exit /b %NEXIAL_RC%
