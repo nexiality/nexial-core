@@ -120,7 +120,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     protected UserStackAPI userStack;
     protected CssHelper css;
 
-    protected static enum AssertionType {
+    protected enum AssertionType {
         PRESENT, ABSENT, VISIBLE, HIDDEN, ENABLED, DISABLED
     }
 
@@ -169,7 +169,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     @Override
     public void destroy() {
         super.destroy();
-        if (browser != null) { try { browser.shutdown(); } catch (Exception e) { } }
+        if (browser != null) { try { browser.shutdown(); } catch (Exception ignored) { } }
     }
 
     @Override
@@ -3678,7 +3678,8 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
             log("element '" + locator + "' not found, hence considered as 'NOT VISIBLE'");
             return false;
         }
-        return element.isDisplayed();
+
+        return isElementVisible(element);
     }
 
     protected void focus(WebElement element) {
@@ -3720,7 +3721,16 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     }
 
     private boolean isElementVisible(WebElement element) {
-        return element != null && element.isDisplayed() && isTrue(jsExecutor.executeScript(JsLib.isVisible(), element));
+        if (element == null) { return false; }
+
+        boolean isDisplayed = isTrue(jsExecutor.executeScript(JsLib.isVisible(), element));
+        return isRadioOrCheckbox(element) ? isDisplayed : element.isDisplayed() && isDisplayed;
+    }
+
+    private boolean isRadioOrCheckbox(WebElement element) {
+        if (element == null) { return false; }
+        if (!StringUtils.equalsIgnoreCase(element.getTagName(), "input")) { return false; }
+        return StringUtils.equalsAnyIgnoreCase(element.getAttribute("type"), "checkbox", "radio");
     }
 
     protected StepResult saveTextSubstring(String var, String locator, String delimStart, String delimEnd) {
