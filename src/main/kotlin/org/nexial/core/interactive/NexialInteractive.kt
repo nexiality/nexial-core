@@ -207,24 +207,6 @@ class NexialInteractive : ConnectedEventListener, CloseEventListener {
                     }
                 }
 
-                // RELOAD_SCRIPT    -> {
-                //     System.setProperty(ITERATION, session.iteration.toString())
-                //     session.reloadTestScript()
-                //     InteractiveConsole.showMenu(session)
-                // }
-
-                // RELOAD_DATA      -> {
-                //     System.setProperty(ITERATION, session.iteration.toString())
-                //     session.reloadDataFile()
-                //     InteractiveConsole.showMenu(session)
-                // }
-
-                // RELOAD_PROJPROP  -> {
-                //     System.setProperty(ITERATION, session.iteration.toString())
-                //     session.reloadProjectProperties()
-                //     InteractiveConsole.showMenu(session)
-                // }
-
                 RELOAD_ALL       -> {
                     System.setProperty(ITERATION, session.iteration.toString())
                     session.reloadDataFile()
@@ -246,11 +228,6 @@ class NexialInteractive : ConnectedEventListener, CloseEventListener {
                     inspect(session)
                     InteractiveConsole.showMenu(session)
                 }
-
-                // ALL_STEP         -> {
-                //     session.useAllActivities()
-                //     InteractiveConsole.showMenu(session)
-                // }
 
                 OPEN_SCRIPT      -> {
                     if (StringUtils.isBlank(session.script)) {

@@ -190,10 +190,10 @@ class LocatorHelper internal constructor(private val delegator: WebCommand) {
                 return resolvePrefix(locator).build(locator, relative)
             }
 
-            fun resolvePrefix(locator: String): LocatorType {
+            private fun resolvePrefix(locator: String): LocatorType {
                 val prefix = StringUtils.substringBefore(locator, "=")
                 if (StringUtils.isBlank(prefix)) throw IllegalArgumentException("No prefix (prefix=...): $locator")
-                return values().first { type -> type.prefix == prefix }
+                return LocatorType.values().first { type -> type.prefix == prefix }
             }
         }
     }
@@ -293,7 +293,7 @@ class LocatorHelper internal constructor(private val delegator: WebCommand) {
     internal fun newFluentWait(waitMs: Long) = newFluentWait(delegator.driver, waitMs)
 
     internal fun newFluentWait(driver: WebDriver, waitMs: Long) =
-        FluentWait<WebDriver?>(driver)
+        FluentWait(driver)
             .withTimeout(Duration.ofMillis(waitMs))
             .pollingEvery(Duration.ofMillis(25))
             .ignoring(NotFoundException::class.java, StaleElementReferenceException::class.java)

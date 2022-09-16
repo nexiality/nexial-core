@@ -652,7 +652,7 @@ public class Nexial {
         // command line option - script
         String testScriptPath = cmd.getOptionValue(SCRIPT);
         Excel script = InputFileUtils.resolveValidScript(testScriptPath);
-        if (script == null) { fail(RB.Tools.text("script.missing", testScriptPath)); }
+        if (script == null) { fail(RB.Tools.text("script.missing", testScriptPath + " ")); }
 
         // resolve the standard project structure based on test script input
         File testScriptFile = new File(testScriptPath);

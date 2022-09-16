@@ -104,20 +104,21 @@ class TableHelper(private val webCommand: WebCommand) {
 				break
 			}
 
-			ConsoleUtils.log("$msgPrefix collecting data for page ${pageCount + 1}")
+			ConsoleUtils.log("$msgPrefix collecting data for page ${pageCount + 1}; ${rows.size} row(s) found")
 			var hasData = true
 
 			for (i in rows.indices) {
 				val cellContent = toCellContent(rows[i], cellLocator)
 				if (CollectionUtils.isEmpty(cellContent)) {
 					writer.writeEmptyRow()
+					hasData = false
 					break
 				}
 
 				if (i == 0) {
 					if (pageCount > 0 && StringUtils.equals(firstRow, cellContent.toString())) {
 						// found duplicate... maybe we have reached the end?
-						ConsoleUtils.log("$msgPrefix reached the end of records")
+						ConsoleUtils.log("$msgPrefix the end of records detected; last ${rows.size} row(s) discarded")
 						hasData = false
 						break
 					}
@@ -180,7 +181,7 @@ class TableHelper(private val webCommand: WebCommand) {
 				break
 			}
 
-			ConsoleUtils.log(msgPrefix + " collecting data for page " + (pageCount + 1))
+			ConsoleUtils.log("$msgPrefix collecting data for page ${pageCount + 1}; ${rows.size} row(s) found")
 			var hasData = true
 
 			for (i in rows.indices) {
@@ -197,7 +198,7 @@ class TableHelper(private val webCommand: WebCommand) {
 					// compare the first row of every page after the 1st page
 					if (pageCount > 0 && StringUtils.equals(firstRow, cells.toString())) {
 						// found duplicate... maybe we have reached the end?
-						ConsoleUtils.log("$msgPrefix reached the end of records.")
+						ConsoleUtils.log("$msgPrefix the end of records detected; last ${rows.size} row(s) discarded")
 						hasData = false
 						break
 					}
@@ -422,10 +423,11 @@ class TableHelper(private val webCommand: WebCommand) {
 		if (CollectionUtils.isEmpty(cells)) return cellContent
 
 		val deepScan = webCommand.context.getBooleanData(DEEP_SCAN, getDefaultBool(DEEP_SCAN))
+		val highlightEnabled = webCommand.isHighlightEnabled
 
 		cells.forEach { cell ->
 			run {
-				webCommand.scrollIntoView(cell)
+				if (highlightEnabled) webCommand.highlight(cell) else webCommand.scrollIntoView(cell)
 				if (cell.isDisplayed) cellContent.add(if (deepScan) deepScan(cell, false) else csvSafe(cell.text))
 			}
 		}
@@ -457,7 +459,7 @@ class TableHelper(private val webCommand: WebCommand) {
 		val dataInput = context.getStringData(DATA_INPUT, getDefault(DATA_INPUT))
 
 		val metaMap = jsElementMeta(jsExec, gridDataMeta, inputs[0])
-		// <SELECT> element will exhibit newline in it's text representation. So if we are not dealing with
+		// <SELECT> element will exhibit newline in its text representation. So if we are not dealing with
 		// <SELECT> then `cellText` should be returned as this point
 		if (metaMap.isEmpty() || (StringUtils.isNotEmpty(cellText) && metaMap["tag"] != "select"))
 			return csvSafe(cellText)
@@ -526,7 +528,7 @@ class TableHelper(private val webCommand: WebCommand) {
 		// no newline means the cell probably doesn't contain <SELECT>
 		if (!StringUtils.contains(cellText, "\n") && StringUtils.isNotEmpty(cellText)) return csvSafe(cellText)
 
-		// now we're not sure.. maybe we need to capture data from <SELECT>
+		// now we're not sure... maybe we need to capture data from <SELECT>
 		val context = webCommand.context
 
 		val dataOption = InputOptions.valueOf(
@@ -593,6 +595,10 @@ class TableHelper(private val webCommand: WebCommand) {
 		safe = StringUtils.replace(safe, "\r", "")
 		safe = StringUtils.replace(safe, "\n", " ")
 		safe = StringUtils.replace(safe, "\t", " ")
+		safe = StringUtils.replace(safe, "▲", "")
+		safe = StringUtils.replace(safe, "△", "")
+		safe = StringUtils.replace(safe, "▼", "")
+		safe = StringUtils.replace(safe, "▽", "")
 
 		val trim = webCommand.context.getBooleanData(DATA_TRIM, getDefaultBool(DATA_TRIM))
 		if (trim) safe = StringUtils.trim(safe)
@@ -619,6 +625,7 @@ class TableHelper(private val webCommand: WebCommand) {
 			else {
 				try {
 					nextPage.click()
+					webCommand.waitForBrowserStability(webCommand.context.pollWaitMs, true)
 					true
 				} catch (e: InvalidElementStateException) {
 					ConsoleUtils.log("Unable to click 'Next Page'; element likely staled or disabled; will stop now")
