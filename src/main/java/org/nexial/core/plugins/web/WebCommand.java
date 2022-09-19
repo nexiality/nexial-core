@@ -157,9 +157,6 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         locatorHelper = new LocatorHelper(this);
         css = new CssHelper(this);
 
-        long browserStabilityWaitMs = deriveBrowserStabilityWaitMs(context);
-        if (context.isVerbose()) { log("default browser stability wait time is " + browserStabilityWaitMs + " ms"); }
-
         // todo: consider this http://seleniumhq.github.io/selenium/docs/api/javascript/module/selenium-webdriver/lib/logging.html
         logToBrowser = !browser.isRunChrome() &&
                        context.getBooleanData(OPT_BROWSER_CONSOLE_LOG, getDefaultBool(OPT_BROWSER_CONSOLE_LOG));
@@ -2074,7 +2071,6 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
         String javascript;
         try {
-            // javascript = OutputFileUtils.resolveContent(script, context, false, true);
             javascript = new OutputResolver(script, context, false, true).getContent();
         } catch (Throwable e) {
             // can't resolve content... then we'll leave it be
@@ -2099,6 +2095,36 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         if (retVal != null) { context.setData(var, retVal); }
 
         return StepResult.success("script executed");
+    }
+
+    public StepResult toast(String message, String duration, String darkMode) {
+        requiresNotBlank(message, "Invalid message", message);
+        requiresPositiveNumber(duration, "Invalid duration", duration);
+
+        int durationNum = NumberUtils.createInteger(duration);
+        if (durationNum < 250) { return StepResult.fail("duration must be greater than 250 (0.25 second)"); }
+
+        boolean isDark = BooleanUtils.toBoolean(darkMode);
+
+        ensureReady();
+
+        try {
+            String isNexialToastInstalled = JsLib.isNexialToastInstalled(isDark);
+            if (!BooleanUtils.toBoolean(Objects.toString(jsExecutor.executeScript(isNexialToastInstalled)))) {
+                jsExecutor.executeScript(JsLib.installNexialToast(isDark));
+            }
+
+            jsExecutor.executeScript(JsLib.toast(isDark), message, duration);
+        } catch (UnhandledAlertException e) {
+            if (browser.isRunSafari()) {
+                // it's ok... safari's been known to barf at JS... let's try to move on...
+                ConsoleUtils.error("UnhandledAlertException when executing JavaScript with Safari, might be ok...");
+            } else {
+                throw e;
+            }
+        }
+
+        return StepResult.success("toast displayed with message " + message);
     }
 
     /**
@@ -3335,7 +3361,15 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         }
 
         if (!context.getBooleanConfig(getTarget(), getProfile(), ENFORCE_PAGE_SOURCE_STABILITY) && !forceWait) {
-            return false;
+            int loadWaitMs = context.getIntConfig("web", profile, WEB_PAGE_LOAD_WAIT_MS);
+            boolean pageLoaded = new WebDriverWait(driver, loadWaitMs).withMessage("is browser load complete")
+                                                                      .until(driver -> isBrowserLoadComplete());
+            if (!pageLoaded) {
+                ConsoleUtils.error("page not ready within specified wait time " + loadWaitMs + "ms");
+                return false;
+            } else {
+                return true;
+            }
         }
 
         // force at least 1 compare

@@ -43,8 +43,13 @@ import org.nexial.core.plugins.base.BaseCommand;
 import org.nexial.core.plugins.base.ContextScreenRecorder;
 import org.nexial.core.plugins.javaui.JavaUICommand;
 import org.nexial.core.plugins.javaui.JavaUIProfile;
+import org.nexial.core.plugins.web.WebCommand;
 import org.nexial.core.plugins.web.WebDriverExceptionHelper;
-import org.nexial.core.utils.*;
+import org.nexial.core.utils.ConsoleUtils;
+import org.nexial.core.utils.FlowControlUtils;
+import org.nexial.core.utils.MessageUtils;
+import org.nexial.core.utils.OutputFileUtils;
+import org.nexial.core.utils.OutputResolver;
 import org.nexial.core.variable.Syspath;
 import org.openqa.selenium.WebDriverException;
 
@@ -54,6 +59,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
@@ -72,6 +78,8 @@ import static org.nexial.core.NexialConst.MSG_FAIL;
 import static org.nexial.core.NexialConst.LogMessage.ERROR_LOG;
 import static org.nexial.core.NexialConst.Recording.Autostarts.execution;
 import static org.nexial.core.NexialConst.Recording.RECORDING_AUTOSTART;
+import static org.nexial.core.NexialConst.Web.*;
+import static org.nexial.core.NexialConst.Web.DESCRIPTION_AS_TOAST_DARK_MODE;
 import static org.nexial.core.SystemVariables.getDefault;
 import static org.nexial.core.SystemVariables.getDefaultBool;
 import static org.nexial.core.excel.ExcelConfig.MSG_PASS;
@@ -80,6 +88,13 @@ import static org.nexial.core.model.OnDemandInspectionDetector.getInstance;
 import static org.nexial.core.utils.ExecUtils.isRunningInZeroTouchEnv;
 
 public class TestStep extends TestStepManifest {
+    private static final Map TOAST_MSG_REPLACEMENTS = TextUtils.toMap("=",
+                                                                      "&=&amp;",
+                                                                      " =&nbsp;",
+                                                                      "\n=<br/>",
+                                                                      "\r=",
+                                                                      "\t=&nbsp;&nbsp;&nbsp;&nbsp;");
+
     protected ExecutionContext context;
     protected Worksheet worksheet;
     protected List<XSSFCell> row;
@@ -164,9 +179,9 @@ public class TestStep extends TestStepManifest {
     @Override
     public String toString() {
         return new ToStringBuilder(this, SIMPLE_STYLE)
-            .appendSuper(super.toString())
-            .append("commandRepeater", commandRepeater)
-            .toString();
+                   .appendSuper(super.toString())
+                   .append("commandRepeater", commandRepeater)
+                   .toString();
     }
 
     public void addNestedMessage(String message) {
@@ -412,6 +427,21 @@ public class TestStep extends TestStepManifest {
                 }
             } else {
                 waitFor(context.getDelayBetweenStep());
+            }
+
+            String toastMsg = context.replaceTokens(this.description);
+            if (StringUtils.isNotBlank(toastMsg) &&
+                context.getBooleanData(DESCRIPTION_AS_TOAST, getDefaultBool(DESCRIPTION_AS_TOAST))) {
+                WebCommand web = (WebCommand) context.findPlugin("web");
+                // `readyToTakeScreenshot` checks for browser readiness
+                if (web != null && web.readyToTakeScreenshot()) {
+                    toastMsg = TextUtils.replace(toastMsg, TOAST_MSG_REPLACEMENTS);
+                    web.toast(toastMsg,
+                              context.getStringData(DESCRIPTION_AS_TOAST_WAIT_MS,
+                                                    getDefault(DESCRIPTION_AS_TOAST_WAIT_MS)),
+                              context.getStringData(DESCRIPTION_AS_TOAST_DARK_MODE,
+                                                    getDefault(DESCRIPTION_AS_TOAST_DARK_MODE)));
+                }
             }
 
             try {
@@ -710,7 +740,7 @@ public class TestStep extends TestStepManifest {
                     if (context.containsCrypt(origParamValue)) {
                         paramCell.setCellComment(toSystemComment(paramCell, "detected crypto"));
                         continue;
-                    } else if(i == COL_IDX_PARAMS_START && StringUtils.equals(getCommandFQN(), CMD_VERBOSE)) {
+                    } else if (i == COL_IDX_PARAMS_START && StringUtils.equals(getCommandFQN(), CMD_VERBOSE)) {
                         message = StringUtils.trim(platformSpecificEOL(message));
                         if (StringUtils.length(message) > MAX_VERBOSE_CHAR) {
                             message = StringUtils.abbreviate(message, MAX_VERBOSE_CHAR);
@@ -761,7 +791,8 @@ public class TestStep extends TestStepManifest {
                                     ConsoleUtils.log("output-to-cloud enabled; copying " + link + " cloud...");
                                     String cloudUrl = context.getOtc().importFile(tmpFile, true);
                                     context.setData(OPT_LAST_OUTPUT_LINK, cloudUrl);
-                                    context.setData(OPT_LAST_OUTPUT_PATH, StringUtils.substringBeforeLast(cloudUrl, "/"));
+                                    context.setData(OPT_LAST_OUTPUT_PATH,
+                                                    StringUtils.substringBeforeLast(cloudUrl, "/"));
                                     ConsoleUtils.log("output-to-cloud enabled; copied  " + link + " to " + cloudUrl);
 
                                     worksheet.setHyperlink(paramCell, cloudUrl, "(cloud) " + param);

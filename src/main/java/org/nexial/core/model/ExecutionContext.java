@@ -1098,6 +1098,9 @@ public class ExecutionContext {
             functionToken = StringUtils.replace(functionToken, TOKEN_DEFUNC_END, TOKEN_FUNCTION_END);
             String value = invokeFunction(functionToken);
 
+            // prevent infinite loop
+            if (StringUtils.equals(text, value)) { return value; }
+
             // need to properly handle platform specific path... switch to use / or \ depending on the OS
             if (TextUtils.isBetween(functionToken, "syspath|", "|fullpath")) {
                 String pathPart = StringUtils.substringAfter(text, functionToken);

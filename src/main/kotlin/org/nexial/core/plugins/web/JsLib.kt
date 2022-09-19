@@ -18,6 +18,7 @@
 package org.nexial.core.plugins.web
 
 import org.apache.commons.lang3.StringUtils
+import org.nexial.commons.utils.ResourceUtils
 import org.openqa.selenium.JavascriptExecutor
 
 object JsLib {
@@ -218,6 +219,18 @@ object JsLib {
 
 	@JvmStatic
 	fun documentDimension() = "return window.innerWidth + ',' + window.innerHeight;"
+
+	@JvmStatic
+	fun isNexialToastInstalled(darkMode: Boolean = true) =
+		"return window.nexial != null && window.nexial.Toast${if (darkMode) "Dark" else "Light"} != null;"
+
+	@JvmStatic
+	fun installNexialToast(darkMode: Boolean = true): String =
+		ResourceUtils.loadResource("/org/nexial/core/plugins/web/NexialToast${if (darkMode) "Dark" else "Light"}.js")
+
+	@JvmStatic
+	fun toast(darkMode: Boolean = true) =
+		"window.nexial.Toast${if (darkMode) "Dark" else "Light"}(arguments[0], arguments[1]);"
 
 	object LocalStorage {
 

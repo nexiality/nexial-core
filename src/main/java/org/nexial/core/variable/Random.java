@@ -74,7 +74,7 @@ public class Random {
     public String numeric(String from, String to) {
         if (isDigit("random.numeric()", from)) { return ""; }
         if (isDigit("random.numeric()", to)) { return ""; }
-        return RandomUtils.nextInt(NumberUtils.toInt(from), NumberUtils.toInt(to)) + "";
+        return RandomUtils.nextInt(NumberUtils.toInt(from), NumberUtils.toInt(to) + 1) + "";
     }
 
     protected void init() { }

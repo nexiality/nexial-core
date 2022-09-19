@@ -17,9 +17,6 @@
 
 package org.nexial.core;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-
 import org.apache.commons.cli.Options;
 import org.apache.commons.collections4.ListUtils;
 import org.apache.commons.collections4.MapUtils;
@@ -40,6 +37,8 @@ import org.nexial.core.model.TestProject;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.ExecUtils;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
@@ -51,8 +50,7 @@ import java.util.*;
 import javax.validation.constraints.NotNull;
 
 import static java.awt.Color.*;
-import static java.awt.image.BufferedImage.TYPE_INT_ARGB;
-import static java.awt.image.BufferedImage.TYPE_INT_RGB;
+import static java.awt.image.BufferedImage.*;
 import static java.io.File.separator;
 import static java.math.RoundingMode.*;
 import static javax.naming.Context.*;
@@ -520,6 +518,7 @@ public final class NexialConst {
         public static final String COMPARE_RESULT_AS_CSV = registerSysVar(NS_JSON + "compareResultsAsCSV", false);
         public static final String COMPARE_RESULT_AS_HTML = registerSysVar(NS_JSON + "compareResultsAsHTML", false);
         public static final String TREAT_JSON_AS_IS = registerSysVar(NS_JSON + "treatJsonAsIs", true);
+
 
         /**
          * special prefix to mark certain data as contextual to a test scenario execution.  Such data will be displayed
@@ -2002,6 +2001,13 @@ public final class NexialConst {
         // promiscuous security
         public static final String KEY_TREAT_AS_SECURE = "unsafely-treat-insecure-origin-as-secure";
         public static final String OPT_TREAT_AS_SECURE = registerSysVar(NS_BROWSER + ".treatAsSecure");
+
+        // show description as browser toast message
+        public static final String DESCRIPTION_AS_TOAST = registerSysVar(NS_WEB + "toastDescription", false);
+        public static final String DESCRIPTION_AS_TOAST_WAIT_MS =
+            registerSysVar(NS_WEB + "toastDescriptionWaitMs", 1500);
+        public static final String DESCRIPTION_AS_TOAST_DARK_MODE =
+            registerSysVar(NS_WEB + "toastDescriptionDarkMode", true);
 
         private Web() { }
 

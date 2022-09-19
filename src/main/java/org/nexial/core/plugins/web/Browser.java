@@ -719,8 +719,6 @@ public class Browser implements ForcefulTerminate {
             if (longitude != 0 && latitude != 0) { chrome.setLocation(new Location(longitude, latitude, 0)); }
         }
 
-        // pageSourceSupported = false;
-
         return chrome;
     }
 
@@ -895,7 +893,6 @@ public class Browser implements ForcefulTerminate {
         Capabilities capabilities = edge.getCapabilities();
         browserVersion = capabilities.getVersion();
         browserPlatform = capabilities.getPlatform();
-        pageSourceSupported = false;
 
         StringBuilder log = new StringBuilder("Edge WebDriver capabilities:" + NL);
         capabilities.asMap().forEach((key, val) -> log.append("\t").append(key).append("\t=").append(val).append(NL));
