@@ -1033,7 +1033,7 @@ public final class NexialConst {
         public static final String USER_PROJECTS_DIR = IS_OS_WINDOWS ?
                                                        "C:\\projects" + separator :
                                                        USER_HOME + "/projects" + separator;
-        public static final String NEXIAL_INSTALLER_MIN_VERSION = "1.4.6";
+        public static final String NEXIAL_INSTALLER_MIN_VERSION = "1.4.7";
         public static final String PROJECT_CACHE_LOCATION = USER_NEXIAL_HOME + "projectCache" + separator;
         public static final String BROWSER_META_CACHE_PATH = USER_NEXIAL_HOME + "browser-meta.json";
         public static final String BATCH_EXT = (IS_OS_WINDOWS ? "cmd" : "sh");
