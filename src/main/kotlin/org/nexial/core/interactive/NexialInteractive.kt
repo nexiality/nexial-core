@@ -43,6 +43,7 @@ import org.nexial.core.NexialConst.Iteration.CURR_ITERATION
 import org.nexial.core.NexialConst.Iteration.ITERATION
 import org.nexial.core.NexialConst.Project.appendLog
 import org.nexial.core.excel.Excel
+import org.nexial.core.excel.ExcelAddress
 import org.nexial.core.excel.ExcelStyleHelper
 import org.nexial.core.interactive.InteractiveConsole.Commands.AUTORUN
 import org.nexial.core.interactive.InteractiveConsole.Commands.CLEAR_TEMP
@@ -175,10 +176,16 @@ class NexialInteractive : ConnectedEventListener, CloseEventListener {
 				SET_ITER         -> {
 					if (StringUtils.isBlank(argument))
 						error("No iteration assigned")
-					else if (!NumberUtils.isDigits(argument))
-						error("No a valid number for iteration")
-					else
+					else if (NumberUtils.isDigits(argument))
 						session.iteration = NumberUtils.createInteger(argument)
+					else {
+						// try converting from letter (i.e. Column M) to number
+						if (RegexUtils.isExact(argument, "[A-Za-z]{1,3}")) {
+							session.iteration = ExcelAddress.fromColumnLettersToOrdinalNumber(argument.uppercase()) - 1
+						} else {
+							error("No a valid number or column reference for iteration: $argument")
+						}
+					}
 				}
 
 				SET_ACTIVITY     -> {

@@ -148,7 +148,7 @@ open class InteractiveConsole {
 			printMenu(CMD_START, DIGIT, "$SET_SCRIPT <script>   ${CMD_END}assign test script")
 			printMenu(CMD_START, DIGIT, "$SET_DATA <data file>${CMD_END}assign data file")
 			printMenu(CMD_START, DIGIT, "$SET_SCENARIO <scenario> ${CMD_END}assign scenario")
-			printMenu(CMD_START, DIGIT, "$SET_ITER <iteration>${CMD_END}assign iteration")
+			printMenu(CMD_START, DIGIT, "$SET_ITER <iteration>${CMD_END}assign iteration (index or column letter)")
 			printMenu(CMD_START, DIGIT, "$SET_ACTIVITY <activity> ${CMD_END}assign activities; clears assigned steps")
 			printMenu(CMD_START, DIGIT, "$SET_STEPS <step>     ${CMD_END}assign steps; clears assigned activities")
 			printMenu("", UPPERCASE,

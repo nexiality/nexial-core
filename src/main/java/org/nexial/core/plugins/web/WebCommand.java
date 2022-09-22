@@ -2302,7 +2302,11 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
     }
 
     @Override
-    public boolean readyToTakeScreenshot() { return browser != null && driver != null; }
+    public boolean readyToTakeScreenshot() {
+        return context != null && context.getBooleanData(BROWSER_OPENED) &&
+               driver != null &&
+               browser != null && browser.initialWinHandle != null;
+    }
 
     /**
      * use UserStack API to save browser info/version as data variable

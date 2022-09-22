@@ -431,7 +431,8 @@ public class TestStep extends TestStepManifest {
 
             String toastMsg = context.replaceTokens(this.description);
             if (StringUtils.isNotBlank(toastMsg) &&
-                context.getBooleanData(DESCRIPTION_AS_TOAST, getDefaultBool(DESCRIPTION_AS_TOAST))) {
+                context.getBooleanData(DESCRIPTION_AS_TOAST, getDefaultBool(DESCRIPTION_AS_TOAST)) &&
+                context.getBooleanData(BROWSER_OPENED)) {
                 WebCommand web = (WebCommand) context.findPlugin("web");
                 // `readyToTakeScreenshot` checks for browser readiness
                 if (web != null && web.readyToTakeScreenshot()) {

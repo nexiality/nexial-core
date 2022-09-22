@@ -457,6 +457,9 @@
     <!-- Disable the default browser check, do not prompt to set it as such -->
     <value>no-default-browser-check</value>
     <value>ignore-certificate-errors</value>
+    <value>ignore-urlfetcher-cert-requests</value>
+    <value>use-mock-keychain</value>
+    <value>disable-machine-cert-request</value>
     <value>disable-resize-lock</value>
     <value>disable-print-preview</value>
     <value>disable-breakpad</value>
