@@ -17,12 +17,6 @@
 
 package org.nexial.core.plugins.base;
 
-import com.xuggle.mediatool.IMediaWriter;
-import com.xuggle.mediatool.MediaToolAdapter;
-import com.xuggle.mediatool.ToolFactory;
-import com.xuggle.xuggler.IMetaData;
-import com.xuggle.xuggler.IRational;
-import com.xuggle.xuggler.IStreamCoder;
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -31,16 +25,24 @@ import org.nexial.core.NexialConst.Project;
 import org.nexial.core.ShutdownAdvisor;
 import org.nexial.core.utils.ConsoleUtils;
 
+import com.xuggle.mediatool.IMediaWriter;
+import com.xuggle.mediatool.MediaToolAdapter;
+import com.xuggle.mediatool.ToolFactory;
+import com.xuggle.xuggler.IMetaData;
+import com.xuggle.xuggler.IRational;
+import com.xuggle.xuggler.IStreamCoder;
 import java.awt.*;
-import java.awt.image.BufferedImage;
+import java.awt.image.*;
 import java.io.File;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
 import static com.xuggle.xuggler.ICodec.ID.CODEC_ID_H264;
-import static java.awt.image.BufferedImage.TYPE_3BYTE_BGR;
+import static java.awt.image.BufferedImage.*;
 import static java.io.File.separator;
 import static java.util.concurrent.TimeUnit.*;
+import static org.apache.commons.lang3.SystemUtils.OS_ARCH;
+import static org.apache.commons.lang3.SystemUtils.OS_NAME;
 import static org.nexial.core.NexialConst.OPT_OUT_DIR;
 import static org.nexial.core.NexialConst.Recording.Types.mp4;
 import static org.nexial.core.NexialConst.TEMP;
@@ -122,7 +124,7 @@ public class Mp4ScreenRecorder extends MediaToolAdapter implements Runnable, Scr
             pool.shutdown();
             pool.awaitTermination(1, SECONDS);
 
-            if (writer.isOpen()) {
+            if (writer != null && writer.isOpen()) {
                 writer.flush();
                 writer.close();
             }
@@ -143,7 +145,7 @@ public class Mp4ScreenRecorder extends MediaToolAdapter implements Runnable, Scr
     }
 
     @Override
-    public boolean mustForcefullyTerminate() { return true; }
+    public boolean mustForcefullyTerminate() { return targetVideoFile != null && writer != null && writer.isOpen(); }
 
     @Override
     public void forcefulTerminate() { stop(); }
@@ -157,21 +159,31 @@ public class Mp4ScreenRecorder extends MediaToolAdapter implements Runnable, Scr
     }
 
     protected void startCapture() {
-        writer = ToolFactory.makeWriter(targetVideoFile);
-        writer.addVideoStream(0,
-                              0,
-                              CODEC_ID_H264,
-                              screenBounds.width / HIGH.getDivisor(),
-                              screenBounds.height / HIGH.getDivisor());
-        IStreamCoder streamCoder = writer.getContainer().getStream(0).getStreamCoder();
-        streamCoder.setFrameRate(IRational.make(DEF_FRAME_RATE));
+        try {
+            writer = ToolFactory.makeWriter(targetVideoFile);
+            writer.addVideoStream(0,
+                                  0,
+                                  CODEC_ID_H264,
+                                  screenBounds.width / HIGH.getDivisor(),
+                                  screenBounds.height / HIGH.getDivisor());
+            IStreamCoder streamCoder = writer.getContainer().getStream(0).getStreamCoder();
+            streamCoder.setFrameRate(IRational.make(DEF_FRAME_RATE));
 
-        if (StringUtils.isNotEmpty(title)) {
-            IMetaData metaData = writer.getContainer().getMetaData();
-            metaData.setValue(TITLE, title);
+            if (StringUtils.isNotEmpty(title)) {
+                IMetaData metaData = writer.getContainer().getMetaData();
+                metaData.setValue(TITLE, title);
+            }
+
+            startTime = System.nanoTime();
+            pool.scheduleAtFixedRate(this, 0L, (long) (1000.0 / DEF_FRAME_RATE), MILLISECONDS);
+        } catch (UnsatisfiedLinkError e) {
+            ConsoleUtils.error("Screen Recording is not available for " + OS_NAME + " " + OS_ARCH);
+            writer = null;
+            throw e;
+        } catch (Exception e) {
+            ConsoleUtils.error("Screen Recording cannot start successfully: " + e.getMessage());
+            writer = null;
+            throw e;
         }
-
-        startTime = System.nanoTime();
-        pool.scheduleAtFixedRate(this, 0L, (long) (1000.0 / DEF_FRAME_RATE), MILLISECONDS);
     }
 }

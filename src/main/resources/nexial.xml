@@ -823,6 +823,7 @@
     <entry key="nexial.generateReport" value="true"/>
     <entry key="nexial.screenRecorder" value="mp4"/>
     <entry key="nexial.browser.defaultWindowSize" value="1280x960"/>
+    <entry key="nexial.targetDisplay" value="0"/>
   </util:map>
 
   <!--

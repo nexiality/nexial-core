@@ -2197,6 +2197,9 @@ public class ExecutionContext {
         // DO NOT SET BROWSER TYPE TO SYSTEM PROPS, SINCE THIS WILL PREVENT ITERATION-LEVEL OVERRIDES
         // System.setProperty(SPREADSHEET_PROGRAM, spreadsheetProgram);
 
+        // system-wide impact, so this spot is as good as any...
+        System.setProperty(TARGET_DISPLAY, MapUtils.getString(data, TARGET_DISPLAY, getDefault(TARGET_DISPLAY)));
+
         ExecutionMailConfig.configure(this);
     }
 

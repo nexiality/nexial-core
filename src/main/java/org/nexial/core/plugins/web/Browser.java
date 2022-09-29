@@ -34,12 +34,16 @@ import org.nexial.core.ShutdownAdvisor;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.plugins.CanTakeScreenshot;
 import org.nexial.core.plugins.ForcefulTerminate;
+import org.nexial.core.plugins.base.AwtUtils;
 import org.nexial.core.plugins.browserstack.BrowserStackHelper;
 import org.nexial.core.plugins.external.ExternalCommand;
 import org.nexial.core.spi.NexialExecutionEvent;
 import org.nexial.core.spi.NexialListenerFactory;
 import org.nexial.core.utils.ConsoleUtils;
+import org.openqa.selenium.Dimension;
+import org.openqa.selenium.Point;
 import org.openqa.selenium.*;
+import org.openqa.selenium.WebDriver.Window;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeDriverService;
 import org.openqa.selenium.chrome.ChromeDriverService.Builder;
@@ -59,6 +63,7 @@ import org.openqa.selenium.safari.SafariOptions;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.List;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -1073,6 +1078,8 @@ public class Browser implements ForcefulTerminate {
     }
 
     protected void setWindowSizeForcefully(WebDriver driver) {
+        Window window = driver.manage().window();
+
         String windowSize = context.getStringConfig("web", profile, BROWSER_WINDOW_SIZE);
         if ((isHeadless()) && StringUtils.isBlank(windowSize)) {
             // window size required for headless browser
@@ -1081,29 +1088,31 @@ public class Browser implements ForcefulTerminate {
         }
 
         if (StringUtils.isNotBlank(windowSize)) {
-            Pattern p = Pattern.compile(REGEX_WINDOW_SIZE);
-            Matcher m = p.matcher(windowSize);
-            if (!m.matches()) {
-                throw new RuntimeException("The valid window size not defined.. Found : " + windowSize);
+            boolean showMaximized = BROWSER_WINDOW_SIZE_FULL.contains(windowSize.trim().toLowerCase());
+            if (showMaximized) {
+                window.maximize();
+            } else {
+                Pattern p = Pattern.compile(REGEX_WINDOW_SIZE);
+                Matcher m = p.matcher(windowSize);
+                if (!m.matches()) { throw new RuntimeException("Specified window size invalid: " + windowSize); }
+
+                String[] dim = StringUtils.split(windowSize, "x");
+
+                int width = NumberUtils.toInt(dim[0]);
+                int height = NumberUtils.toInt(dim[1]);
+                if (width < MIN_WIDTH_OR_HEIGHT || height < MIN_WIDTH_OR_HEIGHT) {
+                    throw new RuntimeException("Window height or width should be greater than " + MIN_WIDTH_OR_HEIGHT +
+                                               ": " + windowSize);
+                }
+
+                window.setSize(new Dimension(width, height));
             }
-
-            String[] dim = StringUtils.split(windowSize, "x");
-
-            int width = NumberUtils.toInt(dim[0]);
-            int height = NumberUtils.toInt(dim[1]);
-            if (width < MIN_WIDTH_OR_HEIGHT || height < MIN_WIDTH_OR_HEIGHT) {
-                throw new RuntimeException("Window height or width should be greater than " + MIN_WIDTH_OR_HEIGHT +
-                                           ": " + windowSize);
-            }
-
-            Window window = driver.manage().window();
-            window.setSize(new Dimension(width, height));
         }
     }
 
     protected void setWindowPosition(WebDriver driver) {
         if (driver == null) { return; }
-        if (shouldNotResizeOrReposition()) { return; }
+        if (shouldNotResizeOrReposition() || isHeadless()) { return; }
 
         Window window = driver.manage().window();
         if (window == null) { return; }
@@ -1112,11 +1121,9 @@ public class Browser implements ForcefulTerminate {
                                 (isRunBrowserStack() && browserStackHelper.browser == safari) ||
                                 (isRunCrossBrowserTesting() && cbtHelper.browser == safari);
 
-        Point position = null;
+        Point position = runningSafari ? INITIAL_POSITION_SAFARI : INITIAL_POSITION;
         String windowPosition = context.getStringConfig("web", profile, OPT_POSITION);
-        if (StringUtils.isBlank(windowPosition)) {
-            position = runningSafari ? INITIAL_POSITION_SAFARI : INITIAL_POSITION;
-        } else {
+        if (StringUtils.isNotBlank(windowPosition)) {
             String[] coordinates = StringUtils.split(windowPosition, context.getTextDelim());
             if (ArrayUtils.getLength(coordinates) != 2 ||
                 !NumberUtils.isCreatable(coordinates[0]) ||
@@ -1127,7 +1134,7 @@ public class Browser implements ForcefulTerminate {
             }
         }
 
-        window.setPosition(position);
+        window.setPosition(AwtUtils.relativeToTargetDisplay(position));
     }
 
     /**

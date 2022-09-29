@@ -20,15 +20,20 @@ package org.nexial.core.plugins.base;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.nexial.core.utils.ConsoleUtils;
+import org.openqa.selenium.Point;
 
 import java.awt.*;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.annotation.Nullable;
 
 import static java.awt.event.KeyEvent.*;
+import static org.nexial.core.NexialConst.TARGET_DISPLAY;
+import static org.nexial.core.NexialConst.TARGET_DISPLAY_CURRENT;
 
 public final class AwtUtils {
     private static final Map<Character, Integer> SHIFT_NEEDED = initShiftNeededMapping();
@@ -87,43 +92,12 @@ public final class AwtUtils {
         }
     }
 
+    public static boolean isValidScreen(int target) {
+        if (target < 0) { return false; }
 
-    // DOESN'T WORK?
-    /**
-     * change the application's starting position (x, y) based on specific monitor ({@literal screenIndex}) and the
-     * starting position of that screen ({@literal screenStartingPosition}).
-     */
-    // @NotNull
-    // public static Point adjustForScreen(Point appStartingPosition, int screenIndex, Point screenStartingPosition) {
-    //     GraphicsDevice[] screens = GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices();
-    //
-    //     // default to 1st
-    //     if (screenIndex < 1) { screenIndex = 0; }
-    //
-    //     // default to last
-    //     if (screenIndex >= screens.length) { screenIndex = screens.length - 1; }
-    //
-    //     // target screen dimension
-    //     Rectangle bounds = screens[screenIndex].getDefaultConfiguration().getBounds();
-    //
-    //     // Is double?
-    //     double x = screenStartingPosition.x;
-    //     // Decimal -> percentage
-    //     if (x == Math.floor(x) && !Double.isInfinite(x)) { x *= bounds.x; }
-    //
-    //     // Decimal -> percentage
-    //     double y = screenStartingPosition.y;
-    //     if (y == Math.floor(y) && !Double.isInfinite(y)) { y *= bounds.y; }
-    //
-    //     x = bounds.x + x;
-    //     y = appStartingPosition.y + y;
-    //
-    //     // make sure we stay within target screen bounds
-    //     if (x > bounds.x) { x = bounds.x; }
-    //     if (y > bounds.y) { y = bounds.y; }
-    //
-    //     return new Point((int) x, (int) y);
-    // }
+        GraphicsDevice[] screens = AwtUtils.getAvailableScreens();
+        return screens != null && ArrayUtils.isNotEmpty(screens) && screens.length > target;
+    }
 
     public static void typeKey(String text) {
         if (StringUtils.isEmpty(text)) { throw new IllegalArgumentException("text is blank/null"); }
@@ -203,6 +177,47 @@ public final class AwtUtils {
     public static void mouseMove(int x, int y) {
         Robot robot = getRobotInstance();
         robot.mouseMove(x, y);
+    }
+
+    public static Point relativeToTargetDisplay(Point position) {
+        final String PREFIX = "[DISPLAY] ";
+        String targetDisplayConf = System.getProperty(TARGET_DISPLAY);
+        GraphicsDevice screen = null;
+        if (StringUtils.equals(targetDisplayConf, TARGET_DISPLAY_CURRENT)) {
+            screen = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
+            ConsoleUtils.log(PREFIX + "adjust position to CURRENT display " + screen.getDisplayMode());
+        } else {
+            int targetDisplay = Math.max(NumberUtils.toInt(targetDisplayConf, 0), 0);
+            GraphicsDevice[] screens = getAvailableScreens();
+            if (screens == null) {
+                ConsoleUtils.error(PREFIX + "Unable to obtain current display configuration; position remains AS IS");
+            } else {
+                ConsoleUtils.log(PREFIX + "Currently discovered display(s):");
+                Arrays.stream(screens).forEach(s -> ConsoleUtils.log("\t" + s.getDisplayMode()));
+                if (screens.length <= targetDisplay) {
+                    ConsoleUtils.error(PREFIX + "No DISPLAY " + targetDisplay + " found; use current screen instead");
+                    screen = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
+                } else {
+                    screen = screens[targetDisplay];
+                }
+                ConsoleUtils.log(PREFIX + "adjust position to display " + screen.getDisplayMode());
+            }
+        }
+
+        if (screen != null) {
+            GraphicsConfiguration screenConfig = screen.getDefaultConfiguration();
+            if (screenConfig == null || screenConfig.getBounds() == null) {
+                ConsoleUtils.error(PREFIX + "Unable to obtain screen boundary; position remains AS IS");
+            } else {
+                Rectangle bounds = screenConfig.getBounds();
+                ConsoleUtils.log(PREFIX + "adjusting position within the bounds of target display: " + bounds);
+                position = new Point((int) bounds.getX() + position.getX(),
+                                     (int) bounds.getY() + position.getY());
+                ConsoleUtils.log(PREFIX + "position adjusted to " + position);
+            }
+        }
+
+        return position;
     }
 
     /**

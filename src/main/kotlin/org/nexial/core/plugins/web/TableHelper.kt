@@ -34,11 +34,7 @@ import org.nexial.core.model.ExecutionContext
 import org.nexial.core.model.StepResult
 import org.nexial.core.utils.CheckUtils.*
 import org.nexial.core.utils.ConsoleUtils
-import org.openqa.selenium.By
-import org.openqa.selenium.InvalidElementStateException
-import org.openqa.selenium.JavascriptExecutor
-import org.openqa.selenium.StaleElementReferenceException
-import org.openqa.selenium.WebElement
+import org.openqa.selenium.*
 import org.openqa.selenium.support.ui.Select
 import java.io.File
 import java.util.*
@@ -134,7 +130,11 @@ class TableHelper(private val webCommand: WebCommand) {
 
 			pageCount++
 
-			if (!clickNextPage(nextPageLocator)) break
+			if (!clickNextPage(nextPageLocator)
+				{ _ ->
+					CollectionUtils.isNotEmpty(webCommand.findElements(rowLocator))
+				}
+			) break
 		}
 
 		writer.flush()
@@ -214,7 +214,11 @@ class TableHelper(private val webCommand: WebCommand) {
 
 			pageCount++
 
-			if (!clickNextPage(nextPageLocator)) break
+			if (!clickNextPage(nextPageLocator)
+				{ _ ->
+					CollectionUtils.isNotEmpty(table.findElements<WebElement>(By.xpath(".//tbody/tr")))
+				}
+			) break
 
 			// table might be stale or redrawn after clicking on 'Next Page' (some crappy UI framework does that)
 			try {
@@ -615,7 +619,7 @@ class TableHelper(private val webCommand: WebCommand) {
 		return CsvWriter(File(file), DEF_FILE_ENCODING, settings)
 	}
 
-	private fun clickNextPage(nextPageLocator: String): Boolean {
+	private fun clickNextPage(nextPageLocator: String, waitUntil: (webdriver: WebDriver) -> Boolean): Boolean {
 		return if (webCommand.context.isNullOrEmptyOrBlankValue(nextPageLocator))
 			false
 		else {
@@ -626,6 +630,7 @@ class TableHelper(private val webCommand: WebCommand) {
 				try {
 					nextPage.click()
 					webCommand.waitForBrowserStability(webCommand.context.pollWaitMs, true)
+					webCommand.newFluentWait(webCommand.context.pollWaitMs).until(waitUntil)
 					true
 				} catch (e: InvalidElementStateException) {
 					ConsoleUtils.log("Unable to click 'Next Page'; element likely staled or disabled; will stop now")

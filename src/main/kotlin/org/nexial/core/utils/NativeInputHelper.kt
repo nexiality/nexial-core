@@ -19,6 +19,7 @@ package org.nexial.core.utils
 import org.apache.commons.lang3.StringUtils
 import org.apache.commons.lang3.math.NumberUtils
 import org.nexial.core.NexialConst.SCREENSHOT_EXT
+import org.nexial.core.NexialConst.TARGET_DISPLAY
 import org.nexial.core.plugins.base.AwtUtils
 import org.nexial.core.utils.KeystrokeParser.MODIFIERS
 import java.awt.Dimension
@@ -58,11 +59,20 @@ object NativeInputHelper {
     fun dragAndDrop(modifiers: List<String>, fromX: Int, fromY: Int, toX: Int, toY: Int) =
         Mousey.dragAndDrop(robot, BUTTON1_DOWN_MASK, modifiers, fromX, fromY, toX, toY)
 
-    @JvmField
-    val screenDimension: Dimension = AwtUtils.getScreenDimension(0)
-                                     ?: throw RuntimeException("Unable to determine current screen dimension")
+	@JvmField
+	val screenDimension: Dimension = resolveScreenDimension()
 
-    @JvmStatic
+	private fun resolveScreenDimension(): Dimension {
+		val targetDisplay = NumberUtils.toInt(System.getProperty(TARGET_DISPLAY, "0"), 0)
+
+        if (!AwtUtils.isValidScreen(targetDisplay))
+            throw RuntimeException("DISPLAY $targetDisplay is not valid or current available screens is not available")
+
+		return AwtUtils.getScreenDimension(targetDisplay)
+		       ?: throw RuntimeException("Unable to determine current screen dimension")
+	}
+
+	@JvmStatic
     fun resolveScreenPosition(x: String, y: String): Point {
         val height = screenDimension.height
         val width = screenDimension.width

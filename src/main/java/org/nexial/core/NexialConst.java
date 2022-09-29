@@ -158,6 +158,9 @@ public final class NexialConst {
     public static final Map<String, RoundingMode> VALID_ROUNDING_MODES = initValidRoundingModes();
     public static final String OPT_ROUNDING_MODE = registerSysVar(NS_NUMBER + "rounding", DEF_ROUNDING_MODE);
 
+    public static final String TARGET_DISPLAY = registerSysVar(NAMESPACE + "targetDisplay", 0);
+    public static final String TARGET_DISPLAY_CURRENT = "CURRENT";
+
     // screenshots
     public static final String OPT_SCREENSHOT_ON_ERROR = registerSysVar(NAMESPACE + "screenshotOnError", false);
     public static final String OPT_LAST_SCREENSHOT_NAME = registerSysVar(NAMESPACE + "lastScreenshot");
@@ -518,7 +521,6 @@ public final class NexialConst {
         public static final String COMPARE_RESULT_AS_CSV = registerSysVar(NS_JSON + "compareResultsAsCSV", false);
         public static final String COMPARE_RESULT_AS_HTML = registerSysVar(NS_JSON + "compareResultsAsHTML", false);
         public static final String TREAT_JSON_AS_IS = registerSysVar(NS_JSON + "treatJsonAsIs", true);
-
 
         /**
          * special prefix to mark certain data as contextual to a test scenario execution.  Such data will be displayed
@@ -1894,6 +1896,9 @@ public final class NexialConst {
         public static final String OPT_DELAY_BROWSER = registerSysVar(NAMESPACE + "delayBrowser", false);
         public static final String BROWSER_DEFAULT_WINDOW_SIZE = registerSysVar(NS_BROWSER + ".defaultWindowSize");
         public static final String BROWSER_WINDOW_SIZE = registerSysVar(NS_BROWSER + ".windowSize");
+        // all possible keywords to indicate that browser should start as maximized
+        public static final List<String> BROWSER_WINDOW_SIZE_FULL =
+            Arrays.asList("maximized", "maximize", "full", "fullscreen");
         public static final String BROWSER_LANG = registerSysVar(NAMESPACE + "browserLang");
         public static final String OPT_BROWSER_CONSOLE_LOG = registerSysVar(NAMESPACE + "browserConsoleLog", false);
         public static final String KEY_INCOGNITO = "incognito";

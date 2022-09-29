@@ -39,6 +39,7 @@ import org.nexial.core.model.TestStep;
 import org.nexial.core.plugins.CanLogExternally;
 import org.nexial.core.plugins.CanTakeScreenshot;
 import org.nexial.core.plugins.RequireBrowser;
+import org.nexial.core.plugins.base.AwtUtils;
 import org.nexial.core.plugins.base.BaseCommand;
 import org.nexial.core.plugins.base.ScreenshotUtils;
 import org.nexial.core.plugins.ws.Response;
@@ -1600,7 +1601,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         int posX = NumberUtils.toInt(x);
         int posY = NumberUtils.toInt(y);
         // dimension unit is point (or px)
-        window.setPosition(new Point(posX, posY));
+        window.setPosition(AwtUtils.relativeToTargetDisplay(new Point(posX, posY)));
 
         return StepResult.success("current browser window moved to position (%s, %s)", x, y);
     }
@@ -2730,7 +2731,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
     protected void nativeMaximizeScreen(Window window) {
         java.awt.Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
-        window.setPosition(new Point(0, 0));
+        window.setPosition(AwtUtils.relativeToTargetDisplay(new Point(0, 0)));
         window.setSize(new Dimension((int) screenSize.getWidth(), (int) screenSize.getHeight()));
     }
 
