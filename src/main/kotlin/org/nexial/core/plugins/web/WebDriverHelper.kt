@@ -644,7 +644,7 @@ class EdgeChromeDriverHelper(context: ExecutionContext) : WebDriverHelper(contex
 		// not sure if edge is minimum Chrome version
 		if (StringUtils.isEmpty(compatibleDriverVersion) ||
 		    compatibleDriverVersion!!.substringBefore(".").toInt() < minVersion.substringBefore(".").toInt()
-		) {
+		)   {
 			ConsoleUtils.error("This version $compatibleDriverVersion is not supported by $browserType browser")
 			return manifest
 		}
@@ -853,7 +853,7 @@ class ChromeDriverHelper(context: ExecutionContext) : WebDriverHelper(context) {
 			val env = when {
 				IS_OS_WINDOWS -> "win32"
 				IS_OS_LINUX   -> "linux64"
-				IS_OS_MAC     -> if (StringUtils.containsIgnoreCase(OS_ARCH, "aarch")) "mac64_m1" else "mac64"
+				IS_OS_MAC     -> if (StringUtils.containsIgnoreCase(OS_ARCH, "aarch")) "mac_arm64" else "mac64"
 				else          -> throw IllegalArgumentException("OS $OS_NAME not supported for $browserType")
 			}
 

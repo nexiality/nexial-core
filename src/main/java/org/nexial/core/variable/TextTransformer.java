@@ -17,7 +17,6 @@
 
 package org.nexial.core.variable;
 
-import com.google.gson.JsonElement;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.set.ListOrderedSet;
 import org.apache.commons.lang3.ArrayUtils;
@@ -29,19 +28,28 @@ import org.jdom2.JDOMException;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Document.OutputSettings.Syntax;
-import org.nexial.commons.utils.*;
+import org.nexial.commons.utils.FileUtil;
+import org.nexial.commons.utils.RegexUtils;
+import org.nexial.commons.utils.ResourceUtils;
+import org.nexial.commons.utils.TextUtils;
+import org.nexial.commons.utils.XmlUtils;
 import org.nexial.core.ExecutionThread;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.plugins.ws.WsCommand;
 import org.nexial.core.utils.ConsoleUtils;
 
+import com.google.gson.JsonElement;
 import java.io.IOException;
 import java.lang.reflect.Method;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
-import static org.nexial.core.NexialConst.Expression.EXPRESSION_RESOLVE_URL;
 import static org.nexial.core.NexialConst.Data.TEXT_DELIM;
+import static org.nexial.core.NexialConst.Expression.EXPRESSION_RESOLVE_URL;
 import static org.nexial.core.NexialConst.GSON;
 import static org.nexial.core.SystemVariables.getDefault;
 import static org.nexial.core.SystemVariables.getDefaultBool;
@@ -293,7 +301,7 @@ public class TextTransformer<T extends TextDataType> extends Transformer<T> {
 
     public T removeRight(T data, String length) {
         requiresPositiveNumber(length, "invalid length", length);
-        if (data != null) {
+        if (data != null && data.getTextValue() != null) {
             String text = data.getTextValue();
             data.setValue(StringUtils.substring(text, 0, Math.max(text.length() - NumberUtils.toInt(length), 0)));
         }
