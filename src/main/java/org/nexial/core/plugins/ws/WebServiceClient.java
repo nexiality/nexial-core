@@ -45,6 +45,7 @@ import org.apache.http.impl.client.*;
 import org.apache.http.impl.conn.DefaultProxyRoutePlanner;
 import org.apache.http.impl.nio.client.HttpAsyncClientBuilder;
 import org.apache.http.protocol.HttpContext;
+import org.apache.http.util.EntityUtils;
 import org.nexial.commons.utils.DateUtility;
 import org.nexial.commons.utils.FileUtil;
 import org.nexial.commons.utils.RegexUtils;
@@ -57,20 +58,23 @@ import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.OutputFileUtils;
 import org.nexial.core.variable.Syspath;
 
-import java.io.*;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import javax.validation.constraints.NotNull;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.InetAddress;
 import java.net.MalformedURLException;
 import java.net.SocketException;
 import java.net.URL;
 import java.util.*;
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-import javax.validation.constraints.NotNull;
 
 import static java.io.File.separator;
 import static org.apache.http.HttpHeaders.AUTHORIZATION;
-import static org.nexial.core.NexialConst.Data.TEXT_DELIM;
 import static org.nexial.core.NexialConst.DEF_CHARSET;
+import static org.nexial.core.NexialConst.Data.TEXT_DELIM;
 import static org.nexial.core.NexialConst.NL;
 import static org.nexial.core.NexialConst.Ws.*;
 import static org.nexial.core.SystemVariables.getDefault;
@@ -880,8 +884,7 @@ public class WebServiceClient {
 
         InputStream responseBody = responseEntity.getContent();
         if (responseBody == null) { return null; }
-        if (responseBody.available() <= 0 && !responseEntity.isChunked()) { return null; }
-        return IOUtils.toByteArray(responseBody);
+        return EntityUtils.toString(responseEntity, DEF_CHARSET).getBytes();
     }
 
     protected long saveResponsePayload(HttpEntity responseEntity, String saveTo) throws IOException {
