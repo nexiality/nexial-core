@@ -725,8 +725,12 @@ public class BaseCommand implements NexialCommand {
 
         // we should not allow to print this... security violation
         if (context.containsCrypt(text)) {
-            // but we should still process any functions or expressions
-            context.replaceTokens(text);
+            if (TextUtils.isBetween(text, "${", "}")) {
+                text = CellTextReader.readValue(context.replaceTokens(text));
+            } else {
+                // but we should still process any functions or expressions
+                text = context.replaceTokens(text, true);
+            }
             log("crypto found; no data variable expansion");
         }
 

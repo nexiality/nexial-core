@@ -907,7 +907,7 @@ public class ExecutionContext {
 
         // pre-first pass  ;-)
         // substitute crypt value
-        text = handleCryptValue(text);
+        if (!retainCrypt) { text = handleCryptValue(text); }
 
         // first pass: cycle through the dyn var
         text = handleFunction(text);
