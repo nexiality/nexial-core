@@ -26,6 +26,7 @@ import org.apache.poi.xssf.usermodel.XSSFCell
 import org.apache.poi.xssf.usermodel.XSSFCellStyle
 import org.apache.poi.xssf.usermodel.XSSFRow
 import org.apache.poi.xssf.usermodel.XSSFSheet
+import org.nexial.commons.utils.TextUtils
 import org.nexial.core.CommandConst.CMD_REPEAT_UNTIL
 import org.nexial.core.CommandConst.CMD_SECTION
 import org.nexial.core.CommandConst.CMD_VERBOSE
@@ -39,14 +40,17 @@ import org.nexial.core.excel.Excel.Worksheet
 import org.nexial.core.excel.ExcelConfig.*
 import org.nexial.core.excel.ExcelStyleHelper
 import org.nexial.core.excel.ext.CellTextReader
+import org.nexial.core.excel.ext.CipherHelper.CRYPT_IND
 import org.nexial.core.logs.ExecutionLogger
 import org.nexial.core.utils.ConsoleUtils
 import org.nexial.core.utils.MessageUtils
 import java.io.IOException
 import java.util.function.Consumer
 
-class ExecutionResultHelper(private val allSteps: List<TestStep>, val worksheet: Worksheet,
-                            val executionSummary: ExecutionSummary) {
+class ExecutionResultHelper(
+    private val allSteps: List<TestStep>, val worksheet: Worksheet,
+    val executionSummary: ExecutionSummary,
+) {
 
     fun updateScenarioResults() {
         worksheet.sheet.workbook.missingCellPolicy = CREATE_NULL_AS_BLANK
@@ -167,8 +171,10 @@ class ExecutionResultHelper(private val allSteps: List<TestStep>, val worksheet:
      * @param lastRow last row number of the worksheet
      * @constructor Creates an empty group.
      */
-    private fun writeTestResults(testStep: TestStep, isRepeatUntil: Boolean, currentRowIdx: Int,
-                                 lastRow: Int): Pair<Int, Int> {
+    private fun writeTestResults(
+        testStep: TestStep, isRepeatUntil: Boolean, currentRowIdx: Int,
+        lastRow: Int,
+    ): Pair<Int, Int> {
         // look for base.macro(file,sheet,name) OR base.macroEnhanced(macro,input,output) - expand into output excel
         var lastDataRow: Int = lastRow
         var currentRow = currentRowIdx
@@ -303,10 +309,12 @@ class ExecutionResultHelper(private val allSteps: List<TestStep>, val worksheet:
         }
     }
 
-    private fun handleNestedMessages(worksheet: Worksheet,
-                                     testStep: TestStep,
-                                     currentRow: Int,
-                                     lastRow: Int): Pair<Int, Int> {
+    private fun handleNestedMessages(
+        worksheet: Worksheet,
+        testStep: TestStep,
+        currentRow: Int,
+        lastRow: Int,
+    ): Pair<Int, Int> {
         val nestedTestResults = testStep.nestedTestResults
 
         if (testStep.commandFQN == CMD_VERBOSE || CollectionUtils.isEmpty(nestedTestResults))
@@ -486,7 +494,14 @@ class ExecutionResultHelper(private val allSteps: List<TestStep>, val worksheet:
                 if (context.hasData(name)) {
                     // use try-catch here in case we run into NPE or RTE when substituting `name`
                     val value = try {
-                        CellTextReader.readValue(context.getStringData(name))
+                        val rawValue = context.getRawStringData(name)
+                        if (StringUtils.contains(rawValue, CRYPT_IND)) {
+                            rawValue
+                        } else if (TextUtils.isBetween(rawValue, "[", "]")) {
+                            rawValue
+                        } else {
+                            CellTextReader.readValue(context.getStringData(name))
+                        }
                     } catch (e: RuntimeException) {
                         val error = if (e.cause != null) e.cause!!.message else e.message
                         ConsoleUtils.error("Error while evaluating '$name': $error")
