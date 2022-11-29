@@ -40,8 +40,6 @@ import org.nexial.core.plugins.external.ExternalCommand;
 import org.nexial.core.spi.NexialExecutionEvent;
 import org.nexial.core.spi.NexialListenerFactory;
 import org.nexial.core.utils.ConsoleUtils;
-import org.openqa.selenium.Dimension;
-import org.openqa.selenium.Point;
 import org.openqa.selenium.*;
 import org.openqa.selenium.WebDriver.Window;
 import org.openqa.selenium.chrome.ChromeDriver;
@@ -56,6 +54,7 @@ import org.openqa.selenium.firefox.FirefoxProfile;
 import org.openqa.selenium.html5.Location;
 import org.openqa.selenium.ie.InternetExplorerDriver;
 import org.openqa.selenium.ie.InternetExplorerOptions;
+import org.openqa.selenium.net.PortProber;
 import org.openqa.selenium.remote.DesiredCapabilities;
 import org.openqa.selenium.safari.SafariDriver;
 import org.openqa.selenium.safari.SafariOptions;
@@ -63,7 +62,6 @@ import org.openqa.selenium.safari.SafariOptions;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.List;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -622,20 +620,30 @@ public class Browser implements ForcefulTerminate {
         }
         options.addArguments(configurableOptions);
 
+        // option to change browser language
+        String browserLang = context.hasConfig("web", profile, BROWSER_LANG) ?
+                             context.getStringConfig("web", profile, BROWSER_LANG) :
+                             context.getStringData(BROWSER_LANG);
+        if (StringUtils.isNotEmpty(browserLang)) { options.addArguments("--lang=" + browserLang); }
+
         boolean enableGeoLocation = context.getBooleanConfig("web", profile, GEOLOCATION);
         addChromeExperimentalOptions(options,
                                      enableGeoLocation,
                                      context.getBooleanConfig("web", profile, OPT_DOWNLOAD_PDF),
-                                     resolveDownloadTo(context));
+                                     resolveDownloadTo(context),
+                                     browserLang);
 
         handleChromeProfile(options);
 
-        String chromeRemotePort = context.getStringConfig("web", profile, CHROME_REMOTE_PORT);
-        if (NumberUtils.isDigits(chromeRemotePort)) {
-            int port = NumberUtils.toInt(chromeRemotePort);
-            log("enabling chrome remote port: %s", port);
-            options.addArguments("--remote-debugging-port=" + port);
+        int remotePort = -1;
+        if (StringUtils.equals(profile, CMD_PROFILE_DEFAULT)) {
+            String chromeRemotePort = context.getStringConfig("web", profile, CHROME_REMOTE_PORT);
+            if (NumberUtils.isDigits(chromeRemotePort)) { remotePort = NumberUtils.toInt(chromeRemotePort); }
         }
+
+        if (remotePort < 0) { remotePort = PortProber.findFreePort(); }
+        log("enabling chrome remote port: %s", remotePort);
+        options.addArguments("--remote-debugging-port=" + remotePort);
 
         String binaryLocation = resolveBinLocation();
         if (StringUtils.isNotBlank(binaryLocation)) { options.setBinary(binaryLocation); }

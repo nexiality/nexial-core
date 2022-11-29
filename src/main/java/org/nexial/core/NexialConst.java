@@ -1899,7 +1899,7 @@ public final class NexialConst {
         // all possible keywords to indicate that browser should start as maximized
         public static final List<String> BROWSER_WINDOW_SIZE_FULL =
             Arrays.asList("maximized", "maximize", "full", "fullscreen");
-        public static final String BROWSER_LANG = registerSysVar(NAMESPACE + "browserLang");
+        public static final String BROWSER_LANG = registerSysVar(NS_BROWSER + ".lang");
         public static final String OPT_BROWSER_CONSOLE_LOG = registerSysVar(NAMESPACE + "browserConsoleLog", false);
         public static final String KEY_INCOGNITO = "incognito";
         public static final String BROWSER_INCOGNITO = registerSysVar(NS_BROWSER + "." + KEY_INCOGNITO, true);

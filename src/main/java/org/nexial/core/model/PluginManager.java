@@ -99,21 +99,6 @@ public class PluginManager implements ApplicationContextAware {
                 isInitialized = true;
             } else {
                 nexialCommand = plugins.get(target);
-
-                // not sure why we need to (re)initialize command instance again?
-                /*
-                // command not yet initialized or was never referenced (until now)
-                try {
-                    // new instance based on the original command copy
-                    nexialCommand = plugins.get(target).getClass().newInstance();
-                } catch (InstantiationException | IllegalAccessException e) {
-                    // unlikely... but we must keep compiler happy
-                    String error = "Unable to create another instance of '" + target + "' for profile '" +
-                                   profile + "': " + e.getMessage();
-                    ConsoleUtils.error(error);
-                    throw new RuntimeException(error);
-                }
-                */
                 nexialCommand.setProfile(profile);
             }
         }

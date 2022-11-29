@@ -1483,9 +1483,6 @@ public class ExecutionContext {
         if (StringUtils.isNotBlank(config)) {
             // replace , with newline, except if comma is escaped.
             config = StringUtils.remove(config, "\r");
-            config = StringUtils.replace(config, "\\,", "!@#>>*<<#@!");
-            config = StringUtils.replace(config, ",", "\n");
-            config = StringUtils.replace(config, "!@#>>*<<#@!", ",");
             config = StringUtils.trim(config);
             configMap = TextUtils.toMap(config, "\n", "=");
         }

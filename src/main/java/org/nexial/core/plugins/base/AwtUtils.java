@@ -28,6 +28,7 @@ import java.awt.*;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.annotation.Nullable;
 
@@ -41,6 +42,7 @@ public final class AwtUtils {
     private static final String FN_SHIFT = "Shift";
     private static final String FN_CONTROL = "Ctrl";
     private static final String FN_ALT = "Alt";
+    private static final String PREFIX = "[DISPLAY] ";
 
     private static final ThreadLocal<Integer> SEMAPHORE = initSemaphore();
 
@@ -180,7 +182,6 @@ public final class AwtUtils {
     }
 
     public static Point relativeToTargetDisplay(Point position) {
-        final String PREFIX = "[DISPLAY] ";
         String targetDisplayConf = System.getProperty(TARGET_DISPLAY);
         GraphicsDevice screen = null;
         if (StringUtils.equals(targetDisplayConf, TARGET_DISPLAY_CURRENT)) {
@@ -210,7 +211,8 @@ public final class AwtUtils {
                 ConsoleUtils.error(PREFIX + "Unable to obtain screen boundary; position remains AS IS");
             } else {
                 Rectangle bounds = screenConfig.getBounds();
-                ConsoleUtils.log(PREFIX + "adjusting position within the bounds of target display: " + bounds);
+                ConsoleUtils.log(PREFIX + "adjusting position within the bounds of target display: " +
+                                 StringUtils.substringBetween(Objects.toString(bounds, "[UNKNOWN]"), "[", "]"));
                 position = new Point((int) bounds.getX() + position.getX(),
                                      (int) bounds.getY() + position.getY());
                 ConsoleUtils.log(PREFIX + "position adjusted to " + position);

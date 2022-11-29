@@ -86,10 +86,13 @@ internal object WebDriverCapabilityUtils {
     }
 
     @JvmStatic
-    fun addChromeExperimentalOptions(options: ChromeOptions,
-                                     withGeoLocation: Boolean,
-                                     alwaysSavePdf: Boolean,
-                                     downloadTo: String?) {
+    fun addChromeExperimentalOptions(
+        options: ChromeOptions,
+        withGeoLocation: Boolean,
+        alwaysSavePdf: Boolean,
+        downloadTo: String?,
+        lang: String?
+    ) {
         // time to experiment...
         val prefs: MutableMap<String, Any> = HashMap()
 
@@ -113,6 +116,9 @@ internal object WebDriverCapabilityUtils {
         prefs["profile.default_content_setting_values.automatic_downloads"] = 1
         // Turns off download prompt
         prefs["download.prompt_for_download"] = false
+
+        if (StringUtils.isNotBlank(lang)) prefs["intl.accept_languages"] = lang!!
+
         options.setExperimentalOption("prefs", prefs)
 
         // starting from Chrome 80, "samesite" is enforced by default... we need to workaround it
