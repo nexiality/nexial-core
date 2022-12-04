@@ -6,7 +6,7 @@
 
 
 :init
-    REM # utilities to be invoked by other frontend scripts
+    REM utilities to be invoked by other frontend scripts
     set PROJECT_BASE=%SystemDrive%\projects
     set NEXIAL_HOME=%~dp0..
     set NEXIAL_LIB=%NEXIAL_HOME%\lib
@@ -17,6 +17,12 @@
     set USER_NEXIAL_DLL=%USER_NEXIAL_HOME%\dll
     set USER_NEXIAL_INSTALL=%USER_NEXIAL_HOME%\install
     set USER_NEXIAL_KEYSTORE=%USER_NEXIAL_HOME%\nexial-keystore.jks
+
+    set MSG_WARNING_HEADER==WARNING========================================================================
+    set MSG_FOOTER=================================================================================
+    set TMP_JAVA_VERSION=%TEMP%\java_version
+
+    call :preset
 
     if exist "%LOCALAPPDATA%\Google\Chrome\Application\chrome.exe" (
         set DEFAULT_CHROME_BIN="%LOCALAPPDATA%\Google\Chrome\Application\chrome.exe"
@@ -79,102 +85,85 @@
 
 REM # Make sure prerequisite environment variables are set
 :checkJava
-    if "%JAVA_HOME%"=="" (
-        if "%JRE_HOME%"=="" (
-            echo =WARNING========================================================================
-            echo Neither the JAVA_HOME nor the JRE_HOME environment variable is defined.
-            echo Nexial will use the JVM based on current PATH. Nexial requires Java 1.8
-            echo or above to run, so this might not work...
-            echo ================================================================================
-            echo.
+    if EXIST %NEXIAL_JAVA_HOME_IMPORT% (
+        call %NEXIAL_JAVA_HOME_IMPORT%
+    )
 
-            set JAVA=
-            for /F "delims=" %%x in ('where java.exe') do (
-                if [%JAVA%]==[] (
-                    set JAVA="%%x"
-                    goto :eof
+    IF [%JAVA%] == [] (
+        if "%JAVA_HOME%"=="" (
+            if "%JRE_HOME%"=="" (
+                echo %MSG_WARNING_HEADER%
+                echo Neither the JAVA_HOME nor the JRE_HOME environment variable is defined.
+                echo Nexial will use the JVM based on current PATH. Nexial requires Java 1.8
+                echo or above to run, so this might not work...
+                echo %MSG_FOOTER%
+                echo.
+
+                call :resolveJavaFromWhereCommand
+                goto :check_exit
+            ) else (
+                if EXIST "%JRE_HOME%\bin\java.exe" (
+                    set JAVA="%JRE_HOME%\bin\java.exe"
+                ) else (
+                    echo ERROR!!!
+                    echo The JRE_HOME environment variable is not defined correctly.
+                    echo Unable to find "%JRE_HOME%\bin\java.exe"
+                    echo.
+                    call :showJavaNotFoundError
+                    call :optToInstallJava
+                    goto :check_exit
                 )
             )
         ) else (
-            if EXIST "%JRE_HOME%\bin\java.exe" (
-                set JAVA="%JRE_HOME%\bin\java.exe"
+            if EXIST "%JAVA_HOME%\bin\java.exe" (
+                set JAVA="%JAVA_HOME%\bin\java.exe"
             ) else (
                 echo ERROR!!!
-                echo The JRE_HOME environment variable is not defined correctly.
-                echo Unable to find "%JRE_HOME%\bin\java.exe"
+                echo The JAVA_HOME environment variable is not defined correctly.
+                echo Unable to find "%JAVA_HOME%\bin\java.exe"
                 echo.
-                exit /b -1
+                call :showJavaNotFoundError
+                call :optToInstallJava
+                goto :check_exit
             )
-        )
-    ) else (
-        if EXIST "%JAVA_HOME%\bin\java.exe" (
-            set JAVA="%JAVA_HOME%\bin\java.exe"
-        ) else (
-            echo ERROR!!!
-            echo The JAVA_HOME environment variable is not defined correctly.
-            echo Unable to find "%JAVA_HOME%\bin\java.exe"
-            echo.
-            exit /b -1
         )
     )
 
     set JAVA_VERSION=
     set JAVA_SUPPORTS_MODULE=true
+    set current_java=%JAVA%
+    call :findJavaVersion %current_java%
 
-    %JAVA% -version > %TEMP%\java_version 2>&1
+    set /p installed_jdk_version=< %TMP_JAVA_VERSION%
+    del %TMP_JAVA_VERSION%
 
-    findstr /C:"\ \"18" %TEMP%\java_version
-    if %ERRORLEVEL% EQU 0 ( set JAVA_VERSION=18)
+    for /f "tokens=3" %%i in ("%installed_jdk_version%") do set installed_jdk_version=%%i
+    set installed_jdk_version=%installed_jdk_version:"=%
 
-    findstr /C:"\ \"17" %TEMP%\java_version
-    if %ERRORLEVEL% EQU 0 ( set JAVA_VERSION=17)
-
-    findstr /C:"\ \"16" %TEMP%\java_version
-    if %ERRORLEVEL% EQU 0 ( set JAVA_VERSION=16)
-
-    findstr /C:"\ \"15" %TEMP%\java_version
-    if %ERRORLEVEL% EQU 0 ( set JAVA_VERSION=15)
-
-    findstr /C:"\ \"14" %TEMP%\java_version
-    if %ERRORLEVEL% EQU 0 ( set JAVA_VERSION=14)
-
-    findstr /C:"\ \"13" %TEMP%\java_version
-    if %ERRORLEVEL% EQU 0 ( set JAVA_VERSION=13)
-
-    findstr /C:"\ \"12" %TEMP%\java_version
-    if %ERRORLEVEL% EQU 0 ( set JAVA_VERSION=12)
-
-    findstr /C:"\ \"11" %TEMP%\java_version
-    if %ERRORLEVEL% EQU 0 ( set JAVA_VERSION=11)
-
-    findstr /C:"\ \"10" %TEMP%\java_version
-    if %ERRORLEVEL% EQU 0 ( set JAVA_VERSION=10)
-
-    findstr /C:"\ \"1.9" %TEMP%\java_version
-    if %ERRORLEVEL% EQU 0 (
-        set JAVA_SUPPORTS_MODULE=false
-        set JAVA_VERSION=1.9
+    for /F "tokens=1 delims=." %%a in ("%installed_jdk_version%") do (
+        set JAVA_VERSION=%%a
     )
 
-    findstr /C:"\ \"1.8" %TEMP%\java_version
-    if %ERRORLEVEL% EQU 0 (
-        set JAVA_SUPPORTS_MODULE=false
-        set JAVA_VERSION=1.8
+    if %JAVA_VERSION% LSS %MINIMUM_JAVA_VERSION% (
+        call :showJavaIncompatibleError
+        call :optToInstallJava
+        goto :check_exit
     )
-
-    if "%JAVA_VERSION%"=="" (
-        echo ERROR!!!
-        echo Unknown or unsupported Java found:
-        type %TEMP%\java_version
-        echo.
-        exit /b -2
-    )
-
-    del %TEMP%\java_version
 
     if "%JAVA_SUPPORTS_MODULE%"=="true" ( set JAVA_OPT=%JAVA_OPT% --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.lang.reflect=ALL-UNNAMED --add-opens java.base/java.io=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED --add-opens java.base/java.text=ALL-UNNAMED --add-opens java.desktop/java.awt.font=ALL-UNNAMED)
 
     goto :eof
+
+
+:check_exit
+    REM TODO not sure if we need single quote here...
+    for /f %%i in ('set NEXIAL_RC') do (
+        if '%%i'=='NEXIAL_RC=3' (
+            goto :exitCommons
+        ) else (
+            call :checkJava
+        )
+    )
 
 
 :title
@@ -212,3 +201,31 @@ REM # Make sure prerequisite environment variables are set
     echo   USER_NEXIAL_HOME: %USER_NEXIAL_HOME%
     echo.
     goto :eof
+
+
+:optToInstallJava
+    %NEXIAL_BIN%.java_check_and_install.cmd
+
+
+:findJavaVersion
+    %NEXIAL_BIN%.java_check_and_install.cmd
+
+
+:preset
+    %NEXIAL_BIN%.java_check_and_install.cmd
+
+
+:showJavaIncompatibleError
+    %NEXIAL_BIN%.java_check_and_install.cmd
+
+
+:showJavaNotFoundError
+    %NEXIAL_BIN%.java_check_and_install.cmd
+
+
+:resolveJavaFromWhereCommand
+    %NEXIAL_BIN%.java_check_and_install.cmd
+
+
+:exitCommons
+    exit /b %NEXIAL_RC%

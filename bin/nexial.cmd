@@ -23,6 +23,7 @@ if NOT ERRORLEVEL 0 goto :exit
 
 call :checkJava
 if NOT ERRORLEVEL 0 goto :exit
+if [%NEXIAL_RC%]==[3] goto :exit
 
 call :resolveEnv
 if NOT ERRORLEVEL 0 goto :exit
@@ -138,4 +139,6 @@ goto :exit
     %NEXIAL_BIN%.commons.cmd %*
 
 :exit
+    REM TODO not sure if we need this - maybe yes, because we are using setlocal at the beginning
+    endlocal
     exit /b %NEXIAL_RC%
