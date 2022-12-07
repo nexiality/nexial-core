@@ -420,14 +420,9 @@ open class InteractiveConsole {
 
 		private fun initAnsiConsole() {
 			try {
-				log("initializing color-aware console output...")
 				AnsiConsole.systemInstall()
 			} catch (e: Throwable) {
 				error("Unable to initialize color-aware console output: ${e.message}")
-			}
-
-			if (AnsiConsole.out() == null) {
-				log("AnsiConsole.out is null!")
 			}
 		}
 
