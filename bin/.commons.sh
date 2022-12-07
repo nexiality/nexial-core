@@ -47,16 +47,16 @@ function resolveLinuxAppPath() {
 
 
 function resolveOSName() {
-    local NEXIAL_OS=
-    	unameOut="$(uname -s)"
-    case "${unameOut}" in
-    	Linux*) NEXIAL_OS=Linux ;;
-    	Darwin*) NEXIAL_OS=Mac ;;
-    	CYGWIN*) NEXIAL_OS=Cygwin ;;
-    	MINGW*) NEXIAL_OS=MinGw ;;
-    	*) NEXIAL_OS="UNKNOWN:${unameOut}" ;;
-    esac
-    	echo $NEXIAL_OS
+		unameOut="$(uname -s)"
+		local NEXIAL_OS=
+		case "${unameOut}" in
+			Linux*) NEXIAL_OS=Linux ;;
+			Darwin*) NEXIAL_OS=Mac ;;
+			CYGWIN*) NEXIAL_OS=Cygwin ;;
+			MINGW*) NEXIAL_OS=MinGw ;;
+			*) NEXIAL_OS="UNKNOWN:${unameOut}" ;;
+		esac
+			echo $NEXIAL_OS
 }
 
 export NEXIAL_OS=$(resolveOSName)

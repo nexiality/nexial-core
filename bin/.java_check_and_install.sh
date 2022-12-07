@@ -2,11 +2,13 @@
 
 MINIMUM_JAVA_VERSION=17
 NEXIAL_JDK_DOWNLOAD_VERSION=${MINIMUM_JAVA_VERSION}
-declare -A JDK_DOWNLOAD_URLS
+declare -a JDK_DOWNLOAD_URLS
 JDK_DOWNLOAD_URLS[Linux_aarch64]=https://download.oracle.com/java/${NEXIAL_JDK_DOWNLOAD_VERSION}/latest/jdk-${NEXIAL_JDK_DOWNLOAD_VERSION}_linux-aarch64_bin.tar.gz
 JDK_DOWNLOAD_URLS[Linux_x86_64]=https://download.oracle.com/java/${NEXIAL_JDK_DOWNLOAD_VERSION}/latest/jdk-${NEXIAL_JDK_DOWNLOAD_VERSION}_linux-x64_bin.tar.gz
-JDK_DOWNLOAD_URLS[macos_aarch64]=https://download.oracle.com/java/${NEXIAL_JDK_DOWNLOAD_VERSION}/latest/jdk-${NEXIAL_JDK_DOWNLOAD_VERSION}_macos-aarch64_bin.tar.gz
-JDK_DOWNLOAD_URLS[macos_x64]=https://download.oracle.com/java/${NEXIAL_JDK_DOWNLOAD_VERSION}/latest/jdk-${NEXIAL_JDK_DOWNLOAD_VERSION}_macos-x64_bin.tar.gz
+JDK_DOWNLOAD_URLS[Macos_aarch64]=https://download.oracle.com/java/${NEXIAL_JDK_DOWNLOAD_VERSION}/latest/jdk-${NEXIAL_JDK_DOWNLOAD_VERSION}_macos-aarch64_bin.tar.gz
+JDK_DOWNLOAD_URLS[Macos_arm64]=https://download.oracle.com/java/${NEXIAL_JDK_DOWNLOAD_VERSION}/latest/jdk-${NEXIAL_JDK_DOWNLOAD_VERSION}_macos-aarch64_bin.tar.gz
+JDK_DOWNLOAD_URLS[Macos_x64]=https://download.oracle.com/java/${NEXIAL_JDK_DOWNLOAD_VERSION}/latest/jdk-${NEXIAL_JDK_DOWNLOAD_VERSION}_macos-x64_bin.tar.gz
+JDK_DOWNLOAD_URLS[Macos_i386]=https://download.oracle.com/java/${NEXIAL_JDK_DOWNLOAD_VERSION}/latest/jdk-${NEXIAL_JDK_DOWNLOAD_VERSION}_macos-x64_bin.tar.gz
 MSG_ERR_HEADER="=ERROR=========================================================================="
 MSG_SUCCESS_HEADER="=SUCCESS========================================================================"
 MSG_FOOTER="================================================================================"
@@ -16,10 +18,7 @@ MSG_SPECIFY_JAVA2="please exit and update the JAVA_HOME environment variable acc
 NEXIAL_JAVA_HOME_IMPORT="$HOME/.nexial/.java_home.sh"
 
 function cacheJavaPath() {
-		REM is the echo needed, or jus for debugging?
-    echo $NEXIAL_JAVA_HOME_IMPORT
-    java_path=$1
-    echo -e "#!/bin/bash\nexport JAVA=$1" >$NEXIAL_JAVA_HOME_IMPORT
+    echo -e "#!/bin/bash\nexport JAVA=$1" > $NEXIAL_JAVA_HOME_IMPORT
 }
 
 function showJavaIncompatibleError() {
@@ -47,10 +46,8 @@ function showJavaNotFoundError() {
 function tryDownloadingJava() {
     echo
     NEXIAL_JAVA_HOME=${NEXIAL_HOME}/jdk-${NEXIAL_JDK_DOWNLOAD_VERSION}
-
     CURRENT_ARCH=$(arch)
     DOWNLOAD_URL_KEY=$(resolveOSName)_${CURRENT_ARCH}
-
     DOWNLOAD_URL=${JDK_DOWNLOAD_URLS[$DOWNLOAD_URL_KEY]}
 
     if [[ -z "${DOWNLOAD_URL}" ]]; then

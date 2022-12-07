@@ -14,19 +14,19 @@ exit /b 9009
     echo 3. Exit
     set choice=
     set /p choice=Enter your selection (1, 2, or 3) and press Enter: 
-    if not '"%choice%"'=='' set choice=%choice:~0,1%
+    if not [%choice%]==[] set choice=%choice:~0,1%
     
-    if '%choice%'=='1' (
+    if [%choice%]==[1] (
         call :promptForCustomJdkLocation
         goto :eof
     )
 
-    if '%choice%'=='2' (
+    if [%choice%]==[2] (
         goto :tryDownloadingJava
         goto :eof
     )
 
-    if '%choice%'=='3' (
+    if [%choice%]==[3] (
         echo.
         echo Please install Java %MINIMUM_JAVA_VERSION% or higher manually for Nexial to work.
         echo Thanks for trying Nexial!
@@ -44,7 +44,6 @@ exit /b 9009
 :preset
     REM # utilities to be invoked by other frontend scripts
     set MINIMUM_JAVA_VERSION=17
-    REM TODO the same variable is defined in `.commons.sh`, why not in `.java_check_and_install.sh`?
     set NEXIAL_JAVA_HOME_IMPORT=%USER_NEXIAL_HOME%\.java_home.cmd
     set NEXIAL_JDK_DOWNLOAD_VERSION=17
     set NEXIAL_JAVA_HOME=%USER_NEXIAL_HOME%\jdk-%NEXIAL_JDK_DOWNLOAD_VERSION%
@@ -90,7 +89,12 @@ exit /b 9009
 
 
 :findJavaVersion
-    %current_java% -version > %TMP_JAVA_VERSION% 2>&1
+    if [%current_java%]==[''] (
+        echo 0 > %TMP_JAVA_VERSION%
+        goto :eof
+    ) else (
+        %current_java% -version > %TMP_JAVA_VERSION% 2>&1
+    )
     goto :eof
 
 
@@ -139,8 +143,7 @@ exit /b 9009
 
 
 :resolveJavaFromWhereCommand
-    REM TODO should be "set JAVA="?
-    set JAVA=''
+    set JAVA=
     where java >nul 2>&1
     IF %ERRORLEVEL% EQU 0 (
         for /F "delims=" %%x in ('where java') do (
@@ -152,8 +155,7 @@ exit /b 9009
         )
     )
 
-    REM TODO should be "if [%JAVA%]==[] ("?
-    if %JAVA%=='' (
+    if [%JAVA%]==[] (
         call :showJavaNotFoundError
         goto :optToInstallJava
     )

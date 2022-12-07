@@ -18,7 +18,7 @@
 package org.nexial.core.interactive
 
 import com.diogonunes.jcdp.bw.Printer.Builder
-import com.diogonunes.jcdp.bw.Printer.Types
+import com.diogonunes.jcdp.bw.Printer.Types.TERM
 import com.diogonunes.jcdp.color.ColoredPrinter
 import com.diogonunes.jcdp.color.api.Ansi.Attribute.*
 import com.diogonunes.jcdp.color.api.Ansi.BColor
@@ -28,6 +28,7 @@ import org.apache.commons.collections4.MapUtils
 import org.apache.commons.lang3.ArrayUtils
 import org.apache.commons.lang3.StringUtils
 import org.apache.commons.lang3.SystemUtils.*
+import org.fusesource.jansi.AnsiConsole
 import org.nexial.commons.utils.DateUtility
 import org.nexial.commons.utils.DateUtility.formatLongDate
 import org.nexial.commons.utils.EnvUtils.getHostName
@@ -118,7 +119,7 @@ open class InteractiveConsole {
 		private const val LEFT_MARGIN_L2_VAL = MAX_LENGTH_BASE - HDR_STATS.length
 		private const val LEFT_MARGIN_L3_HEADER = MAX_LENGTH_BASE - SUB1_START.length
 
-		private val CONSOLE = Builder(Types.TERM).timestamping(false).build()
+		private val CONSOLE = Builder(TERM).timestamping(false).build()
 		private val CPRINTER = ColoredPrinter.Builder(1, false).build()
 
 		private val HELP_TEMPLATE_RESOURCE =
@@ -323,6 +324,8 @@ open class InteractiveConsole {
 		private fun printMenu(prefix: String, menuIdentifier: MenuIdentifier, vararg menus: String) {
 			if (ArrayUtils.isEmpty(menus)) return
 
+			if (AnsiConsole.out() == null) initAnsiConsole()
+
 			var charPrinted = 0
 
 			CONSOLE.print(MARGIN_LEFT)
@@ -340,7 +343,6 @@ open class InteractiveConsole {
 					if (StringUtils.isNotEmpty(beforeKey)) CONSOLE.print(beforeKey)
 
 					CPRINTER.print(key, UNDERLINE, FColor.BLACK, BColor.WHITE)
-					// CPRINTER.clear()
 
 					val afterKey = StringUtils.substringAfter(menu, key)
 					if (StringUtils.isNotEmpty(afterKey)) CONSOLE.print(afterKey)
@@ -357,9 +359,7 @@ open class InteractiveConsole {
 			val header1 = "[$header]"
 
 			CONSOLE.print(MARGIN_LEFT)
-			// CONSOLE.print(SUB1_START)
 			CPRINTER.print(header1, UNDERLINE, FColor.CYAN, BColor.NONE)
-			// CPRINTER.clear()
 
 			val fillerLength = LEFT_MARGIN_L3_HEADER - header1.length + SUB1_START.length
 			CONSOLE.print(StringUtils.repeat(" ", fillerLength))
@@ -392,7 +392,6 @@ open class InteractiveConsole {
 			CPRINTER.print(fail, BOLD, if (failCount < 1) FColor.WHITE else FColor.RED, BColor.NONE)
 			if (skipCount > 0) CPRINTER.print(skippedStat, CLEAR, FColor.YELLOW, BColor.NONE)
 			if (iteration != null) CPRINTER.print(iterationStat, CLEAR, FColor.WHITE, BColor.NONE)
-			// CPRINTER.clear()
 
 			val fillerLength = LEFT_MARGIN_L2_VAL - statDetails.length
 			CONSOLE.print(StringUtils.repeat(" ", fillerLength))
@@ -419,7 +418,22 @@ open class InteractiveConsole {
 		private fun formatExecutionMeta(startTime: Long) =
 			"$USER_NAME on ${getHostName()} ($OS_NAME $OS_VERSION); ${formatLongDate(startTime)}"
 
+		private fun initAnsiConsole() {
+			try {
+				log("initializing color-aware console output...")
+				AnsiConsole.systemInstall()
+			} catch (e: Throwable) {
+				error("Unable to initialize color-aware console output: ${e.message}")
+			}
+
+			if (AnsiConsole.out() == null) {
+				log("AnsiConsole.out is null!")
+			}
+		}
+
 		init {
+			initAnsiConsole()
+
 			try {
 				HELP_TEMPLATE = ResourceUtils.loadProperties(HELP_TEMPLATE_RESOURCE)
 			} catch (e: IOException) {
