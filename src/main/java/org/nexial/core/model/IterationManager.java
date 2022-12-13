@@ -17,10 +17,6 @@
 
 package org.nexial.core.model;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.IterableUtils;
 import org.apache.commons.lang3.ArrayUtils;
@@ -28,6 +24,10 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.nexial.core.excel.ExcelAddress;
 import org.nexial.core.utils.ConsoleUtils;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 import static org.nexial.core.NexialConst.Iteration.ITERATION_RANGE_SEP;
 import static org.nexial.core.NexialConst.Iteration.ITERATION_SEP;
@@ -45,10 +45,11 @@ public final class IterationManager {
     public static IterationManager newInstance(String iteration) {
         if (StringUtils.isBlank(iteration)) { iteration = "1"; }
 
-        String[] parts = StringUtils.split(iteration, ITERATION_SEP);
+        String[] parts = StringUtils.split(StringUtils.trim(iteration), ITERATION_SEP);
         if (ArrayUtils.isEmpty(parts)) { parts = new String[]{"1"}; }
 
         IterationManager instance = new IterationManager();
+        boolean hasError=false;
 
         for (String part : parts) {
             // if it's a number, then it's gotta be 1 or greater
@@ -58,14 +59,16 @@ public final class IterationManager {
                 // internally convert all zero or less to 1. Doesn't make sense to consider a "zero" or "negative one" loop.
                 int startNum = toIterationRef(StringUtils.trim(StringUtils.substringBefore(part, ITERATION_RANGE_SEP)));
                 if (startNum < 1) {
-                    ConsoleUtils.error("Invalid iteration reference: " + part + "; ignored...");
-                    continue;
+                    ConsoleUtils.error("Invalid iteration reference: " + iteration + "; ignored...");
+                    hasError=true;
+                    break;
                 }
 
                 int endNum = toIterationRef(StringUtils.trim(StringUtils.substringAfter(part, ITERATION_RANGE_SEP)));
                 if (endNum < 1) {
-                    ConsoleUtils.error("Invalid iteration reference: " + part + "; ignored...");
-                    continue;
+                    ConsoleUtils.error("Invalid iteration reference: " + iteration + "; ignored...");
+                    hasError=true;
+                    break;
                 }
 
                 // if start is greater than end
@@ -77,11 +80,20 @@ public final class IterationManager {
             } else {
                 int iterationNum = toIterationRef(StringUtils.trim(part));
                 if (iterationNum < 1) {
-                    ConsoleUtils.error("Invalid iteration reference: " + part + "; ignored...");
-                    continue;
+                    ConsoleUtils.error("Invalid iteration reference: " + iteration + "; ignored...");
+                    hasError=true;
+                    break;
                 }
                 instance.iterations.add(iterationNum);
             }
+        }
+
+        if (hasError) {
+            instance.first = 1;
+            instance.last = 1;
+            instance.lowest = 1;
+            instance.highest = 1;
+            return instance;
         }
 
         if (CollectionUtils.isEmpty(instance.iterations)) { instance.iterations.add(1); }

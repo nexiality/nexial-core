@@ -17,10 +17,6 @@
 
 package org.nexial.core.model;
 
-import java.io.File;
-import java.util.*;
-import java.util.stream.Collectors;
-
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.BooleanUtils;
@@ -28,7 +24,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.nexial.commons.utils.CollectionUtil;
-import org.nexial.core.CommandConst;
 import org.nexial.core.ExecutionInputPrep;
 import org.nexial.core.excel.Excel;
 import org.nexial.core.excel.Excel.Worksheet;
@@ -36,6 +31,11 @@ import org.nexial.core.excel.ExcelAddress;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.InputFileUtils;
 
+import java.io.File;
+import java.util.*;
+import java.util.stream.Collectors;
+
+import static org.nexial.core.CommandConst.isNonIterableVariable;
 import static org.nexial.core.NexialConst.*;
 import static org.nexial.core.NexialConst.Data.*;
 import static org.nexial.core.NexialConst.Exec.POST_EXEC_MAIL_TO;
@@ -134,7 +134,7 @@ public class TestData {
 
     public IterationManager getIterationManager() {
         // can't save as instance variable due to the nature of how scopeSetting is collected in constructor...
-        return IterationManager.newInstance(getSetting(ITERATION));
+        return IterationManager.newInstance(getIteration());
     }
 
     public boolean isFallbackToPrevious() { return getSettingAsBoolean(FALLBACK_TO_PREVIOUS); }
@@ -198,12 +198,12 @@ public class TestData {
     public List<String> getAllValue(String name) {
         // no longer consider the system property when retrieving values,
         // that way we can define data at any iteration without being overshadowed by system prop.
-        //String sysPropValue = System.getProperty(name);
-        //if (sysPropValue == null) { return dataMap.computeIfAbsent(name, s -> new ArrayList<>()); }
+        // String sysPropValue = System.getProperty(name);
+        // if (sysPropValue == null) { return dataMap.computeIfAbsent(name, s -> new ArrayList<>()); }
 
-        //List<String> values = TextUtils.toList(sysPropValue, DEF_TEXT_DELIM, false);
-        //dataMap.put(name, values);
-        //return values;
+        // List<String> values = TextUtils.toList(sysPropValue, DEF_TEXT_DELIM, false);
+        // dataMap.put(name, values);
+        // return values;
 
         return dataMap.computeIfAbsent(name, s -> new ArrayList<>());
     }
@@ -213,13 +213,16 @@ public class TestData {
     public boolean isDefinedAsDefault(String name) { return defaultDataMap.containsKey(name); }
 
     public boolean has(int iteration, String name) {
-        // data name must exists, data value must exist or else fallback must be set to true and iteration is not the 1st
+        // data name must exist, data value must exist or else fallback must be set to true and iteration is not the 1st
         return dataMap.containsKey(name) &&
                (StringUtils.isNotEmpty(CollectionUtil.getOrDefault(dataMap.get(name), (iteration - 1), "")) ||
                 getSettingAsBoolean(FALLBACK_TO_PREVIOUS) && iteration > 1);
     }
 
     public String getValue(int iteration, String name) {
+        // if this is a "scope" variable, then we shouldn't look at `defaultDataMap` since datasheet shouldn't be overridden by `#default`
+        if (isNonIterableVariable(name)) { return scopeSettings.get(name); }
+
         List<String> values = getAllValue(name);
 
         // in case there isn't any iteration, or data is defined outside of iteration (i.e. in project.properties or
@@ -228,7 +231,18 @@ public class TestData {
 
         for (int i = iteration - 1; i >= 0; i--) {
             String data = CollectionUtil.getOrDefault(values, i, "");
-            if (StringUtils.isNotEmpty(data) || !isFallbackToPrevious()) { return data; }
+
+            // found it? use it
+            if (StringUtils.isNotEmpty(data)) { return data; }
+
+            // should we fallback to previous iteration dataset?
+            if (isFallbackToPrevious()) { continue; }
+
+            // we did not find the data in iteration dataset, and we are not suppose to fallback...
+            if (!this.defaultDataMap.containsKey(name)) { return ""; }
+
+            // but if the data variable is registered in `defaultDataMap` then we can still use it from there
+            return CollectionUtil.getOrDefault(this.defaultDataMap.get(name), 0, "");
         }
 
         // nothing means nothing
@@ -329,7 +343,7 @@ public class TestData {
                 throw new IllegalArgumentException(errPrefix + "no data name defined at A" + i);
             }
 
-            if (CommandConst.isNonIterableVariable(name)) {
+            if (isNonIterableVariable(name)) {
                 XSSFCell dataCell = row.get(1);
                 String dataCellValue = Excel.getCellValue(dataCell);
                 if (StringUtils.isBlank(dataCellValue)) { continue; }
@@ -356,7 +370,7 @@ public class TestData {
             if (ExecutionInputPrep.isDataStepDisabled(headerCell)) { continue; }
 
             String name = Excel.getCellValue(headerCell);
-            if (!CommandConst.isNonIterableVariable(name)) {
+            if (!isNonIterableVariable(name)) {
                 // shouldn't use lastIteration since by doing so we might not be able to capture iteration data that
                 // might be needed by other overriding scenarios
                 // collectIterationData(row, lastIteration, name, dataMap);

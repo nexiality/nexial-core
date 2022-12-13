@@ -181,7 +181,7 @@ class NexialInteractive : ConnectedEventListener, CloseEventListener {
 					else {
 						// try converting from letter (i.e. Column M) to number
 						if (RegexUtils.isExact(argument, "[A-Za-z]{1,3}")) {
-							session.iteration = ExcelAddress.fromColumnLettersToOrdinalNumber(argument.uppercase()) - 1
+							session.iteration = ExcelAddress.fromColumnLettersToOrdinalNumber(argument) - 1
 						} else {
 							error("No a valid number or column reference for iteration: $argument")
 						}

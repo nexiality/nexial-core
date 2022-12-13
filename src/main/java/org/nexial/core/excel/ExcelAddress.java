@@ -143,7 +143,7 @@ public class ExcelAddress {
 
     public static int fromColumnLettersToOrdinalNumber(String letters) {
         int columnNum = 0;
-        for (char ch : letters.toCharArray()) { columnNum = columnNum * ALPHABET_COUNT + ch - 'A' + 1; }
+        for (char ch : letters.toUpperCase().toCharArray()) { columnNum = columnNum * ALPHABET_COUNT + ch - 'A' + 1; }
         return columnNum;
     }
 

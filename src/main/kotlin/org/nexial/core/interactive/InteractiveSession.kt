@@ -203,11 +203,14 @@ data class InteractiveSession(val context: ExecutionContext) {
 
         execDef.getTestData(true)
         if (this.iteration == 0) {
-            val iterationValue = execDef.testData.iteration
+            val iterationValue = StringUtils.trim(execDef.testData.iteration)
             this.iteration = if (NumberUtils.isDigits(iterationValue)) {
                 NumberUtils.toInt(iterationValue)
             } else {
-                NumberUtils.toInt(StringUtils.substringBefore(iterationValue, "-"))
+                val firstIteration = iterationValue.substringBefore(ITERATION_SEP)
+                    .substringBefore(ITERATION_RANGE_SEP)
+                    .trim()
+                ExcelAddress.fromColumnLettersToOrdinalNumber(firstIteration) - 1
             }
         }
     }
