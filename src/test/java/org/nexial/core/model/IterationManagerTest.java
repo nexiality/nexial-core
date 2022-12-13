@@ -48,8 +48,6 @@ public class IterationManagerTest {
         assertEquals(subject.getLowestIteration(), 1);
         assertEquals(subject.getHighestIteration(), 1);
         assertEquals(subject.getIterationCount(), 1);
-        assertFalse(subject.skip(0));
-        for (int i = 1; i < 200; i++) { assertTrue(subject.skip(i)); }
 
         subject = IterationManager.newInstance("1,2,3,4,5");
         assertEquals(subject.getFirstIteration(), 1);
@@ -115,21 +113,10 @@ public class IterationManagerTest {
 
         subject = IterationManager.newInstance("1-5,1 - 5, 001  -      05.00");
         assertEquals(subject.getFirstIteration(), 1);
-        assertEquals(subject.getLastIteration(), 5);
+        assertEquals(subject.getLastIteration(), 1);
         assertEquals(subject.getLowestIteration(), 1);
-        assertEquals(subject.getHighestIteration(), 5);
-        assertEquals(subject.getIterationCount(), 10);
-        for (int i = 1; i < 200; i++) {
-            if (i == 0 ||
-                i == 1 ||
-                i == 2 ||
-                i == 3 ||
-                i == 4) {
-                assertFalse(subject.skip(i));
-            } else {
-                assertTrue(subject.skip(i));
-            }
-        }
+        assertEquals(subject.getHighestIteration(), 1);
+        assertEquals(subject.getIterationCount(), 1);
 
     }
 

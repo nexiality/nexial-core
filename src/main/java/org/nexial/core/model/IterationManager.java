@@ -93,6 +93,7 @@ public final class IterationManager {
             instance.last = 1;
             instance.lowest = 1;
             instance.highest = 1;
+            instance.iterations.clear();
             return instance;
         }
 
@@ -118,7 +119,7 @@ public final class IterationManager {
      * The difference will be resolved internally within this method.
      */
     public boolean skip(int iterationIndex) {
-        return !iterations.isEmpty() && !iterations.contains(iterationIndex + 1);
+        return iterations.isEmpty() || !iterations.contains(iterationIndex + 1);
     }
 
     public int getLowestIteration() { return lowest; }
