@@ -436,44 +436,57 @@ public class WebServiceClient {
         return client.execute(http);
     }
 
-    protected Response gatherResponseData(Request request, HttpResponse httpResponse, long ttfb)
-        throws IOException {
+    protected Response gatherResponseData(Request request, HttpResponse httpResponse, long ttfb) throws IOException {
         Response response = new Response();
         response.setTtfb(ttfb);
 
         StatusLine statusLine = httpResponse.getStatusLine();
-        response.setReturnCode(statusLine.getStatusCode());
+        int statusCode = statusLine.getStatusCode();
+        response.setReturnCode(statusCode);
         response.setStatusText(statusLine.getReasonPhrase());
 
         HttpEntity responseEntity = httpResponse.getEntity();
         if (request instanceof GetRequest && StringUtils.isNotBlank(((GetRequest) request).getPayloadLocation())) {
 
             // check for response code; only 2xx means we are downloading
-            if (statusLine.getStatusCode() >= 200 && statusLine.getStatusCode() < 300) {
-                String saveTo = ((GetRequest) request).getPayloadLocation();
-                log("Saving response payload to " + saveTo);
-                response.setContentLength(saveResponsePayload(responseEntity, saveTo));
-                response.setPayloadLocation(saveTo);
+            if (statusCode >= 200 && statusCode < 300) {
+                if (statusCode == 204) {
+                    log("Response status 204 received. No response payload expected.");
+                    response.setContentLength(0);
+                } else {
+                    String saveTo = ((GetRequest) request).getPayloadLocation();
+                    log("Saving response payload to " + saveTo);
+                    response.setContentLength(saveResponsePayload(responseEntity, saveTo));
+                    response.setPayloadLocation(saveTo);
+                }
             } else {
                 // status NOT in 2xx means failure
                 log("Unable to download due to " + statusLine);
                 throw new IOException(statusLine + "");
             }
+
         } else {
-            log("Saving response payload as raw bytes");
-            byte[] rawBody = harvestResponsePayload(responseEntity);
-            if (rawBody == null) {
+
+            if (statusCode == 204) {
+                log("Response status 204 received. No response payload expected.");
                 response.setRawBody(null);
                 response.setContentLength(0);
             } else {
-                long contentLength = Math.max(responseEntity.getContentLength(), rawBody.length);
-                response.setRawBody(rawBody);
-                response.setContentLength(contentLength);
+                log("Saving response payload as raw bytes");
+                byte[] rawBody = harvestResponsePayload(responseEntity);
+                if (rawBody == null) {
+                    response.setRawBody(null);
+                    response.setContentLength(0);
+                } else {
+                    long contentLength = Math.max(responseEntity.getContentLength(), rawBody.length);
+                    response.setRawBody(rawBody);
+                    response.setContentLength(contentLength);
+                }
             }
+
         }
 
         response.setHeaders(handleResponseHeaders(httpResponse));
-
         return response;
     }
 
@@ -488,8 +501,7 @@ public class WebServiceClient {
         int contentLength = 0;
         boolean requestWithBody = request instanceof PostRequest;
         if (requestWithBody) {
-            if (request instanceof PostMultipartRequest) {
-                PostMultipartRequest mpRequest = ((PostMultipartRequest) request);
+            if (request instanceof PostMultipartRequest mpRequest) {
 
                 HttpEntity mpEntity = mpRequest.getEntity();
                 Header contentType = mpEntity.getContentType();
