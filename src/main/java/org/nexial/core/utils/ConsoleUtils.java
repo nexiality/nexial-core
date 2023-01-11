@@ -451,23 +451,29 @@ public final class ConsoleUtils {
 
     private static void sendToLogger(Level logLevel, String message) {
         switch (logLevel) {
-            case TRACE:
+            case TRACE -> {
                 if (LOGGER.isTraceEnabled()) { LOGGER.trace(message); }
                 return;
-            case DEBUG:
+            }
+            case DEBUG -> {
                 if (LOGGER.isDebugEnabled()) { LOGGER.debug(message); }
                 return;
-            case INFO:
+            }
+            case INFO -> {
                 if (LOGGER.isInfoEnabled()) { LOGGER.info(message); }
                 return;
-            case WARN:
+            }
+            case WARN -> {
                 LOGGER.warn(message);
                 return;
-            case ERROR:
+            }
+            case ERROR -> {
                 LOGGER.error(message);
                 return;
-            default:
+            }
+            default -> {
                 if (LOGGER.isDebugEnabled()) { LOGGER.debug(message); }
+            }
         }
     }
 }

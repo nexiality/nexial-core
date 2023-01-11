@@ -147,161 +147,170 @@ class NexialInteractive : ConnectedEventListener, CloseEventListener {
 			val command = StringUtils.upperCase(StringUtils.trim(StringUtils.substringBefore(input, " ")))
 			val argument = StringUtils.trim(StringUtils.substringAfter(input, " "))
 
-			when (command) {
-				SET_SCRIPT       -> {
-					if (StringUtils.isBlank(argument)) {
-						error("No test script assigned")
-					} else {
-						session.script = argument
-					}
-				}
-
-				SET_DATA         -> {
-					if (StringUtils.isBlank(argument)) {
-						error("No data file assigned")
-					} else {
-						session.dataFile = argument
-					}
-				}
-
-				SET_SCENARIO     -> {
-					if (StringUtils.isBlank(argument)) {
-						error("No scenario assigned")
-					} else {
-						session.scenario = argument
-						session.reloadTestScript()
-					}
-				}
-
-				SET_ITER         -> {
-					if (StringUtils.isBlank(argument))
-						error("No iteration assigned")
-					else if (NumberUtils.isDigits(argument))
-						session.iteration = NumberUtils.createInteger(argument)
-					else {
-						// try converting from letter (i.e. Column M) to number
-						if (RegexUtils.isExact(argument, "[A-Za-z]{1,3}")) {
-							session.iteration = ExcelAddress.fromColumnLettersToOrdinalNumber(argument) - 1
+			try {
+				when (command) {
+					SET_SCRIPT       -> {
+						if (StringUtils.isBlank(argument)) {
+							error("No test script assigned")
 						} else {
-							error("No a valid number or column reference for iteration: $argument")
+							session.script = argument
 						}
 					}
-				}
 
-				SET_ACTIVITY     -> {
-					// steps can be range (dash) or comma-separated
-					if (StringUtils.isBlank(argument)) {
-						error("No activity assigned")
-					} else {
-						session.assignActivities(TextUtils.replaceItems(toSteps(argument), tmpComma, ","))
-						if (autoRun) {
-							execute(session)
+					SET_DATA         -> {
+						if (StringUtils.isBlank(argument)) {
+							error("No data file assigned")
+						} else {
+							session.dataFile = argument
+						}
+					}
+
+					SET_SCENARIO     -> {
+						if (StringUtils.isBlank(argument)) {
+							error("No scenario assigned")
+						} else {
+							session.scenario = argument
+							session.reloadTestScript()
+						}
+					}
+
+					SET_ITER         -> {
+						if (StringUtils.isBlank(argument))
+							error("No iteration assigned")
+						else if (NumberUtils.isDigits(argument))
+							session.iteration = NumberUtils.createInteger(argument)
+						else {
+							// try converting from letter (i.e. Column M) to number
+							if (RegexUtils.isExact(argument, "[A-Za-z]{1,3}")) {
+								session.iteration = ExcelAddress.fromColumnLettersToOrdinalNumber(argument) - 1
+							} else {
+								error("No a valid number or column reference for iteration: $argument")
+							}
+						}
+					}
+
+					SET_ACTIVITY     -> {
+						// steps can be range (dash) or comma-separated
+						if (StringUtils.isBlank(argument)) {
+							error("No activity assigned")
+						} else {
+							session.assignActivities(TextUtils.replaceItems(toSteps(argument), tmpComma, ","))
+							if (autoRun) {
+								execute(session)
+								InteractiveConsole.showMenu(session)
+							}
+						}
+					}
+
+					SET_STEPS        -> {
+						// steps can be range (dash) or comma-separated
+						if (StringUtils.isBlank(argument)) {
+							error("No test step assigned")
+						} else {
+							session.steps = toSteps(argument)
+							session.clearActivities()
+							if (autoRun) {
+								execute(session)
+								InteractiveConsole.showMenu(session)
+							}
+						}
+					}
+
+					RELOAD_ALL       -> {
+						System.setProperty(ITERATION, session.iteration.toString())
+						session.reloadDataFile()
+						session.reloadProjectProperties()
+						session.reloadTestScript()
+						InteractiveConsole.showMenu(session)
+					}
+
+					RELOAD_MENU      -> {
+						InteractiveConsole.showMenu(session)
+					}
+
+					RUN              -> {
+						execute(session)
+						InteractiveConsole.showMenu(session)
+					}
+
+					INSPECT          -> {
+						inspect(session)
+						InteractiveConsole.showMenu(session)
+					}
+
+					OPEN_SCRIPT      -> {
+						if (StringUtils.isBlank(session.script)) {
+							error("No valid test script assigned")
+						} else {
+							Excel.openExcel(File(session.script!!))
 							InteractiveConsole.showMenu(session)
 						}
 					}
-				}
 
-				SET_STEPS        -> {
-					// steps can be range (dash) or comma-separated
-					if (StringUtils.isBlank(argument)) {
-						error("No test step assigned")
-					} else {
-						session.steps = toSteps(argument)
-						session.clearActivities()
-						if (autoRun) {
-							execute(session)
+					OPEN_DATA        -> {
+						if (StringUtils.isBlank(session.dataFile)) {
+							error("No valid data file assigned")
+						} else {
+							Excel.openExcel(File(session.dataFile!!))
 							InteractiveConsole.showMenu(session)
 						}
 					}
-				}
 
-				RELOAD_ALL       -> {
-					System.setProperty(ITERATION, session.iteration.toString())
-					session.reloadDataFile()
-					session.reloadProjectProperties()
-					session.reloadTestScript()
-					InteractiveConsole.showMenu(session)
-				}
+					OUTPUT           -> {
+						val output = System.getProperty(OPT_OUT_DIR)
+						if (StringUtils.isNotBlank(output)) {
+							ExecUtils.openFileNoWait(output)
+							InteractiveConsole.showMenu(session)
+						} else {
+							error("Unable to determine output directory. Perhaps no execution has been performed thus far?")
+						}
+					}
 
-				RELOAD_MENU      -> {
-					InteractiveConsole.showMenu(session)
-				}
-
-				RUN              -> {
-					execute(session)
-					InteractiveConsole.showMenu(session)
-				}
-
-				INSPECT          -> {
-					inspect(session)
-					InteractiveConsole.showMenu(session)
-				}
-
-				OPEN_SCRIPT      -> {
-					if (StringUtils.isBlank(session.script)) {
-						error("No valid test script assigned")
-					} else {
-						Excel.openExcel(File(session.script!!))
+					TOGGLE_RECORDING -> {
+						toggleRecording(session)
 						InteractiveConsole.showMenu(session)
 					}
-				}
 
-				OPEN_DATA        -> {
-					if (StringUtils.isBlank(session.dataFile)) {
-						error("No valid data file assigned")
-					} else {
-						Excel.openExcel(File(session.dataFile!!))
+					AUTORUN          -> {
+						autoRun = !autoRun
+						session.autoRun = autoRun
+						if (autoRun)
+							ConsoleUtils.log(runId,
+							                 "Autorun ENABLED: Nexial Interactive will automatically execute after steps" +
+							                 " are specified via Option 5 or 6.")
+						else
+							ConsoleUtils.log(runId, "Autorun DISABLED: Use Option X to execute specified steps.")
+
 						InteractiveConsole.showMenu(session)
 					}
-				}
 
-				OUTPUT           -> {
-					val output = System.getProperty(OPT_OUT_DIR)
-					if (StringUtils.isNotBlank(output)) {
-						ExecUtils.openFileNoWait(output)
+					CLEAR_TEMP       -> {
+						ConsoleUtils.log(runId, "Scanning fo Nexial-generated temp files to purge...")
+						TempCleanUp.cleanTempFiles(verbose = true, 1)
 						InteractiveConsole.showMenu(session)
-					} else {
-						error("Unable to determine output directory. Perhaps no execution has been performed thus far?")
+					}
+
+					HELP             -> {
+						InteractiveConsole.showHelp(session)
+						InteractiveConsole.showMenu(session)
+					}
+
+					EXIT             -> {
+						proceed = false
+						ConsoleUtils.log(runId, "Ending Nexial Interactive session...")
+					}
+
+					else             -> {
+						error("Unknown command $input. Try again...\n")
 					}
 				}
-
-				TOGGLE_RECORDING -> {
-					toggleRecording(session)
-					InteractiveConsole.showMenu(session)
-				}
-
-				AUTORUN          -> {
-					autoRun = !autoRun
-					session.autoRun = autoRun
-					if (autoRun)
-						ConsoleUtils.log(runId,
-						                 "Autorun ENABLED: Nexial Interactive will automatically execute after steps" +
-						                 " are specified via Option 5 or 6.")
-					else
-						ConsoleUtils.log(runId, "Autorun DISABLED: Use Option X to execute specified steps.")
-
-					InteractiveConsole.showMenu(session)
-				}
-
-				CLEAR_TEMP       -> {
-					ConsoleUtils.log(runId, "Scanning fo Nexial-generated temp files to purge...")
-					TempCleanUp.cleanTempFiles(verbose = true, 1)
-					InteractiveConsole.showMenu(session)
-				}
-
-				HELP             -> {
-					InteractiveConsole.showHelp(session)
-					InteractiveConsole.showMenu(session)
-				}
-
-				EXIT             -> {
-					proceed = false
-					ConsoleUtils.log(runId, "Ending Nexial Interactive session...")
-				}
-
-				else             -> {
-					error("Unknown command $input. Try again...\n")
-				}
+			} catch (e: Exception) {
+				println("\n")
+				println(StringUtils.repeat('!', 13))
+				println("!!! ERROR !!!")
+				println(StringUtils.repeat('!', 13))
+				println(" >>> ${e.message}")
+				println("\n\n")
 			}
 		}
 	}
