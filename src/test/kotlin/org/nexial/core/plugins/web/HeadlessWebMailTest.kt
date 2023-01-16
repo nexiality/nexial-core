@@ -20,7 +20,7 @@ package org.nexial.core.plugins.web
 import org.junit.Test
 import org.nexial.core.ExcelBasedTests
 
-class HeadlessWebMailTest : ExcelBasedTests() {
+class  HeadlessWebMailTest : ExcelBasedTests() {
 
 	@Test
 	@Throws(Exception::class)
