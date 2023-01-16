@@ -1,0 +1,1 @@
+EY15|00000123|ABC|N|Y|Nexial_Test|A|01032023|test_email@mail.com|John|Doe|

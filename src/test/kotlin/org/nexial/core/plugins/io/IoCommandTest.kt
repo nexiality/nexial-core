@@ -1179,6 +1179,24 @@ class IoCommandTest {
         }
     }
 
+    @Test
+    @Throws(Throwable::class)
+    fun testAssertFileContent() {
+        val subject =newIO()
+
+        val file1 = makeEmptyFile(testDestination2 + separator + "AssertFileContent1.txt")
+        FileUtils.writeStringToFile(file1, "This is a test for John Doe, my friend", DEF_CHARSET)
+        assertTrue(subject.assertFileContent(file1.absolutePath, "CONTAIN:John Doe", "false").isSuccess)
+        assertTrue(subject.assertFileContent(file1.absolutePath, "REGEX:.+test.+friend", "false").isSuccess)
+        assertTrue(subject.assertFileContent(file1.absolutePath, "LENGTH:38", "false").isSuccess)
+        file1.delete()
+
+        val file2 = makeEmptyFile(testDestination2 + separator + "AssertFileContent2.txt")
+        FileUtils.writeStringToFile(file2, "2023-01-12|Red|17\n2023-01-13|Yellow|4", DEF_CHARSET)
+        assertTrue(subject.assertFileContent(file2.absolutePath, "CONTAIN:2023-01", "true").isSuccess)
+        file2.delete()
+    }
+
     private fun newIO(): IoCommand {
         val command = IoCommand()
         command.init(context)

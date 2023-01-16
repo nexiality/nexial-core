@@ -21,6 +21,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.LineIterator;
+import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.lang3.math.NumberUtils;
@@ -31,17 +32,29 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.text.similarity.LevenshteinDetailedDistance;
 import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
-import org.nexial.commons.utils.*;
+import org.nexial.commons.utils.DateUtility;
+import org.nexial.commons.utils.FileUtil;
+import org.nexial.commons.utils.RegexUtils;
+import org.nexial.commons.utils.ResourceUtils;
+import org.nexial.commons.utils.TextUtils;
 import org.nexial.core.excel.Excel;
 import org.nexial.core.excel.Excel.Worksheet;
-import org.nexial.core.model.*;
+import org.nexial.core.model.ExecutionContext;
+import org.nexial.core.model.NexialFilter;
+import org.nexial.core.model.NexialFilterComparator;
+import org.nexial.core.model.NexialFilterList;
+import org.nexial.core.model.StepResult;
 import org.nexial.core.plugins.base.BaseCommand;
 import org.nexial.core.plugins.filevalidation.RecordData;
 import org.nexial.core.plugins.filevalidation.parser.FileParserFactory;
 import org.nexial.core.plugins.filevalidation.validators.ErrorReport;
 import org.nexial.core.plugins.filevalidation.validators.MasterFileValidator;
 import org.nexial.core.plugins.pdf.PdfTextExtractor;
-import org.nexial.core.utils.*;
+import org.nexial.core.utils.CheckUtils;
+import org.nexial.core.utils.ConsoleUtils;
+import org.nexial.core.utils.IOFilePathFilter;
+import org.nexial.core.utils.OutputFileUtils;
+import org.nexial.core.utils.OutputResolver;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -238,7 +251,7 @@ public class IoCommand extends BaseCommand {
                                                                 "either DOES NOT exists or is NOT readable"), null);
     }
 
-    //todo: need to consider target as file name, not just dir. but how to recognize this?
+    // todo: need to consider target as file name, not just dir. but how to recognize this?
     public StepResult copyFiles(String source, String target) { return doAction(copy, source, target); }
 
     public StepResult copyFilesByRegex(String sourceDir, String regex, String target) throws IOException {
@@ -256,7 +269,7 @@ public class IoCommand extends BaseCommand {
         }
     }
 
-    //todo: need to consider target as file name, not just dir. but how to recognize this?
+    // todo: need to consider target as file name, not just dir. but how to recognize this?
     public StepResult moveFiles(String source, String target) { return doAction(move, source, target); }
 
     public StepResult moveFilesByRegex(String sourceDir, String regex, String target) throws IOException {
@@ -374,19 +387,58 @@ public class IoCommand extends BaseCommand {
     public StepResult assertReadableFile(String file, String minByte) {
         requiresNotBlank(file, "invalid file", file);
 
-        boolean passed;
-        if (StringUtils.isBlank(minByte) || StringUtils.equals(StringUtils.trim(minByte), "-1")) {
-            passed = FileUtil.isFileReadable(file);
-        } else {
-            requiresPositiveNumber(minByte, "minByte must be a positive integer", minByte);
-            passed = FileUtil.isFileReadable(file, NumberUtils.toInt(minByte));
-        }
+        boolean passed = isReadableFile(file, minByte);
 
         return new StepResult(
             passed,
             "File (" + file + ") is " +
             (passed ? "readable and meet size requirement" : "NOT readable or less than specified size"),
             null);
+    }
+
+    private static boolean isReadableFile(String file, String minByte) {
+        if (StringUtils.isBlank(minByte) || StringUtils.equals(StringUtils.trim(minByte), "-1")) {
+            return FileUtil.isFileReadable(file);
+        }
+
+        requiresPositiveNumber(minByte, "minByte must be a positive integer", minByte);
+        return FileUtil.isFileReadable(file, NumberUtils.toInt(minByte));
+    }
+
+    /**
+     * {@literal file} must be readable, not empty, and contains text content.
+     * {@literal match} supports polymatcher; default to exact match.
+     */
+    public StepResult assertFileContent(String file, String match, String asLines) {
+        requiresNotBlank(file, "invalid file", file);
+        requiresNotBlank(match, "invalid match criteria", match);
+
+        if (!isReadableFile(file, "1")) { return StepResult.fail("File %s is not readable or is empty", file); }
+
+        File input = toFile(file);
+
+        try {
+            String content = FileUtils.readFileToString(input, DEF_CHARSET);
+            if (StringUtils.isEmpty(content)) { return StepResult.fail("File %s is empty", file); }
+
+            boolean lineMode = BooleanUtils.toBoolean(asLines);
+            if (lineMode) {
+                boolean allMatched = TextUtils.polyMatchAll(FileUtils.readLines(input, DEF_CHARSET), match);
+                return new StepResult(allMatched,
+                                      (allMatched ? "Every" : "Not every") +
+                                      " line in file " + file + " matched '" + match + "'",
+                                      null);
+            }
+
+            boolean matched = TextUtils.polyMatch(content, match);
+            return new StepResult(matched,
+                                  "File content in file " + file + (matched ? " matched " : " not matched ") +
+                                  "to '" + match + "'",
+                                  null);
+        } catch (IOException e) {
+            return StepResult.fail("Error when reading content from '" + file + "': " + e.getMessage());
+        }
+
     }
 
     public StepResult zip(String filePattern, String zipFile) {

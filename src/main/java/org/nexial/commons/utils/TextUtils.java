@@ -1491,6 +1491,11 @@ public final class TextUtils {
         return actual.stream().anyMatch(item -> polyMatch(item, expected, false));
     }
 
+    /** check if one of the items of {@code actual} would poly-match against the specified {@code expected}. */
+    public static boolean polyMatchAll(List<String> actual, String expected) {
+        return actual.stream().allMatch(item -> polyMatch(item, expected, false));
+    }
+
     public static boolean polyMatch(String actual, String expected) { return polyMatch(actual, expected, false); }
 
     public static boolean polyMatch(String actual, String expected, boolean trim) {

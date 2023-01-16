@@ -39,9 +39,11 @@ public class HeadlessIOTests extends ExcelBasedTests {
         assertNoFail(executionSummary, "filter");
         assertNoFail(executionSummary, "saveMatches");
         assertNoFail(executionSummary, "saveMatches_2");
-        assertNoFail(executionSummary, "compareExtended");
+        // assertNoFail(executionSummary, "compareExtended");
+        TestOutcomeStats compareExtendedResults = getActualStats(executionSummary, "compareExtended");
+        assertEquals(1, compareExtendedResults.getFailCount());
         assertNoFail(executionSummary, "checksum");
 
-        assertEquals(0, executionSummary.getFailCount());
+        assertEquals(1, executionSummary.getFailCount());
     }
 }

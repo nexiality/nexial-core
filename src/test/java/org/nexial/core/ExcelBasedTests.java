@@ -64,6 +64,10 @@ public abstract class ExcelBasedTests {
 
         public static TestOutcomeStats allFailed() { return ALL_FAILED; }
 
+        public int getFailCount() { return failCount; }
+
+        public int getPassCount() { return passCount; }
+
         public int getUnaccounted() { return unaccounted; }
 
         public void setUnaccounted(int unaccounted) { this.unaccounted = unaccounted; }
