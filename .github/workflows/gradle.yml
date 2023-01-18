@@ -1,7 +1,7 @@
 # Description: Build and test nexial core
 # Author: Sai Karthik <kskarthik@disroot.org>
-# TODO: Investigate what causes build on windows
-# TODO: Check why tets fail
+# TODO: Investigate what causes build failure on windows
+# TODO: Check why unit tests fail
 name: Nexial Core CI
 
 # run jobs on master branches & pull requests
