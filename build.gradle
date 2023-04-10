@@ -308,6 +308,10 @@ dependencies {
 
 	implementation("com.mikesamuel:json-sanitizer:${jsonSanitizerVersion}")
 
+	// JT400 for Tn5250/AS400
+	implementation("net.sf.jt400:jt400:${jt400Version}")
+
+
 	//	implementation 'org.owasp:java-file-io:1.0.0'
 	//	https://github.com/augustd/owasp-java-fileio/tree/master/src/main/java/org/owasp/fileio
 

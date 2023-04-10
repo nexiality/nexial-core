@@ -331,7 +331,7 @@
     <entry key="ssh">
       <bean class="org.nexial.core.plugins.ssh.SshCommand"/>
     </entry>
-    <entry key="tn5250">
+    <entry key="tn.5250">
       <bean class="org.nexial.core.plugins.tn5250.Tn5250Command"/>
     </entry>
     <entry key="web">
