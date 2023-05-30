@@ -206,37 +206,16 @@ public class ValidationsExecutor {
                     continue;
                 }
                 switch (function.toUpperCase()) {
-                    /*case "SAVE": {
-                        if (mapValues.containsKey("FILE#" + mapTo)) {
-                            int counter = mapValues.get("FILE#" + mapTo).intValue();
-                            mapValues.put("FILE#" + mapTo, ++counter);
-                        } else { mapValues.put("FILE#" + mapTo, 1);}
-                        break;
-
-                    }*/
-                    case "AVERAGE": {
-                        average(mapValues, mapTo, big);
-                        break;
-                    }
-                    case "AGGREGATE": {
-                        aggregate(mapValues, mapTo, big);
-                        break;
-                    }
-                    case "MIN": {
-                        min(mapValues, mapTo, big);
-                        break;
-                    }
-                    case "MAX": {
-                        max(mapValues, mapTo, big);
-                        break;
-                    }
-                    case "COUNT": {
+                    case "AVERAGE" -> average(mapValues, mapTo, big);
+                    case "AGGREGATE" -> aggregate(mapValues, mapTo, big);
+                    case "MIN" -> min(mapValues, mapTo, big);
+                    case "MAX" -> max(mapValues, mapTo, big);
+                    case "COUNT" -> {
                         if (mapValues.containsKey(mapTo)) {
                             int counter = mapValues.get(mapTo).intValue();
                             mapValues.put(mapTo, ++counter);
                         } else {
                             mapValues.put(mapTo, 1);
-                            break;
                         }
                     }
                 }

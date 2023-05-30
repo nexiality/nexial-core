@@ -34,10 +34,10 @@ import static org.nexial.core.NexialConst.Data.RESOLVE_TEXT_AS_IS;
 import static org.nexial.core.SystemVariables.getDefaultBool;
 import static org.nexial.core.variable.BinaryDataType.BINARY;
 
-public class ExpressionUtils {
+public final class ExpressionUtils {
     private ExpressionUtils() { }
 
-    protected static String handleExternal(String dataType, String value) throws TypeConversionException {
+    static String handleExternal(String dataType, String value) throws TypeConversionException {
         ExecutionContext context = ExecutionThread.get();
         if (StringUtils.equals(dataType, BINARY)) {
             // file content resolved by BinaryDataType itself
@@ -48,7 +48,7 @@ public class ExpressionUtils {
         }
     }
 
-    protected static String handleExternal(String dataType, String value, boolean replaceTokens)
+    static String handleExternal(String dataType, String value, boolean replaceTokens)
         throws TypeConversionException {
         ExecutionContext context = ExecutionThread.get();
         if (context == null) { return value; }
@@ -62,7 +62,7 @@ public class ExpressionUtils {
         }
     }
 
-    protected static <T> T resumeExpression(String value, Class<T> dataType) {
+    static <T> T resumeExpression(String value, Class<T> dataType) {
         if (StringUtils.isBlank(value)) { return null; }
         if (!CheckUtils.isValidVariable(value)) { return null; }
 
@@ -109,11 +109,10 @@ public class ExpressionUtils {
         }
     }
 
-    protected static String fixControlChars(String text) {
+    static String fixControlChars(String text) {
         text = StringUtils.replace(text, "\\n", "\n");
         text = StringUtils.replace(text, "\\r", "\r");
         text = StringUtils.replace(text, "\\t", "\t");
         return text;
     }
-
 }

@@ -46,7 +46,7 @@ public class NexialUpdate {
 
     private static final String REL_PATH_INSTALLER_JAR = separator + "lib" + separator + "nexial-installer.jar";
     private static final String INSTALLER_DIR_NAME = "nexial-installer";
-    private static final long timeoutSeconds = 15l;
+    private static final long timeoutSeconds = 15L;
 
     public static void checkAndRun() {
         if (ExecUtils.isRunningInZeroTouchEnv()) { return; }
@@ -67,26 +67,23 @@ public class NexialUpdate {
                 }
 
                 switch (choice) {
-                    case 1: {
+                    case 1 -> {
                         saveUpdatePreferenceChoice(true);
                         System.exit(0);
                     }
-                    case 2: {
+                    case 2 -> {
                         saveUpdatePreferenceChoice(false);
                         System.exit(0);
                     }
-                    case 3: {
+                    case 3 -> {
                         System.out.println("Skipping the installation...\n");
                         return;
                     }
-                    default:
-                        System.out.println("Please choose valid option.\n");
+                    default -> System.out.println("Please choose valid option.\n");
                 }
 
             }
         }
-
-        // updateSilently();
     }
 
     public static void installNexialInstallerIfNotPresent() {
@@ -95,12 +92,6 @@ public class NexialUpdate {
             if (isNexialInstallerOlder(nexialInstallerVersion)) { showNexialInstallerBanner(true); }
         } else {
             showNexialInstallerBanner(false);
-            /*try {
-                String version = downloadNexialInstaller();
-                installNexialInstaller(version);
-            } catch (Exception e) {
-                ConsoleUtils.log("Failed to download Nexial-Installer. Reason: " + e.getMessage());
-            }*/
         }
     }
 
@@ -185,10 +176,10 @@ public class NexialUpdate {
         if (ArrayUtils.isEmpty(minimumNumbers)) { return false; }
 
         try {
-            long currentVersionNum = (NumberUtils.toInt(versionNumbers[0]) * 10000) +
+            long currentVersionNum = (NumberUtils.toInt(versionNumbers[0]) * 10000L) +
                                      (versionNumbers.length > 1 ? NumberUtils.toInt(versionNumbers[1]) + 100 : 0) +
                                      (versionNumbers.length > 2 ? NumberUtils.toInt(versionNumbers[2]) : 0);
-            long minVersionNum = (NumberUtils.toInt(minimumNumbers[0]) * 10000) +
+            long minVersionNum = (NumberUtils.toInt(minimumNumbers[0]) * 10000L) +
                                  (minimumNumbers.length > 1 ? NumberUtils.toInt(minimumNumbers[1]) + 100 : 0) +
                                  (minimumNumbers.length > 2 ? NumberUtils.toInt(minimumNumbers[2]) : 0);
             return currentVersionNum < minVersionNum;
@@ -219,81 +210,4 @@ public class NexialUpdate {
     }
 
     private static boolean isInstallDirectory(File f) { return f.getName().toLowerCase().matches(INSTALLER_DIR_NAME); }
-
-    // private static String downloadNexialInstaller() {
-    //
-    //     final String installUrl = "https://api.github.com/repos/nexiality/nexial-installer/releases?prerelease=true";
-    //
-    //     try (InputStream is = new URL(installUrl).openStream()) {
-    //         BufferedReader br = new BufferedReader(new InputStreamReader(is));
-    //         StringBuilder jsonString = new StringBuilder();
-    //         while (true) {
-    //             Optional<String> chunk = Optional.ofNullable(br.readLine());
-    //             if (chunk.isPresent()) {
-    //                 jsonString.append(chunk.get());
-    //             } else { break; }
-    //         }
-    //
-    //         String downloadUrl = GSON.fromJson(jsonString.toString(), JsonArray.class)
-    //                                  .get(0).getAsJsonObject()
-    //                                  .get("assets").getAsJsonArray()
-    //                                  .get(0).getAsJsonObject()
-    //                                  .get("browser_download_url").getAsString();
-    //
-    //         String[] pathToken = downloadUrl.split("/");
-    //
-    //         String installerName = pathToken[pathToken.length - 1];
-    //
-    //         String NEXIAL_INSTALLER_PATH = USER_PROJECTS_DIR + "nexial-installer" + separator + installerName;
-    //
-    //         // Checking If The File Exists At The Specified Location Or Not
-    //         Path filePathObj = Paths.get(NEXIAL_INSTALLER_PATH);
-    //         if (Files.notExists(filePathObj)) {
-    //             try {
-    //                 FileUtils.forceMkdir(new File(NEXIAL_INSTALLER_PATH).getParentFile());
-    //                 Files.createFile(Paths.get(NEXIAL_INSTALLER_PATH));
-    //             } catch (IOException e) {
-    //                 ConsoleUtils.error("Could not get response. Reason: " + e.getMessage());
-    //             }
-    //         }
-    //
-    //         try (ReadableByteChannel rbcObj = Channels.newChannel(new URL(downloadUrl).openStream());
-    //              FileOutputStream fOutStream = new FileOutputStream(NEXIAL_INSTALLER_PATH)) {
-    //             fOutStream.getChannel().transferFrom(rbcObj, 0, Long.MAX_VALUE);
-    //             ConsoleUtils.log("File Downloaded");
-    //             return installerName;
-    //         } catch (IOException e) {
-    //             ConsoleUtils.error("Could not download installer. Reason: " + e.getMessage());
-    //         }
-    //     } catch (IOException e) {
-    //         ConsoleUtils.error("Could not get response. Reason: " + e.getMessage());
-    //     }
-    //     return null;
-    // }
-
-    // public static void installNexialInstaller(String zipfileName) {
-    //     String NEXIAL_INSTALLER_PATH = USER_PROJECTS_DIR + "nexial-installer" + separator;
-    //     String fileZip = NEXIAL_INSTALLER_PATH + zipfileName;
-    //     Path destDirStr = Paths.get(NEXIAL_INSTALLER_PATH);
-    //
-    //     try {
-    //         FileUtil.unzip(new File(fileZip), destDirStr.toFile());
-    //         Files.list(Paths.get(String.valueOf(destDirStr), "bin"))
-    //              .map(Path::toFile).forEach(f -> f.setExecutable(true));
-    //     } catch (IOException e) {
-    //         e.printStackTrace();
-    //     } finally {
-    //         // delete installer.zip
-    //         new File(fileZip).delete();
-    //     }
-    // }
-
-    // public static String getVersion(String nexialHome) {
-    //     try {
-    //         return new String(Files.readAllBytes(Paths.get(nexialHome + separator + "version.txt")));
-    //     } catch (IOException e) {
-    //         return "UNKNOWN";
-    //     }
-    // }
-
 }

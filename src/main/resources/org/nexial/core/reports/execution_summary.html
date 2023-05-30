@@ -75,6 +75,19 @@
                                 <div class="execLabel">java version</div>
                                 <div class="content" data-th-utext="${execution.get('java version')}">1.8.0_181</div>
                             </div>
+                            <th:block data-th-if="${execution.get('JENKINS::build url')}">
+                                <div class="execValue execValue_JENKINS">
+                                    <div class="execLabel">jenkins</div>
+                                    <div class="content">
+                                        <a href="about:blank" th:href="${execution.get('JENKINS::build url')}" target="_nexial_jenkins">
+                                            #
+                                            <th:block data-th-utext="${execution.get('JENKINS::build number')}">1234</th:block>
+                                            by
+                                            <th:block data-th-utext="${execution.get('JENKINS::build user')}">somebody</th:block>
+                                        </a>
+                                    </div>
+                                </div>
+                            </th:block>
                         </td>
                     </tr>
                     <tr>

@@ -17,13 +17,6 @@
 
 package org.nexial.core.model;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import javax.validation.constraints.NotNull;
-
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
@@ -41,6 +34,13 @@ import org.nexial.core.excel.ExcelArea;
 import org.nexial.core.excel.ExcelStyleHelper;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.InputFileUtils;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import javax.validation.constraints.NotNull;
 
 import static java.io.File.separator;
 import static org.apache.poi.ss.usermodel.CellType.STRING;
@@ -323,10 +323,10 @@ public class MacroMerger {
                 }
 
                 switch (j) {
-                    case COL_IDX_TESTCASE:
+                    case COL_IDX_TESTCASE -> {
                         if (hasCellValue) { ExcelStyleHelper.formatActivityCell(sheet, cell); }
-                        break;
-                    case COL_IDX_DESCRIPTION:
+                    }
+                    case COL_IDX_DESCRIPTION -> {
                         if (hasCellValue) {
                             if (StringUtils.startsWith(cellValue, SECTION_DESCRIPTION_PREFIX)) {
                                 ExcelStyleHelper.formatSectionDescription(sheet, cell);
@@ -334,16 +334,10 @@ public class MacroMerger {
                                 ExcelStyleHelper.formatDescription(sheet, cell);
                             }
                         }
-                        break;
-                    case COL_IDX_TARGET:
-                        cell.setCellStyle(styleTarget);
-                        break;
-                    case COL_IDX_COMMAND:
-                        cell.setCellStyle(styleCommand);
-                        break;
-                    case COL_IDX_FLOW_CONTROLS:
-                        ExcelStyleHelper.formatFlowControlCell(sheet, cell);
-                        break;
+                    }
+                    case COL_IDX_TARGET -> cell.setCellStyle(styleTarget);
+                    case COL_IDX_COMMAND -> cell.setCellStyle(styleCommand);
+                    case COL_IDX_FLOW_CONTROLS -> ExcelStyleHelper.formatFlowControlCell(sheet, cell);
                 }
             }
         }

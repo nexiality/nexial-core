@@ -577,22 +577,19 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
             try {
                 boolean matched;
                 switch (assertionType) {
-                    case PRESENT: {
+                    case PRESENT -> {
                         matched = assertElementPresent(locator).isSuccess();
                         message += (matched ? "" : "NOT ") + "found via '" + locator + "'";
-                        break;
                     }
-                    case VISIBLE: {
+                    case VISIBLE -> {
                         matched = isVisible(locator);
                         message += "is " + (matched ? "" : "NOT ") + "visible as '" + locator + "'";
-                        break;
                     }
-                    case ENABLED: {
+                    case ENABLED -> {
                         matched = isEnabled(locatorHelper.findBy(locator));
                         message += "is " + (matched ? "" : "NOT ") + "enabled as '" + locator + "'";
-                        break;
                     }
-                    default: {
+                    default -> {
                         throw new IllegalArgumentException("assertion " + assertionType.name() + " not implemented");
                     }
                 }
@@ -760,7 +757,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
         String prefix = "Element by locator '" + locator + "' ";
         if (!outcome) {
-            // perhaps the element is not available anyways... in this case, we'll treat it the same as being "hidden"
+            // perhaps the element is not available anyway... in this case, we'll treat it the same as being "hidden"
             ConsoleUtils.log("waitUntilHidden(): condition not met, checking if element exists...");
             if (!isElementPresent(locator)) {
                 ConsoleUtils.log("waitUntilHidden(): element '" + locator + "' not present; consider element hidden");
@@ -1145,8 +1142,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
 
         if (alsoScrollTo) {
             WebElement scrollTarget = matches.get(atLeast - 1);
-            if (scrollTarget instanceof Locatable) {
-                Locatable target = (Locatable) scrollTarget;
+            if (scrollTarget instanceof Locatable target) {
                 if (!scrollTo(target)) {
                     log("At least " + minMatch + " matches of text '" + text + "' was found, but scrolling to the " +
                         "last expected element was not possible due to its lack of page coordinates");
@@ -1561,11 +1557,6 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
             }
             return StepResult.success("browser window maximized");
         } catch (WebDriverException e) {
-            // fail safe..
-            // Toolkit toolkit = Toolkit.getDefaultToolkit();
-            // int screenWidth = (int) toolkit.getScreenSize().getWidth();
-            // int screenHeight = (int) toolkit.getScreenSize().getHeight();
-            // driver.manage().window().setSize(new Dimension(screenWidth, screenHeight));
             return StepResult.fail("Unable to maximize window: " + e.getMessage() +
                                    ".  Consider running browser in non-incognito mode");
         }
@@ -1904,7 +1895,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
                 // available (aka NoSuchElementException or StaleElementException)
                 // ignore this... move on.
                 ConsoleUtils.log("Unable to reference element (" + locator + "), possibly due to page loading...");
-                if (waitForElementPresent(locator, getPollWaitMs() + "").failed()) {
+                if (waitForElementPresent(locator, String.valueOf(getPollWaitMs())).failed()) {
                     error("[WARN] Web element '" + locator + "' no longer available after its value is cleared");
                 } else {
                     // do what we came here for...
@@ -2370,7 +2361,7 @@ public class WebCommand extends BaseCommand implements CanTakeScreenshot, CanLog
         // give it time to settle down
         // BUT only for the last window
         if (lastWindow) {
-            wait(context.getIntConfig(getTarget(), getProfile(), BROWSER_POST_CLOSE_WAIT) + "");
+            wait(String.valueOf(context.getIntConfig(getTarget(), getProfile(), BROWSER_POST_CLOSE_WAIT)));
             return closeAll();
         }
 

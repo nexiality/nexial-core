@@ -193,134 +193,44 @@ public class NexialFilter implements Serializable {
         boolean result;
         switch (comparator) {
             // always good
-            case Any:
-                result = true;
-                break;
-
-            case Equal:
-            case Equal_2:
-                result = isEqualsTextOrNumeric(actual, expected);
-                break;
-
-            case NotEqual:
-            case NotEqual_2:
-                result = !isEqualsTextOrNumeric(actual, expected);
-                break;
-
-            case Greater:
-            case Greater_2:
-            case GreaterOrEqual:
-            case GreaterOrEqual_2:
-            case Lesser:
-            case Lesser_2:
-            case LesserOrEqual:
-            case LesserOrEqual_2:
+            case Any -> result = true;
+            case Equal, Equal_2 -> result = isEqualsTextOrNumeric(actual, expected);
+            case NotEqual, NotEqual_2 -> result = !isEqualsTextOrNumeric(actual, expected);
+            case Greater, Greater_2, GreaterOrEqual, GreaterOrEqual_2, Lesser, Lesser_2, LesserOrEqual, LesserOrEqual_2 ->
                 result = isNumericMatch(actual, context, msgPrefix);
-                break;
-
-            case In:
-            case Is:
-                result = isAtLeastOneMatched(actual, context);
-                break;
-
-            case IsNot:
-            case NotIn:
-                result = isNoneMatched(actual, context);
-                break;
-
-            case Between:
-                result = isInRange(actual, context, msgPrefix);
-                break;
-
-            case StartsWith:
-            case EndsWith:
-            case Contain:
-            case NotStartsWith:
-            case NotEndsWith:
-            case NotContain:
+            case In, Is -> result = isAtLeastOneMatched(actual, context);
+            case IsNot, NotIn -> result = isNoneMatched(actual, context);
+            case Between -> result = isInRange(actual, context, msgPrefix);
+            case StartsWith, EndsWith, Contain, NotStartsWith, NotEndsWith, NotContain ->
                 result = isMatchingStringCompare(actual, context);
-                break;
-
-            case Match:
-                result = isMatchByRegex(actual, context);
-                break;
-
-            case HasLengthOf:
-                result = isNumericMatch(StringUtils.length(actual) + "", context, msgPrefix);
-                break;
-
-            case IsEmpty:
-                result = StringUtils.isEmpty(actual);
-                break;
-
-            case IsNotEmpty:
-                result = StringUtils.isNotEmpty(actual);
-                break;
-
-            case IsDefined:
-                result = context.hasData(subject);
-                break;
-
-            case IsUndefined:
-                result = !context.hasData(subject);
-                break;
-
-            case ReadableFileWithSize:
+            case Match -> result = isMatchByRegex(actual, context);
+            case HasLengthOf -> result = isNumericMatch(String.valueOf(StringUtils.length(actual)), context, msgPrefix);
+            case IsEmpty -> result = StringUtils.isEmpty(actual);
+            case IsNotEmpty -> result = StringUtils.isNotEmpty(actual);
+            case IsDefined -> result = context.hasData(subject);
+            case IsUndefined -> result = !context.hasData(subject);
+            case ReadableFileWithSize -> {
                 if (!NumberUtils.isCreatable(expected)) {
                     ConsoleUtils.error(msgPrefix + "NOT A NUMBER: " + expected);
                     return false;
                 }
-
                 long expectedFileLength = NumberUtils.toLong(expected);
                 result = FileUtil.isFileReadable(actual, expectedFileLength);
                 if (expectedFileLength < 0) { result = !result; }
-
-                break;
-
-            case NotReadableFile:
-                result = !FileUtil.isFileReadable(actual);
-                break;
-
-            case ReadableFile:
-                result = FileUtil.isFileReadable(actual);
-                break;
-
-            case NotReadablePath:
-                result = !FileUtil.isDirectoryReadable(actual);
-                break;
-
-            case ReadablePath:
-                result = FileUtil.isDirectoryReadable(actual);
-                break;
-
-            case NotEmptyPath:
-                result = !FileUtil.isEmptyDirectory(actual);
-                break;
-
-            case EmptyPath:
-                result = FileUtil.isEmptyDirectory(actual);
-                break;
-
-            case ContainFilePattern:
-            case ContainFile:
+            }
+            case NotReadableFile -> result = !FileUtil.isFileReadable(actual);
+            case ReadableFile -> result = FileUtil.isFileReadable(actual);
+            case NotReadablePath -> result = !FileUtil.isDirectoryReadable(actual);
+            case ReadablePath -> result = FileUtil.isDirectoryReadable(actual);
+            case NotEmptyPath -> result = !FileUtil.isEmptyDirectory(actual);
+            case EmptyPath -> result = FileUtil.isEmptyDirectory(actual);
+            case ContainFilePattern, ContainFile ->
                 result = FileUtil.isDirectoryReadable(actual) && FileUtil.listFiles(actual, expected, false).size() > 0;
-                break;
-
-            case HasFileContentPattern:
-                result = FileUtil.isContentMatched(actual, expected, true);
-                break;
-
-            case HasFileContent:
-                result = FileUtil.isContentMatched(actual, expected, false);
-                break;
-
-            case LastModifiedGreater:
-            case LastModifiedLesser:
-            case LastModifiedEqual:
+            case HasFileContentPattern -> result = FileUtil.isContentMatched(actual, expected, true);
+            case HasFileContent -> result = FileUtil.isContentMatched(actual, expected, false);
+            case LastModifiedGreater, LastModifiedLesser, LastModifiedEqual ->
                 result = compareLastModified(actual, expected);
-                break;
-
-            default: {
+            default -> {
                 ConsoleUtils.error("Unsupported comparison: " + comparator.getSymbol());
                 result = false;
             }
@@ -341,120 +251,116 @@ public class NexialFilter implements Serializable {
         data = data == null ? NULL : normalizeCondition(data);
 
         switch (comparator) {
-            case Equal:
-            case Equal_2:
+            case Equal, Equal_2 -> {
                 return isEqualsTextOrNumeric(data, normalizeCondition(controls));
-            case NotEqual:
-            case NotEqual_2:
+            }
+            case NotEqual, NotEqual_2 -> {
                 return !isEqualsTextOrNumeric(data, normalizeCondition(controls));
-
-            case Greater:
-            case Greater_2:
+            }
+            case Greater, Greater_2 -> {
                 return toDouble(data) > toDouble(controls);
-            case GreaterOrEqual:
-            case GreaterOrEqual_2:
+            }
+            case GreaterOrEqual, GreaterOrEqual_2 -> {
                 return toDouble(data) >= toDouble(controls);
-            case Lesser:
-            case Lesser_2:
+            }
+            case Lesser, Lesser_2 -> {
                 return toDouble(data) < toDouble(controls);
-            case LesserOrEqual:
-            case LesserOrEqual_2:
+            }
+            case LesserOrEqual, LesserOrEqual_2 -> {
                 return toDouble(data) <= toDouble(controls);
-
-            case Between: {
+            }
+            case Between -> {
                 Pair<Double, Double> range = toNumericRange(controls);
                 double value = toDouble(data);
                 return value >= range.getLeft() && value <= range.getRight();
             }
-
-            case StartsWith:
+            case StartsWith -> {
                 return TextUtils.isBetween(controls, IS_OPEN_TAG, IS_CLOSE_TAG) ?
                        toControlStream(controls).anyMatch(data::startsWith) :
                        StringUtils.startsWith(data, normalizeCondition(controls));
-            case NotStartsWith:
+            }
+            case NotStartsWith -> {
                 return TextUtils.isBetween(controls, IS_OPEN_TAG, IS_CLOSE_TAG) ?
                        toControlStream(controls).noneMatch(data::startsWith) :
                        !StringUtils.startsWith(data, normalizeCondition(controls));
-            case EndsWith:
+            }
+            case EndsWith -> {
                 return TextUtils.isBetween(controls, IS_OPEN_TAG, IS_CLOSE_TAG) ?
                        toControlStream(controls).anyMatch(data::endsWith) :
                        StringUtils.endsWith(data, normalizeCondition(controls));
-            case NotEndsWith:
+            }
+            case NotEndsWith -> {
                 return TextUtils.isBetween(controls, IS_OPEN_TAG, IS_CLOSE_TAG) ?
                        toControlStream(controls).noneMatch(data::endsWith) :
                        !StringUtils.endsWith(data, normalizeCondition(controls));
-            case Contain:
+            }
+            case Contain -> {
                 return TextUtils.isBetween(controls, IS_OPEN_TAG, IS_CLOSE_TAG) ?
                        toControlStream(controls).anyMatch(data::contains) :
                        StringUtils.contains(data, normalizeCondition(controls));
-            case NotContain:
+            }
+            case NotContain -> {
                 return TextUtils.isBetween(controls, IS_OPEN_TAG, IS_CLOSE_TAG) ?
                        toControlStream(controls).noneMatch(data::contains) :
                        !StringUtils.contains(data, normalizeCondition(controls));
-
-            case Match:
+            }
+            case Match -> {
                 return RegexUtils.isExact(data, controls, true, caseSensitive);
-
-            case Is:
-            case In:
+            }
+            case Is, In -> {
                 // true if `controls` is empty and data is also empty, or data is found in `controls`
                 return
                     (StringUtils.equals(StringUtils.deleteWhitespace(controls), IS_OPEN_TAG + IS_CLOSE_TAG) &&
                      StringUtils.isEmpty(data)) ||
                     toControlStream(controls).anyMatch(data::equals);
-
-            case IsNot:
-            case NotIn:
+            }
+            case IsNot, NotIn -> {
                 // true if `controls` is [] and data is also empty, or data is not found in `controls`
                 return
                     (StringUtils.equals(StringUtils.deleteWhitespace(controls), IS_OPEN_TAG + IS_CLOSE_TAG) &&
                      !StringUtils.isEmpty(data)) ||
                     toControlStream(controls).noneMatch(data::equals);
+            }
 
             // not applicable in this case
-            case IsDefined:
-            case IsUndefined:
-                throw new IllegalArgumentException("Not applicable filter: " + comparator);
-
-            case IsEmpty:
+            case IsDefined, IsUndefined -> throw new IllegalArgumentException("Not applicable filter: " + comparator);
+            case IsEmpty -> {
                 return StringUtils.isEmpty(data);
-
-            case IsNotEmpty:
+            }
+            case IsNotEmpty -> {
                 return StringUtils.isNotEmpty(data);
-
-            case HasLengthOf:
+            }
+            case HasLengthOf -> {
                 return StringUtils.length(data) == toDouble(controls);
-
-            case ReadableFileWithSize:
+            }
+            case ReadableFileWithSize -> {
                 if (!NumberUtils.isCreatable(controls)) {
                     throw new IllegalArgumentException("NOT A NUMBER: " + controls);
                 }
-
                 long expectedFileLength = NumberUtils.toLong(controls);
                 boolean result = FileUtil.isFileReadable(data, expectedFileLength);
                 if (expectedFileLength < 0) { result = !result; }
                 return result;
-
-            case NotReadableFile:
+            }
+            case NotReadableFile -> {
                 return !FileUtil.isFileReadable(data);
-
-            case ReadableFile:
+            }
+            case ReadableFile -> {
                 return FileUtil.isFileReadable(data);
-
-            case NotReadablePath:
+            }
+            case NotReadablePath -> {
                 return !FileUtil.isDirectoryReadable(data);
-
-            case ReadablePath:
+            }
+            case ReadablePath -> {
                 return FileUtil.isDirectoryReadable(data);
-
-            case NotEmptyPath:
+            }
+            case NotEmptyPath -> {
                 return !FileUtil.isEmptyDirectory(data);
-
-            case EmptyPath:
+            }
+            case EmptyPath -> {
                 return FileUtil.isEmptyDirectory(data);
-
-            default:
-                throw new IllegalArgumentException("Invalid/unknown comparator: " + comparator.getSymbol());
+            }
+            default -> throw new IllegalArgumentException("Invalid/unknown comparator: " + comparator.getSymbol());
         }
     }
 
@@ -533,26 +439,15 @@ public class NexialFilter implements Serializable {
         String expected =
             context.replaceTokens(CollectionUtils.isNotEmpty(controlList) ? controlList.get(0) : controls);
 
-        switch (comparator) {
-            case StartsWith:
-                return StringUtils.startsWith(actual, expected);
-            case NotStartsWith:
-                return !StringUtils.startsWith(actual, expected);
-            case EndsWith:
-                return StringUtils.endsWith(actual, expected);
-            case NotEndsWith:
-                return !StringUtils.endsWith(actual, expected);
-            case Contain: {
-                return StringUtils.contains(actual, expected);
-            }
-            case NotContain: {
-                return !StringUtils.contains(actual, expected);
-            }
-            default: {
-                ConsoleUtils.error("UNSUPPORTED Operator for text-compare: " + comparator.getSymbol());
-                return false;
-            }
-        }
+        return switch (comparator) {
+            case StartsWith -> StringUtils.startsWith(actual, expected);
+            case NotStartsWith -> !StringUtils.startsWith(actual, expected);
+            case EndsWith -> StringUtils.endsWith(actual, expected);
+            case NotEndsWith -> !StringUtils.endsWith(actual, expected);
+            case Contain -> StringUtils.contains(actual, expected);
+            case NotContain -> !StringUtils.contains(actual, expected);
+            default -> false;
+        };
     }
 
     protected boolean isInRange(String actual, ExecutionContext context, String msgPrefix) {
@@ -607,20 +502,13 @@ public class NexialFilter implements Serializable {
 
         long actualLastModified = new File(path).lastModified();
         long expectedLastModified = Long.parseLong(lastModified);
-        boolean result = false;
 
-        switch (comparator) {
-            case LastModifiedGreater:
-                result = actualLastModified > expectedLastModified;
-                break;
-            case LastModifiedLesser:
-                result = actualLastModified < expectedLastModified;
-                break;
-            case LastModifiedEqual:
-                result = actualLastModified == expectedLastModified;
-                break;
-        }
-        return result;
+        return switch (comparator) {
+            case LastModifiedGreater -> actualLastModified > expectedLastModified;
+            case LastModifiedLesser -> actualLastModified < expectedLastModified;
+            case LastModifiedEqual -> actualLastModified == expectedLastModified;
+            default -> false;
+        };
     }
 
     protected boolean isNumericMatch(String actual, ExecutionContext context, String msgPrefix) {
@@ -640,26 +528,14 @@ public class NexialFilter implements Serializable {
         double actualNum = NumberUtils.toDouble(actual);
         double expectedNum = NumberUtils.toDouble(expected);
 
-        switch (comparator) {
-            case Greater:
-            case Greater_2:
-                return actualNum > expectedNum;
-            case GreaterOrEqual:
-            case GreaterOrEqual_2:
-                return actualNum >= expectedNum;
-            case Lesser:
-            case Lesser_2:
-                return actualNum < expectedNum;
-            case LesserOrEqual:
-            case LesserOrEqual_2:
-                return actualNum <= expectedNum;
-            case HasLengthOf:
-                return actualNum == expectedNum;
-            default: {
-                ConsoleUtils.error(msgPrefix + "UNKNOWN COMPARISON");
-                return false;
-            }
-        }
+        return switch (comparator) {
+            case Greater, Greater_2 -> actualNum > expectedNum;
+            case GreaterOrEqual, GreaterOrEqual_2 -> actualNum >= expectedNum;
+            case Lesser, Lesser_2 -> actualNum < expectedNum;
+            case LesserOrEqual, LesserOrEqual_2 -> actualNum <= expectedNum;
+            case HasLengthOf -> actualNum == expectedNum;
+            default -> false;
+        };
     }
 
     @NotNull

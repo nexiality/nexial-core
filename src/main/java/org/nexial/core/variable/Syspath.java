@@ -52,7 +52,9 @@ public class Syspath {
         return evaluateScope(scope, executionData);
     }
 
-    public String data(String scope) { return evaluateScope(scope, getExecutionData(OPT_DATA_DIR)); }
+    public String data(String scope) {
+        return evaluateScope(scope, getExecutionData(OPT_DATA_DIR));
+    }
 
     public String screenshot(String scope) { return evaluateScope(scope, appendCapture(getExecutionData(OPT_OUT_DIR)));}
 
@@ -86,14 +88,11 @@ public class Syspath {
         try {
             Scope s = Scope.valueOf(scope);
             File path = new File(fullpath);
-            switch (s) {
-                case name:
-                    return path.getName();
-                case base:
-                    return path.getParent();
-                default:
-                    return path.getAbsolutePath();
-            }
+            return switch (s) {
+                case name -> path.getName();
+                case base -> path.getParent();
+                default -> path.getAbsolutePath();
+            };
         } catch (IllegalArgumentException e) {
             ConsoleUtils.error("'" + scope + "' is not valid or support for " +
                                TOKEN_FUNCTION_START + "syspath" + TOKEN_FUNCTION_END);

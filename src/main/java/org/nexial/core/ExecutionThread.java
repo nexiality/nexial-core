@@ -70,7 +70,7 @@ import static org.nexial.core.model.ExecutionSummary.ExecutionLevel.SCRIPT;
  * {@link Nexial} as the initiator has the option to wait on thread complete or to launch another set of
  * tests in parallel.  This class will track all the test artifacts such as test scenarios, test steps, test data
  * and test results within its own thread context.  No sharing of such data between parallel test executions.
- * However test results will be consolidated at the end of the entire run.
+ * However, test results will be consolidated at the end of the entire run.
  *
  * @see Nexial
  * @see ExecutionDefinition
@@ -130,7 +130,7 @@ public final class ExecutionThread extends Thread {
 
         ExecutionThread.set(context);
 
-        // in case there were fail-immediate condition from previous script.. or end-immediate condition
+        // in case there were fail-immediate condition from previous script... or end-immediate condition
         if (shouldFailNow(context) || BooleanUtils.toBoolean(System.getProperty(END_SCRIPT_IMMEDIATE, "false"))) {
             return;
         }
@@ -202,7 +202,7 @@ public final class ExecutionThread extends Thread {
                 File testScriptFile = null;
                 if (testScript == null) {
                     // possibly the script prep/parsing routine failed (ie ExecutionInputPrep.prep()), but the output
-                    // file might already generated. If so then we should use the generated output file and generate
+                    // file might already be generated. If so then we should use the generated output file and generate
                     // output (as much as possible).
                     String scriptOutputFullPath = context.getStringData(OPT_INPUT_EXCEL_FILE);
                     if (StringUtils.isNotBlank(scriptOutputFullPath)) {testScriptFile = new File(scriptOutputFullPath);}
@@ -282,7 +282,7 @@ public final class ExecutionThread extends Thread {
 
         if (execDef.isFailFast() && !context.getBooleanData(OPT_LAST_OUTCOME)) {
             if (context.getBooleanData(RESET_FAIL_FAST, getDefaultBool(RESET_FAIL_FAST))) {
-                // reset and pretend nothing's wrong.  Current script will be executed..
+                // reset and pretend nothing's wrong.  Current script will be executed...
                 context.setData(OPT_LAST_OUTCOME, true);
             } else {
                 logger.error(context, RB.Abort.text("scenario.failFast"));

@@ -93,13 +93,14 @@ object CommandConst {
         "base.assertVarPresent(var)" to "base.assertVarsPresent(vars)",
         "base.assertVarNotPresent(var)" to "base.assertVarsNotPresent(vars)",
 
-        "desktop.getRowCount(var)" to "desktop.saveRowCount(var)",
-        "desktop.saveAllTableRows(var)" to "desktop.saveAllTableRows(var,csv)",
-        "desktop.scanTable(var,name)" to "desktop.useTable(var,name)",
-        "desktop.saveTableRows(var,contains)" to "desktop.saveTableRows(var,contains,csv)",
-        "desktop.saveTableRowsRange(var,beginRow,endRow)" to "desktop.saveTableRowsRange(var,beginRow,endRow,csv)",
+        "desktop.assertModalDialogTitleByLocator(locator,title)" to "desktop.assertModalDialogTitle(title)",
         "desktop.contextMenu(name,menu)" to "desktop.contextMenu(name,menu,xOffset,yOffset)",
         "desktop.contextMenuByLocator(locator,menu)" to "desktop.contextMenuByLocator(locator,menu,xOffset,yOffset)",
+        "desktop.getRowCount(var)" to "desktop.saveRowCount(var)",
+        "desktop.saveAllTableRows(var)" to "desktop.saveAllTableRows(var,csv)",
+        "desktop.saveTableRows(var,contains)" to "desktop.saveTableRows(var,contains,csv)",
+        "desktop.saveTableRowsRange(var,beginRow,endRow)" to "desktop.saveTableRowsRange(var,beginRow,endRow,csv)",
+        "desktop.scanTable(var,name)" to "desktop.useTable(var,name)",
 
         "image.colorbit(source,bit,saveTo)" to "image.colorbit(image,bit,saveTo)",
 

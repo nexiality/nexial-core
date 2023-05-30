@@ -26,36 +26,33 @@ import org.openqa.selenium.WebElement
 import java.io.Serializable
 
 class LayeredFindBy(val locators: List<String>) : By(), Serializable {
-    // very first locator should be absolute while all subsequent locators should be relative
-    private val findBys = locators.mapIndexed { index, locator ->
-        LocatorHelper.LocatorType.build(locator, index != 0)
-    }.toList()
 
-    init {
-        ConsoleUtils.log("${toString()} mapped to ${findBys.joinToString(separator = " -> ") { toLocatorString(it) }}")
-    }
+	// very first locator should be absolute while all subsequent locators should be relative
+	private val findBys = locators.mapIndexed { index, locator ->
+		LocatorHelper.LocatorType.build(locator, index != 0)
+	}.toList()
 
-    override fun findElement(context: SearchContext): WebElement? =
-        findElements(context, findBys[0], findBys.drop(1)).firstOrNull()
+	init {
+		ConsoleUtils.log("${toString()} mapped to ${findBys.joinToString(separator = " -> ") { toLocatorString(it) }}")
+	}
 
-    override fun findElements(context: SearchContext): MutableList<WebElement> =
-        findElements(context, findBys[0], findBys.drop(1))
+	override fun findElement(context: SearchContext): WebElement? =
+		findElements(context, findBys[0], findBys.drop(1)).firstOrNull()
 
-    private fun findElements(context: SearchContext, findBy: By, childFindBy: List<By>): MutableList<WebElement> {
-        val matches = findBy.findElements(context)
-        if (CollectionUtils.isEmpty(matches)) return mutableListOf()
+	override fun findElements(context: SearchContext): MutableList<WebElement> =
+		findElements(context, findBys[0], findBys.drop(1))
 
-        if (CollectionUtils.isEmpty(childFindBy)) return matches
+	private fun findElements(context: SearchContext, findBy: By, childFindBy: List<By>): MutableList<WebElement> {
+		val matches = findBy.findElements(context)
+		if (CollectionUtils.isEmpty(matches)) return mutableListOf()
 
-        return matches.mapNotNull { container ->
-            (
-                if (childFindBy.size == 1)
-                    findElements(container, childFindBy[0], listOf())
-                else
-                    findElements(container, childFindBy[0], childFindBy.drop(1))
-            ).filterNotNull()
-        }.flatten().toMutableList()
-    }
+		if (CollectionUtils.isEmpty(childFindBy)) return matches
 
-    override fun toString() = locators.joinToString(prefix = "{", separator = " -> ", postfix = "}")
+		return matches.mapNotNull { container ->
+			findElements(container, childFindBy[0], if (childFindBy.size == 1) listOf() else childFindBy.drop(1))
+				.toList()
+		}.flatten().toMutableList()
+	}
+
+	override fun toString() = locators.joinToString(prefix = "{", separator = " -> ", postfix = "}")
 }

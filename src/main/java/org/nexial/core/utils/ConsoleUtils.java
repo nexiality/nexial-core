@@ -211,8 +211,10 @@ public final class ConsoleUtils {
     }
 
     @SuppressWarnings("PMD.SystemPrintln")
-    public static String pauseForStep(ExecutionContext context, String instructions, String header,
-                                      boolean interruptable) {
+    public static String pauseForStep(ExecutionContext context,
+                                      String instructions,
+                                      String header,
+                                      boolean interrupted) {
         // not applicable when running in Jenkins environment
         if (!isPauseReady()) { return null; }
 
@@ -223,7 +225,7 @@ public final class ConsoleUtils {
         printStepPrompt(instructions);
 
         System.out.println("> When complete, enter your comment or press ENTER to continue ");
-        String comment = readInput(interruptable);
+        String comment = readInput(interrupted);
 
         listener.afterPause();
 
@@ -243,7 +245,7 @@ public final class ConsoleUtils {
                                                String instructions,
                                                String possibleResponses,
                                                String header,
-                                               boolean interruptable) {
+                                               boolean interrupted) {
         // not applicable when running in Jenkins environment
         if (!isPauseReady()) { return null; }
 
@@ -262,10 +264,10 @@ public final class ConsoleUtils {
         }
 
         System.out.printf("> %s: ", responses);
-        String input = readInput(interruptable);
+        String input = readInput(interrupted);
 
         System.out.print("> Comment: ");
-        String comment = readInput(interruptable);
+        String comment = readInput(interrupted);
 
         listener.afterPause();
 
@@ -278,7 +280,7 @@ public final class ConsoleUtils {
     }
 
     @SuppressWarnings("PMD.SystemPrintln")
-    public static String pauseForInput(ExecutionContext context, String prompt, String header, boolean interruptable) {
+    public static String pauseForInput(ExecutionContext context, String prompt, String header, boolean interrupted) {
         // not applicable when running in Jenkins environment
         if (!isPauseReady()) { return null; }
 
@@ -291,15 +293,15 @@ public final class ConsoleUtils {
 
         printStepPrompt(prompt);
         System.out.print("> ");
-        String input = readInput(interruptable);
+        String input = readInput(interrupted);
 
         if (listener != null) { listener.afterPause(); }
 
         return input;
     }
 
-    private static String readInput(boolean interruptable) {
-        return interruptable ? InterruptableSystemIn.getNextLine() : new Scanner(System.in).nextLine();
+    private static String readInput(boolean interrupted) {
+        return interrupted ? InterruptableSystemIn.getNextLine() : new Scanner(System.in).nextLine();
     }
 
     public static String centerPrompt(String prompt, int width) {
@@ -415,7 +417,7 @@ public final class ConsoleUtils {
         printConsoleHeaderTop(System.out, header, FILLER);
         printHeaderLine(System.out, META_START + "scenario" + META_END, scenarioName);
         printHeaderLine(System.out, META_START + "activity" + META_END, activityName);
-        printHeaderLine(System.out, META_START + "row/step" + META_END, (testStep.getRowIndex() + 1) + "");
+        printHeaderLine(System.out, META_START + "row/step" + META_END, String.valueOf(testStep.getRowIndex() + 1));
         printConsoleHeaderBottom(System.out, FILLER);
     }
 
@@ -451,29 +453,11 @@ public final class ConsoleUtils {
 
     private static void sendToLogger(Level logLevel, String message) {
         switch (logLevel) {
-            case TRACE -> {
-                if (LOGGER.isTraceEnabled()) { LOGGER.trace(message); }
-                return;
-            }
-            case DEBUG -> {
-                if (LOGGER.isDebugEnabled()) { LOGGER.debug(message); }
-                return;
-            }
-            case INFO -> {
-                if (LOGGER.isInfoEnabled()) { LOGGER.info(message); }
-                return;
-            }
-            case WARN -> {
-                LOGGER.warn(message);
-                return;
-            }
-            case ERROR -> {
-                LOGGER.error(message);
-                return;
-            }
-            default -> {
-                if (LOGGER.isDebugEnabled()) { LOGGER.debug(message); }
-            }
+            case TRACE -> { if (LOGGER.isTraceEnabled()) { LOGGER.trace(message); } }
+            case INFO -> { if (LOGGER.isInfoEnabled()) { LOGGER.info(message); } }
+            case WARN -> LOGGER.warn(message);
+            case ERROR -> LOGGER.error(message);
+            default -> { if (LOGGER.isDebugEnabled()) { LOGGER.debug(message); } }
         }
     }
 }

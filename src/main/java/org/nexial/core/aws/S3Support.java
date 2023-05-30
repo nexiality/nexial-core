@@ -17,16 +17,16 @@
 
 package org.nexial.core.aws;
 
-import java.io.File;
-import java.io.IOException;
-import javax.validation.constraints.NotNull;
-
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.nexial.core.aws.AwsS3Helper.PutOption;
+import org.nexial.core.utils.ConsoleUtils;
 
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.PutObjectResult;
+import java.io.File;
+import java.io.IOException;
+import javax.validation.constraints.NotNull;
 
 import static com.amazonaws.regions.Regions.DEFAULT_REGION;
 import static org.nexial.core.NexialConst.S3_PATH_SEP;
@@ -58,6 +58,7 @@ public abstract class S3Support extends AwsSupport {
             throw new IOException("Unable to delete file " + source + " after being copied to S3");
         }
 
+        ConsoleUtils.log("output-to-cloud", "transferred artifact %s to %s", source, publicUrl);
         return publicUrl;
     }
 
@@ -94,6 +95,7 @@ public abstract class S3Support extends AwsSupport {
         to = StringUtils.replace(to, "\\", "/");
 
         PutObjectResult result = newAWSS3Helper(to).copyToS3(from, option);
+
 
         if (logger.isDebugEnabled()) {
             ObjectMetadata metadata = result.getMetadata();

@@ -17,14 +17,6 @@
 
 package org.nexial.core.excel;
 
-import java.io.*;
-import java.math.BigInteger;
-import java.security.GeneralSecurityException;
-import java.util.*;
-import java.util.stream.Collectors;
-import javax.annotation.Nullable;
-import javax.validation.constraints.NotNull;
-
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.IterableUtils;
 import org.apache.commons.io.FileUtils;
@@ -58,6 +50,14 @@ import org.nexial.core.excel.ext.CellTextReader;
 import org.nexial.core.model.ExecutionContext;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.OutputFileUtils;
+
+import java.io.*;
+import java.math.BigInteger;
+import java.security.GeneralSecurityException;
+import java.util.*;
+import java.util.stream.Collectors;
+import javax.annotation.Nullable;
+import javax.validation.constraints.NotNull;
 
 import static org.apache.commons.lang3.SystemUtils.*;
 import static org.apache.poi.poifs.filesystem.FileMagic.OLE2;
@@ -715,19 +715,15 @@ public class Excel {
         boolean isNumericInput = NumberUtils.isDigits(text) || NumberUtils.isCreatable(text);
         CellType cellType = cell.getCellTypeEnum();
         switch (cellType) {
-            case NUMERIC: {
+            case NUMERIC -> {
                 if (isNumericInput) {
                     cell.setCellValue(NumberUtils.createDouble(TextUtils.cleanNumber(text, REAL)));
                 } else {
                     cell.setCellValue(text);
                 }
-                break;
             }
-            case BOOLEAN: {
-                cell.setCellValue(BooleanUtils.toBoolean(text));
-                break;
-            }
-            default: {
+            case BOOLEAN -> cell.setCellValue(BooleanUtils.toBoolean(text));
+            default -> {
                 String cellValue = StringUtils.trim(cell.getStringCellValue());
                 if (isNumericInput && (NumberUtils.isDigits(cellValue) || NumberUtils.isCreatable(cellValue))) {
                     cell.setCellValue(NumberUtils.createDouble(TextUtils.cleanNumber(text, REAL)));
@@ -1380,12 +1376,10 @@ public class Excel {
 
         CellType cellType = cell.getCellTypeEnum();
         switch (cellType) {
-            case BLANK:
-            case NUMERIC:
-            case BOOLEAN:
-                FormulaEvaluator evaluator = deriveFormulaEvaluator(cell);
-                return new DataFormatter().formatCellValue(cell, evaluator);
-            case FORMULA:
+            case BLANK, NUMERIC, BOOLEAN -> {
+                return new DataFormatter().formatCellValue(cell, deriveFormulaEvaluator(cell));
+            }
+            case FORMULA -> {
                 FormulaEvaluator evaluator1 = deriveFormulaEvaluator(cell);
                 if (evaluator1 == null) { return new DataFormatter().formatCellValue(cell); }
 
@@ -1401,11 +1395,14 @@ public class Excel {
                 } catch (NotImplementedException e) {
                     return new DataFormatter().formatCellValue(cell);
                 }
-            case ERROR:
+            }
+            case ERROR -> {
                 if (cell instanceof XSSFCell) { return ((XSSFCell) cell).getErrorCellString(); }
-                return cell.getErrorCellValue() + "";
-            default:
+                return String.valueOf(cell.getErrorCellValue());
+            }
+            default -> {
                 return escapeUtfDecode(cell, asRaw);
+            }
         }
     }
 
@@ -1488,26 +1485,13 @@ public class Excel {
 
     public static void copyCellValue(XSSFCell oldCell, XSSFCell newCell) {
         switch (oldCell.getCellTypeEnum()) {
-            case STRING:
-                newCell.setCellValue(oldCell.getStringCellValue());
-                break;
-            case BLANK:
-                newCell.setCellType(BLANK);
-                break;
-            case NUMERIC:
-                newCell.setCellValue(oldCell.getNumericCellValue());
-                break;
-            case BOOLEAN:
-                newCell.setCellValue(oldCell.getBooleanCellValue());
-                break;
-            case FORMULA:
-                newCell.setCellFormula(oldCell.getCellFormula());
-                break;
-            case ERROR:
-                newCell.setCellValue(oldCell.getErrorCellValue());
-                break;
-            default:
-                throw new IllegalArgumentException("Invalid cell type");
+            case STRING -> newCell.setCellValue(oldCell.getStringCellValue());
+            case BLANK -> newCell.setCellType(BLANK);
+            case NUMERIC -> newCell.setCellValue(oldCell.getNumericCellValue());
+            case BOOLEAN -> newCell.setCellValue(oldCell.getBooleanCellValue());
+            case FORMULA -> newCell.setCellFormula(oldCell.getCellFormula());
+            case ERROR -> newCell.setCellValue(oldCell.getErrorCellValue());
+            default -> throw new IllegalArgumentException("Invalid cell type");
         }
     }
 

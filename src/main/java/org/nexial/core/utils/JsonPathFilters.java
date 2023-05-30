@@ -160,11 +160,9 @@ class JsonPathFilters {
             return;
         }
 
-        if (candidate instanceof JSONArray) {
-            JSONArray array = (JSONArray) candidate;
+        if (candidate instanceof JSONArray array) {
             if (array.length() < 1) { return; }
             for (Object child : array) { filter(child, matched); }
-            // filter(array, matched);
             return;
         }
 
@@ -326,9 +324,7 @@ class JsonPathFilters {
             return matched ? option.handle(obj.toString(), modifyWith) : null;
         }
 
-        if (obj instanceof JSONObject) {
-            JSONObject json = (JSONObject) obj;
-
+        if (obj instanceof JSONObject json) {
             if (CollectionUtils.size(filters) == 1) {
                 // special case: reference to node name (ONLY) means "include that node as is, as part of filter"
                 FilterKey filterKey = filters.get(0);
@@ -354,8 +350,7 @@ class JsonPathFilters {
             return null;
         }
 
-        if (obj instanceof JSONArray) {
-            JSONArray array = (JSONArray) obj;
+        if (obj instanceof JSONArray array) {
             for (int i = 0; i < array.length(); i++) {
                 Object item = array.opt(i);
                 Object newValue = modify(item, modifyWith, option);

@@ -93,7 +93,7 @@ class OutputResolver(val data: String?,
                 bytes = rawBytes
             } else {
                 content = String(rawBytes)
-                    .let { if (replaceTokens && context != null) context.replaceTokens(it) else it }
+                    .let { if (replaceTokens && context != null) context.replaceTokens(it, true) else it }
                     .let { if (compact) it.trim() else it }
                 bytes = content.toByteArray()
             }

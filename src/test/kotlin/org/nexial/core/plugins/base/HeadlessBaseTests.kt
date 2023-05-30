@@ -29,163 +29,164 @@ import java.io.File.separator
 import java.io.FileReader
 
 class HeadlessBaseTests : ExcelBasedTests() {
-    @Test
-    @Throws(Exception::class)
-    fun baseCommandTests_part1() {
-        val executionSummary = testViaExcel("unitTest_base_part1.xlsx")
-        assertNoFail(executionSummary, "base_showcase")
-        assertPassFail(executionSummary, "function_projectfile", TestOutcomeStats.allPassed())
-        assertPassFail(executionSummary, "function_array", TestOutcomeStats.allPassed())
-        assertPassFail(executionSummary, "function_count", TestOutcomeStats.allPassed())
-        assertPassFail(executionSummary, "function_date", TestOutcomeStats.allPassed())
-        assertPassFail(executionSummary, "actual_in_output", TestOutcomeStats.allPassed())
-        assertPassFail(executionSummary, "actual_in_output2", TestOutcomeStats.allPassed())
-        assertEquals(0, executionSummary.failCount)
-    }
 
-    @Test
-    @Throws(Exception::class)
-    fun baseCommandTests_part2() {
-        val executionSummary = testViaExcel("unitTest_base_part2.xlsx")
-        assertPassFail(executionSummary, "crypto", TestOutcomeStats.allPassed())
-        assertNoFail(executionSummary, "macro-test")
-        assertPassFail(executionSummary, "repeat-test", TestOutcomeStats.allPassed())
-        assertPassFail(executionSummary, "expression-test", TestOutcomeStats.allPassed())
-        assertPassFail(executionSummary, "multi-scenario2", TestOutcomeStats.allPassed())
-        assertPassFail(executionSummary, "flow_controls", TestOutcomeStats(2, 14))
-    }
+	@Test
+	@Throws(Exception::class)
+	fun baseCommandTests_part1() {
+		val executionSummary = testViaExcel("unitTest_base_part1.xlsx")
+		assertNoFail(executionSummary, "base_showcase")
+		assertPassFail(executionSummary, "function_projectfile", TestOutcomeStats.allPassed())
+		assertPassFail(executionSummary, "function_array", TestOutcomeStats.allPassed())
+		assertPassFail(executionSummary, "function_count", TestOutcomeStats.allPassed())
+		assertPassFail(executionSummary, "function_date", TestOutcomeStats.allPassed())
+		assertPassFail(executionSummary, "actual_in_output", TestOutcomeStats.allPassed())
+		assertPassFail(executionSummary, "actual_in_output2", TestOutcomeStats.allPassed())
+		assertEquals(0, executionSummary.failCount)
+	}
 
-    @Test
-    @Throws(Exception::class)
-    fun baseCommandTests_part3() {
-        val executionSummary = testViaExcel("unitTest_base_part3.xlsx")
-        assertPassFail(executionSummary, "function_format", TestOutcomeStats.allPassed())
-        assertPassFail(executionSummary, "execution_count", TestOutcomeStats(2, 9))
-        assertPassFail(executionSummary, "waitForCondition", TestOutcomeStats(1, 6))
-    }
+	@Test
+	@Throws(Exception::class)
+	fun baseCommandTests_part2() {
+		val executionSummary = testViaExcel("unitTest_base_part2.xlsx")
+		assertPassFail(executionSummary, "crypto", TestOutcomeStats.allPassed())
+		assertNoFail(executionSummary, "macro-test")
+		assertPassFail(executionSummary, "repeat-test", TestOutcomeStats.allPassed())
+		assertPassFail(executionSummary, "expression-test", TestOutcomeStats.allPassed())
+		assertPassFail(executionSummary, "multi-scenario2", TestOutcomeStats.allPassed())
+		assertPassFail(executionSummary, "flow_controls", TestOutcomeStats(2, 14))
+	}
 
-    @Test
-    @Throws(Exception::class)
-    fun baseCommandTests_macro3() {
-        val executionSummary = testViaExcel("unitTest_base_macro3.xlsx")
-        assertPassFail(executionSummary, "start", TestOutcomeStats.allPassed())
-        assertNoFail(executionSummary, "macro-test")
-        assertNoFail(executionSummary, "macro-section-test")
-        assertEquals(0, executionSummary.failCount)
-        // to check total steps inside macro-section-test is not reduced
-        assertEquals(118, executionSummary.totalSteps)
-    }
+	@Test
+	@Throws(Exception::class)
+	fun baseCommandTests_part3() {
+		val executionSummary = testViaExcel("unitTest_base_part3.xlsx")
+		assertPassFail(executionSummary, "function_format", TestOutcomeStats.allPassed())
+		assertPassFail(executionSummary, "execution_count", TestOutcomeStats(2, 9))
+		assertPassFail(executionSummary, "waitForCondition", TestOutcomeStats(1, 6))
+	}
 
-    @Test
-    @Throws(Exception::class)
-    fun baseCommandTests_macroFlex() {
-        val executionSummary = testViaExcel("unitTest_base_macroFlex.xlsx")
-        assertPassFail(executionSummary, "macroFlex", TestOutcomeStats.allPassed())
-        assertPassFail(executionSummary, "macroFlexWithoutIO", TestOutcomeStats.allPassed())
-    }
+	@Test
+	@Throws(Exception::class)
+	fun baseCommandTests_macro3() {
+		val executionSummary = testViaExcel("unitTest_base_macro3.xlsx")
+		assertPassFail(executionSummary, "start", TestOutcomeStats.allPassed())
+		assertNoFail(executionSummary, "macro-test")
+		assertNoFail(executionSummary, "macro-section-test")
+		assertEquals(0, executionSummary.failCount)
+		// to check total steps inside macro-section-test is not reduced
+		assertEquals(118, executionSummary.totalSteps)
+	}
 
-    @Test
-    @Throws(Exception::class)
-    fun numberCommandTests() {
-        val executionSummary = testViaExcel("unitTest_numberCommand.xlsx")
-        assertPassFail(executionSummary, "Number_Command_Validation", TestOutcomeStats.allPassed())
-    }
+	@Test
+	@Throws(Exception::class)
+	fun baseCommandTests_macroFlex() {
+		val executionSummary = testViaExcel("unitTest_base_macroFlex.xlsx")
+		assertPassFail(executionSummary, "macroFlex", TestOutcomeStats.allPassed())
+		assertPassFail(executionSummary, "macroFlexWithoutIO", TestOutcomeStats.allPassed())
+	}
 
-    @Test
-    @Throws(Exception::class)
-    fun repeatUntilTests() {
-        val executionSummary = testViaExcel("unitTest_repeatUntil.xlsx")
-        assertNoFail(executionSummary, "repeatUntil_take1")
-        assertEquals(0, executionSummary.failCount)
-    }
+	@Test
+	@Throws(Exception::class)
+	fun numberCommandTests() {
+		val executionSummary = testViaExcel("unitTest_numberCommand.xlsx")
+		assertPassFail(executionSummary, "Number_Command_Validation", TestOutcomeStats.allPassed())
+	}
 
-    @Test
-    @Throws(Exception::class)
-    fun repeatUntilAssertTests() {
-        val executionSummary = testViaExcel("unitTest_repeatUntil_assert.xlsx", "repeatUntil")
-        assertNoFail(executionSummary, "repeatUntil")
+	@Test
+	@Throws(Exception::class)
+	fun repeatUntilTests() {
+		val executionSummary = testViaExcel("unitTest_repeatUntil.xlsx")
+		assertNoFail(executionSummary, "repeatUntil_take1")
+		assertEquals(0, executionSummary.failCount)
+	}
 
-        // in this test, we expect no screenshot to be generated
-        val outputDir = System.getProperty("nexial.outBase")
-        val captureDir = File(StringUtils.appendIfMissing(outputDir, "/") + "captures/")
-        val screenshots = FileUtils.listFiles(captureDir, arrayOf("png"), false)
-        assertTrue(screenshots == null || screenshots.isEmpty())
-        assertEquals(0, executionSummary.failCount)
-    }
+	@Test
+	@Throws(Exception::class)
+	fun repeatUntilAssertTests() {
+		val executionSummary = testViaExcel("unitTest_repeatUntil_assert.xlsx", "repeatUntil")
+		assertNoFail(executionSummary, "repeatUntil")
 
-    /**
-     * test that the combination of section and repeat-until won't throw off the correct number of steps to skip
-     */
-    @Test
-    @Throws(Exception::class)
-    fun repeatUntilInsideSectionAssetTests() {
-        val executionSummary = testViaExcel("unitTest_repeatUntil_assert.xlsx", "section_with_repeatUntil")
-        assertNoFail(executionSummary, "section_with_repeatUntil")
-        assertEquals(0, executionSummary.failCount)
-    }
+		// in this test, we expect no screenshot to be generated
+		val outputDir = System.getProperty("nexial.outBase")
+		val captureDir = File(StringUtils.appendIfMissing(outputDir, "/") + "captures/")
+		val screenshots = FileUtils.listFiles(captureDir, arrayOf("png"), false)
+		assertTrue(screenshots == null || screenshots.isEmpty())
+		assertEquals(0, executionSummary.failCount)
+	}
 
-    @Test
-    @Throws(Exception::class)
-    fun buildNumTest() {
-        System.setProperty("nexial.generateReport", "true")
+	/**
+	 * test that the combination of section and repeat-until won't throw off the correct number of steps to skip
+	 */
+	@Test
+	@Throws(Exception::class)
+	fun repeatUntilInsideSectionAssetTests() {
+		val executionSummary = testViaExcel("unitTest_repeatUntil_assert.xlsx", "section_with_repeatUntil")
+		assertNoFail(executionSummary, "section_with_repeatUntil")
+		assertEquals(0, executionSummary.failCount)
+	}
 
-        val executionSummary = testViaExcel("unitTest_buildnum.xlsx", "basic")
-        assertPassFail(executionSummary, "basic", TestOutcomeStats.allPassed())
+	@Test
+	@Throws(Exception::class)
+	fun buildNumTest() {
+		System.setProperty("nexial.generateReport", "true")
 
-        // check scriptRef
-        val executionSummaryJson = StringUtils.appendIfMissing(System.getProperty("nexial.output"), separator) +
-                                   "execution-summary.json"
-        val json = GSON.fromJson(FileReader(executionSummaryJson), JsonObject::class.java)
-        assertTrue(json.has("referenceData"))
+		val executionSummary = testViaExcel("unitTest_buildnum.xlsx", "basic")
+		assertPassFail(executionSummary, "basic", TestOutcomeStats.allPassed())
 
-        val referenceData = json.get("referenceData").asJsonObject
-        assertTrue(referenceData.size() > 0)
-        assertEquals("v2.0-1.1419-", referenceData.get("buildnum").asString)
-    }
+		// check scriptRef
+		val executionSummaryJson = StringUtils.appendIfMissing(System.getProperty("nexial.output"), separator) +
+		                           "execution-summary.json"
+		val json = GSON.fromJson(FileReader(executionSummaryJson), JsonObject::class.java)
+		assertTrue(json.has("referenceData"))
 
-    @Test
-    @Throws(Exception::class)
-    fun buildNumTest_sysprop() {
-        System.setProperty("nexial.generateReport", "true")
+		val referenceData = json.get("referenceData").asJsonObject
+		assertTrue(referenceData.size() > 0)
+		assertEquals("v2.0-1.1419-", referenceData.get("buildnum").asString)
+	}
 
-        // test that sys prop won't affect the same being modified in execution (script, in this case)
-        System.setProperty("nexial.scriptRef.buildnum", "1.2.3-4")
+	@Test
+	@Throws(Exception::class)
+	fun buildNumTest_sysprop() {
+		System.setProperty("nexial.generateReport", "true")
 
-        try {
-            val executionSummary = testViaExcel("unitTest_buildnum.xlsx", "basic")
-            assertPassFail(executionSummary, "basic", TestOutcomeStats.allPassed())
+		// test that sys prop won't affect the same being modified in execution (script, in this case)
+		System.setProperty("nexial.scriptRef.buildnum", "1.2.3-4")
 
-            // check scriptRef
-            val executionSummaryJson = StringUtils.appendIfMissing(System.getProperty("nexial.output"), separator) +
-                                       "execution-summary.json"
-            val json = GSON.fromJson(FileReader(executionSummaryJson), JsonObject::class.java)
-            assertTrue(json.has("referenceData"))
+		try {
+			val executionSummary = testViaExcel("unitTest_buildnum.xlsx", "basic")
+			assertPassFail(executionSummary, "basic", TestOutcomeStats.allPassed())
 
-            val referenceData = json.get("referenceData").asJsonObject
-            assertTrue(referenceData.size() > 0)
-            assertEquals("v2.0-1.1419-", referenceData.get("buildnum").asString)
-        } finally {
-            System.clearProperty("nexial.scriptRef.buildnum")
-            System.clearProperty("nexial.generateReport")
-        }
-    }
+			// check scriptRef
+			val executionSummaryJson = StringUtils.appendIfMissing(System.getProperty("nexial.output"), separator) +
+			                           "execution-summary.json"
+			val json = GSON.fromJson(FileReader(executionSummaryJson), JsonObject::class.java)
+			assertTrue(json.has("referenceData"))
 
-    @Test
-    @Throws(Exception::class)
-    fun parsingTest() {
+			val referenceData = json.get("referenceData").asJsonObject
+			assertTrue(referenceData.size() > 0)
+			assertEquals("v2.0-1.1419-", referenceData.get("buildnum").asString)
+		} finally {
+			System.clearProperty("nexial.scriptRef.buildnum")
+			System.clearProperty("nexial.generateReport")
+		}
+	}
 
-        listOf(Pair("duplicate_activity_name", "[A9]: Found duplicate activity name 'Activity1'"),
-               Pair("empty_activity_name", "[A7]: Found invalid, space-only activity name"),
-               Pair("no_activity_name", "[A5]: Invalid format; First row must contain valid activity name")).forEach {
+	@Test
+	@Throws(Exception::class)
+	fun parsingTest() {
 
-            val summary = testViaExcel("unitTest_bad_script.xlsx", it.first)
-            assertNotNull(summary)
-            assertEquals(0, summary.totalSteps)
-            assertEquals(0, summary.executed)
-            assertEquals(0, summary.passCount)
-            assertEquals(0, summary.failCount)
-            assertTrue(StringUtils.contains(summary.errorStackTrace, "[${it.first}]${it.second}"))
+		listOf(Pair("duplicate_activity_name", "[A9]: Found duplicate activity name 'Activity1'"),
+		       Pair("empty_activity_name", "[A7]: Found invalid, space-only activity name"),
+		       Pair("no_activity_name", "[A5]: Invalid format; First row must contain valid activity name")).forEach {
 
-        }
-    }
+			val summary = testViaExcel("unitTest_bad_script.xlsx", it.first)
+			assertNotNull(summary)
+			assertEquals(0, summary.totalSteps)
+			assertEquals(0, summary.executed)
+			assertEquals(0, summary.passCount)
+			assertEquals(0, summary.failCount)
+			assertTrue(StringUtils.contains(summary.errorStackTrace, "[${it.first}]${it.second}"))
+
+		}
+	}
 }

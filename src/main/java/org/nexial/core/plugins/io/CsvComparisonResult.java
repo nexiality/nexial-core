@@ -17,16 +17,16 @@
 
 package org.nexial.core.plugins.io;
 
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.nexial.commons.utils.TextUtils;
+import org.nexial.core.plugins.io.CsvExtendedComparison.ReportFormat;
+
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import javax.validation.constraints.NotNull;
-
-import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.nexial.commons.utils.TextUtils;
-import org.nexial.core.plugins.io.CsvExtendedComparison.ReportFormat;
 
 import static org.nexial.core.NexialConst.NL;
 import static org.nexial.core.plugins.io.CsvExtendedComparison.ReportFormat.*;
@@ -134,17 +134,12 @@ public class CsvComparisonResult {
     public String reportAsCSVWithQuotes() { return externalizeReport(CSV_DOUBLE_QUOTES); }
 
     protected String externalizeReport(ReportFormat format) {
-        switch (format) {
-            case CSV:
-                return toCSV(false);
-            case CSV_DOUBLE_QUOTES:
-                return toCSV(true);
-            case HTML:
-                return toHTML();
-            case PLAIN:
-                return toPlain();
-        }
-        return null;
+        return switch (format) {
+            case CSV -> toCSV(false);
+            case CSV_DOUBLE_QUOTES -> toCSV(true);
+            case HTML -> toHTML();
+            case PLAIN -> toPlain();
+        };
     }
 
     protected String toPlain() {

@@ -48,18 +48,18 @@ internal const val SSL_PROTOCOL = "TLS"
 internal const val JKS_FILENAME = "nexial-keystore.jks"
 internal const val CERT_STORE_PASSWORD = "nexialrocks"
 internal const val CERT_KEY_PASSWORD = "nexialrocks"
-
-// internal val FRONTDESK_HOME = "${System.getProperty(Project.NEXIAL_HOME)}${separator}bin${separator}frontdesk"
-internal const val FRONTDESK_HOME = "C:\\projects\\nexial\\nexial-ui"
-internal val FRONTDESK_LAUNCHER =
-    if (IS_OS_WINDOWS) "${System.getenv("APPDATA")}${separator}npm${separator}neu.cmd"
-    else "${System.getenv("HOME")}${separator}npm${separator}neu.sh"
 internal const val WS_PREFIX = "ws://"
 internal const val WS_PREFIX_SECURE = "wss://"
 internal const val HANDSHAKE_KEY = "nexial-handshake"
 internal const val CALLBACK_KEY = "callback-ws"
 
-private val MSG_HANDSHAKE_VERIFIED = "HANDSHAKE_VERIFIED"
+internal const val MSG_HANDSHAKE_VERIFIED = "HANDSHAKE_VERIFIED"
+
+internal val DEF_NFD_HOME =
+    System.getenv(if (IS_OS_WINDOWS) "HOMEDRIVE" else "HOME") + "${separator}projects${separator}nexial-frontdesk"
+internal val NFD_HOME = StringUtils.defaultIfBlank(System.getenv("NFD_HOME"), DEF_NFD_HOME)
+internal val NFD_LAUNCHER =
+    if (IS_OS_WINDOWS) "${System.getenv("APPDATA")}${separator}npm${separator}neu.cmd" else "/usr/local/bin/neu"
 
 class NexialWebSocket(port: Int = DEFAULT_PORT, val secure: Boolean = false, val handshake: String) :
     WebSocketServer(InetSocketAddress(port)) {

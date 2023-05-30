@@ -17,10 +17,6 @@
 
 package org.nexial.core.plugins.ws;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import io.jsonwebtoken.*;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
@@ -40,6 +36,10 @@ import org.nexial.core.utils.CheckUtils;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.OutputResolver;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import io.jsonwebtoken.*;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -697,27 +697,23 @@ public class WsCommand extends BaseCommand {
 
             content = TextUtils.toString(params, "\n", "=");
 
-            Response response = null;
+            Response response;
             switch (uploadMethod) {
-                case "POST": {
+                case "POST" -> {
                     if (isMultipart) {
                         response = client.postMultipart(url, content, fileParams);
                     } else {
                         response = client.post(url, extractUploadContent(params.get(fileParams)));
                     }
-                    break;
                 }
-                case "PUT": {
+                case "PUT" -> {
                     if (isMultipart) {
                         response = client.putMultipart(url, content, fileParams);
                     } else {
                         response = client.putWithPayload(url, extractUploadContent(params.get(fileParams)), null);
                     }
-                    break;
                 }
-                default: {
-                    throw new IllegalArgumentException("Unsupported HTTP Method for upload: " + uploadMethod);
-                }
+                default -> throw new IllegalArgumentException("Unsupported HTTP Method for upload: " + uploadMethod);
             }
 
             context.setData(var, response);

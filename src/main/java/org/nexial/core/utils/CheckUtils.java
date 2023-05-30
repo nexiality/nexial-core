@@ -33,6 +33,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
+import static java.lang.Boolean.TRUE;
 import static java.lang.Integer.MIN_VALUE;
 import static org.apache.commons.lang3.BooleanUtils.toBooleanObject;
 import static org.nexial.core.NexialConst.Project.NEXIAL_HOME;
@@ -58,7 +59,7 @@ public class CheckUtils {
         if (!condition) {
             fail(errorMessage + ": " + TextUtils.toString(ArrayUtils.toStringArray(params, "<null>"), ",", "", ""));
         }
-        return condition;
+        return true;
     }
 
     public static boolean requiresNotNull(Object notNull, String errorMessage, Object... params) {
@@ -99,7 +100,7 @@ public class CheckUtils {
     }
 
     public static boolean requiresExecutableFile(String file) {
-        requires(FileUtil.isFileExecutable(file), "invalid, unexecutable or empty file", file);
+        requires(FileUtil.isFileExecutable(file), "invalid, non-executable or empty file", file);
         return true;
     }
 
@@ -154,11 +155,8 @@ public class CheckUtils {
                (num >= upperRange && num <= lowerRange);
     }
 
-    public static boolean isSameType(Class[] types, Class required) {
-        if (ArrayUtils.isEmpty(types)) { return false; }
-
-        for (Class type : types) { if (type != required) { return false;} }
-        return true;
+    public static boolean isSameType(Class<?>[] types, Class<?> required) {
+        return !ArrayUtils.isEmpty(types) && Arrays.stream(types).noneMatch(type -> type != required);
     }
 
     public static boolean requiresOneOf(String option, String... options) {
@@ -173,10 +171,8 @@ public class CheckUtils {
 
     public static boolean toBoolean(final String str) {
         Boolean retVal = toBooleanObject(str);
-        if (retVal == null) {
-            throw new AssertionError("Invalid input, expected boolean but found " + str);
-        }
-        return retVal == Boolean.TRUE;
+        if (retVal == null) { throw new AssertionError("Invalid input, expected boolean but found " + str); }
+        return retVal == TRUE;
     }
 
     public static void requiresNexialHome() {

@@ -17,12 +17,6 @@
 
 package org.nexial.core.plugins.io;
 
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.nexial.commons.utils.DateUtility;
@@ -34,6 +28,11 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import static org.nexial.core.plugins.io.ComparisonResult.EOL;
 import static org.nexial.core.utils.ExecUtils.NEXIAL_MANIFEST;
@@ -103,26 +102,16 @@ public class FileComparisonReport implements Serializable {
 
                     String message;
                     switch (type) {
-                        case MATCHED:
-                        case MISMATCH:
-                        case MISSING: {
-                            message = "[" + expected + "]";
-                            break;
-                        }
-                        case ADDED: {
-                            message = "[" + actual + "]|missing in EXPECTED";
-                            break;
-                        }
-                        default: {
-                            throw new IllegalArgumentException("Unknown diff type " + type);
-                        }
+                        case MATCHED, MISMATCH, MISSING -> message = "[" + expected + "]";
+                        case ADDED -> message = "[" + actual + "]|missing in EXPECTED";
+                        default -> throw new IllegalArgumentException("Unknown diff type " + type);
                     }
 
                     if (expectedLine != actualLine) { message += "|ACTUAL moved to line " + actualLine; }
 
-                    buffer.append(StringUtils.leftPad(expectedLine + "", 4))
+                    buffer.append(StringUtils.leftPad(String.valueOf(expectedLine), 4))
                           .append("|")
-                          .append(StringUtils.leftPad(type + "", 10))
+                          .append(StringUtils.leftPad(String.valueOf(type), 10))
                           .append("|")
                           .append(message)
                           .append(EOL);

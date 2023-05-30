@@ -72,38 +72,30 @@ public class BasicValidator {
         }
 
         switch (enumType) {
-            case ANY: {
+            case ANY -> {
                 if (!StringUtils.isAsciiPrintable(fieldValue)) { addDataTypeError(field, DataType.ANY); }
-                break;
             }
-            case ALPHA: {
+            case ALPHA -> {
                 if (!StringUtils.isAlphaSpace(fieldValue)) { addDataTypeError(field, DataType.ALPHA); }
-                break;
             }
-            case BLANK: {
+            case BLANK -> {
                 if (StringUtils.isNotBlank(fieldValue)) { addDataTypeError(field, DataType.BLANK); }
-                break;
             }
-            case NUMERIC: {
+            case NUMERIC -> {
                 if (!validateNumberDataType(fieldValue)) { addDataTypeError(field, NUMERIC); }
-                break;
             }
-            case ALPHALOWER: {
+            case ALPHALOWER -> {
                 if (!StringUtils.isAllLowerCase(fieldValue.trim())) { addDataTypeError(field, DataType.ALPHALOWER); }
-                break;
             }
-            case ALPHAUPPER: {
+            case ALPHAUPPER -> {
                 if (!StringUtils.isAllUpperCase(fieldValue.trim())) { addDataTypeError(field, DataType.ALPHAUPPER); }
-                break;
             }
-            case PERSONNAME: {
+            case PERSONNAME -> {
                 final Pattern pattern = Pattern.compile("^[a-zA-Z]+[ ,.'\\-(a-zA-Z)]*$");
                 if (!pattern.matcher(fieldValue).matches()) { addDataTypeError(field, PERSONNAME); }
-                break;
             }
-            case ALPHANUMERIC: {
+            case ALPHANUMERIC -> {
                 if (!StringUtils.isAlphanumericSpace(fieldValue)) { addDataTypeError(field, ALPHANUMERIC); }
-                break;
             }
         }
     }
@@ -130,17 +122,15 @@ public class BasicValidator {
         }
 
         switch (alignment) {
-            case LEFT: {
+            case LEFT -> {
                 if (fieldValue.length() >= 1 && fieldValue.charAt(0) == ' ') {
                     addAlignmentError(field, Alignment.LEFT);
                 }
-                break;
             }
-            case RIGHT: {
+            case RIGHT -> {
                 if (fieldValue.length() >= 1 && fieldValue.charAt(fieldValue.length() - 1) == ' ') {
                     addAlignmentError(field, Alignment.RIGHT);
                 }
-                break;
             }
         }
     }

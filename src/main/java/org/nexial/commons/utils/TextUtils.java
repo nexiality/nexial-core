@@ -1164,17 +1164,14 @@ public final class TextUtils {
                     Map<String, String> maps = properties.get(section);
                     if (maps.containsKey(key)) {
                         switch (duplicateKeyStrategy) {
-                            case NotAllowed:
-                                throw new InvalidInputRuntimeException(RB.Abort.text("dupProjectProperties",
-                                                                                     propPath,
-                                                                                     key));
-                            case FavorFirst:
-                                ConsoleUtils.log(RB.Commons.text("dupProjectProperties.first", propPath, key));
-                                break;
-                            case FavorLast:
+                            case NotAllowed -> throw new InvalidInputRuntimeException(
+                                RB.Abort.text("dupProjectProperties", propPath, key));
+                            case FavorFirst -> ConsoleUtils.log(
+                                RB.Commons.text("dupProjectProperties.first", propPath, key));
+                            case FavorLast -> {
                                 ConsoleUtils.log(RB.Commons.text("dupProjectProperties.last", propPath, key));
                                 maps.put(key, value);
-                                break;
+                            }
                         }
                     } else {
                         maps.put(key, value);
@@ -1225,66 +1222,20 @@ public final class TextUtils {
             if (Character.isLetter(ch)) {
                 ch = Character.toUpperCase(ch);
                 switch (ch) {
-                    case 'A':
-                    case 'B':
-                    case 'C': {
-                        phone.append('2');
-                        break;
-                    }
-                    case 'D':
-                    case 'E':
-                    case 'F': {
-                        phone.append('3');
-                        break;
-                    }
-                    case 'G':
-                    case 'H':
-                    case 'I': {
-                        phone.append('4');
-                        break;
-                    }
-                    case 'J':
-                    case 'K':
-                    case 'L': {
-                        phone.append('5');
-                        break;
-                    }
-                    case 'M':
-                    case 'N':
-                    case 'O': {
-                        phone.append('6');
-                        break;
-                    }
-                    case 'P':
-                    case 'Q':
-                    case 'R':
-                    case 'S': {
-                        phone.append('7');
-                        break;
-                    }
-                    case 'T':
-                    case 'U':
-                    case 'V': {
-                        phone.append('8');
-                        break;
-                    }
-                    case 'W':
-                    case 'X':
-                    case 'Y':
-                    case 'Z': {
-                        phone.append('9');
-                        break;
-                    }
-                    default: {
-                        break;
-                    }
+                    case 'A', 'B', 'C' -> phone.append('2');
+                    case 'D', 'E', 'F' -> phone.append('3');
+                    case 'G', 'H', 'I' -> phone.append('4');
+                    case 'J', 'K', 'L' -> phone.append('5');
+                    case 'M', 'N', 'O' -> phone.append('6');
+                    case 'P', 'Q', 'R', 'S' -> phone.append('7');
+                    case 'T', 'U', 'V' -> phone.append('8');
+                    case 'W', 'X', 'Y', 'Z' -> phone.append('9');
+                    default -> { }
                 }
                 continue;
             }
 
-            if (ch == '*' || ch == '#') {
-                phone.append(ch);
-            }
+            if (ch == '*' || ch == '#') { phone.append(ch); }
         }
 
         phoneNumber = phone.toString();
@@ -1592,22 +1543,15 @@ public final class TextUtils {
     }
 
     private static boolean polyMatcherNumeric(String comparator, double actual, double expected, String polyMatcher) {
-        switch (comparator) {
-            case ">":
-                return actual > expected;
-            case ">=":
-                return actual >= expected;
-            case "<":
-                return actual < expected;
-            case "<=":
-                return actual <= expected;
-            case "=":
-                return actual == expected;
-            case "!=":
-                return actual != expected;
-            default:
-                throw new IllegalArgumentException("Unknown comparator in PolyMatcher: " + polyMatcher);
-        }
+        return switch (comparator) {
+            case ">" -> actual > expected;
+            case ">=" -> actual >= expected;
+            case "<" -> actual < expected;
+            case "<=" -> actual <= expected;
+            case "=" -> actual == expected;
+            case "!=" -> actual != expected;
+            default -> throw new IllegalArgumentException("Unknown comparator in PolyMatcher: " + polyMatcher);
+        };
     }
 
     private static Map<String, String> initDefaultEscapeHtmlMapping() {

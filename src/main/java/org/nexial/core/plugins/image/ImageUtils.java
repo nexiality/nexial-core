@@ -17,13 +17,13 @@
 
 package org.nexial.core.plugins.image;
 
-import java.awt.*;
-import java.awt.image.*;
-import java.io.IOException;
-
 import org.apache.commons.lang3.StringUtils;
 import org.nexial.core.NexialConst.Image.ImageType;
 import org.nexial.core.utils.ConsoleUtils;
+
+import java.awt.*;
+import java.awt.image.*;
+import java.io.IOException;
 
 import static java.awt.AlphaComposite.*;
 import static java.awt.RenderingHints.*;
@@ -65,24 +65,16 @@ public class ImageUtils {
             return src;
         }
 
-        switch (colorBit) {
-            case 32:
-                return convertBits(src, TYPE_INT_ARGB);
-            case 24:
-                return convertBits(src, TYPE_INT_RGB);
-            case 16:
-                return convertBits(src, TYPE_USHORT_565_RGB);
-            case 8:
-                return convertBits(src, TYPE_BYTE_INDEXED);
-            case 4:
-                return convertBits(src, CMAP_4BIT);
-            case 2:
-                return convertBits(src, CMAP_2BIT);
-            case 1:
-                return convertTo1Bit(src);
-            default:
-                throw new RuntimeException("Unsupported image color bit " + colorBit);
-        }
+        return switch (colorBit) {
+            case 32 -> convertBits(src, TYPE_INT_ARGB);
+            case 24 -> convertBits(src, TYPE_INT_RGB);
+            case 16 -> convertBits(src, TYPE_USHORT_565_RGB);
+            case 8 -> convertBits(src, TYPE_BYTE_INDEXED);
+            case 4 -> convertBits(src, CMAP_4BIT);
+            case 2 -> convertBits(src, CMAP_2BIT);
+            case 1 -> convertTo1Bit(src);
+            default -> throw new RuntimeException("Unsupported image color bit " + colorBit);
+        };
     }
 
     public static BufferedImage resize(BufferedImage src, int width, int height) {

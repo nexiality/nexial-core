@@ -1177,7 +1177,7 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
         DesktopList list = getCurrentList();
         requiresNotNull(list, "No List element referenced or scanned");
 
-        return numberCommand.assertEqual(count, list.getRowCount() + "");
+        return numberCommand.assertEqual(count, String.valueOf(list.getRowCount()));
     }
 
     public StepResult saveFirstMatchedListIndex(String var, String contains) {
@@ -1286,7 +1286,7 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
             if (!foundMatch) { return StepResult.fail("Unable to found list item matching '" + contains + "'"); }
 
             // run the shortcut sequence to select the target list item
-            driver.executeScript(toShortcuts(shortcuts.toArray(new String[shortcuts.size()])), listElement);
+            driver.executeScript(toShortcuts(shortcuts.toArray(new String[0])), listElement);
         }
 
         autoClearModalDialog(list);
@@ -1376,11 +1376,10 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
 
         Object textPaneObject = context.getObjectData(DESKTOP_CURRENT_TEXTPANE);
         if (textPaneObject == null) { return StepResult.fail("No TextPane previously used"); }
-        if (!(textPaneObject instanceof DesktopElement)) {
+        if (!(textPaneObject instanceof DesktopElement textPane)) {
             return StepResult.fail("Invalid object type: " + textPaneObject.getClass().getSimpleName());
         }
 
-        DesktopElement textPane = (DesktopElement) textPaneObject;
         if (textPane.getElementType() != TextPane) {
             return StepResult.fail("Invalid component type: " + textPane.getElementType());
         }
@@ -1602,7 +1601,7 @@ public class DesktopCommand extends BaseCommand implements ForcefulTerminate, Ca
     public StepResult editTableCells(String row, String nameValues) {
         requiresNotBlank(row, "Invalid row index (zero-based)", row);
         int rowIndex = StringUtils.equals(row, "*") ? MAX_VALUE : NumberUtils.toInt(row);
-        requiresPositiveNumber(rowIndex + "", "Invalid row index (zero-based)", row);
+        requiresPositiveNumber(String.valueOf(rowIndex), "Invalid row index (zero-based)", row);
 
         requiresNotBlank(nameValues, "Invalid name-values", nameValues);
         requires(StringUtils.contains(nameValues, "="), "Name-values MUST be in the form of name=value", nameValues);

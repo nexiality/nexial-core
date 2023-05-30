@@ -41,6 +41,7 @@ import org.nexial.core.NexialConst.*
 import org.nexial.core.NexialConst.Data.*
 import org.nexial.core.NexialConst.Iteration.CURR_ITERATION
 import org.nexial.core.NexialConst.Iteration.ITERATION
+import org.nexial.core.NexialConst.Project.NEXIAL_HOME
 import org.nexial.core.NexialConst.Project.appendLog
 import org.nexial.core.excel.Excel
 import org.nexial.core.excel.ExcelAddress
@@ -114,12 +115,15 @@ class NexialInteractive : ConnectedEventListener, CloseEventListener {
 			wsServer.start()
 			ConsoleUtils.log(runId, "waiting on connection...")
 
-			callbackUrl =
-				"${if (wsServer.secure) WS_PREFIX_SECURE else WS_PREFIX}${EnvUtils.getHostName()}:${wsServer.port}"
-			ProcessInvoker.invokeNoWait(FRONTDESK_LAUNCHER,
+			Thread.sleep(5000)
+
+			callbackUrl = "${if (wsServer.secure) WS_PREFIX_SECURE else WS_PREFIX}${EnvUtils.getHostName()}:${wsServer.port}"
+			ProcessInvoker.invokeNoWait(NFD_LAUNCHER,
 			                            listOf("run", "--", "$HANDSHAKE_KEY=$handshake", "$CALLBACK_KEY=$callbackUrl"),
-			                            mapOf(Pair(WORKING_DIRECTORY, FRONTDESK_HOME))
+			                            mapOf(Pair(WORKING_DIRECTORY, NFD_HOME),
+			                                  Pair(ENV_NEXIAL_HOME, System.getProperty(NEXIAL_HOME)))
 			)
+			Thread.sleep(2000)
 		}
 
 		if (executionDefinition.testScript != null) {

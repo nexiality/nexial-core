@@ -17,10 +17,6 @@
 
 package org.nexial.core;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.*;
-
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.io.FileUtils;
@@ -38,6 +34,10 @@ import org.nexial.core.model.TestData;
 import org.nexial.core.utils.ConsoleUtils;
 import org.nexial.core.utils.ExecUtils;
 import org.nexial.core.utils.OutputFileUtils;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.*;
 
 import static java.io.File.separator;
 import static org.apache.poi.ss.usermodel.Row.MissingCellPolicy.CREATE_NULL_AS_BLANK;
@@ -79,7 +79,7 @@ public class ExecutionInputPrep {
         String filename = testScript.getName();
 
         // since tmp file is local, the merge work with test data would be faster
-        // add random alphanum to avoid collision in parallel processing
+        // add random alphanumeric to avoid collision in parallel processing
         // String tmpFilePath = SystemUtils.getJavaIoTmpDir().getAbsolutePath() + separator +
         //                      RandomStringUtils.randomAlphabetic(5) + separator +
         //                      filename;
@@ -89,7 +89,8 @@ public class ExecutionInputPrep {
         // 2.1. decorate output file name based on runtime information
         String outputFileName = StringUtils.appendIfMissing(outBase, separator) + filename;
         outputFileName = OutputFileUtils.addStartDateTime(outputFileName, new Date());
-        outputFileName = OutputFileUtils.addIteration(outputFileName, StringUtils.leftPad(iterationIndex + "", 3, "0"));
+        outputFileName = OutputFileUtils.addIteration(outputFileName,
+                                                      StringUtils.leftPad(String.valueOf(iterationIndex), 3, "0"));
 
         // if script are executed as part of test plan, then the naming convention is:
         // [test plan file name w/o ext][SEP][test plan sheet name][SEP][sequence#][SEP][test script name w/o ext][SEP][start date yyyyMMdd_HHmmss][SEP][iteration#].xlsx
@@ -121,15 +122,6 @@ public class ExecutionInputPrep {
             outputExcel = new Excel(outputFile, false, true);
         }
 
-        // merge macros
-        /*  // todo: better instantiation so that we can reuse in-class cache (inside MacroMerger)
-        MacroMerger macroMerger = new MacroMerger();
-        macroMerger.setCurrentIteration(iterationIndex);
-        macroMerger.setExecDef(execDef);
-        macroMerger.setProject(execDef.getProject());
-        macroMerger.setExcel(outputExcel);
-        // macroMerger.mergeMacro();*/
-
         // 4. merge expanded test data to output file
         // this is necessary since the output directory (and final output file) could be remote
         // merging test data to remote output file could be time-consuming
@@ -137,7 +129,9 @@ public class ExecutionInputPrep {
 
         // we are no longer concerned with remote file access. The best practice to follow is NOT to use remote fs
         TestData testData = execDef.getTestData();
-        if (testData == null || testData.getSettingAsBoolean(REFETCH_DATA_FILE)) {testData = execDef.getTestData(true);}
+        if (testData == null || testData.getSettingAsBoolean(REFETCH_DATA_FILE)) {
+            testData = execDef.getTestData(true);
+        }
         if (!ExecUtils.isRunningInZeroTouchEnv()) {
             testData = new ExecutionVariableConsole().processRuntimeVariables(testData, iterationIndex);
         }
@@ -154,7 +148,7 @@ public class ExecutionInputPrep {
         if (StringUtils.isNotBlank(jitBatchSource) && FileUtil.isFileReadable(jitBatchSource, 800)) {
             String jitBatchTarget = StringUtils.appendIfMissing(outBase, separator) + "nexial.sh";
             if (!FileUtil.isFileReadable(jitBatchTarget, 800)) {
-                // didn't copy the file yet.. time to do so
+                // didn't copy the file yet... time to do so
                 ConsoleUtils.log(runId, "copying just-in-time batch script to output");
                 FileUtils.copyFile(new File(jitBatchSource), new File(jitBatchTarget));
             }
@@ -235,14 +229,14 @@ public class ExecutionInputPrep {
         int iterationRef = iterationManager.getIterationRef(iterationIndex - 1);
 
         data.putAll(testData.getAllValue(iterationRef));
-        testData.getAllSettings().forEach(data::put);
+        data.putAll(testData.getAllSettings());
         data.putAll(ExecUtils.deriveJavaOpts());
 
-        data.put(CURR_ITERATION, iterationIndex + "");
-        if (iterationRef != -1) { data.put(CURR_ITERATION_ID, iterationRef + ""); }
+        data.put(CURR_ITERATION, String.valueOf(iterationIndex));
+        if (iterationRef != -1) { data.put(CURR_ITERATION_ID, String.valueOf(iterationRef)); }
         if (iterationIndex > 1) {
             int lastIterationRef = iterationManager.getIterationRef(iterationIndex - 2);
-            if (lastIterationRef != -1) { data.put(LAST_ITERATION, lastIterationRef + ""); }
+            if (lastIterationRef != -1) { data.put(LAST_ITERATION, String.valueOf(lastIterationRef)); }
             data.put(IS_FIRST_ITERATION, "false");
         } else {
             data.put(IS_FIRST_ITERATION, "true");
@@ -280,7 +274,7 @@ public class ExecutionInputPrep {
         dataSheet.autoSizeColumn(1);
 
         // save output file with expanded data
-        // (2018/10/18,automike): skip saving because it'll need to be saved later anyways
+        // (2018/10/18,automike): skip saving because it'll need to be saved later anyway
         // excel.save();
 
         return excel;
