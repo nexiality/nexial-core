@@ -66,6 +66,7 @@ import javax.annotation.Nullable;
 
 import static java.io.File.separator;
 import static java.lang.System.lineSeparator;
+import static org.apache.commons.lang3.StringUtils.*;
 import static org.apache.commons.lang3.builder.ToStringStyle.SIMPLE_STYLE;
 import static org.apache.poi.ss.usermodel.CellType.BLANK;
 import static org.apache.tika.utils.SystemUtils.*;
@@ -123,7 +124,7 @@ public class TestStep extends TestStepManifest {
         this.worksheet = worksheet;
         this.context = testCase.getTestScenario().getContext();
 
-        assert context != null && StringUtils.isNotBlank(context.getId());
+        assert context != null && isNotBlank(context.getId());
         assert worksheet != null && worksheet.getFile() != null;
 
         int rowIndex = row.get(0).getRowIndex();
@@ -140,15 +141,15 @@ public class TestStep extends TestStepManifest {
                                    worksheet.getFile().getName(),
                                    worksheet.getName(),
                                    testCase.getName() + (macro == null ? "" : " (" + macro.getMacroName() + ")"),
-                                   StringUtils.leftPad((getRowIndex() + 1) + "", 3),
+                                   leftPad((getRowIndex() + 1) + "", 3),
                                    target,
                                    command));
 
         nestedTestResults = new ArrayList<>();
-        setExternalProgram(StringUtils.containsAny(target, "external", "junit"));
+        setExternalProgram(containsAny(target, "external", "junit"));
         setLogToTestScript(isExternalProgram);
         isCommandRepeater = StringUtils.equals(target + "." + command, CMD_REPEAT_UNTIL);
-        isMacroExpander = StringUtils.equalsAny(target + "." + command, CMD_MACRO, CMD_MACRO_FLEX);
+        isMacroExpander = equalsAny(target + "." + command, CMD_MACRO, CMD_MACRO_FLEX);
         macroPartOfRepeatUntil = false;
     }
 
@@ -280,12 +281,12 @@ public class TestStep extends TestStepManifest {
             if (screenCount > 0) { filename += "_" + screenCount; }
         }
 
-        return filename + StringUtils.prependIfMissing(ext, ".");
+        return filename + prependIfMissing(ext, ".");
     }
 
     private String generateFileName() {
         String repeatUntilIndex = context != null && context.hasData(REPEAT_UNTIL_LOOP_IN) ?
-                                  "_" + StringUtils.leftPad(context.getStringData(REPEAT_UNTIL_LOOP_INDEX), 3, '0') :
+                                  "_" + leftPad(context.getStringData(REPEAT_UNTIL_LOOP_INDEX), 3, '0') :
                                   "";
         String stepIndex = row.get(0).getReference();
         if (context != null && context.hasData(MACRO_INVOKED_FROM)) {
@@ -309,7 +310,7 @@ public class TestStep extends TestStepManifest {
         int idxLastCell = COL_IDX_PARAMS_START;
         for (int i = COL_IDX_PARAMS_START; i <= COL_IDX_PARAMS_END; i++) {
             cell = row.get(i);
-            if (cell != null && StringUtils.isNotBlank(cell.toString())) { idxLastCell = i + 1; }
+            if (cell != null && isNotBlank(cell.toString())) { idxLastCell = i + 1; }
         }
 
         // SECOND PASS: push data to params
@@ -349,11 +350,11 @@ public class TestStep extends TestStepManifest {
         if (e instanceof WebDriverException) {
             error = WebDriverExceptionHelper.analyzeError(context, this, (WebDriverException) e);
         } else if (e instanceof ArrayIndexOutOfBoundsException) {
-            error = "position/index not found: " + StringUtils.defaultString(e.getMessage(), e.toString());
+            error = "position/index not found: " + defaultString(e.getMessage(), e.toString());
         } else if (e instanceof NullPointerException) {
             error = "null pointer exception";
         } else {
-            error = StringUtils.defaultString(e.getMessage(), e.toString());
+            error = defaultString(e.getMessage(), e.toString());
             // minor formatting adjustment for better error output
             List<String> errorParts = RegexUtils.collectGroups(error, "^.+Exception\\:\\s*(.+)$");
             if (CollectionUtils.isNotEmpty(errorParts)) { error = errorParts.get(0); }
@@ -369,7 +370,7 @@ public class TestStep extends TestStepManifest {
         // step 3: write error to file for RCA
         // determine the file to send log
         String logFqn = OutputFileUtils.generateErrorLog(this, e);
-        if (StringUtils.isNotBlank(logFqn)) { result.setDetailedLogLink(logFqn); }
+        if (isNotBlank(logFqn)) { result.setDetailedLogLink(logFqn); }
 
         // step 4: return back the error message for FAIL result instance
         return result;
@@ -420,8 +421,7 @@ public class TestStep extends TestStepManifest {
 
             // delay is carried out here so that timespan is captured as part of execution
             if (plugin instanceof JavaUICommand) {
-                if (StringUtils.isNotBlank(plugin.getProfile()) &&
-                    !StringUtils.equals(plugin.getProfile(), CMD_PROFILE_DEFAULT)) {
+                if (isNotBlank(plugin.getProfile()) && !StringUtils.equals(plugin.getProfile(), CMD_PROFILE_DEFAULT)) {
                     JavaUIProfile config = ((JavaUICommand) plugin).resolveConfig(plugin.getProfile());
                     waitFor(config.getDelayBetweenStepsMs());
                 }
@@ -430,7 +430,7 @@ public class TestStep extends TestStepManifest {
             }
 
             String toastMsg = context.replaceTokens(this.description);
-            if (StringUtils.isNotBlank(toastMsg) &&
+            if (isNotBlank(toastMsg) &&
                 context.getBooleanData(DESCRIPTION_AS_TOAST, getDefaultBool(DESCRIPTION_AS_TOAST)) &&
                 context.getBooleanData(BROWSER_OPENED)) {
                 WebCommand web = (WebCommand) context.findPlugin("web");
@@ -469,8 +469,7 @@ public class TestStep extends TestStepManifest {
         ExecutionLogger logger = context.getLogger();
 
         String argText = Arrays.stream(args)
-                               .map(arg -> StringUtils.startsWith(arg, "$(execution") ?
-                                           context.replaceTokens(arg, true) : arg)
+                               .map(arg -> startsWith(arg, "$(execution") ? context.replaceTokens(arg, true) : arg)
                                .collect(Collectors.joining(", "));
 
         // force console logging
@@ -533,14 +532,14 @@ public class TestStep extends TestStepManifest {
         context.setData(OPT_LAST_ERROR, result.getMessage());
         if (context.getBooleanData(OPT_ERROR_TRACKER, getDefaultBool(OPT_ERROR_TRACKER))) {
             // 1. derive log file path
-            String fullpath = StringUtils.appendIfMissing(new Syspath().log("fullpath"), separator) + ERROR_TRACKER;
+            String fullpath = appendIfMissing(new Syspath().log("fullpath"), separator) + ERROR_TRACKER;
             File logFile = new File(fullpath);
 
             // 2. append to log
             String log = "[" + DateUtility.formatLogDate(System.currentTimeMillis()) + "]" +
                          getMessageId() +
                          ("[" + (hasErrorScreenshot ? context.getStringData(OPT_LAST_SCREENSHOT_NAME) : "-") + "]") +
-                         ("[" + StringUtils.defaultIfBlank(result.getDetailedLogLink(), "-") + "]") + ": " +
+                         ("[" + defaultIfBlank(result.getDetailedLogLink(), "-") + "]") + ": " +
                          result.getMessage() + NL;
             try {
                 FileUtils.writeStringToFile(logFile, log, DEF_FILE_ENCODING, true);
@@ -554,13 +553,13 @@ public class TestStep extends TestStepManifest {
 
     protected void readDescriptionCell(List<XSSFCell> row) {
         XSSFCell cell = row.get(COL_IDX_DESCRIPTION);
-        setDescription(cell != null ? StringUtils.defaultIfEmpty(cell.toString(), "") : "");
+        setDescription(cell != null ? defaultIfEmpty(cell.toString(), "") : "");
     }
 
     protected void readTargetCell(List<XSSFCell> row) {
         XSSFCell cell = row.get(COL_IDX_TARGET);
-        if (cell == null || StringUtils.isBlank(cell.toString())) {
-            throw new IllegalArgumentException(StringUtils.defaultString(messageId) + " no target specified" +
+        if (cell == null || isBlank(cell.toString())) {
+            throw new IllegalArgumentException(defaultString(messageId) + " no target specified" +
                                                (cell != null ? " on ROW " + (cell.getRowIndex() + 1) : ""));
         }
         setTarget(cell.toString());
@@ -568,8 +567,8 @@ public class TestStep extends TestStepManifest {
 
     protected void readCommandCell(List<XSSFCell> row) {
         XSSFCell cell = row.get(COL_IDX_COMMAND);
-        if (cell == null || StringUtils.isBlank(cell.toString())) {
-            throw new IllegalArgumentException(StringUtils.defaultString(messageId) + " no command specified" +
+        if (cell == null || isBlank(cell.toString())) {
+            throw new IllegalArgumentException(defaultString(messageId) + " no command specified" +
                                                (cell != null ? " on ROW " + (cell.getRowIndex() + 1) : ""));
         }
         setCommand(cell.toString());
@@ -606,7 +605,7 @@ public class TestStep extends TestStepManifest {
             } else {
                 summary.incrementFail();
                 error(MessageUtils.renderAsFail(result.getMessage()));
-                if (StringUtils.isNotBlank(result.getDetailedLogLink())) {
+                if (isNotBlank(result.getDetailedLogLink())) {
                     context.getLogger().error(this, ERROR_LOG + result.getDetailedLogLink());
                 }
                 trackExecutionError(result);
@@ -618,7 +617,7 @@ public class TestStep extends TestStepManifest {
 
     protected void readCaptureScreenCell(List<XSSFCell> row) {
         XSSFCell cell = row.get(COL_IDX_CAPTURE_SCREEN);
-        setCaptureScreen(StringUtils.startsWithIgnoreCase(Excel.getCellValue(cell), "X"));
+        setCaptureScreen(startsWithIgnoreCase(Excel.getCellValue(cell), "X"));
     }
 
     protected String handleScreenshot(StepResult result) {
@@ -640,7 +639,7 @@ public class TestStep extends TestStepManifest {
         // screenshot failure shouldn't cause exception to offset execution pass/fail percentage
         try {
             String screenshotPath = agent.takeScreenshot(this);
-            if (StringUtils.isBlank(screenshotPath)) {
+            if (isBlank(screenshotPath)) {
                 error("Unable to capture screenshot: " + result.getMessage());
                 return null;
             }
@@ -659,21 +658,40 @@ public class TestStep extends TestStepManifest {
         // screenshot
         // take care of screenshot requirement first...
         // in interactive mode, we won't proceed if any of the Excel-related operations
-        if ((!isSkipped || !isEnded) && StringUtils.isEmpty(screenshot)) {
+        if ((!isSkipped || !isEnded) && isEmpty(screenshot)) {
             // don't capture screenshot if step skipped or ended by endIf
             // OR if screenshot is already captured then also no need of duplicate screenshot
             screenshot = handleScreenshot(result);
         }
 
-        if (!context.isInteractiveMode()) {
+        boolean interactiveMode = context.isInteractiveMode();
+        boolean pass = result.isSuccess();
+        String commandName = row.get(COL_IDX_TARGET).toString() + "." + row.get(COL_IDX_COMMAND).toString();
+        String message = result.getMessage();
+        boolean violateSLA = false;
+
+        // SLA not applicable to composite commands and all wait* commands
+        if (!isSkipped && !isEnded &&
+            !SLA_EXEMPT_COMMANDS.contains(commandName) &&
+            !contains(commandName, ".wait")) {
+            long elapsedTimeSLA = context.getSLAElapsedTimeMs();
+            if (!updateElapsedTime(elapsedMs, elapsedTimeSLA > 0 && elapsedTimeSLA < elapsedMs)) {
+                result.markElapsedTimeSlaNotMet();
+                pass = false;
+                message = result.getMessage();
+                violateSLA = true;
+            }
+        }
+
+        if (!interactiveMode) {
             ExcelStyleHelper.formatActivityCell(worksheet, row.get(COL_IDX_TESTCASE));
 
             // description
             XSSFCell cellDescription = row.get(COL_IDX_DESCRIPTION);
             String description = Excel.getCellValue(cellDescription);
-            if (StringUtils.startsWith(description, SECTION_DESCRIPTION_PREFIX)) {
+            if (startsWith(description, SECTION_DESCRIPTION_PREFIX)) {
                 ExcelStyleHelper.formatSectionDescription(worksheet, cellDescription);
-            } else if (StringUtils.contains(description, REPEAT_DESCRIPTION_PREFIX)) {
+            } else if (contains(description, REPEAT_DESCRIPTION_PREFIX)) {
                 ExcelStyleHelper.formatRepeatUntilDescription(worksheet, cellDescription);
             } else {
                 ExcelStyleHelper.formatDescription(worksheet, cellDescription);
@@ -682,8 +700,6 @@ public class TestStep extends TestStepManifest {
             ExcelStyleHelper.formatTargetCell(worksheet, row.get(COL_IDX_TARGET));
             ExcelStyleHelper.formatCommandCell(worksheet, row.get(COL_IDX_COMMAND));
 
-            String commandName = row.get(COL_IDX_TARGET).toString() + "." + row.get(COL_IDX_COMMAND).toString();
-            String message = result.getMessage();
 
             if (isSkipped) {
                 XSSFCellStyle styleSkipped = worksheet.getStyle(STYLE_PARAM_SKIPPED);
@@ -729,10 +745,10 @@ public class TestStep extends TestStepManifest {
                     XSSFCell paramCell = row.get(i);
 
                     String param = mergedParams.get(paramIdx);
-                    if (StringUtils.isBlank(param)) { continue; }
+                    if (isBlank(param)) { continue; }
 
                     String origParamValue = Excel.getCellValue(paramCell);
-                    if (StringUtils.isBlank(origParamValue)) {
+                    if (isBlank(origParamValue)) {
                         paramCell.setCellType(BLANK);
                         continue;
                     }
@@ -742,10 +758,8 @@ public class TestStep extends TestStepManifest {
                         paramCell.setCellComment(toSystemComment(paramCell, "detected crypto"));
                         continue;
                     } else if (i == COL_IDX_PARAMS_START && StringUtils.equals(getCommandFQN(), CMD_VERBOSE)) {
-                        message = StringUtils.trim(platformSpecificEOL(message));
-                        if (StringUtils.length(message) > MAX_VERBOSE_CHAR) {
-                            message = StringUtils.abbreviate(message, MAX_VERBOSE_CHAR);
-                        }
+                        message = trim(platformSpecificEOL(message));
+                        if (length(message) > MAX_VERBOSE_CHAR) { message = abbreviate(message, MAX_VERBOSE_CHAR); }
                         paramCell.setCellValue(message);
                         paramCell.setCellComment(toSystemComment(paramCell, origParamValue));
                         continue;
@@ -755,7 +769,7 @@ public class TestStep extends TestStepManifest {
                     boolean tainted = !StringUtils.equals(origParamValue, taintedValue);
                     if (tainted) {
                         paramCell.setCellValue(context.truncateForDisplay(taintedValue));
-                        if (StringUtils.isNotEmpty(origParamValue)) {
+                        if (isNotEmpty(origParamValue)) {
                             paramCell.setCellComment(toSystemComment(paramCell, origParamValue));
                         }
                         paramCell.setCellStyle(styleTaintedParam);
@@ -781,19 +795,17 @@ public class TestStep extends TestStepManifest {
 
                             if (FileUtil.isFileReadable(link, 1)) {
                                 // target file should exist with at least 1 byte
-                                File tmpFile = new File(StringUtils.substringBeforeLast(link, separator) + separator +
+                                File tmpFile = new File(substringBeforeLast(link, separator) + separator +
                                                         row.get(COL_IDX_TESTCASE).getReference() + "_" +
-                                                        StringUtils.substringAfterLast(link, separator));
+                                                        substringAfterLast(link, separator));
 
                                 try {
-                                    // ConsoleUtils.log("copy local resource " + link + " to " + tmpFile);
                                     FileUtils.copyFile(new File(link), tmpFile);
 
                                     ConsoleUtils.log("output-to-cloud enabled; copying " + link + " cloud...");
                                     String cloudUrl = context.getOtc().importFile(tmpFile, true);
                                     context.setData(OPT_LAST_OUTPUT_LINK, cloudUrl);
-                                    context.setData(OPT_LAST_OUTPUT_PATH,
-                                                    StringUtils.substringBeforeLast(cloudUrl, "/"));
+                                    context.setData(OPT_LAST_OUTPUT_PATH, substringBeforeLast(cloudUrl, "/"));
                                     ConsoleUtils.log("output-to-cloud enabled; copied  " + link + " to " + cloudUrl);
 
                                     worksheet.setHyperlink(paramCell, cloudUrl, "(cloud) " + param);
@@ -809,7 +821,7 @@ public class TestStep extends TestStepManifest {
                         }
 
                         // if `link` contains double quote, it's likely not a link..
-                        if (!StringUtils.containsAny(link, "\"")) { worksheet.setHyperlink(paramCell, link, param); }
+                        if (!containsAny(link, "\"")) { worksheet.setHyperlink(paramCell, link, param); }
                         continue;
                     }
 
@@ -821,22 +833,8 @@ public class TestStep extends TestStepManifest {
             ExcelStyleHelper.formatFlowControlCell(worksheet, row.get(COL_IDX_FLOW_CONTROLS));
 
             // elapsed time
-            if (!isSkipped || !isEnded) {
+            if ((!isSkipped || !isEnded) && !violateSLA) {
                 row.get(COL_IDX_ELAPSED_MS).setCellStyle(worksheet.getStyle(STYLE_ELAPSED_MS));
-            }
-
-            boolean pass = result.isSuccess();
-
-            if ((!isSkipped && !isEnded) &&
-                !SLA_EXEMPT_COMMANDS.contains(commandName) &&
-                !StringUtils.contains(commandName, ".wait")) {
-                // SLA not applicable to composite commands and all wait* commands
-                long elapsedTimeSLA = context.getSLAElapsedTimeMs();
-                if (!updateElapsedTime(elapsedMs, elapsedTimeSLA > 0 && elapsedTimeSLA < elapsedMs)) {
-                    result.markElapsedTimeSlaNotMet();
-                    pass = false;
-                    message = result.getMessage();
-                }
             }
 
             createCommentForMacro(cellDescription, pass);
@@ -847,7 +845,7 @@ public class TestStep extends TestStepManifest {
                 MESSAGE_REQUIRED_COMMANDS.contains(commandName) && (result.isSuccess() || result.isError()) ?
                 (result.isSuccess() ? MSG_PASS : MSG_FAIL) + message :
                 MessageUtils.markResult(message, pass, true);
-            cellResult.setCellValue(StringUtils.left(resultMsg, MAX_VERBOSE_CHAR));
+            cellResult.setCellValue(left(resultMsg, MAX_VERBOSE_CHAR));
 
             if (result.isError()) {
                 ExcelStyleHelper.formatFailedStepDescription(this);
@@ -871,10 +869,10 @@ public class TestStep extends TestStepManifest {
             // reason
             XSSFCell cellReason = row.get(COL_IDX_REASON);
             if (cellReason != null && !pass) {
-                if (StringUtils.isNotBlank(result.getDetailedLogLink())) {
+                if (isNotBlank(result.getDetailedLogLink())) {
                     // currently support just 1 log link
                     String logLink = result.getDetailedLogLink();
-                    if (StringUtils.isNotBlank(logLink)) {
+                    if (isNotBlank(logLink)) {
                         Excel.setHyperlink(cellReason, logLink, "details");
                         ConsoleUtils.error("Check corresponding error log for details: " + logLink);
                     }
@@ -895,7 +893,7 @@ public class TestStep extends TestStepManifest {
     }
 
     private void updateNestedResults(StepResult result) {
-        if (StringUtils.isNotEmpty(screenshot)) {
+        if (isNotEmpty(screenshot)) {
             if (result.failed()) {
                 addErrorScreenCapture(screenshot, result.getMessage());
             } else {
@@ -931,7 +929,7 @@ public class TestStep extends TestStepManifest {
         if (isURL(link)) { return link; }
 
         if (IS_OS_WINDOWS) {
-            link = StringUtils.replace(link, "/", "\\");
+            link = replace(link, "/", "\\");
             if (RegexUtils.isExact(link, "^[A-Za-z]\\:\\\\.+$") ||
                 RegexUtils.isExact(link, "^\\\\\\\\[0-9A-Za-z_\\.\\-]+\\\\.+$")) {
                 return link;
@@ -958,13 +956,13 @@ public class TestStep extends TestStepManifest {
     }
 
     protected void log(String message) {
-        if (StringUtils.isBlank(message)) { return; }
+        if (isBlank(message)) { return; }
         context.getLogger().log(this, message);
         logToTestScript(message);
     }
 
     protected void error(String message) {
-        if (StringUtils.isBlank(message)) { return; }
+        if (isBlank(message)) { return; }
         context.getLogger().error(this, message);
         logToTestScript(message);
     }
@@ -999,14 +997,13 @@ public class TestStep extends TestStepManifest {
     }
 
     private boolean isFileLink(String param) {
-        return !StringUtils.startsWith(param, "[") &&
-               StringUtils.countMatches(param, TOKEN_FUNCTION_START + "syspath|") == 1 &&
-               StringUtils.countMatches(param, "|name" + TOKEN_FUNCTION_END) == 0;
+        return !startsWith(param, "[") &&
+               countMatches(param, TOKEN_FUNCTION_START + "syspath|") == 1 &&
+               countMatches(param, "|name" + TOKEN_FUNCTION_END) == 0;
     }
 
     private boolean isURL(String link) {
-        return StringUtils.startsWithIgnoreCase(link, "http") ||
-               StringUtils.startsWithIgnoreCase(link, "file:");
+        return startsWithIgnoreCase(link, "http") || startsWithIgnoreCase(link, "file:");
     }
 
     private Comment toSystemComment(XSSFCell paramCell, String message) {
@@ -1031,7 +1028,7 @@ public class TestStep extends TestStepManifest {
     protected void readFlowControlsCell(List<XSSFCell> row) {
         addSkipFlowControl();
         XSSFCell cell = row.get(COL_IDX_FLOW_CONTROLS);
-        setFlowControls(FlowControl.parse(cell != null ? StringUtils.defaultString(Excel.getCellValue(cell), "") : ""));
+        setFlowControls(FlowControl.parse(cell != null ? defaultString(Excel.getCellValue(cell), "") : ""));
     }
 
     private void addSkipFlowControl() {

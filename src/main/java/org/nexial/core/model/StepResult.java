@@ -106,7 +106,6 @@ public class StepResult {
 
     public void markElapsedTimeSlaNotMet() {
         success = false;
-        // exception = new AssertionError("Elapsed time violated SLA specified via '" + OPT_ELAPSED_TIME_SLA + "'.");
         if (StringUtils.isNotBlank(message)) {
             message += (StringUtils.endsWith(message, ".") ? " But " : " but ") +
                        "the elapsed time violated the SLA specified via '" + OPT_ELAPSED_TIME_SLA + "'.";
