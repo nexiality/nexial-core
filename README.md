@@ -1,6 +1,5 @@
 [![GitHub stars](https://img.shields.io/github/stars/nexiality/nexial-core)](https://github.com/nexiality/nexial-core/stargazers)
 [![GitHub issues](https://img.shields.io/github/issues/nexiality/nexial-core)](https://github.com/nexiality/nexial-core/issues)
-[![StandWithUkraine](https://raw.githubusercontent.com/vshymanskyy/StandWithUkraine/main/badges/StandWithUkraine.svg)](https://github.com/vshymanskyy/StandWithUkraine/blob/main/docs/README.md)
 
 # Nexial Automation
 
